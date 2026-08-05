@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -121,26 +110,7 @@ local driver_template = {
     capabilities.powerMeter,
     capabilities.smokeDetector
   },
-  sub_drivers = {
-    require("zooz-4-in-1-sensor"),
-    require("vision-motion-detector"),
-    require("fibaro-flood-sensor"),
-    require("aeotec-water-sensor"),
-    require("glentronics-water-leak-sensor"),
-    require("homeseer-multi-sensor"),
-    require("fibaro-door-window-sensor"),
-    require("sensative-strip"),
-    require("enerwave-motion-sensor"),
-    require("aeotec-multisensor"),
-    require("zwave-water-leak-sensor"),
-    require("everspring-motion-light-sensor"),
-    require("ezmultipli-multipurpose-sensor"),
-    require("fibaro-motion-sensor"),
-    require("v1-contact-event"),
-    require("timed-tamper-clear"),
-    require("wakeup-no-poll"),
-    require("apiv6_bugfix")
-  },
+  sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
     added = added_handler,
     init = device_init,
@@ -155,9 +125,12 @@ local driver_template = {
       [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
+  shared_device_thread_enabled = true,
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
+defaults.register_for_default_handlers(driver_template,
+  driver_template.supported_capabilities,
+  {native_capability_attrs_enabled = true})
 --- @type st.zwave.Driver
 local sensor = ZwaveDriver("zwave_sensor", driver_template)
 sensor:run()

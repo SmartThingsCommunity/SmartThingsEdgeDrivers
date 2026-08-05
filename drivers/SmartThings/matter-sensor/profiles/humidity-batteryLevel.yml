@@ -1,0 +1,17 @@
+name: humidity-batteryLevel
+components:
+- id: main
+  capabilities:
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: batteryLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: HumiditySensor
+preferences:
+  - preferenceId: humidityOffset
+    explicit: true

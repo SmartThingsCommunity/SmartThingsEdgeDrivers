@@ -1,11 +1,317 @@
 matterManufacturer:
+#Aqara
+  - id: "4447/6145"
+    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    vendorId: 0x115F
+    productId: 0x1801
+    deviceProfileName: light-color-level
+  - id: "4447/6146"
+    deviceLabel: Aqara LED Bulb T2 CCT
+    vendorId: 0x115F
+    productId: 0x1802
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4447/6149"
+    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    vendorId: 0x115F
+    productId: 0x1805
+    deviceProfileName: light-color-level
+  - id: "4447/6150"
+    deviceLabel: Aqara LED Bulb T2 CCT
+    vendorId: 0x115F
+    productId: 0x1806
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4447/8196"
+    deviceLabel: Climate Sensor W100
+    vendorId: 0x115F
+    productId: 0x2004
+    deviceProfileName: 3-button-battery-temperature-humidity
+  - id: "4447/4105"
+    deviceLabel: Aqara Light Switch H2 EU (4 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1009
+    deviceProfileName: 4-button
+  - id: "4447/4104"
+    deviceLabel: Aqara Light Switch H2 EU (2 Buttons 1 Channel)
+    vendorId: 0x115F
+    productId: 0x1008
+    deviceProfileName: 2-button
+  - id: "4447/4099"
+    deviceLabel: Aqara Light Switch H2 US (2 Buttons 1 Channel)
+    vendorId: 0x115F
+    productId: 0x1003
+    deviceProfileName: 2-button
+  - id: "4447/4100"
+    deviceLabel: Aqara Light Switch H2 US (2 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1004
+    deviceProfileName: 2-button
+  - id: "4447/4101"
+    deviceLabel: Aqara Light Switch H2 US (4 Buttons 3 Channel)
+    vendorId: 0x115F
+    productId: 0x1005
+    deviceProfileName: 4-button
+#AiDot
+  - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: Linkind Smart Light Bulb A19 RGBTW
+    vendorId: 0x1168
+    productId: 0x03e8
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "OREiN/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: OREiN Smart Light Bulb A19 RGBTW
+    vendorId: 0x1168
+    productId: 0x03ea
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/BR30/RGBTW"
+    deviceLabel: Linkind Smart Light Bulb BR30 RGBTW
+    vendorId: 0x1168
+    productId: 0x03eb
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "OREiN/Smart/Light/Bulb/BR30/RGBTW"
+    deviceLabel: OREiN Smart Light Bulb BR30 RGBTW
+    vendorId: 0x1168
+    productId: 0x03ec
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Consciot/Smart/Light/Bulb/A19/RGBT"
+    deviceLabel: Consciot Smart Light Bulb A19 RGBT
+    vendorId: 0x1168
+    productId: 0x0405
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1010"
+    deviceLabel: Aidot OREiN Matter Smart Light Bulb BR30 RGBTW 1200lm
+    vendorId: 0x1168
+    productId: 0x03F2
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1011"
+    deviceLabel: Smart Light Bulb A60
+    vendorId: 0x1168
+    productId: 0x03F3
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1012"
+    deviceLabel: Aidot Linkind Matter Smart Light Bulb BR30 RGBTW 1200lm
+    vendorId: 0x1168
+    productId: 0x03F4
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1013"
+    deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
+    vendorId: 0x1168
+    productId: 0x03F5
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "AiDot/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: AiDot Smart Light Bulb A19 RGBT
+    vendorId: 0x1168
+    productId: 0x03f8
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/A19/CCT"
+    deviceLabel: Smart Light Bulb A19 CCT
+    vendorId: 0x1168
+    productId: 0x03f9
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1024"
+    deviceLabel: Smart Plug
+    vendorId: 0x1168
+    productId: 0x0400
+    deviceProfileName: plug-binary
+  - id: "4456/1007"
+    deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
+    vendorId: 0x1168
+    productId: 0x03EF
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1005"
+    deviceLabel: Matter Smart Light Bulb A19 RGBTW 1100lm
+    vendorId: 0x1168
+    productId: 0x03ED
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1006"
+    deviceLabel: Matter Smart Light Bulb A19 RGBTW 1100lm
+    vendorId: 0x1168
+    productId: 0x03EE
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1102"
+    deviceLabel: Matter Smart Plug
+    vendorId: 0x1168
+    productId: 0x044E
+    deviceProfileName: plug-binary
+  - id: "4456/1019"
+    deviceLabel: Matter Smart Filament  Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FB
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1020"
+    deviceLabel: AiDot OREiN Matter Smart Filament Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FC
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "5014/4096"
+    deviceLabel: Linkind LED Light Strip EL6
+    vendorId: 0x1396
+    productId: 0x1000
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "5014/4101"
+    deviceLabel: Linkind Smart Plug with Light
+    vendorId: 0x1396
+    productId: 0x1005
+    deviceProfileName: plug-binary
+  - id: "5014/4097"
+    deviceLabel: OREIN Bath Fan OLO5S
+    vendorId: 0x1396
+    productId: 0x1001
+    deviceProfileName: fan-modular
+  - id: "5014/4214"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1076
+    deviceProfileName: light-color-level
+  - id: "5014/4245"
+    deviceLabel: OREiN Matter smart Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1095
+    deviceProfileName: fan-modular
+  - id: "5014/4246"
+    deviceLabel: OREiN Matter smart Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1096
+    deviceProfileName: fan-modular
+  - id: "5014/4247"
+    deviceLabel: OREiN Matter smart Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1097
+    deviceProfileName: fan-modular
+  - id: "5014/4215"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1077
+    deviceProfileName: light-color-level
+  - id: "5014/4273"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B1
+    deviceProfileName: light-color-level
+  - id: "5014/4164"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1044
+    deviceProfileName: light-color-level
+  - id: "5014/4118"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x1016
+    deviceProfileName: light-color-level
+  - id: "5014/4116"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1014
+    deviceProfileName: light-color-level
+  - id: "5014/4165"
+    deviceLabel: Linkind Smart Downlight
+    vendorId: 0x1396
+    productId: 0x1045
+    deviceProfileName: light-color-level
+  - id: "5014/4578"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E2
+    deviceProfileName: light-color-level
+  - id: "5014/4274"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B2
+    deviceProfileName: light-color-level
+  - id: "5014/4642"
+    deviceLabel: Linkind Smart Permanent Outdoor Lights
+    vendorId: 0x1396
+    productId: 0x1222
+    deviceProfileName: light-color-level
+  - id: "5014/4629"
+    deviceLabel: Smart Outdoor String Lights
+    vendorId: 0x1396
+    productId: 0x1215
+    deviceProfileName: light-color-level
+  - id: "5014/4158"
+    deviceLabel: Linkind Smart Ceiling Fan
+    vendorId: 0x1396
+    productId: 0x103E
+    deviceProfileName: fan-modular
+#Bosch Smart Home
+  - id: "4617/12310"
+    deviceLabel: Plug Compact [M]
+    vendorId: 0x1209
+    productId: 0x3016
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: 4617/12307
+    deviceLabel: "Motion Detector II [M]"
+    vendorId: 0x1209
+    productId: 0x3013
+    deviceProfileName:  light-level-battery-illuminance-motion-temperature
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
-    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
-    
+    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+  - id: "5127/5121"
+    deviceLabel: ThirdReality Smart Night Light -T
+    vendorId: 0x1407
+    productId: 0x1401
+    deviceProfileName: light-color-level-illuminance-motion
+  - id: "5127/4744"
+    deviceLabel: Smart Bridge MZ1
+    vendorId: 0x1407
+    productId: 0x1288
+    deviceProfileName: matter-bridge
+  - id: "5127/5000"
+    deviceLabel: Smart Mechanical Keyboard MK1
+    vendorId: 0x1407
+    productId: 0x1388
+    deviceProfileName: 12-button-keyboard
+  - id: "5127/4248"
+    deviceLabel: Smart Garage Door Opener
+    vendorId: 0x1407
+    productId: 0x1098
+    deviceProfileName: garage-door-battery
+
+#Edishine
+  - id: "5458/3328"
+    deviceLabel: Edishine Smart Led Bulb
+    vendorId: 0x1552
+    productId: 0x0D00
+    deviceProfileName: light-color-level
+
+#ELEGRP
+  - id: "5158/3"
+    deviceLabel: ELEGRP Smart Mini Plug
+    vendorId: 0x1426
+    productId: 0x0003
+    deviceProfileName: plug-binary
+#Elko
+  - id: "5170/4096"
+    deviceLabel: RFSAI-62B-SL/MT
+    vendorId: 0x1432
+    productId: 0x1000
+    deviceProfileName: switch-binary
+  - id: "5170/4097"
+    deviceLabel: RFGB-40B(W)/MT
+    vendorId: 0x1432
+    productId: 0x1001
+    deviceProfileName: 4-button-battery
+  - id: "5170/4099"
+    deviceLabel: RFWB-40G/MT
+    vendorId: 0x1432
+    productId: 0x1003
+    deviceProfileName: 4-button-battery
+
+#Eufy
+  - id: "5427/19"
+    deviceLabel: eufy Permanent Outdoor Lights S4
+    vendorId: 0x1533
+    productId: 0x0013
+    deviceProfileName: light-color-level-2200K-6500K
+
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -32,6 +338,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x69
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/121"
+    deviceLabel: Eve Dimmer Switch
+    vendorId: 0x130A
+    productId: 0x0079
+    deviceProfileName: light-level
   - id: "4874/106"
     deviceLabel: Eve Energy Switzerland
     vendorId: 0x130A
@@ -42,6 +353,28 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x006B
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/93"
+    deviceLabel: Eve Light Switch
+    vendorId: 0x130A
+    productId: 0x005D
+    deviceProfileName: switch-binary
+  - id: "4874/67"
+    deviceLabel: Eve Light Switch
+    vendorId: 0x130A
+    productId: 0x0043
+    deviceProfileName: switch-binary
+
+#Ezviz
+  - id: "5172/4096"
+    deviceLabel: A3 Home Gateway
+    vendorId: 0x1434
+    productId: 0x1000
+    deviceProfileName: matter-bridge
+  - id: "5172/4352"
+    deviceLabel: Wi-Fi Relay
+    vendorId: 0x1434
+    productId: 0x1100
+    deviceProfileName: plug-binary
 
 #GE
   - id: "4921/177"
@@ -68,11 +401,16 @@ matterManufacturer:
     deviceLabel: Cync Full Color 6 Inch Wafer
     vendorId: 0x1339
     productId: 0x00AF
-    deviceProfileName: light-color-level-2000K-7000K  
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/181"
     deviceLabel: Cync 6 Inch High Ceiling Wafer
     vendorId: 0x1339
     productId: 0x00B5
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/182"
+    deviceLabel: Cync Full Color A19 Clear Spiral
+    vendorId: 0x1339
+    productId: 0x00B6
     deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/41"
     deviceLabel: Cync Full Color Undercabinet 12 Inch
@@ -128,19 +466,827 @@ matterManufacturer:
     deviceLabel: Cync Indoor Light Strip 16ft
     vendorId: 0x1339
     productId: 0x006E
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/123"
     deviceLabel: Cync Indoor Light Strip 32ft
     vendorId: 0x1339
     productId: 0x007B
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/109"
+    deviceLabel: Cync Reveal Full Color A21
+    vendorId: 0x1339
+    productId: 0x006D
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
+  - id: "4921/21"
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0x0015
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/101"
+    deviceLabel: Cync Full Color Deco Candle Base
+    vendorId: 0x1339
+    productId: 0x0065
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/105"
+    deviceLabel: Cync Full Color A21
+    vendorId: 0x1339
+    productId: 0x0069
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/173"
+    deviceLabel: Cync Full Color BR30
+    vendorId: 0x1339
+    productId: 0x00AD
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/107"
+    deviceLabel: Cync Reveal Full Color A19
+    vendorId: 0x1339
+    productId: 0x006B
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/124"
+    deviceLabel: Cync Keypad Dimmer
+    vendorId: 0x1339
+    productId: 0x007C
+    deviceProfileName: light-level-2-button
+  - id: "4921/125"
+    deviceLabel: Cync Paddle Dimmer
+    vendorId: 0x1339
+    productId: 0x007D
+    deviceProfileName: switch-level
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/64"
+    deviceLabel: Cync Indoor Plug
+    vendorId: 0x1339
+    productId: 0x0040
+    deviceProfileName: plug-binary
+  - id: "4921/118"
+    deviceLabel: Cync Button Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0076
+    deviceProfileName: light-binary
+  - id: "4921/119"
+    deviceLabel: Cync Paddle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0077
+    deviceProfileName: light-binary
+  - id: "4921/120"
+    deviceLabel: Cync Toggle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0078
+    deviceProfileName: light-binary
+  - id: "4921/116"
+    deviceLabel: Cync Button Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0074
+    deviceProfileName: switch-level
+  - id: "4921/117"
+    deviceLabel: Cync Motion Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0075
+    deviceProfileName: switch-level
+  - id: "4921/22"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x0016
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/86"
+    deviceLabel: Cync Smart Shop Light
+    vendorId: 0x1339
+    productId: 0x0056
+    deviceProfileName: light-color-level
+  - id: "4921/85"
+    deviceLabel: Dual Socket Smart Plug
+    vendorId: 0x1339
+    productId: 0x0055
+    deviceProfileName: plug-binary
+#Govee
+  - id: "4999/24740"
+    deviceLabel: Govee Square Ceiling Light (12 inch)
+    vendorId: 0x1387
+    productId: 0x60A4
+    deviceProfileName: light-color-level
+  - id: "4999/28871"
+    deviceLabel: Govee Christmas String Lights 2 (Clear Wire)  164ft/50m
+    vendorId: 0x1387
+    productId: 0x70C7
+    deviceProfileName: light-color-level
+  - id: "4999/25043"
+    deviceLabel: Govee Neon Rope Light 2 9.8ft/3m
+    vendorId: 0x1387
+    productId: 0x61D3
+    deviceProfileName: light-color-level
+  - id: "4999/24595"
+    deviceLabel: Govee RGBWW Smart LED Bulb BR30 850lm
+    vendorId: 0x1387
+    productId: 0x6013
+    deviceProfileName: light-color-level
+  - id: "4999/25011"
+    deviceLabel: Govee Strip Light with Cover 9.8f/3m
+    vendorId: 0x1387
+    productId: 0x61B3
+    deviceProfileName: light-color-level
+  - id: "4999/24586"
+    deviceLabel: Govee RGBWW Smart LED Bulb A19 1200lm
+    vendorId: 0x1387
+    productId: 0x600A
+    deviceProfileName: light-color-level
+  - id: "4999/26116"
+    deviceLabel: Govee HDMI 2.1 Sync Box 2 75-85
+    vendorId: 0x1387
+    productId: 0x6604
+    deviceProfileName: light-color-level
+  - id: "4999/24729"
+    deviceLabel: Govee TV Backlight 3 Lite 75-85
+    vendorId: 0x1387
+    productId: 0x6099
+    deviceProfileName: light-color-level
+  # - id: "4999/28871"
+  #   deviceLabel: Govee Christmas String Lights 2 (Green Wire) 164ft/50m
+  #   vendorId: 0x1387
+  #   productId: 0x70C7
+  #   deviceProfileName: light-color-level
+  - id: "4999/28873"
+    deviceLabel: Govee Christmas String Lights 2 (Green Wire)  328ft/100m
+    vendorId: 0x1387
+    productId: 0x70C9
+    deviceProfileName: light-color-level
+  - id: "4999/24754"
+    deviceLabel: Govee Tree Floor Lamp
+    vendorId: 0x1387
+    productId: 0x60B2
+    deviceProfileName: light-color-level
+  - id: "4999/25078"
+    deviceLabel: Govee Strip Light 2 Pro 32.8ft/10m
+    vendorId: 0x1387
+    productId: 0x61F6
+    deviceProfileName: light-color-level
+  - id: "4999/25077"
+    deviceLabel: Govee Strip Light 2 Pro 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x61F5
+    deviceProfileName: light-color-level
+  - id: "4999/24588"
+    deviceLabel: Govee RGBWW Smart LED Bulb E14 450lm
+    vendorId: 0x1387
+    productId: 0x600C
+    deviceProfileName: light-color-level
+  - id: "4999/28868"
+    deviceLabel: Govee Christmas String Lights 2 (Clear Wire) 66ft/20m
+    vendorId: 0x1387
+    productId: 0x70C4
+    deviceProfileName: light-color-level
+  - id: "4999/25074"
+    deviceLabel: Govee Strip Light 2 Pro 6.56ft/2m
+    vendorId: 0x1387
+    productId: 0x61F2
+    deviceProfileName: light-color-level
+  - id: "4999/25013"
+    deviceLabel: Govee Strip Light with Cover 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x61B5
+    deviceProfileName: light-color-level
+  - id: "4999/24753"
+    deviceLabel: Govee Torchiere Floor Lamp
+    vendorId: 0x1387
+    productId: 0x60B1
+    deviceProfileName: light-color-level
+  - id: "4999/28869"
+    deviceLabel: Govee Christmas String Lights 2 (Green Wire)  99ft/30m
+    vendorId: 0x1387
+    productId: 0x70C5
+    deviceProfileName: light-color-level
+  - id: "4999/24592"
+    deviceLabel: Govee RGBWW Smart LED Bulb BR30 1200lm
+    vendorId: 0x1387
+    productId: 0x6010
+    deviceProfileName: light-color-level
+  # - id: "4999/28869"
+  #   deviceLabel: Govee Christmas String Lights 2 (Clear Wire) 99ft/30m
+  #   vendorId: 0x1387
+  #   productId: 0x70C5
+  #   deviceProfileName: light-color-level
+  - id: "4999/24607"
+    deviceLabel: Govee Recessed Downlight 2 (6 inch)
+    vendorId: 0x1387
+    productId: 0x601F
+    deviceProfileName: light-color-level
+  - id: "4999/25045"
+    deviceLabel: Govee Neon Rope Light 2 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x61D5
+    deviceProfileName: light-color-level
+  - id: "4999/24603"
+    deviceLabel: Govee Recessed Downlight (4 inch)
+    vendorId: 0x1387
+    productId: 0x601B
+    deviceProfileName: light-color-level
+  - id: "4999/24602"
+    deviceLabel: Govee Recessed Downlight (6 inch)
+    vendorId: 0x1387
+    productId: 0x601A
+    deviceProfileName: light-color-level
+  - id: "4999/25014"
+    deviceLabel: Govee Strip Light with Cover 32.8ft/10m
+    vendorId: 0x1387
+    productId: 0x61B6
+    deviceProfileName: light-color-level
+  - id: "4999/24610"
+    deviceLabel: Govee Table Lamp 2
+    vendorId: 0x1387
+    productId: 0x6022
+    deviceProfileName: light-color-level
+  - id: "4999/24606"
+    deviceLabel: Govee Recessed Downlight 2 (4 inch)
+    vendorId: 0x1387
+    productId: 0x601E
+    deviceProfileName: light-color-level
+  - id: "4999/24589"
+    deviceLabel: Govee RGBWW Smart LED Bulb MR16 400lm
+    vendorId: 0x1387
+    productId: 0x600D
+    deviceProfileName: light-color-level
+  - id: "4999/24700"
+    deviceLabel: Govee Floor Lamp 2
+    vendorId: 0x1387
+    productId: 0x607C
+    deviceProfileName: light-color-level
+  # - id: "4999/26116"
+  #   deviceLabel: Govee HDMI 2.1 Sync Box 2 55-65
+  #   vendorId: 0x1387
+  #   productId: 0x6604
+  #   deviceProfileName: light-color-level
+  - id: "4999/24694"
+    deviceLabel: Govee Floor Lamp Basic
+    vendorId: 0x1387
+    productId: 0x6076
+    deviceProfileName: light-color-level
+  - id: "4999/24587"
+    deviceLabel: Govee RGBWW Smart LED Bulb E12 450lm
+    vendorId: 0x1387
+    productId: 0x600B
+    deviceProfileName: light-color-level
+  - id: "4999/25017"
+    deviceLabel: Govee Strip Light with Skyline Kit 19.7ft/6m
+    vendorId: 0x1387
+    productId: 0x61B9
+    deviceProfileName: light-color-level
+  - id: "4999/24742"
+    deviceLabel: Govee Ceiling Light Pro
+    vendorId: 0x1387
+    productId: 0x60A6
+    deviceProfileName: light-color-level
+  - id: "4999/24666"
+    deviceLabel: Govee TV Backlight 3 Lite Kit 55-65
+    vendorId: 0x1387
+    productId: 0x605A
+    deviceProfileName: light-color-level
+  - id: "4999/24608"
+    deviceLabel: Govee Table Lamp 2 Pro Sound by JBL
+    vendorId: 0x1387
+    productId: 0x6020
+    deviceProfileName: light-color-level
+  # - id: "4999/28868"
+  #   deviceLabel: Govee Christmas String Lights 2 (Green Wire)  66ft/20m
+  #   vendorId: 0x1387
+  #   productId: 0x70C4
+  #   deviceProfileName: light-color-level
+  - id: "4999/25046"
+    deviceLabel: Govee Neon Rope Light 2 32.8ft/10m
+    vendorId: 0x1387
+    productId: 0x61D6
+    deviceProfileName: light-color-level
+  - id: "4999/25061"
+    deviceLabel: Govee COB Strip Light Pro 9.8ft/3m
+    vendorId: 0x1387
+    productId: 0x61E5
+    deviceProfileName: light-color-level
+  - id: "4999/24723"
+    deviceLabel: Govee Star Light Projector (Aurora)
+    vendorId: 0x1387
+    productId: 0x6093
+    deviceProfileName: light-color-level
+  - id: "4999/25062"
+    deviceLabel: Govee COB Strip Light Pro 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x61E6
+    deviceProfileName: light-color-level
+  - id: "4999/24752"
+    deviceLabel: Govee Uplighter Floor Lamp
+    vendorId: 0x1387
+    productId: 0x60B0
+    deviceProfileName: light-color-level
+  - id: "4999/24727"
+    deviceLabel: Govee TV Backlight 3 Lite 40-50
+    vendorId: 0x1387
+    productId: 0x6097
+    deviceProfileName: light-color-level
+  - id: "4999/24582"
+    deviceLabel: Govee RGBWW Smart LED Bulb A19 1000lm
+    vendorId: 0x1387
+    productId: 0x6006
+    deviceProfileName: light-color-level
+  - id: "4999/25016"
+    deviceLabel: Govee Strip Light with Skyline Kit 13.1ft/4m
+    vendorId: 0x1387
+    productId: 0x61B8
+    deviceProfileName: light-color-level
+  - id: "4999/26737"
+    deviceLabel: Govee Christmas Sparkle String Lights 99ft
+    vendorId: 0x1387
+    productId: 0x6871
+    deviceProfileName: light-color-level
+  - id: "4999/26736"
+    deviceLabel: Govee Christmas Sparkle String Lights 66ft
+    vendorId: 0x1387
+    productId: 0x6870
+    deviceProfileName: light-color-level
+  - id: "4999/26272"
+    deviceLabel: Govee TV Backlight 3 Pro 55-65
+    vendorId: 0x1387
+    productId: 0x66A0
+    deviceProfileName: light-color-level
+  # - id: "4999/26272"
+  #   deviceLabel: Govee TV Backlight 3 Pro 75-85
+  #   vendorId: 0x1387
+  #   productId: 0x66A0
+  #   deviceProfileName: light-color-level
+  - id: "4999/28854"
+    deviceLabel: Govee Curtain Lights Pro
+    vendorId: 0x1387
+    productId: 0x70B6
+    deviceProfileName: light-color-level
+  - id: "4999/24733"
+    deviceLabel: Govee Galaxy Light Star Projector 2 Pro
+    vendorId: 0x1387
+    productId: 0x609D
+    deviceProfileName: light-color-level
+  - id: "4999/24725"
+    deviceLabel: Govee Star Projector Light
+    vendorId: 0x1387
+    productId: 0x6095
+    deviceProfileName: light-color-level
+  - id: "4999/24724"
+    deviceLabel: Govee Star Projector Light
+    vendorId: 0x1387
+    productId: 0x6094
+    deviceProfileName: light-color-level
+  - id: "4999/24646"
+    deviceLabel: Govee TV Light Bar
+    vendorId: 0x1387
+    productId: 0x6046
+    deviceProfileName: light-color-level
+  - id: "4999/24662"
+    deviceLabel: Govee RGBICWW Light Bar
+    vendorId: 0x1387
+    productId: 0x6056
+    deviceProfileName: light-color-level
+  - id: "4999/5281"
+    deviceLabel: Govee Smart Bulb PAR38
+    vendorId: 0x1387
+    productId: 0x14A1
+    deviceProfileName: light-color-level
+  - id: "4999/5121"
+    deviceLabel: Govee Smart Bulb A21 1600lm
+    vendorId: 0x1387
+    productId: 0x1401
+    deviceProfileName: light-color-level
+  - id: "4999/5313"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C1
+    deviceProfileName: light-color-level
+  - id: "4999/5312"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C0
+    deviceProfileName: light-color-level
+  - id: "4999/5680"
+    deviceLabel: Govee Lantern Floor Lamp
+    vendorId: 0x1387
+    productId: 0x1630
+    deviceProfileName: light-color-level
+  - id: "4999/5953"
+    deviceLabel: Govee Table Lamp Classic
+    vendorId: 0x1387
+    productId: 0x1741
+    deviceProfileName: light-color-level
+  - id: "4999/5808"
+    deviceLabel: Govee Floor Lamp 3
+    vendorId: 0x1387
+    productId: 0x16B0
+    deviceProfileName: light-color-level
+  - id: "4999/5824"
+    deviceLabel: Govee Floor Lamp 3 Lite
+    vendorId: 0x1387
+    productId: 0x16C0
+    deviceProfileName: light-color-level
+  - id: "4999/4720"
+    deviceLabel: Govee Ceiling Light Ultra (21inch)
+    vendorId: 0x1387
+    productId: 0x1270
+    deviceProfileName: light-color-level
+  - id: "4999/24755"
+    deviceLabel: Govee Uplighter Floor Lamp with Nebula Effect
+    vendorId: 0x1387
+    productId: 0x60B3
+    deviceProfileName: light-color-level
+# Hager
+  - id: "4741/8"
+    deviceLabel: Hager matter 2 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0008
+    deviceProfileName: 2-button-batteryLevel
+  - id: "4741/9"
+    deviceLabel: Hager matter 4 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0009
+    deviceProfileName: 4-button-batteryLevel
+  - id: "4741/5"
+    deviceLabel: Hager Switch 1G
+    vendorId: 0x1285
+    productId: 0x0005
+    deviceProfileName: matter-bridge
+  - id: "4741/6"
+    deviceLabel: Hager Switch 2G
+    vendorId: 0x1285
+    productId: 0x0006
+    deviceProfileName: matter-bridge
+  - id: "4741/7"
+    deviceLabel: Hager PIR 1.1M
+    vendorId: 0x1285
+    productId: 0x0007
+    deviceProfileName: matter-bridge
+  - id: "4741/10"
+    deviceLabel: Hager PIR 2.2M
+    vendorId: 0x1285
+    productId: 0x000A
+    deviceProfileName: matter-bridge
+# HAOJAI
+  - id: "5530/4113"
+    deviceLabel: HAOJAI Smart Switch 3-key
+    vendorId: 0x159A
+    productId: 0x1011
+    deviceProfileName: 3-button-motion
+  - id: "5530/4098"
+    deviceLabel: HAOJAI Smart Switch 6-key
+    vendorId: 0x159A
+    productId: 0x1002
+    deviceProfileName: 6-button-motion
+# Hue
+  - id: "4107/2049"
+    deviceLabel: Hue W 1600 A21 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0801
+    deviceProfileName: light-level
+  - id: "4107/297"
+    deviceLabel: Hue WCA 650 BR30 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0129
+    deviceProfileName: light-color-level
+  - id: "4107/2048"
+    deviceLabel: Hue WA 810 A19 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0800
+    deviceProfileName: light-level-colorTemperature
+# Intecular
+  - id: "5226/32769"
+    deviceLabel: InvisOutlet
+    vendorId: 0x146A
+    productId: 0x8001
+    deviceProfileName: plug-binary
 
+#Ledvance
+  - id: "4489/843"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034B
+    deviceProfileName: light-color-level
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
+  - id: "4489/845"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034D
+    deviceProfileName: light-color-level
+  - id: "4489/828"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033C
+    deviceProfileName: light-color-level
+  - id: "4489/829"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033D
+    deviceProfileName: light-color-level
+  - id: "4489/831"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033F
+    deviceProfileName: light-color-level
+  - id: "4489/832"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x0340
+    deviceProfileName: light-color-level
+  - id: "4489/833"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0341
+    deviceProfileName: light-color-level
+  - id: "4489/835"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0343
+    deviceProfileName: light-color-level
+  - id: "4489/1120"
+    deviceLabel: Ledvance Matter PAR16 RGBW
+    vendorId: 0x1189
+    productId: 0x0460
+    deviceProfileName: light-color-level
+  - id: "4489/1121"
+    deviceLabel: Ledvance Matter Classic G RGBW
+    vendorId: 0x1189
+    productId: 0x0461
+    deviceProfileName: light-color-level
+  - id: "4489/1372"
+    deviceLabel: MATTER PLUG EU WH
+    vendorId: 0x1189
+    productId: 0x055C
+    deviceProfileName: plug-binary
+  - id: "4489/2377"
+    deviceLabel: LEDVANCE MATTER PLUG CH
+    vendorId: 0x1189
+    productId: 0x0949
+    deviceProfileName: plug-binary
+  - id: "4489/2473"
+    deviceLabel: MATTER FLEX RGBTW EU
+    vendorId: 0x1189
+    productId: 0x09A9
+    deviceProfileName: light-color-level
+  - id: "4489/2176"
+    deviceLabel: MATTER PLUG EU BK
+    vendorId: 0x1189
+    productId: 0x0880
+    deviceProfileName: plug-binary
+  - id: "4489/1587"
+    deviceLabel: MATTER COMP OUT PLUG EU
+    vendorId: 0x1189
+    productId: 0x0633
+    deviceProfileName: plug-binary
+  - id: "4489/2193"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 2G
+    vendorId: 0x1189
+    productId: 0x0891
+    deviceProfileName: switch-binary
+#Ikea
+  - id: "4476/32768"
+    deviceLabel: BILRESA Scroll Wheel
+    vendorId: 0x117C
+    productId: 0x8000
+    deviceProfileName: ikea-scroll
+  - id: "4476/32769"
+    deviceLabel: BILRESA Dual Button
+    vendorId: 0x117C
+    productId: 0x8001
+    deviceProfileName: ikea-2-button-battery
+  - id: "4476/36885"
+    deviceLabel: KAJPLATS E12 WS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9015
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36880"
+    deviceLabel: VARMBLIXT table/wall lamp
+    vendorId: 0x117C
+    productId: 0x9010
+    deviceProfileName: light-color-level
+  - id: "4476/36881"
+    deviceLabel: KAJPLATS E26 450lm
+    vendorId: 0x117C
+    productId: 0x9011
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36882"
+    deviceLabel: KAJPLATS E26 1100lm
+    vendorId: 0x117C
+    productId: 0x9012
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36884"
+    deviceLabel: KAJPLATS E26 WS 1600lm
+    vendorId: 0x117C
+    productId: 0x9014
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36886"
+    deviceLabel: KAJPLATS E26 1100lm CWS
+    vendorId: 0x117C
+    productId: 0x9016
+    deviceProfileName: light-color-level
+  - id: "4476/36887"
+    deviceLabel: KAJPLATS E12 CWS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9017
+    deviceProfileName: light-color-level
+  - id: "4476/36889"
+    deviceLabel: KAJPLATS E12 WS B38 CL 470lm
+    vendorId: 0x117C
+    productId: 0x9019
+    deviceProfileName: light-level-colorTemperature
+  - id: "17526/16534"
+    deviceLabel: GRILLPLATS plug
+    vendorId: 0x4476
+    productId: 0x4096
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "17526/16535"
+    deviceLabel: TOFSMYGGA
+    vendorId: 0x4476
+    productId: 0x4097
+    deviceProfileName: plug-power-energy-powerConsumption
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: 4-button
+#JUNG
+  - id: "5161/1"
+    deviceLabel: Matter Push button 2-gang
+    vendorId: 0x1429
+    productId: 0x0001
+    deviceProfileName: 4-button-battery
+#Legrand
+  - id: "4129/3"
+    deviceLabel: Smart Lights Smart Plug
+    vendorId: 0x1021
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "4129/4"
+    deviceLabel: Smart Lights Outdoor Plug
+    vendorId: 0x1021
+    productId: 0x0004
+    deviceProfileName: plug-binary
+  - id: "4129/7"
+    deviceLabel: Radiant Smart Receptacle
+    vendorId: 0x1021
+    productId: 0x0007
+    deviceProfileName: plug-binary
+  - id: "4129/5"
+    deviceLabel: Radiant Smart Switch
+    vendorId: 0x1021
+    productId: 0x0005
+    deviceProfileName: switch-binary
+  - id: "4129/6"
+    deviceLabel: Radiant Smart LED Dimmer
+    vendorId: 0x1021
+    productId: 0x0006
+    deviceProfileName: switch-level
+#Leviton
+  - id: "4251/4097"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Switch
+    vendorId: 0x109B
+    productId: 0x1001
+    deviceProfileName: switch-binary
+  - id: "4251/4096"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) 600W Dimmer
+    vendorId: 0x109B
+    productId: 0x1000
+    deviceProfileName: switch-level
+  - id: "4251/4107"
+    deviceLabel: Decora Smart Wi-Fi ELV Dimmer
+    vendorId: 0x109B
+    productId: 0x100B
+    deviceProfileName: switch-level
+  - id: "4251/4110"
+    deviceLabel: Decora Smart Wi-Fi 0-10V Dimmer
+    vendorId: 0x109B
+    productId: 0x100E
+    deviceProfileName: switch-level
+  - id: "4251/4108"
+    deviceLabel: Decora Evolve Smart Dimmer Module
+    vendorId: 0x109B
+    productId: 0x100C
+    deviceProfileName: switch-level
+  - id: "4251/4109"
+    deviceLabel: Decora Evolve Smart Switch Module
+    vendorId: 0x109B
+    productId: 0x100D
+    deviceProfileName: switch-binary
+  - id: "4251/4105"
+    deviceLabel: Decora Smart Wi-Fi Outdoor Plug-In Switch
+    vendorId: 0x109B
+    productId: 0x1009
+    deviceProfileName: switch-binary
+  - id: "4251/4099"
+    deviceLabel: Leviton Decora Smart Wi-Fi Mini Plug-In Outlet
+    vendorId: 0x109B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "4251/4100"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Tamper Resistant Outlet
+    vendorId: 0x109B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "4251/4098"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Mini Plug-In Dimmer
+    vendorId: 0x109B
+    productId: 0x1002
+    deviceProfileName: switch-level
+  - id: "4251/4102"
+    deviceLabel: Decora Smart Motion Sensing Dimmer Switch
+    vendorId: 0x109B
+    productId: 0x1006
+    deviceProfileName: light-level-motion
+  - id: "4251/4103"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Scene Controller Switch
+    vendorId: 0x109B
+    productId: 0x1007
+    deviceProfileName: 3-button
+  - id: "4251/4113"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 15A Switch"
+    vendorId: 0x109B
+    productId: 0x1011
+    deviceProfileName: switch-binary
+  - id: "4251/4112"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 600W Dimmer"
+    vendorId: 0x109B
+    productId: 0x1010
+    deviceProfileName: switch-level
+#LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
+  - id: "5163/4100"
+    deviceLabel: LeTianPai Smart Switch 3 Way
+    vendorId: 0x142B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "5163/4099"
+    deviceLabel: LeTianPai Smart Switch 2 Way
+    vendorId: 0x142B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "5163/4098"
+    deviceLabel: LeTianPai Smart Switch 1 Way
+    vendorId: 0x142B
+    productId: 0x1002
+    deviceProfileName: switch-binary
+#LG
+  - id: "4142/8785"
+    deviceLabel: LG Smart Button (2 Button)
+    vendorId: 0x102E
+    productId: 0x2251
+    deviceProfileName: 2-button-battery
+  - id: "4142/8800"
+    deviceLabel: LG Smart Plug
+    vendorId: 0x102E
+    productId: 0x2260
+    deviceProfileName: plug-power
+  - id: "4142/8704"
+    deviceLabel: LG Smart Wall Switch (1 Button)
+    vendorId: 0x102E
+    productId: 0x2200
+    deviceProfileName: light-binary
+  - id: "4142/8705"
+    deviceLabel: LG Smart Wall Switch (2 Button)
+    vendorId: 0x102E
+    productId: 0x2201
+    deviceProfileName: light-binary
+  - id: "4142/8706"
+    deviceLabel: LG Smart Wall Switch (3 Button)
+    vendorId: 0x102E
+    productId: 0x2202
+    deviceProfileName: light-binary
 #Lifx
+  - id: "5155/161"
+    deviceLabel: LIFX Neon Outdoor
+    vendorId: 0x1423
+    productId: 0x00A1
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/162"
+    deviceLabel: LIFX Neon Outdoor
+    vendorId: 0x1423
+    productId: 0x00A2
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/168"
+    deviceLabel: LIFX Downlight (Retrofit 6)
+    vendorId: 0x1423
+    productId: 0x00A8
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
     vendorId: 0x1423
@@ -171,7 +1317,259 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/178"
+    deviceLabel: LIFX Downlight (Canless 6)
+    vendorId: 0x1423
+    productId: 0x00B2
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/179"
+    deviceLabel: LIFX Downlight (Retrofit 4)
+    vendorId: 0x1423
+    productId: 0x00B3
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/180"
+    deviceLabel: LIFX Downlight (Canless 4)
+    vendorId: 0x1423
+    productId: 0x00B4
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/185"
+    deviceLabel: LIFX Candle
+    vendorId: 0x1423
+    productId: 0x00B9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/201"
+    deviceLabel: LIFX Ceiling 13x26
+    vendorId: 0x1423
+    productId: 0x00C9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/219"
+    deviceLabel: LIFX Luna
+    vendorId: 0x1423
+    productId: 0x00DB
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/220"
+    deviceLabel: LIFX Luna
+    vendorId: 0x1423
+    productId: 0x00DC
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/213"
+    deviceLabel: LIFX Permanent Outdoor
+    vendorId: 0x1423
+    productId: 0x00D5
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/215"
+    deviceLabel: LIFX Candle (B10)
+    vendorId: 0x1423
+    productId: 0x00D7
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/217"
+    deviceLabel: LIFX Tube
+    vendorId: 0x1423
+    productId: 0x00D9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/119"
+    deviceLabel: LIFX Beam
+    vendorId: 0x1423
+    productId: 0x0077
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/191"
+    deviceLabel: LIFX Everyday Smart Light 2-Pack
+    vendorId: 0x1423
+    productId: 0x00BF
+    deviceProfileName: light-color-level
+  - id: "5155/163"
+    deviceLabel: LIFX Supercolor (A19)
+    vendorId: 0x1423
+    productId: 0x00A3
+    deviceProfileName: light-color-level
+  - id: "5155/118"
+    deviceLabel: LIFX Lightstrip
+    vendorId: 0x1423
+    productId: 0x0076
+    deviceProfileName: light-color-level
+  - id: "5155/221"
+    deviceLabel: LIFX Spot
+    vendorId: 0x1423
+    productId: 0x00DD
+    deviceProfileName: light-color-level
+  - id: "5155/144"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x0090
+    deviceProfileName: light-color-level
+  - id: "5155/216"
+    deviceLabel: LIFX Candle Color (B10)
+    vendorId: 0x1423
+    productId: 0x00D8
+    deviceProfileName: light-color-level
+  - id: "5155/225"
+    deviceLabel: LIFX PAR38
+    vendorId: 0x1423
+    productId: 0x00E1
+    deviceProfileName: light-color-level
+  - id: "5155/186"
+    deviceLabel: LIFX Candle Color
+    vendorId: 0x1423
+    productId: 0x00BA
+    deviceProfileName: light-color-level
+  - id: "5155/202"
+    deviceLabel: LIFX Ceiling 13x26
+    vendorId: 0x1423
+    productId: 0x00CA
+    deviceProfileName: light-color-level
+  - id: "5155/143"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x008F
+    deviceProfileName: light-color-level
+  - id: "5155/166"
+    deviceLabel: LIFX Supercolour (BR30)
+    vendorId: 0x1423
+    productId: 0x00A6
+    deviceProfileName: light-color-level
+  - id: "5155/167"
+    deviceLabel: LIFX Downlight
+    vendorId: 0x1423
+    productId: 0x00A7
+    deviceProfileName: light-color-level
+  - id: "5155/207"
+    deviceLabel: LIFX Everyday Lightstrip
+    vendorId: 0x1423
+    productId: 0x00CF
+    deviceProfileName: light-color-level
+  - id: "5155/222"
+    deviceLabel: LIFX Path (Round)
+    vendorId: 0x1423
+    productId: 0x00DE
+    deviceProfileName: light-color-level
+  - id: "5155/203"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x00CB
+    deviceProfileName: light-color-level
+  - id: "5155/218"
+    deviceLabel: LIFX Tube
+    vendorId: 0x1423
+    productId: 0x00DA
+    deviceProfileName: light-color-level
+  - id: "5155/214"
+    deviceLabel: LIFX Permanent Outdoor
+    vendorId: 0x1423
+    productId: 0x00D6
+    deviceProfileName: light-color-level
+  - id: "5155/117"
+    deviceLabel: LIFX Lightstrip
+    vendorId: 0x1423
+    productId: 0x0075
+    deviceProfileName: light-color-level
+  - id: "5155/223"
+    deviceLabel: LIFX Downlight (6 Retro Downlight)
+    vendorId: 0x1423
+    productId: 0x00DF
+    deviceProfileName: light-color-level
+  - id: "5155/224"
+    deviceLabel: LIFX Downlight (90mm Downlight)
+    vendorId: 0x1423
+    productId: 0x00E0
+    deviceProfileName: light-color-level
+  - id: "5155/204"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x00CC
+    deviceProfileName: light-color-level
+  - id: "5155/206"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x00CE
+    deviceProfileName: light-color-level
+  - id: "5155/164"
+    deviceLabel: LIFX Supercolor (BR30)
+    vendorId: 0x1423
+    productId: 0x00A4
+    deviceProfileName: light-color-level
+  - id: "5155/120"
+    deviceLabel: LIFX Beam
+    vendorId: 0x1423
+    productId: 0x0078
+    deviceProfileName: light-color-level
+  - id: "5155/208"
+    deviceLabel: LIFX Everyday Lightstrip
+    vendorId: 0x1423
+    productId: 0x00D0
+    deviceProfileName: light-color-level
+  - id: "5155/165"
+    deviceLabel: LIFX Supercolour (A19)
+    vendorId: 0x1423
+    productId: 0x00A5
+    deviceProfileName: light-color-level
+  - id: "5155/142"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x008E
+    deviceProfileName: light-color-level
+  - id: "5155/141"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x008D
+    deviceProfileName: light-color-level
+  - id: "5155/177"
+    deviceLabel: LIFX Ceiling
+    vendorId: 0x1423
+    productId: 0x00B1
+    deviceProfileName: light-color-level
+  - id: "5155/170"
+    deviceLabel: LIFX Supercolour (A21)
+    vendorId: 0x1423
+    productId: 0x00AA
+    deviceProfileName: light-color-level
+  - id: "5155/205"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x00CD
+    deviceProfileName: light-color-level
+  - id: "5155/265"
+    deviceLabel: Ceiling 13
+    vendorId: 0x1423
+    productId: 0x0109
+    deviceProfileName: light-color-level
+  - id: "5155/266"
+    deviceLabel: LIFX Ceiling 13
+    vendorId: 0x1423
+    productId: 0x010A
+    deviceProfileName: light-color-level
+  - id: "5155/267"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010B
+    deviceProfileName: light-color-level
+  - id: "5155/268"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010C
+    deviceProfileName: light-color-level
 
+#LG
+  - id: "4142/8784"
+    deviceLabel: LG Smart Button (1 Button)
+    vendorId: 0x102E
+    productId: 0x2250
+    deviceProfileName: button-battery
+#Meross
+  - id: "4933/40987"
+    deviceLabel: Smart Wi-Fi Switch
+    vendorId: 0x1345
+    productId: 0xA01B
+    deviceProfileName: switch-binary
+  - id: "4933/40978"
+    deviceLabel: Smart Wi-Fi Switch
+    vendorId: 0x1345
+    productId: 0xA012
+    deviceProfileName: switch-binary
+  - id: "4933/45057"
+    deviceLabel: Smart Wi-Fi Power Strip
+    vendorId: 0x1345
+    productId: 0xB001
+    deviceProfileName: switch-binary
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -203,6 +1601,589 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/72"
+    deviceLabel: Essentials Indoor Lights
+    vendorId: 0x115A
+    productId: 0x0048
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/73"
+    deviceLabel: Essentials Outdoor Lights
+    vendorId: 0x115A
+    productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/71"
+    deviceLabel: Smart Holiday String Lights
+    vendorId: 0x115A
+    productId: 0x0047
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/75"
+    deviceLabel: Essentials Wifi A19-A60 Smart Bulb
+    vendorId: 0x115A
+    productId: 0x004B
+    deviceProfileName: light-color-level-2700K-6500K
+#Neo
+  - id: "4991/635"
+    deviceLabel: Power Plug
+    vendorId: 0x137F
+    productId: 0x027B
+    deviceProfileName: plug-binary
+#Netatmo
+  - id: "4129/8"
+    deviceLabel: Netatmo Thermo Hub
+    vendorId: 0x1021
+    productId: 0x0008
+    deviceProfileName: matter-bridge
+#Onvis
+  - id: "5181/4097"
+    deviceLabel: Onvis Smart Plug S4EU
+    vendorId: 0x143D
+    productId: 0x1001
+    deviceProfileName: plug-binary
+#Osram
+  - id: "4489/2564"
+    deviceLabel: OSRAM MATTER PLUG UK
+    vendorId: 0x1189
+    productId: 0x0A04
+    deviceProfileName: plug-binary
+  - id: "4489/2757"
+    deviceLabel: SMART MAT P40 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC5
+    deviceProfileName: light-color-level
+  - id: "4489/61442"
+    deviceLabel: OSRAM MATTER CLASSIC A 100W
+    vendorId: 0x1189
+    productId: 0xF002
+    deviceProfileName: light-color-level
+  - id: "4489/2755"
+    deviceLabel: SMART MAT A60 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC3
+    deviceProfileName: light-color-level
+  - id: "4489/61444"
+    deviceLabel: OSRAM MATTER PLUG UK
+    vendorId: 0x1189
+    productId: 0xF004
+    deviceProfileName: plug-binary
+  - id: "4489/61443"
+    deviceLabel: OSRAM MATTER PLUG EU WH
+    vendorId: 0x1189
+    productId: 0xF003
+    deviceProfileName: plug-binary
+  - id: "4489/61441"
+    deviceLabel: OSRAM MATTER CLASSIC A 60W
+    vendorId: 0x1189
+    productId: 0xF001
+    deviceProfileName: light-color-level
+  - id: "4489/2353"
+    deviceLabel: SMART MATTER FLOORCORN200 MGC WT
+    vendorId: 0x1189
+    productId: 0x0931
+    deviceProfileName: light-color-level
+  - id: "4489/2350"
+    deviceLabel: SMART MATTER FLOORCORN140 MGC BK
+    vendorId: 0x1189
+    productId: 0x092E
+    deviceProfileName: light-color-level
+  - id: "4489/2352"
+    deviceLabel: SMART MATTER FLOORCORN140 MGC WT
+    vendorId: 0x1189
+    productId: 0x0930
+    deviceProfileName: light-color-level
+  - id: "4489/2351"
+    deviceLabel: SMART MATTER FLOORCORN200 MGC BK
+    vendorId: 0x1189
+    productId: 0x092F
+    deviceProfileName: light-color-level
+  - id: "4489/2715"
+    deviceLabel: SMART MAT B40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9B
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2686"
+    deviceLabel: SMART MAT A53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7E
+    deviceProfileName: light-level
+  - id: "4489/2725"
+    deviceLabel: SMART MAT PAR16 RGBW GU10
+    vendorId: 0x1189
+    productId: 0x0AA5
+    deviceProfileName: light-color-level
+  - id: "4489/2766"
+    deviceLabel: SMART MAT B40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACE
+    deviceProfileName: light-color-level
+  - id: "4489/2765"
+    deviceLabel: SMART MAT P40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACD
+    deviceProfileName: light-color-level
+  - id: "4489/2764"
+    deviceLabel: SMART MAT G95 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0ACC
+    deviceProfileName: light-color-level
+  - id: "4489/2774"
+    deviceLabel: SMART MAT A40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD6
+    deviceProfileName: light-color-level
+  - id: "4489/2775"
+    deviceLabel: SMART MAT E40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD7
+    deviceProfileName: light-color-level
+  - id: "4489/2776"
+    deviceLabel: SMART MAT G40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD8
+    deviceProfileName: light-color-level
+  - id: "4489/2837"
+    deviceLabel: SMART MAT A75 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B15
+    deviceProfileName: light-color-level
+  - id: "4489/2713"
+    deviceLabel: SMART MAT A60 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A99
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2711"
+    deviceLabel: SMART MAT A100 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A97
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2716"
+    deviceLabel: SMART MAT P40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9C
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2726"
+    deviceLabel: SMART MAT PAR16 TW 827 GU10
+    vendorId: 0x1189
+    productId: 0x0AA6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2678"
+    deviceLabel: SMART MAT E60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A76
+    deviceProfileName: light-level
+  - id: "4489/2676"
+    deviceLabel: SMART MAT G60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A74
+    deviceProfileName: light-level
+  - id: "4489/2687"
+    deviceLabel: SMART MAT B40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7F
+    deviceProfileName: light-level
+  - id: "4489/2685"
+    deviceLabel: SMART MAT E53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7D
+    deviceProfileName: light-level
+  - id: "4489/2684"
+    deviceLabel: SMART MAT G53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7C
+    deviceProfileName: light-level
+  - id: "4489/2681"
+    deviceLabel: SMART MAT A60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A79
+    deviceProfileName: light-level
+  - id: "4489/2682"
+    deviceLabel: SMART MAT P40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7A
+    deviceProfileName: light-level
+  - id: "4489/2727"
+    deviceLabel: SMART MAT PAR16 DIM GU10
+    vendorId: 0x1189
+    productId: 0x0AA7
+    deviceProfileName: light-level
+  - id: "4489/2712"
+    deviceLabel: SMART MAT G95 100 TW 827 E27
+    vendorId: 0x1189
+    productId: 0x0A98
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2836"
+    deviceLabel: SMART MAT A75 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B14
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2514"
+    deviceLabel: SMART MAT ORBIS DL 200 TW WT
+    vendorId: 0x1189
+    productId: 0x09D2
+    deviceProfileName: light-color-level
+  - id: "4489/2518"
+    deviceLabel: SMART MAT ORBIS DL 400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D6
+    deviceProfileName: light-color-level
+  - id: "4489/2519"
+    deviceLabel: SMART MAT ORBIS DL SQ400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D7
+    deviceProfileName: light-color-level
+  - id: "4489/2763"
+    deviceLabel: SMART MAT A60 RGBW 827 FR B22D
+    vendorId: 0x1189
+    productId: 0x0ACB
+    deviceProfileName: light-color-level
+  - id: "4489/2756"
+    deviceLabel: SMART MAT A100 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC4
+    deviceProfileName: light-color-level
+  - id: "4489/3027"
+    deviceLabel: SMART MAT DECORWALLSWAN300X150TW
+    vendorId: 0x1189
+    productId: 0x0BD3
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2994"
+    deviceLabel: SMART MAT PLANON FL 120X30 TW
+    vendorId: 0x1189
+    productId: 0x0BB2
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3032"
+    deviceLabel: SMART WIFI MAT BATH W400 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD8
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3026"
+    deviceLabel: SMART WIFI MAT WAVE300X300IP44TW
+    vendorId: 0x1189
+    productId: 0x0BD2
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2957"
+    deviceLabel: SMART WIFI MAT TRACKSP OSAKA TW
+    vendorId: 0x1189
+    productId: 0x0B8D
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3025"
+    deviceLabel: SMART WIFI MAT CYLINDER 450 TW
+    vendorId: 0x1189
+    productId: 0x0BD1
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2969"
+    deviceLabel: SMART MAT PLANON PLUS 120X30TW
+    vendorId: 0x1189
+    productId: 0x0B99
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3028"
+    deviceLabel: SMART MAT DISC 400 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD4
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2971"
+    deviceLabel: SMART MAT PLANON FL 80X10TW
+    vendorId: 0x1189
+    productId: 0x0B9B
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3014"
+    deviceLabel: SMART MAT PLANONFLSPARK45X45TW
+    vendorId: 0x1189
+    productId: 0x0BC6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3023"
+    deviceLabel: SMART WIFI MAT MAGNET 600X300 TW
+    vendorId: 0x1189
+    productId: 0x0BCF
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3021"
+    deviceLabel: SMART WIFI MAT AQUA280X160IP44TW
+    vendorId: 0x1189
+    productId: 0x0BCD
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3035"
+    deviceLabel: SMART WIFI MAT DUPLO 300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BDB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3024"
+    deviceLabel: SMART WIFI MAT DUPLO 580 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD0
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2998"
+    deviceLabel: SMART WIFI MAT DL SLIM 120 TW
+    vendorId: 0x1189
+    productId: 0x0BB6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3020"
+    deviceLabel: SMART MATDECORWALLTWIST230X127TW
+    vendorId: 0x1189
+    productId: 0x0BCC
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3049"
+    deviceLabel: SMART WIFI MAT TRACKSP CIRCLE TW
+    vendorId: 0x1189
+    productId: 0x0BE9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3029"
+    deviceLabel: SMART WIFI MAT DUPLO 450 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD5
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2991"
+    deviceLabel: SMART MAT PLANON PLUS 60X60 TW
+    vendorId: 0x1189
+    productId: 0x0BAF
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2985"
+    deviceLabel: SMART MAT PLANON PLUS 30X30 TW
+    vendorId: 0x1189
+    productId: 0x0BA9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3033"
+    deviceLabel: SMART WIFI MAT BATH W300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2999"
+    deviceLabel: SMART WIFI MAT DL SLIM 225 TW
+    vendorId: 0x1189
+    productId: 0x0BB7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3037"
+    deviceLabel: SMART WIFI MAT MAGNET 300X300 TW
+    vendorId: 0x1189
+    productId: 0x0BDD
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2990"
+    deviceLabel: SMART MAT PLANON PLUS 60X30 TW
+    vendorId: 0x1189
+    productId: 0x0BAE
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3047"
+    deviceLabel: SMART WIFI MAT TRACKSP OSAKA TW
+    vendorId: 0x1189
+    productId: 0x0BE7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3031"
+    deviceLabel: SMART WIFI MAT MAGNET 600X300 TW
+    vendorId: 0x1189
+    productId: 0x0BD7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3034"
+    deviceLabel: SMART WIFI MAT DISC 300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BDA
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3030"
+    deviceLabel: SMART WIFI MAT MAGNET 450X450 TW
+    vendorId: 0x1189
+    productId: 0x0BD6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3022"
+    deviceLabel: SMART WIFI MAT AQUA200X200IP44TW
+    vendorId: 0x1189
+    productId: 0x0BCE
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2993"
+    deviceLabel: SMART MAT PLANON FL 30X30 TW
+    vendorId: 0x1189
+    productId: 0x0BB1
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3048"
+    deviceLabel: SMART WIFI MAT TRACKSP CIRCLE TW
+    vendorId: 0x1189
+    productId: 0x0BE8
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2997"
+    deviceLabel: SMART WIFI MAT DL SLIM 85 TW WT
+    vendorId: 0x1189
+    productId: 0x0BB5
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2949"
+    deviceLabel: SMART WIFI MAT SPIRAL 500 TW
+    vendorId: 0x1189
+    productId: 0x0B85
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3036"
+    deviceLabel: SMART WFMTDECORWALLSWAN200X200TW
+    vendorId: 0x1189
+    productId: 0x0BDC
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2995"
+    deviceLabel: SMART MAT PLANON FL 120X10 TW
+    vendorId: 0x1189
+    productId: 0x0BB3
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2987"
+    deviceLabel: SMART MAT PLANON PLUS 45X45 TW
+    vendorId: 0x1189
+    productId: 0x0BAB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3018"
+    deviceLabel: SMART WFMTDECORWALLWOOD210X110TW
+    vendorId: 0x1189
+    productId: 0x0BCA
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3019"
+    deviceLabel: SMART MATDECORWALLTWIST230X127TW
+    vendorId: 0x1189
+    productId: 0x0BCB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3055"
+    deviceLabel: SMART WIFI MAT FLOOD 50W RGBW
+    vendorId: 0x1189
+    productId: 0x0BEF
+    deviceProfileName: light-color-level
+  - id: "4489/2970"
+    deviceLabel: SMART MAT PLANON PLUS60X60RGBTW
+    vendorId: 0x1189
+    productId: 0x0B9A
+    deviceProfileName: light-color-level
+  - id: "4489/3057"
+    deviceLabel: SMART WIFI MAT FLOOD 20W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF1
+    deviceProfileName: light-color-level
+  - id: "4489/2973"
+    deviceLabel: SMART MAT PLANON PLUS45X45RGBW
+    vendorId: 0x1189
+    productId: 0x0B9D
+    deviceProfileName: light-color-level
+  - id: "4489/2974"
+    deviceLabel: SMART MAT PLANON PLUS60X30RGBW
+    vendorId: 0x1189
+    productId: 0x0B9E
+    deviceProfileName: light-color-level
+  - id: "4489/3059"
+    deviceLabel: SMART WIFI MAT CLARIA 490RGBTW
+    vendorId: 0x1189
+    productId: 0x0BF3
+    deviceProfileName: light-color-level
+  - id: "4489/3058"
+    deviceLabel: SMART WIFI MAT FLOOD 30W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF2
+    deviceProfileName: light-color-level
+  - id: "4489/2972"
+    deviceLabel: SMART MAT PLANON PLUS60X60RGBW
+    vendorId: 0x1189
+    productId: 0x0B9C
+    deviceProfileName: light-color-level
+  - id: "4489/2984"
+    deviceLabel: SMART MAT PLANON PLUS120X30RGBW
+    vendorId: 0x1189
+    productId: 0x0BA8
+    deviceProfileName: light-color-level
+  - id: "4489/3001"
+    deviceLabel: SMART WIFI MAT SP170 110DEGRGBTW
+    vendorId: 0x1189
+    productId: 0x0BB9
+    deviceProfileName: light-color-level
+  - id: "4489/2992"
+    deviceLabel: SMART MAT PLANON PLUS30X30RGBW
+    vendorId: 0x1189
+    productId: 0x0BB0
+    deviceProfileName: light-color-level
+  - id: "4489/3056"
+    deviceLabel: SMART WIFI MAT FLOOD 10W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF0
+    deviceProfileName: light-color-level
+  - id: "4489/3016"
+    deviceLabel: SMART OUTD MAT BEAMADJWALL RGBTW
+    vendorId: 0x1189
+    productId: 0x0BC8
+    deviceProfileName: light-color-level
+  - id: "4489/3000"
+    deviceLabel: SMART WIFI MAT SP 86 100DEGRGBTW
+    vendorId: 0x1189
+    productId: 0x0BB8
+    deviceProfileName: light-color-level
+  - id: "4489/3003"
+    deviceLabel: SMART WIFI MAT STEA485RD RGBTW
+    vendorId: 0x1189
+    productId: 0x0BBB
+    deviceProfileName: light-color-level
+  - id: "4489/2963"
+    deviceLabel: SMART WIFI MAT FLOOD 100W RGBW
+    vendorId: 0x1189
+    productId: 0x0B93
+    deviceProfileName: light-color-level
+  - id: "4489/2194"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 1G
+    vendorId: 0x1189
+    productId: 0x0892
+    deviceProfileName: switch-binary
+  - id: "4489/4097"
+    deviceLabel: OSRAM PLANON SLIM
+    vendorId: 0x1189
+    productId: 0x1001
+    deviceProfileName: light-color-level
+#Shelly
+  - id: "5264/1"
+    deviceLabel: Shelly Plug S MTR Gen3
+    vendorId: 0x1490
+    productId: 0x0001
+    deviceProfileName: plug-binary
+  - id: "5264/6227"
+    deviceLabel: Shelly Outdoor Plug S Gen3
+    vendorId: 0x1490
+    productId: 0x1853
+    deviceProfileName: plug-binary
+  - id: "5264/4121"
+    deviceLabel: Shelly 1PM Gen3
+    vendorId: 0x1490
+    productId: 0x1019
+    deviceProfileName: plug-binary
+  - id: "5264/4120"
+    deviceLabel: Shelly 1 Gen3
+    vendorId: 0x1490
+    productId: 0x1018
+    deviceProfileName: plug-binary
+  - id: "5264/4115"
+    deviceLabel: Shelly 2L Gen3
+    vendorId: 0x1490
+    productId: 0x1013
+    deviceProfileName: plug-binary
+  - id: "5264/4116"
+    deviceLabel: Shelly 1L Gen3
+    vendorId: 0x1490
+    productId: 0x1014
+    deviceProfileName: plug-binary
+  - id: "5264/4117"
+    deviceLabel: Shelly 1 Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1015
+    deviceProfileName: plug-binary
+  - id: "5264/4118"
+    deviceLabel: Shelly 1PM Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1016
+    deviceProfileName: plug-binary
+  - id: "5264/4137"
+    deviceLabel: Shelly 1PM Gen4
+    vendorId: 0x1490
+    productId: 0x1029
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "5264/4101"
+    deviceLabel: Shelly 2PM Gen3
+    vendorId: 0x1490
+    productId: 0x1005
+    deviceProfileName: plug-power-energy-powerConsumption
+
+#SmartSetup
+  - id: "5385/4"
+    deviceLabel: SmartSetup Smart Multi-Switch
+    vendorId: 0x1509
+    productId: 0x0004
+    deviceProfileName: switch-binary
+  - id: "5385/1"
+    deviceLabel: SmartSetup Smart Switch
+    vendorId: 0x1509
+    productId: 0x0001
+    deviceProfileName: switch-binary
+
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -242,42 +2223,22 @@ matterManufacturer:
     productId: 0x9002
     deviceProfileName: light-color-level-2700K-6500K
 
-#AiDot
-  - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
-    deviceLabel: Linkind Smart Light Bulb A19 RGBTW
-    vendorId: 0x1168
-    productId: 0x03e8
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "OREiN/Smart/Light/Bulb/A19/RGBTW"
-    deviceLabel: OREiN Smart Light Bulb A19 RGBTW
-    vendorId: 0x1168
-    productId: 0x03ea
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "Linkind/Smart/Light/Bulb/BR30/RGBTW"
-    deviceLabel: Linkind Smart Light Bulb BR30 RGBTW
-    vendorId: 0x1168
-    productId: 0x03eb
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "OREiN/Smart/Light/Bulb/BR30/RGBTW"
-    deviceLabel: OREiN Smart Light Bulb BR30 RGBTW
-    vendorId: 0x1168
-    productId: 0x03ec
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "Consciot/Smart/Light/Bulb/A19/RGBT"
-    deviceLabel: Consciot Smart Light Bulb A19 RGBT
-    vendorId: 0x1168
-    productId: 0x0405
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "AiDot/Smart/Light/Bulb/A19/RGBTW"
-    deviceLabel: AiDot Smart Light Bulb A19 RGBT
-    vendorId: 0x1168
-    productId: 0x03f8
-    deviceProfileName: light-color-level-1800K-6500K
-  - id: "4456/1011"
-    deviceLabel: Smart Light Bulb A60
-    vendorId: 0x1168
-    productId: 0x03F3
-    deviceProfileName: light-color-level-1800K-6500K
+#U-Tec
+  - id: "5247/3"
+    deviceLabel: U-tec Smart Matter Plug
+    vendorId: 0x147F
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "5247/4"
+    deviceLabel: U-tec Smart Matter Switch
+    vendorId: 0x147F
+    productId: 0x0004
+    deviceProfileName: switch-binary
+  - id: "5247/2"
+    deviceLabel: UTEC Smart Matter Light Bulb
+    vendorId: 0x147F
+    productId: 0x0002
+    deviceProfileName: light-color-level-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -2074,12 +4035,110 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
+  - id: "4107/8954"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22FA
+    deviceProfileName: light-color-level
+  - id: "4107/8953"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22F9
+    deviceProfileName: light-color-level
+  - id: "4107/8949"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F5
+    deviceProfileName: light-color-level
+  - id: "4107/8948"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F4
+    deviceProfileName: light-color-level
 #Zemismart
   - id: "5020/61154"
     deviceLabel: Zemismart Inline Module
     vendorId: 0x139C
     productId: 0xEEE2
     deviceProfileName: switch-binary
+  - id: "5020/53249"
+    deviceLabel: Zemismart Downlight
+    vendorId: 0x139C
+    productId: 0xD001
+    deviceProfileName: light-color-level
+  - id: "5020/53250"
+    deviceLabel: Zemismart Bulb
+    vendorId: 0x139C
+    productId: 0xD002
+    deviceProfileName: light-color-level
+  - id: "5020/53251"
+    deviceLabel: Zemismart LED Light Strip Driver
+    vendorId: 0x139C
+    productId: 0xD003
+    deviceProfileName: light-color-level
+  - id: "5020/43784"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB08
+    deviceProfileName: switch-binary
+  - id: "5020/43825"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB31
+    deviceProfileName: switch-binary
+  - id: "5020/43780"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB04
+    deviceProfileName: switch-binary
+  - id: "5020/43777"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB01
+    deviceProfileName: switch-binary
+  - id: "5020/43843"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB43
+    deviceProfileName: switch-binary
+  - id: "5020/904"
+    deviceLabel: Zemismart M6 Hub
+    vendorId: 0x139C
+    productId: 0x0388
+    deviceProfileName: matter-bridge
+  - id: "5020/43778"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB02
+    deviceProfileName: switch-binary
+  - id: "5020/43779"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB03
+    deviceProfileName: switch-binary
+  - id: "5020/43781"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB05
+    deviceProfileName: switch-binary
+  - id: "5020/903"
+    deviceLabel: Zemismart M1 Hub
+    vendorId: 0x139C
+    productId: 0x0387
+    deviceProfileName: matter-bridge
+#Zimi
+  - id: "5410/3"
+    deviceLabel: Zimi Matter Connect
+    vendorId: 0x1522
+    productId: 0x0003
+    deviceProfileName: matter-bridge
+#TUO
+  - id: "5150/1"
+    deviceLabel: "TUO Smart Button"
+    vendorId: 0x141E
+    productId: 0x0001
+    deviceProfileName: "button-battery"
+
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
@@ -2124,6 +4183,33 @@ matterManufacturer:
     vendorId: 0x138A
     productId: 0x1392
     deviceProfileName: matter-bridge
+  - id: "4932/1054"
+    deviceLabel: Eltako Matter Bridge
+    vendorId: 0x1344
+    productId: 0x041E
+    deviceProfileName: matter-bridge
+#Tapo
+  - id: "5010/269"
+    deviceLabel: Tapo Smart Power Strip
+    vendorId: 0x1392
+    productId: 0x010D
+    deviceProfileName: plug-binary
+  - id: "5010/262"
+    deviceLabel: Mini Smart Wi-Fi Plug Energy Monitoring Matter
+    vendorId: 0x1392
+    productId: 0x0106
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "5010/276"
+    deviceLabel: Smart WiFi Outdoor Plug
+    vendorId: 0x1392
+    productId: 0x0114
+    deviceProfileName: plug-energy-powerConsumption
+#GIANT LIGHTING
+  - id: "5707/1"
+    deviceLabel: Floor Lamp
+    vendorId: 0x164B
+    productId: 0x0001
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
@@ -2195,6 +4281,108 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/on-off/plug/electrical-sensor"
+    deviceLabel: Matter OnOff Plug
+    deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "matter/mounted/on-off/control"
+    deviceLabel: Matter Mounted OnOff Control
+    deviceTypes:
+      - id: 0x010F # Mounted On/Off Control
+    deviceProfileName: switch-binary
+  - id: "matter/mounted/dimmable/load/control"
+    deviceLabel: Matter Mounted Dimmable Load Control
+    deviceTypes:
+      - id: 0x0110 # Mounted Dimmable Load Control
+    deviceProfileName: switch-level
+  - id: "matter/irrigation-system"
+    deviceLabel: Matter Irrigation System
+    deviceTypes:
+      - id: 0x0040 # Irrigation System
+    deviceProfileName: irrigation-system
+  - id: "matter/water-valve"
+    deviceLabel: Matter Water Valve
+    deviceTypes:
+      - id: 0x0042 # Water Valve
+    deviceProfileName: water-valve
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
+  - id: "matter/dimmable/light/button"
+    deviceLabel: Matter Dimmable Light/Button
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x000F # Generic Switch
+    deviceProfileName: light-level-button
+  - id: "matter/color/light/fan"
+    deviceLabel: Matter Color Light Fan
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+      - id: 0x002B # Fan
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/light/motion"
+    deviceLabel: Matter Dimmable Light Occupancy Sensor
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0107 # Occupancy Sensor
+    deviceProfileName: light-level-motion
+  - id: "matter/camera"
+    deviceLabel: Matter Camera
+    deviceTypes:
+      - id: 0x0142 # Camera
+    deviceProfileName: camera
+  - id: "matter/on-off/fan/light"
+    deviceLabel: Matter OnOff Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0100 # OnOff Light
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/fan/light"
+    deviceLabel: Matter Dimmable Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: fan-modular
+  - id: "matter/colorTemperature/fan/light"
+    deviceLabel: Matter Color Temperature Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: fan-modular
+  - id: "matter/color/fan/light"
+    deviceLabel: Matter Color Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: fan-modular
+  - id: "matter/on-off/fan/plug"
+    deviceLabel: Matter OnOff Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010A # On Off Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/fan/plug"
+    deviceLabel: Matter Dimmable Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010B # Dimmable Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/on-off/control/fan"
+    deviceLabel: Matter Mounted OnOff Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010F # Mounted On/Off Control
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/dim/load/control/fan"
+    deviceLabel: Matter Mounted Dimmable Load Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0110 # Mounted Dimmable Load Control
+    deviceProfileName: fan-modular
 
 matterThing:
   - id: SmartThings/MatterThing

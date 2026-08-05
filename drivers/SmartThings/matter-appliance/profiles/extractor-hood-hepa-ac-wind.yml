@@ -1,0 +1,35 @@
+name: extractor-hood-hepa-ac-wind
+components:
+- id: main
+  label: Main
+  capabilities:
+  - id: fanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: windMode
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: KitchenHood
+- id: hepaFilter
+  label: Hepa filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: KitchenHood
+- id: activatedCarbonFilter
+  label: Activated carbon filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: KitchenHood

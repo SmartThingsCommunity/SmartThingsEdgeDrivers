@@ -1,0 +1,108 @@
+name: Robot Cleaner Operating State
+status: live
+attributes:
+  operatingState:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          enum:
+            - stopped
+            - running
+            - paused
+            - seekingCharger
+            - charging
+            - docked
+            - unableToStartOrResume
+            - unableToCompleteOperation
+            - commandInvalidInState
+            - failedToFindChargingDock
+            - stuck
+            - dustBinMissing
+            - dustBinFull
+            - waterTankEmpty
+            - waterTankMissing
+            - waterTankLidOpen
+            - mopCleaningPadMissing
+      required:
+      - value
+    enumCommands:
+    - command: start
+      value: running
+    - command: pause
+      value: paused
+    - command: goHome
+      value: seekingCharger
+    actedOnBy:
+    - start
+    - pause
+    - goHome
+  supportedOperatingStates:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+          type: string
+          enum:
+            - stopped
+            - running
+            - paused
+            - seekingCharger
+            - charging
+            - docked
+            - unableToStartOrResume
+            - unableToCompleteOperation
+            - commandInvalidInState
+            - failedToFindChargingDock
+            - stuck
+            - dustBinMissing
+            - dustBinFull
+            - waterTankEmpty
+            - waterTankMissing
+            - waterTankLidOpen
+            - mopCleaningPadMissing
+      required:
+      - value
+  supportedCommands:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+            - start
+            - pause
+            - goHome
+  supportedOperatingStateCommands:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+            - start
+            - pause
+            - goHome
+commands:
+  start:
+    arguments: []
+    name: start
+  pause:
+    arguments: []
+    name: pause
+  goHome:
+    arguments: []
+    name: goHome
+id: robotCleanerOperatingState
+version: 1

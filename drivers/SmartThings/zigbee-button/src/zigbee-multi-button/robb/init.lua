@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local device_management = require "st.zigbee.device_management"
 
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -6,6 +9,7 @@ local Level = zcl_clusters.Level
 local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
+local button_utils = require "button_utils"
 
 --[[
 The ROBB Wireless Remote Control has 4 or 8 buttons. They are arranged in two columns:
@@ -17,7 +21,6 @@ Each button-row represents one endpoint. The 8x remote control has four endpoint
 That means each endpoint has two buttons.
 --]]
 
-local ROBB_MFR_STRING = "ROBB smarrt"
 local WIRELESS_REMOTE_FINGERPRINTS = {
   ["ROB_200-008-0"] = {
     endpoints = 2,
@@ -29,13 +32,6 @@ local WIRELESS_REMOTE_FINGERPRINTS = {
   }
 }
 
-local function can_handle(opts, driver, device, ...)
-  if device:get_manufacturer() == ROBB_MFR_STRING and WIRELESS_REMOTE_FINGERPRINTS[device:get_model()] then
-    return true
-  else
-    return false
-  end
-end
 
 local button_push_handler = function(addF)
   return function(driver, device, zb_rx)
@@ -130,7 +126,7 @@ local function added_handler(self, device)
     device:emit_component_event(comp,
       capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
@@ -185,7 +181,7 @@ local robb_wireless_control = {
       }
     }
   },
-  can_handle = can_handle
+  can_handle = require("zigbee-multi-button.robb.can_handle"),
 }
 
 return robb_wireless_control

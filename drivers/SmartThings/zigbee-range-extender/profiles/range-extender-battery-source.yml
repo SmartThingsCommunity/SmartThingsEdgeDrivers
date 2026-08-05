@@ -1,0 +1,20 @@
+name: range-extender-battery-source
+components:
+  - id: main
+    capabilities:
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+      - id: battery
+        version: 1
+      - id: powerSource
+        version: 1
+        config:
+          values:
+            - key: "powerSource.value"
+              enabledValues:
+                - battery
+                - mains
+    categories:
+      - name: Networking

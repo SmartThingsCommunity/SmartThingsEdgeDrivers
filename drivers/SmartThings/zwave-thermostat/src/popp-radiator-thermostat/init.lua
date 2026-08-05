@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
@@ -29,8 +19,6 @@ local LATEST_WAKEUP = "latest_wakeup"
 local CACHED_SETPOINT = "cached_setpoint"
 local POPP_WAKEUP_INTERVAL = 600 --seconds
 
-local POPP_THERMOSTAT_FINGERPRINT = {mfr = 0x0002, prod = 0x0115, model = 0xA010}
-
 local function get_latest_wakeup_timestamp(device)
   return device:get_field(LATEST_WAKEUP)
 end
@@ -46,10 +34,6 @@ local function seconds_since_latest_wakeup(device)
   else
     return 0
   end
-end
-
-local function can_handle_popp_radiator_thermostat(opts, driver, device, ...)
-  return device:id_match(POPP_THERMOSTAT_FINGERPRINT.mfr, POPP_THERMOSTAT_FINGERPRINT.prod, POPP_THERMOSTAT_FINGERPRINT.model)
 end
 
 -- POPP is a sleepy device, therefore it won't accept setpoint commands rightaway.
@@ -116,7 +100,7 @@ local popp_radiator_thermostat = {
   lifecycle_handlers = {
     added = added_handler
   },
-  can_handle = can_handle_popp_radiator_thermostat
+  can_handle = require("popp-radiator-thermostat.can_handle"),
 }
 
 return popp_radiator_thermostat

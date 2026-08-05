@@ -63,3 +63,9 @@ zwaveManufacturer:
     productType: 0x0004
     productId: 0x0003
     deviceProfileName: co-battery
+  - id: "1051/1/1040"
+    deviceLabel: SMCO410
+    manufacturerId: 0x041B
+    productId: 0x0410
+    productType: 0x0001
+    deviceProfileName: smoke-co-battery

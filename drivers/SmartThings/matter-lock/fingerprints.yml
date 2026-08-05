@@ -1,18 +1,211 @@
 matterManufacturer:
-#Nuki
-  - id: "Nuki Smart Lock Pro"
-    deviceLabel: Nuki Smart Lock Pro
-    vendorId: 0x135d
-    productId: 0xb1
-    deviceProfileName: lock-nocodes-notamper
+  #Aqara
+  - id: "4447/10242"
+    deviceLabel: Aqara Smart Lock U200
+    vendorId: 0x115F
+    productId: 0x2802
+    deviceProfileName: lock-user-pin
+  - id: "4447/10241"
+    deviceLabel: Aqara Smart Lock U300
+    vendorId: 0x115F
+    productId: 0x2801
+    deviceProfileName: lock-user-pin
+  - id: "4447/10247"
+    deviceLabel: Aqara Smart Lock U200 Lite
+    vendorId: 0x115F
+    productId: 0x2807
+    deviceProfileName: lock-battery
+  - id: "4447/10346"
+    deviceLabel: Aqara Smart Lock U200 US
+    vendorId: 0x115F
+    productId: 0x286A
+    deviceProfileName: lock-user-pin
+  - id: "4447/10244"
+    deviceLabel: Aqara Smart Lock U400
+    vendorId: 0x115F
+    productId: 0x2804
+    deviceProfileName: lock
+  - id: "4447/10254"
+    deviceLabel: Aqara Smart Lock U500
+    vendorId: 0x115F
+    productId: 0x280E
+    deviceProfileName: lock-modular
+  - id: "4447/10255"
+    deviceLabel: Aqara Smart Lock U500 Rim
+    vendorId: 0x115F
+    productId: 0x280F
+    deviceProfileName: lock-modular
+  - id: "4447/10256"
+    deviceLabel: Aqara Smart Lock U500 Glass Door
+    vendorId: 0x115F
+    productId: 0x2810
+    deviceProfileName: lock-modular
+  - id: "4447/10314"
+    deviceLabel: Aqara Smart Lock U600
+    vendorId: 0x115F
+    productId: 0x284A
+    deviceProfileName: lock-modular
+  - id: "4447/10253"
+    deviceLabel: Aqara Smart Lock J200
+    vendorId: 0x115F
+    productId: 0x280D
+    deviceProfileName: lock-modular
+  #Eufy
+  - id: "5427/1"
+    deviceLabel: eufy Smart Lock E31
+    vendorId: 0x1533
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/2"
+    deviceLabel: eufy Smart Lock E30
+    vendorId: 0x1533
+    productId: 0x0002
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/3"
+    deviceLabel: eufy Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/15"
+    deviceLabel: eufy FamiLock S3 Max
+    vendorId: 0x1533
+    productId: 0x000F
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/16"
+    deviceLabel: eufy FamiLock S3
+    vendorId: 0x1533
+    productId: 0x0010
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/17"
+    deviceLabel: eufy FamiLock E34
+    vendorId: 0x1533
+    productId: 0x0011
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/18"
+    deviceLabel: eufy FamiLock E35
+    vendorId: 0x1533
+    productId: 0x0012
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/22"
+    deviceLabel: eufy FamiLock E32
+    vendorId: 0x1533
+    productId: 0x0016
+    deviceProfileName: lock-user-pin-battery
+  - id: 5427/20
+    deviceLabel: eufy FamiLock E40
+    vendorId: 0x1533
+    productId: 0x0014
+    deviceProfileName: lock-user-pin-battery
+  #Kwikset
+  - id: "5153/66"
+    deviceLabel: Kwikset Halo Select Plus
+    vendorId: 0x1421
+    productId: 0x0042
+    deviceProfileName: lock-user-pin-battery
+  - id: "5153/65"
+    deviceLabel: Halo Select Plus
+    vendorId: 0x1421
+    productId: 0x0041
+    deviceProfileName: lock-user-pin-battery
+  - id: "5153/129"
+    deviceLabel: Kwikset Aura Reach
+    vendorId: 0x1421
+    productId: 0x0081
+    deviceProfileName: lock-user-pin-battery
+  #Level
+  - id: "4767/1"
+    deviceLabel: Level Lock Plus (Matter)
+    vendorId: 0x129F
+    productId: 0x0001
+    deviceProfileName: lock
+  - id: "4767/3"
+    deviceLabel: Level Bolt (Matter)
+    vendorId: 0x129F
+    productId: 0x0003
+    deviceProfileName: lock
+  - id: "4767/4"
+    deviceLabel: Level Lock Pro
+    vendorId: 0x129F
+    productId: 0x0004
+    deviceProfileName: lock
+  - id: "4767/5"
+    deviceLabel: Level Lock (Matter)
+    vendorId: 0x129F
+    productId: 0x0005
+    deviceProfileName: lock
+  #Nuki
+  - id: "4957/161"
+    deviceLabel: Nuki Smart Lock Ultra
+    vendorId: 0x135D
+    productId: 0x00A1
+    deviceProfileName: lock
   - id: "Nuki Smart Lock"
     deviceLabel: Nuki Smart Lock
     vendorId: 0x135d
     productId: 0xb0
-    deviceProfileName: lock-nocodes-notamper
+    deviceProfileName: lock
+  - id: "Nuki Smart Lock Pro"
+    deviceLabel: Nuki Smart Lock Pro
+    vendorId: 0x135d
+    productId: 0xb1
+    deviceProfileName: lock
+  - id: "4957/178"
+    deviceLabel: Nuki Smart Lock Pro
+    vendorId: 0x135D
+    productId: 0x00B2
+    deviceProfileName: lock
+  - id: "4957/193"
+    deviceLabel: Nuki Smart Lock Go
+    vendorId: 0x135D
+    productId: 0x00C1
+    deviceProfileName: lock
+  #U-tec
+  - id: "5247/1"
+    deviceLabel: ULTRALOQ Bolt Fingerprint Smart Matter Deadbolt
+    vendorId: 0x147F
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "5247/8"
+    deviceLabel: ULTRALOQ Bolt Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0008
+    deviceProfileName: lock-user-pin-battery
+  - id: "5247/7"
+    deviceLabel: ULTRALOQ Bolt Pro Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0007
+    deviceProfileName: lock-modular
+  - id: "5247/16"
+    deviceLabel: ULTRALOQ Latch 5 Pro Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0010
+    deviceProfileName: lock-modular
+  #Yale
+  - id: "4125/33040"
+    deviceLabel: Yale Lock with Matter
+    vendorId: 0x101D
+    productId: 0x8110
+    deviceProfileName: lock-user-pin-schedule-battery
+  #Dreame
+  - id: "5420/38144"
+    deviceLabel: Dreame NAVO Smart Lock A10
+    vendorId: 0x152C
+    productId: 0x9500
+    deviceProfileName: lock
+  - id: "5420/38145"
+    deviceLabel: Dreame NAVO Smart Lock E10
+    vendorId: 0x152C
+    productId: 0x9501
+    deviceProfileName: lock
+  #Lockly
+  - id: "5212/2"
+    deviceLabel: Lockly Smart Lock
+    vendorId: 0x145C
+    productId: 0x0002
+    deviceProfileName: lock-modular
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
     deviceTypes:
       - id: 0x000A # Door Lock
-    deviceProfileName: base-lock
+    deviceProfileName: lock

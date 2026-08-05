@@ -1,0 +1,44 @@
+name: refrigerator-freezer
+components:
+- id: main
+  label: Main
+  capabilities:
+  - id: mode
+    version: 1
+  - id: contactSensor
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: refrigerator
+  label: Refrigerator
+  capabilities:
+  - id: mode
+    version: 1
+  - id: temperatureSetpoint
+    version: 1
+  - id: temperatureLevel
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: freezer
+  label: Freezer
+  capabilities:
+  - id: mode
+    version: 1
+  - id: temperatureSetpoint
+    version: 1
+  - id: temperatureLevel
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  categories:
+  - name: Refrigerator
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-refrigerator

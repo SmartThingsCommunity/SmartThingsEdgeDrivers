@@ -1,0 +1,19 @@
+name: microwave-oven
+components:
+- id: main
+  capabilities:
+  - id: mode
+    version: 1
+  - id: operationalState
+    version: 1
+  - id: cookTime
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Microwave
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-microwave-oven

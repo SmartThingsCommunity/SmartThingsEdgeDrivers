@@ -1,0 +1,42 @@
+id: stse.chargingState
+version: 1
+status: proposed
+name: Charging State
+ephemeral: false
+attributes:
+  supportedChargingStates:
+    schema:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            title: ChargingState
+            type: string
+            enum:
+              - charging
+              - discharging
+              - stopped
+              - fullyCharged
+              - error
+      additionalProperties: false
+      required: []
+    enumCommands: []
+  chargingState:
+    schema:
+      type: object
+      properties:
+        value:
+          title: ChargingState
+          type: string
+          enum:
+            - charging
+            - discharging
+            - stopped
+            - fullyCharged
+            - error
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

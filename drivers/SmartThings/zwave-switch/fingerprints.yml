@@ -23,7 +23,7 @@ zwaveManufacturer:
     productType: 0x4457
     deviceProfileName: switch-level-indicator
   - id: 0063/4944
-    deviceLabel: GE Dimmer Switch
+    deviceLabel: JascoPro In-Wall Dimmer
     manufacturerId: 0x0063
     productType: 0x4944
     deviceProfileName: switch-level-indicator
@@ -45,17 +45,29 @@ zwaveManufacturer:
     productId: 0x0000
     deviceProfileName: switch-level
   - id: "Inovelli/Dimmer/Power/Energy"
-    deviceLabel: Inovelli Dimmer Switch
+    deviceLabel: Inovelli Dimmer Red Series
     manufacturerId: 0x031E
     productType: 0x0001
     productId: 0x0001
     deviceProfileName: inovelli-dimmer-power-energy
   - id: "Inovelli/Dimmer"
-    deviceLabel: Inovelli Dimmer Switch
+    deviceLabel: Inovelli Dimmer Black Series
     manufacturerId: 0x031E
     productType: 0x0003
     productId: 0x0001
     deviceProfileName: inovelli-dimmer
+  - id: "Inovelli/VZW31-SN"
+    deviceLabel: Inovelli Dimmer Red Series
+    manufacturerId: 0x031E
+    productType: 0x0015
+    productId: 0x0001
+    deviceProfileName: inovelli-dimmer-vzw31-sn
+  - id: "Inovelli/VZW32-SN"
+    deviceLabel: Inovelli mmWave Dimmer Red Series
+    manufacturerId: 0x031E
+    productType: 0x0017
+    productId: 0x0001
+    deviceProfileName: inovelli-mmwave-dimmer-vzw32-sn
   - id: "010F/0403"
     deviceLabel: Fibaro Single Switch
     manufacturerId: 0x010F
@@ -387,7 +399,7 @@ zwaveManufacturer:
     productId: 0xA002
     deviceProfileName: switch-binary
   - id: 0063/4952
-    deviceLabel: GE Switch
+    deviceLabel: JascoPro In-Wall Switch
     manufacturerId: 0x0063
     productType: 0x4952
     deviceProfileName: switch-binary-indicator
@@ -448,6 +460,18 @@ zwaveManufacturer:
     productType: 0x1603
     productId: 0x0334
     deviceProfileName: smartplug-binary
+  - id: 001D/0041/0002
+    deviceLabel: Leviton ZW6HD In-wall Dimmer
+    manufacturerId: 0x001D
+    productType: 0x0041
+    productId: 0x0002
+    deviceProfileName: leviton-ZW6HD
+  - id: 001D/0042/0002
+    deviceLabel: Leviton ZW15S In-wall Switch
+    manufacturerId: 0x001D
+    productType: 0x0042
+    productId: 0x0002
+    deviceProfileName: leviton-ZW15S
   - id: 011A/0101/0102
     deviceLabel: Enerwave Switch
     manufacturerId: 0x011A
@@ -541,7 +565,7 @@ zwaveManufacturer:
     productId: 0xC001
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF07
-    deviceLabel: Minoston Outlet
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF07
@@ -784,11 +808,11 @@ zwaveManufacturer:
     productType: 0x1801
     productId: 0x1000
     deviceProfileName: metering-switch
-  - id: 0086/004E
-    deviceLabel: Aeotec Switch
+  - id: "Aeotec/Heavy Duty"
+    deviceLabel: Aeotec Heavy Duty
     manufacturerId: 0x0086
     productId: 0x004E
-    deviceProfileName: metering-switch
+    deviceProfileName: aeotec-heavy-duty
   - id: 0258/0003/0087
     deviceLabel: NEO Coolcam Outlet
     manufacturerId: 0x0258
@@ -814,17 +838,17 @@ zwaveManufacturer:
     productId: 0x0054
     deviceProfileName: metering-switch
   - id: 0371/0003/00AF
-    deviceLabel: Aeotec Outlet
+    deviceLabel: Aeotec Smart Switch 7 EU
     manufacturerId: 0x0371
     productType: 0x0003
     productId: 0x00AF
-    deviceProfileName: metering-switch
+    deviceProfileName: aeotec-smart-switch-7-eu
   - id: 0371/0103/0017
-    deviceLabel: Aeotec Outlet
+    deviceLabel: Aeotec Smart Switch 7 US
     manufacturerId: 0x0371
     productType: 0x0103
     productId: 0x0017
-    deviceProfileName: metering-switch
+    deviceProfileName: aeotec-smart-switch-7-us
   - id: 0060/0004/000B
     deviceLabel: Everspring Outlet
     manufacturerId: 0x0060
@@ -898,6 +922,19 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: 013C/0005/008A
+    deviceLabel: Philio Dimmer Switch PAD19
+    manufacturerId: 0x013C
+    productType: 0x0005
+    productId: 0x008A
+    deviceProfileName: switch-level
+#Zooz
+  - id: "Zooz/ZEN05"
+    deviceLabel: Zooz Outdoor Plug ZEN05
+    manufacturerId: 0x027A
+    productType: 0x7000
+    productId: 0xB001
+    deviceProfileName: zooz-zen05-plug
 #Shelly/Qubino
   - id: 1120/2/137
     deviceLabel: Wave Plug UK
@@ -911,6 +948,66 @@ zwaveManufacturer:
     productId: 0x0088
     productType: 0x0002
     deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/129
+    deviceLabel: Wave 2PM 1
+    manufacturerId: 0x0460
+    productId: 0x0081
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/131
+    deviceLabel: Wave 1
+    manufacturerId: 0x0460
+    productId: 0x0083
+    productType: 0x0002
+    deviceProfileName: switch-binary 
+  - id: 1120/2/132
+    deviceLabel: Wave 1PM
+    manufacturerId: 0x0460
+    productId: 0x0084
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/135
+    deviceLabel: Shelly Wave Plug S
+    manufacturerId: 0x0460
+    productId: 0x0087
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/138
+    deviceLabel: Wave Pro 1
+    manufacturerId: 0x0460
+    productId: 0x008A
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/139
+    deviceLabel: Wave Pro 1PM
+    manufacturerId: 0x0460
+    productId: 0x008B
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/140
+    deviceLabel: Wave Pro 2 1
+    manufacturerId: 0x0460
+    productId: 0x008C
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/141
+    deviceLabel: Wave Pro 2PM 1
+    manufacturerId: 0x0460
+    productId: 0x008D
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/142
+    deviceLabel: Wave 1 Mini
+    manufacturerId: 0x0460
+    productId: 0x008E
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/143
+    deviceLabel: Wave 1PM Mini
+    manufacturerId: 0x0460
+    productId: 0x008F
+    productType: 0x0002
+    deviceProfileName: metering-switch
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

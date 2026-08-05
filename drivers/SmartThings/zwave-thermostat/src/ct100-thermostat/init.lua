@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -32,11 +22,6 @@ local heating_setpoint_defaults = require "st.zwave.defaults.thermostatHeatingSe
 local cooling_setpoint_defaults = require "st.zwave.defaults.thermostatCoolingSetpoint"
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
-
-local CT100_THERMOSTAT_FINGERPRINTS = {
-  { manufacturerId = 0x0098, productType = 0x6401, productId = 0x0107 }, -- 2Gig CT100 Programmable Thermostat
-  { manufacturerId = 0x0098, productType = 0x6501, productId = 0x000C }, -- Iris Thermostat
-}
 
 -- This old device uses separate endpoints to get values of temp and humidity
 -- DTH actually uses the old mutliInstance encap, but multichannel should be back-compat
@@ -73,16 +58,6 @@ local function set_setpoint_factory(setpoint_type)
       device:send(ThermostatOperatingState:Get({}))
     end)
   end
-end
-
-local function can_handle_ct100_thermostat(opts, driver, device)
-  for _, fingerprint in ipairs(CT100_THERMOSTAT_FINGERPRINTS) do
-    if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-
-  return false
 end
 
 local function thermostat_mode_report_handler(self, device, cmd)
@@ -210,7 +185,7 @@ local ct100_thermostat = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
-  can_handle = can_handle_ct100_thermostat,
+  can_handle = require("ct100-thermostat.can_handle"),
 }
 
 return ct100_thermostat

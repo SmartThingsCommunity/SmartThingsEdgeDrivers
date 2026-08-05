@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -84,6 +74,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -114,6 +107,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -144,6 +140,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -174,7 +173,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -204,7 +206,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -223,7 +228,10 @@ test.register_coroutine_test(
             SwitchMultilevel:StopLevelChange({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -233,7 +241,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_qubino_flush_shutter.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(
@@ -254,7 +262,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -284,7 +295,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -309,6 +323,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter_venetian:generate_test_message("venetianBlind", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -339,7 +356,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({}, {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {2}})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 do
@@ -361,7 +381,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -384,7 +408,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -407,7 +435,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -430,7 +462,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -453,7 +489,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -476,7 +516,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -517,125 +561,134 @@ test.register_coroutine_test(
         capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false }})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
-do
-  test.register_coroutine_test(
-    "Mode should be changed to venetian blinds after receiving configuration report with value 1",
-    function()
-      test.wait_for_events()
-      test.socket.zwave:__queue_receive({
-        mock_qubino_flush_shutter.id,
-        Configuration:Report({
-          parameter_number = 71,
-          size = 1,
-          configuration_value = 1
+test.register_coroutine_test(
+  "Mode should be changed to venetian blinds after receiving configuration report with value 1",
+  function()
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter.id,
+      Configuration:Report({
+        parameter_number = 71,
+        size = 1,
+        configuration_value = 1
+    })
+  })
+  mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter-venetian" })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Mode should be changed to shutter after receiving configuration report with value 0",
+  function()
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter.id,
+      Configuration:Report({
+        parameter_number = 71,
+        size = 1,
+        configuration_value = 0
       })
     })
-    mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter-venetian" })
-    end
-  )
-end
+    mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter" })
+  end,
+  {
+     min_api_version = 17
+  }
+)
 
-do
-  test.register_coroutine_test(
-    "Mode should be changed to shutter after receiving configuration report with value 0",
-    function()
-      test.wait_for_events()
-      test.socket.zwave:__queue_receive({
-        mock_qubino_flush_shutter.id,
-        Configuration:Report({
-          parameter_number = 71,
-          size = 1,
-          configuration_value = 0
-        })
+test.register_coroutine_test(
+  "SwitchMultilevel:Set() should be correctly interpreted by the driver",
+  function()
+    local targetValue = 50
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter.id,
+      SwitchMultilevel:Set({
+        value = targetValue
       })
-      mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter" })
-    end
-  )
-end
+    })
+    local expectedCachedEvent = utils.stringify_table(capabilities.windowShade.windowShade.opening())
+    test.wait_for_events()
+    local actualCachedEvent = utils.stringify_table(mock_qubino_flush_shutter.transient_store.blinds_last_command)
+    assert(expectedCachedEvent == actualCachedEvent, "driver should cache 'opening' event when targetLevel > currentLevel")
+    assert(targetValue == mock_qubino_flush_shutter.transient_store.shade_target, "driver should chache correct level value")
+  end,
+  {
+     min_api_version = 17
+  }
+)
 
-do
-  test.register_coroutine_test(
-    "SwitchMultilevel:Set() should be correctly interpreted by the driver",
-    function()
-      local targetValue = 50
-      test.wait_for_events()
-      test.socket.zwave:__queue_receive({
-        mock_qubino_flush_shutter.id,
-        SwitchMultilevel:Set({
-          value = targetValue
-        })
+test.register_coroutine_test(
+  "Meter:Report() with meter_value > 0 should be correctly interpreted by the driver",
+  function()
+    local cachedShadesEvent = capabilities.windowShade.windowShade.opening()
+    local targetValue = 50
+    mock_qubino_flush_shutter:set_field("blinds_last_command", cachedShadesEvent)
+    mock_qubino_flush_shutter:set_field("shade_target", targetValue)
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter.id,
+      Meter:Report({
+        scale = Meter.scale.electric_meter.WATTS,
+        meter_value = 10
       })
-      local expectedCachedEvent = utils.stringify_table(capabilities.windowShade.windowShade.opening())
-      test.wait_for_events()
-      local actualCachedEvent = utils.stringify_table(mock_qubino_flush_shutter.transient_store.blinds_last_command)
-      assert(expectedCachedEvent == actualCachedEvent, "driver should cache 'opening' event when targetLevel > currentLevel")
-      assert(targetValue == mock_qubino_flush_shutter.transient_store.shade_target, "driver should chache correct level value")
-    end
-  )
-end
+    })
+    test.socket.capability:__expect_send(
+      mock_qubino_flush_shutter:generate_test_message("main", cachedShadesEvent)
+    )
+    test.socket.capability:__expect_send(
+      mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(targetValue))
+    )
+    test.socket.capability:__expect_send(
+      mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
 
-do
-  test.register_coroutine_test(
-    "Meter:Report() with meter_value > 0 should be correctly interpreted by the driver",
-    function()
-      local cachedShadesEvent = capabilities.windowShade.windowShade.opening()
-      local targetValue = 50
-      mock_qubino_flush_shutter:set_field("blinds_last_command", cachedShadesEvent)
-      mock_qubino_flush_shutter:set_field("shade_target", targetValue)
-      test.wait_for_events()
-      test.socket.zwave:__queue_receive({
-        mock_qubino_flush_shutter.id,
-        Meter:Report({
-          scale = Meter.scale.electric_meter.WATTS,
-          meter_value = 10
-        })
-      })
-      test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", cachedShadesEvent)
-      )
-      test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(targetValue))
-      )
-      test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
-      )
-    end
-  )
-end
 
-do
-  test.register_coroutine_test(
-    "Meter:Report() with meter_value == 0 should be correctly interpreted by the driver",
-    function()
-      test.wait_for_events()
-      test.socket.zwave:__queue_receive({
-        mock_qubino_flush_shutter.id,
-        Meter:Report({
-          scale = Meter.scale.electric_meter.WATTS,
-          meter_value = 0
-        })
+test.register_coroutine_test(
+  "Meter:Report() with meter_value == 0 should be correctly interpreted by the driver",
+  function()
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter.id,
+      Meter:Report({
+        scale = Meter.scale.electric_meter.WATTS,
+        meter_value = 0
       })
-      test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_qubino_flush_shutter,
-        SwitchMultilevel:Get({})
-        )
+    })
+    test.socket.zwave:__expect_send(
+    zw_test_utils.zwave_test_build_send_command(
+      mock_qubino_flush_shutter,
+      SwitchMultilevel:Get({})
       )
-      test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_qubino_flush_shutter,
-        Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
-        )
+    )
+    test.socket.zwave:__expect_send(
+    zw_test_utils.zwave_test_build_send_command(
+      mock_qubino_flush_shutter,
+      Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
       )
-      test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
-      )
-    end
-  )
-end
+    )
+    test.socket.capability:__expect_send(
+      mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
 
 test.register_message_test(
   "Energy meter reports should be generating events",
@@ -658,7 +711,71 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy({value = 50, unit = "kWh"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
+
+test.register_coroutine_test(
+  "SwitchMultilevel:Set with lower target than current should cache closing command and fire Meter:Get after 4s",
+  function()
+    -- Pre-set state so currentLevel (80) > targetLevel (10)
+    mock_qubino_flush_shutter_venetian:update_state_cache_entry(
+      "main", capabilities.windowShadeLevel.ID, "shadeLevel", { value = 80 }
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_qubino_flush_shutter_venetian.id,
+      SwitchMultilevel:Set({ value = 10 })
+    })
+    test.wait_for_events()
+    test.mock_time.advance_time(4)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_qubino_flush_shutter_venetian,
+        Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+do
+  local new_param_value = 1
+  test.register_coroutine_test(
+    "infoChanged on venetian qubino should send Configuration:Set then Configuration:Get after 1s",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      local device_data = utils.deep_copy(mock_qubino_flush_shutter_venetian.raw_st_data)
+      device_data.preferences["operatingModes"] = new_param_value
+      local device_data_json = dkjson.encode(device_data)
+      test.socket.device_lifecycle:__queue_receive({ mock_qubino_flush_shutter_venetian.id, "infoChanged", device_data_json })
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_qubino_flush_shutter_venetian,
+          Configuration:Set({
+            parameter_number = 71,
+            configuration_value = new_param_value,
+            size = 1
+          })
+        )
+      )
+      test.mock_time.advance_time(1)
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_qubino_flush_shutter_venetian,
+          Configuration:Get({ parameter_number = 71 })
+        )
+      )
+    end,
+    {
+       min_api_version = 17
+    }
+
+  )
+end
 
 test.run_registered_tests()

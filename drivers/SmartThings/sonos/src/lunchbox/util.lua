@@ -16,6 +16,8 @@ util.force_url_table = function(url)
   return url
 end
 
+---@param tbl table the table to make read only
+---@return table read_only read-only version of the table
 util.read_only = function(tbl)
   if type(tbl) == "table" then
     local proxy = {}
@@ -28,19 +30,6 @@ util.read_only = function(tbl)
   else
     return tbl
   end
-end
-
-util.iter_string_lines = function(str)
-  if str:sub(-1) ~= "\n" then str = str .. "\n" end
-
-  return str:gmatch("(.-)\n")
-end
-
-util.copy_data = function(tbl)
-  local ret = {}
-  for k, v in pairs(tbl) do ret[k] = v end
-
-  return ret
 end
 
 return util

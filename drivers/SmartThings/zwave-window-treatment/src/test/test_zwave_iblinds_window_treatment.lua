@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -49,6 +39,15 @@ local mock_blind_v3 = test.mock_device.build_test_zwave_device({
 local function test_init()
   test.mock_device.add_test_device(mock_blind)
   test.mock_device.add_test_device(mock_blind_v3)
+  test.socket.capability:__expect_send(
+    mock_blind:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_blind:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_blind_v3:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition"}, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
@@ -76,7 +75,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -103,7 +105,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -140,7 +145,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -167,7 +175,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -204,7 +215,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -214,7 +228,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -231,7 +245,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -240,18 +257,20 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle():__queue_receive({mock_blind.id, "init"})
-      test.socket.device_lifecycle():__queue_receive(mock_blind:generate_info_changed(
-          {
-              preferences = {
-                presetPosition = 35
-              }
-          }
-      ))
+      test.socket.capability:__queue_receive(
+        {
+          mock_blind.id,
+          { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {35} }
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_blind:generate_test_message("main", capabilities.windowShadePreset.position(35))
+      )
       test.wait_for_events()
       test.socket.capability:__queue_receive(
         {
           mock_blind.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -268,7 +287,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -295,7 +317,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -323,7 +348,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -364,7 +392,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -374,7 +405,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind_v3.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -391,7 +422,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -415,7 +449,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind_v3.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -432,7 +466,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 17
+      }
 )
 
 test.register_coroutine_test(
@@ -471,7 +508,64 @@ test.register_coroutine_test(
           mock_blind_v3,
           Configuration:Set({parameter_number = 6, size = 1, configuration_value = 50})
       ))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+  "Setting window shade level to 0 on iblinds v1 should emit windowShade.closed",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_blind.id,
+        { capability = "windowShadeLevel", command = "setShadeLevel", args = { 0 } }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_blind:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_blind,
+        SwitchMultilevel:Set({ value = 0 })
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Setting window shade level to 0 on iblinds v3 should emit windowShade.closed",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_blind_v3.id,
+        { capability = "windowShadeLevel", command = "setShadeLevel", args = { 0 } }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_blind_v3:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_blind_v3:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_blind_v3,
+        SwitchMultilevel:Set({ value = 0 })
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

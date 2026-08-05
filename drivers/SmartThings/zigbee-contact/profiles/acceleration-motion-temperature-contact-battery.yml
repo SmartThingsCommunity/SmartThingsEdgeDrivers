@@ -1,0 +1,89 @@
+name: acceleration-motion-temperature-contact-battery
+components:
+- id: main
+  capabilities:
+  - id: accelerationSensor
+    version: 1
+  - id: motionSensor
+    version: 1
+  - id: threeAxis
+    version: 1
+  - id: contactSensor
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - title: "Temperature sensitivity (°)"
+    name: temperatureSensitivity
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0
+  - title: "Sensitivity level"
+    name: sensitivityLevel
+    description: "How sensitivite the device is to vibrations"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 15
+      default: 10
+  - title: "Use with Contact Sensor"
+    name: garageSensor
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes": "Yes"
+        "No": "No"
+      default: "Yes"
+  - title: "Axis to activate Contact Sensor"
+    name: contactSensorAxis
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "X": "X"
+        "Y": "Y"
+        "Z": "Z"
+      default: "Z"
+  - title: "Initial position (closed state)"
+    name: sensorInitialPosition
+    description: "Initial position of the device in the chosen axis"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -2000
+      maximum: 2000
+      default: 0
+  - title: "Contact Sensor threshold (open)"
+    name: contactSensorValue
+    description: "Value change required to trigger contact sensor"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 20
+      maximum: 4000
+      default: 900
+  - title: "Measurement tolerance"
+    name: tolerance
+    description: "Set the tolerance in percentage of the threshold"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 20
+      default: 0

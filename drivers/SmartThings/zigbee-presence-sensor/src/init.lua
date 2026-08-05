@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
@@ -111,7 +101,6 @@ end
 local function init_handler(self, device, event, args)
   device:set_field(battery_defaults.DEVICE_VOLTAGE_TABLE_KEY, battery_table)
   device:add_configured_attribute(battery_voltage_attr_configuration)
-  device:add_monitored_attribute(battery_voltage_attr_configuration)
   device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
 
@@ -139,8 +128,14 @@ local function beep_handler(self, device, command)
   device:send(IdentifyCluster.server.commands.Identify(device, BEEP_IDENTIFY_TIME))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  emit_event_if_latest_state_missing(device, "main", PresenceSensor, PresenceSensor.presence.NAME, PresenceSensor.presence("present"))
   device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, false, {persist = true})
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
@@ -199,10 +194,9 @@ local zigbee_presence_driver = {
   },
   -- Custom handler for every Zigbee message
   zigbee_message_handler = all_zigbee_message_handler,
-  sub_drivers = {
-    require("aqara"),
-    require("arrival-sensor-v1")
-  }
+  sub_drivers = require("sub_drivers"),
+  health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_presence_driver, zigbee_presence_driver.supported_capabilities)

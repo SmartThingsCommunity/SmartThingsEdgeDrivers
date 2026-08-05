@@ -1,0 +1,34 @@
+name: lock-modular
+components:
+- id: main
+  capabilities:
+    - id: lock
+      version: 1
+    - id: lockAlarm
+      version: 1
+    - id: remoteControlStatus
+      version: 1
+    - id: lockUsers
+      version: 1
+      optional: true
+    - id: lockCredentials
+      version: 1
+      optional: true
+    - id: lockSchedules
+      version: 1
+      optional: true
+    - id: lockAliro
+      version: 1
+      optional: true
+    - id: battery
+      version: 1
+      optional: true
+    - id: batteryLevel
+      version: 1
+      optional: true
+    - id: firmwareUpdate
+      version: 1
+    - id: refresh
+      version: 1
+  categories:
+    - name: SmartLock

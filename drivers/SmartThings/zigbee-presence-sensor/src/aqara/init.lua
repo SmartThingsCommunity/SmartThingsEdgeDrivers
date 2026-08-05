@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -19,17 +22,12 @@ local SENSITIVITY = "stse.sensitivity"
 local RESET_PRESENCE = "stse.resetPresence"
 local APP_DISTANCE = "stse.approachDistance"
 
-local FINGERPRINTS = { mfr = "aqara", model = "lumi.motion.ac01" }
-
-local is_aqara_products = function(opts, driver, device, ...)
-  return device:get_manufacturer() == FINGERPRINTS.mfr and device:get_model() == FINGERPRINTS.model
-end
-
 local function device_init(driver, device)
   -- no action
 end
 
-local function device_added(driver, device)
+local function do_configure(self, device)
+  device:configure()
   -- private protocol enable
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
@@ -100,10 +98,10 @@ local aqara_fp1_handler = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
+    doConfigure = do_configure,
     infoChanged = device_info_changed
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_fp1_handler

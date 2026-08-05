@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: base-lock
 components:
 - id: main
@@ -10,7 +11,7 @@ components:
         enabledValues:
         - locked
         - unlocked
-        - unknown
+        - not fully locked
   - id: lockCodes
     version: 1
   - id: tamperAlert

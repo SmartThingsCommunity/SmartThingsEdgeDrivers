@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -56,7 +45,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -70,7 +62,10 @@ test.register_coroutine_test(
     }
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 50) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -82,7 +77,10 @@ test.register_coroutine_test(
       }
     }
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -112,7 +110,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -146,7 +147,50 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle infoChanged when dimOnOff changes from 1 to 0 should write transition time 0",
+  function()
+    -- First: change dimOnOff from default 0 to 1 (triggers write with dimRate=20)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { dimOnOff = 1 }
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 20) })
+    test.wait_for_events()
+    -- Now: change dimOnOff from 1 to 0 (driver old=1, new=0 -> writes 0)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { dimOnOff = 0 }
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 0) })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle infoChanged when dimRate changes while dimOnOff is 1 should write new dimRate",
+  function()
+    -- First: change dimOnOff from default 0 to 1 (triggers write with dimRate=20)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { dimOnOff = 1 }
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 20) })
+    test.wait_for_events()
+    -- Now: change dimRate while dimOnOff stays 1 (driver old={dimOnOff=1,dimRate=20}, new={dimOnOff=1,dimRate=50})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { dimOnOff = 1, dimRate = 50 }
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 50) })
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

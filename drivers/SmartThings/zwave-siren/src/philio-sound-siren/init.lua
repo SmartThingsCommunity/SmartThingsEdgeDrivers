@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
@@ -19,9 +9,6 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({version=2})
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local preferencesMap = require "preferences"
 
-local PHILIO_SOUND_SIREN = {
-  { manufacturerId = 0x013C, productType = 0x0004, productId = 0x000A }
-}
 
 local PARAMETER_SOUND = "sound"
 local SMOKE = 0
@@ -43,14 +30,6 @@ local sounds = {
   [SMOKE]     = {notificationType = Notification.notification_type.SMOKE,          event = Notification.event.smoke.DETECTED_LOCATION_PROVIDED}
 }
 
-local function can_handle_philio_sound_siren(opts, driver, device, ...)
-  for _, fingerprint in ipairs(PHILIO_SOUND_SIREN) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function device_added(self, device)
   device:refresh()
@@ -157,7 +136,7 @@ end
 
 local philio_sound_siren = {
   NAME = "Philio sound siren",
-  can_handle = can_handle_philio_sound_siren,
+  can_handle = require("philio-sound-siren.can_handle"),
   lifecycle_handlers = {
     added = device_added
   },

@@ -17,6 +17,7 @@ local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local Level = clusters.Level
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local base64 = require "st.base64"
@@ -32,9 +33,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -60,6 +59,9 @@ test.register_message_test(
             direction = "send",
             message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
           }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -77,6 +79,9 @@ test.register_message_test(
             direction = "send",
             message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
           }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -94,6 +99,9 @@ test.register_message_test(
             direction = "send",
             message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
           }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -109,7 +117,53 @@ test.register_coroutine_test(
 
           test.mock_time.advance_time(1)
           test.socket.zigbee:__expect_send({mock_device.id, Level.attributes.CurrentLevel:read(mock_device)})
-        end
+        end,
+        {
+           min_api_version = 17
+        }
+)
+
+test.register_message_test(
+        "Temperature report should be handled (C)",
+        {
+          {
+            channel = "zigbee",
+            direction = "receive",
+            message = { mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 2500) }
+          },
+          {
+            channel = "capability",
+            direction = "send",
+            message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
+          }
+        },
+        {
+           min_api_version = 17
+        }
+)
+
+test.register_message_test(
+        "Minimum & Maximum Temperature report should be handled (C)",
+        {
+          {
+            channel = "zigbee",
+            direction = "receive",
+            message = { mock_device.id, TemperatureMeasurement.attributes.MinMeasuredValue:build_test_attr_report(mock_device, 2000) }
+          },
+          {
+            channel = "zigbee",
+            direction = "receive",
+            message = { mock_device.id, TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_attr_report(mock_device, 3000) }
+          },
+          {
+            channel = "capability",
+            direction = "send",
+            message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
+          }
+        },
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_message_test(
@@ -149,6 +203,22 @@ test.register_message_test(
             direction = "send",
             message = {
               mock_device.id,
+              clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+            }
+          },
+          {
+            channel = "zigbee",
+            direction = "send",
+            message = {
+              mock_device.id,
+              clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+            }
+          },
+          {
+            channel = "zigbee",
+            direction = "send",
+            message = {
+              mock_device.id,
               clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
             }
           },
@@ -170,7 +240,8 @@ test.register_message_test(
           }
         },
         {
-          inner_block_ordering = "relaxed"
+          inner_block_ordering = "relaxed",
+          min_api_version = 17
         }
 )
 
@@ -226,7 +297,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 
@@ -244,7 +318,10 @@ test.register_coroutine_test(
           test.wait_for_events()
           test.socket.capability:__queue_receive({mock_device.id, { capability = "switch", component = "main", command = "on", args = {}}})
           test.socket.zigbee:__expect_send({mock_device.id, Level.commands.MoveToLevelWithOnOff(mock_device, math.floor(83 / 100 * 254), 0xFFFF)})
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -254,7 +331,10 @@ test.register_coroutine_test(
                   mock_device, 50
           )})
           test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(50)))
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -263,7 +343,10 @@ test.register_coroutine_test(
           test.socket.zigbee:__queue_receive({mock_device.id, zigbee_test_utils.build_attribute_report(mock_device, clusters.PressureMeasurement.ID,
                   {{ KEEN_PRESSURE_ATTRIBUTE, data_types.Uint16.ID, 10000}}, KEEN_MFG_CODE)})
           test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = 1, unit = "kPa"})))
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.run_registered_tests()

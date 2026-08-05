@@ -1,0 +1,23 @@
+name: watering-kit-thirdreality
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: battery
+        version: 1
+      - id: hardwareFault
+        version: 1
+      - id: fanSpeed
+        version: 1 
+      - id: mode
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Irrigation
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-ThirdReality_watering_Kit

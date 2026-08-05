@@ -1,19 +1,10 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
-
+local log = require "log"
+local defaults = require "st.zigbee.defaults"
 local Basic = (require "st.zigbee.zcl.clusters").Basic
 local ZigbeeDriver = require "st.zigbee"
 
@@ -23,24 +14,36 @@ end
 
 local zigbee_range_driver_template = {
   supported_capabilities = {
-    capabilities.refresh
+    capabilities.refresh,
+    capabilities.battery
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
+  health_check = false,
+  sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
+
+defaults.register_for_default_handlers(zigbee_range_driver_template, zigbee_range_driver_template.supported_capabilities)
 
 local zigbee_range_extender_driver = ZigbeeDriver("zigbee-range-extender", zigbee_range_driver_template)
 
 function zigbee_range_extender_driver:device_health_check()
   local device_list = self.device_api.get_device_list()
   for _, device_id in ipairs(device_list) do
-    local device = self:get_device_info(device_id, false)
-    device:send(Basic.attributes.ZCLVersion:read(device))
+    local device, err = self:get_device_info(device_id, false)
+    if device == nil then
+      log.warn_with({ hub_logs = true },
+        string.format("device_health_check failed to get device info for device_id %s: %s", device_id, err))
+    else
+      device:send(Basic.attributes.ZCLVersion:read(device))
+    end
   end
 end
+
 zigbee_range_extender_driver.device_health_timer = zigbee_range_extender_driver.call_on_schedule(zigbee_range_extender_driver, 300, zigbee_range_extender_driver.device_health_check)
 
 zigbee_range_extender_driver:run()

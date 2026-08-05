@@ -1,0 +1,40 @@
+name: thermostat-aqara
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: valve
+    version: 1
+  - id: stse.valveCalibration
+    version: 1
+  - id: hardwareFault
+    version: 1
+  - id: battery
+    version: 1
+  - id: stse.invisibleCapabilities
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat    
+- id: ChildLock
+  capabilities:
+  - id: lock
+    version: 1
+  categories:
+  - name: SmartLock   
+preferences:
+  - preferenceId: stse.antifreezeModeSetting
+    explicit: true
+  - preferenceId: stse.notificationOfValveTest
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Thermostat_E1

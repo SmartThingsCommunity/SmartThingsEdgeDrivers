@@ -1,3 +1,6 @@
+-- Copyright 2021-2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --
 -- Based on https://github.com/iquix/ST-Edge-Driver/blob/master/tuya-window-shade/src/init.lua
 -- Copyright 2021-2022 Jaewon Park (iquix)
@@ -16,7 +19,7 @@ local Messages = require "st.zigbee.messages"
 local data_types = require "st.zigbee.data_types"
 local ZigbeeConstants = require "st.zigbee.constants"
 local generic_body = require "st.zigbee.generic_body"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 
 local TUYA_CLUSTER = 0xEF00
 local DP_TYPE_VALUE = "\x02"
@@ -148,7 +151,7 @@ local function SetShadeLevelHandler(driver, device, capability_command)
 end
 
 local function PresetPositionHandler(driver, device, capability_command)
-  local level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, capability_command.component)
   SetShadeLevelHandler(driver, device, {args = { shadeLevel = level }})
 end
 
@@ -241,9 +244,7 @@ local hanssem_window_treatment = {
     added = device_added,
     infoChanged = device_info_changed
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "TS0601"
-  end
+  can_handle = require("hanssem.can_handle"),
 }
 
 return hanssem_window_treatment

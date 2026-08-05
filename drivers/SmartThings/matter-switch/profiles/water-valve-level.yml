@@ -1,0 +1,18 @@
+name: water-valve-level
+components:
+- id: main
+  capabilities:
+  - id: valve
+    version: 1
+  - id: level
+    version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [0, 100]
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: WaterValve

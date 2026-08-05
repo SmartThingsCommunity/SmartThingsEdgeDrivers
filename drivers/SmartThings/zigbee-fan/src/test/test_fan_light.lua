@@ -1,16 +1,6 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -39,9 +29,7 @@ local mock_base_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-    test.mock_device.add_test_device(mock_base_device)
-    zigbee_test_utils.init_noop_health_check_timer()
-end
+    test.mock_device.add_test_device(mock_base_device)end
 test.set_test_init_function(test_init)
 
 -- create test commands
@@ -60,6 +48,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                             (mock_base_device, 254, 0) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -78,6 +69,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 127, 0) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -96,6 +90,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 127, 0) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -114,6 +111,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 0, 0) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -136,6 +136,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -158,6 +161,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -175,6 +181,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switch.switch.on())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -192,6 +201,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switch.switch.off())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -209,6 +221,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(100))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -226,6 +241,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(50))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -243,6 +261,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(0))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -264,6 +285,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -285,6 +309,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -306,6 +333,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -333,6 +363,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(1))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -360,6 +393,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(2))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -387,6 +423,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(3))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -414,6 +453,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(4))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -441,7 +483,58 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(0))
             }
+        },
+        {
+           min_api_version = 17
         }
+)
+
+test.register_message_test(
+    "Fan switch on command from main component",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_base_device.id, { capability = "switch", component = "main", command = "on", args = {} } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 1) }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "Fan switch off command from main component",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_base_device.id, { capability = "switch", component = "main", command = "off", args = {} } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x00) }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

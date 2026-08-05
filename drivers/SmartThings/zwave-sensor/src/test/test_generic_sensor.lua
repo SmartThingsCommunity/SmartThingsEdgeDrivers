@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -71,6 +61,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 101.3, unit = "kPa" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -91,6 +84,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 30.13 * KILO_PASCAL_PER_INCH_OF_MERCURY, unit = "kPa" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -110,6 +106,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.bodyWeightMeasurement.bodyWeightMeasurement({ value = 60, unit = "kg" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -130,6 +129,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.bodyWeightMeasurement.bodyWeightMeasurement({ value = 120, unit = "lbs" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -150,6 +152,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 700, unit = "lux" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -169,11 +174,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70 }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
 test.register_message_test(
-  "SensorMultilevel report temperature should be handled as temperature",
+  "SensorMultilevel report temperature (C) should be handled as temperature",
   {
     {
       channel = "zwave",
@@ -188,12 +196,23 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 30, unit = "C" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
 test.register_message_test(
-  "SensorMultilevel report temperature should be handled as temperature",
+  "SensorMultilevel report temperature (F) should be handled as temperature",
   {
     {
       channel = "zwave",
@@ -208,7 +227,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70, unit = "F" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -228,6 +258,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.voltageMeasurement.voltage({ value = 5, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -248,6 +281,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.voltageMeasurement.voltage({ value = 0.005, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -266,7 +302,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -286,7 +333,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -306,6 +364,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -325,6 +386,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50, unit = "kVAh" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -346,6 +410,9 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -362,12 +429,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     },
     {
       channel = "capability",
@@ -378,9 +445,19 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Get({ scale = 2 }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   },
-  { inner_block_ordering = "relaxed" }
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -396,12 +473,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
     },
     {
       channel = "capability",
@@ -412,9 +489,19 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Get({ scale = 2 }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   },
-  { inner_block_ordering = "relaxed" }
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -433,6 +520,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -452,6 +542,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -476,6 +569,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -500,6 +596,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -591,6 +690,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -682,6 +784,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -701,6 +806,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -720,6 +828,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -739,6 +850,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -758,6 +872,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -777,6 +894,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -796,6 +916,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -815,6 +938,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -834,6 +960,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -853,6 +982,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -872,6 +1004,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -891,6 +1026,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -910,6 +1048,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -929,6 +1070,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -960,7 +1104,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -980,6 +1125,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -999,6 +1147,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1018,6 +1169,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1044,7 +1198,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -1064,6 +1219,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1083,6 +1241,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1102,6 +1263,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1121,6 +1285,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1140,6 +1307,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1159,6 +1329,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1178,6 +1351,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1197,6 +1373,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1216,6 +1395,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1235,6 +1417,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1254,6 +1439,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1273,6 +1461,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1292,6 +1483,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1310,6 +1504,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(55))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1328,6 +1525,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(1))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1347,7 +1547,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(10)
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -1366,6 +1569,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(1))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1385,6 +1591,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -1502,10 +1711,19 @@ test.register_message_test(
         mock_device,
         Meter:Get({scale = 0})
       )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Meter:Get({scale = 4})
+      )
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 

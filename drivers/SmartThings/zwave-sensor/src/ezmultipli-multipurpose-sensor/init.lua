@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.utils
@@ -27,19 +18,6 @@ local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
-
-local EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x001E, productType = 0x0004, productId = 0x0001 }
-}
-
-local function can_handle_ezmultipli_multipurpose_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function basic_report_handler(driver, device, cmd)
   local event
@@ -104,7 +82,8 @@ local ezmultipli_multipurpose_sensor = {
       [capabilities.colorControl.commands.setColor.NAME] = set_color
     }
   },
-  can_handle = can_handle_ezmultipli_multipurpose_sensor
+  can_handle = require("ezmultipli-multipurpose-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return ezmultipli_multipurpose_sensor

@@ -1,0 +1,11 @@
+matterGeneric:
+  - id: "matter/network-manager"
+    deviceLabel: Matter Network Infrastructure Manager
+    deviceTypes:
+      - id: 0x0090 # NIM
+    deviceProfileName: network-infrastructure-manager
+  - id: "matter/thread-border-router"
+    deviceLabel: Matter Thread Border Router
+    deviceTypes:
+      - id: 0x0091 # TBR
+    deviceProfileName: thread-border-router

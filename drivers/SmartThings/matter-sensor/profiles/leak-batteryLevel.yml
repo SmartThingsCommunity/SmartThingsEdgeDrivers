@@ -1,0 +1,14 @@
+name: leak-batteryLevel
+components:
+- id: main
+  capabilities:
+  - id: waterSensor
+    version: 1
+  - id: batteryLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: LeakSensor

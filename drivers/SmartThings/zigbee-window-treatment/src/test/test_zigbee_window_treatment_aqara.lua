@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
@@ -38,6 +28,8 @@ local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
 local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
+
+local SHADE_STATE_ATTRIBUTE_ID = 0x0404
 
 local APPLICATION_VERSION = "application_version"
 
@@ -74,15 +66,14 @@ local mock_version_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  test.mock_device.add_test_device(mock_version_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_version_device)end
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Handle added lifecycle",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -119,7 +110,41 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
         PREF_SOFT_TOUCH_ON) })
-  end
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "stse.deviceInitialization", component_id = "main",
+        attribute_id = "supportedInitializedState",
+        state = { value = { "notInitialized", "initializing", "initialized" } },
+        visibility = { displayed = false }
+      }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", deviceInitialization.initializedState.notInitialized())
+    )
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        ,
+        data_types.Uint8,
+        1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_REVERSE_OFF) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_SOFT_TOUCH_ON) })
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -151,7 +176,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_read(mock_device, Basic.ID, { PREF_ATTRIBUTE_ID }, MFG_CODE)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -170,7 +198,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -189,7 +220,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -208,7 +242,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -224,7 +261,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.UpOrOpen(mock_device, 'open')
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -240,7 +280,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.DownOrClose(mock_device, 'close')
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -256,7 +299,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.Stop(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -300,7 +346,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       deviceInitialization.initializedState.initialized()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -329,7 +378,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
         PREF_SOFT_TOUCH_OFF) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -350,10 +402,11 @@ test.register_coroutine_test(
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
-
--- mock_version_device
 
 test.register_coroutine_test(
   "Window shade state closed with application version handler",
@@ -379,7 +432,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -406,7 +462,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -433,7 +492,171 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
+
+test.register_coroutine_test(
+  "Set Level handler",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 }}
+      }
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50)))
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
+    })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "shade state attribute handler - initial state open",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    mock_device:set_field("initState", "open")
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 0 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:read(mock_device)
+      }
+    )
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "shade state attribute handler - initial state close",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+
+    mock_device:set_field("initState", "close")
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 0 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:read(mock_device)
+      }
+    )
+    test.mock_time.advance_time(2)
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+    })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "shade state attribute handler - initial state reverse",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+
+    mock_device:set_field("initState", "reverse")
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 0 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:read(mock_device)
+      }
+    )
+    test.mock_time.advance_time(2)
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.read_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID,
+          MFG_CODE)
+    })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "shade state attribute handler - open",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 1 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "shade state attribute handler - close",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 2 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+
 
 test.run_registered_tests()

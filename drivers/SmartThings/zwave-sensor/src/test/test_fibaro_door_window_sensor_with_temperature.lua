@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -94,7 +84,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -120,7 +111,10 @@ test.register_coroutine_test(
         SensorBinary:Get({})
       ))
       mock_fibaro_door_window_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -136,6 +130,9 @@ test.register_message_test(
        direction = "send",
        message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.battery.battery(99))
    }
+ },
+ {
+    min_api_version = 17
  }
 )
 
@@ -155,6 +152,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
    }
+ },
+ {
+    min_api_version = 17
  }
 )
 
@@ -174,6 +174,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
    }
+ },
+ {
+    min_api_version = 17
  }
 )
 
@@ -194,6 +197,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
    }
+ },
+ {
+    min_api_version = 17
  }
 )
 
@@ -213,6 +219,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
    }
+ },
+ {
+    min_api_version = 17
  }
 )
 
@@ -232,7 +241,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -251,7 +271,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -261,9 +292,20 @@ test.register_coroutine_test(
     test.socket.zwave:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle():__queue_receive({mock_fibaro_door_window_sensor.id, "init"})
     test.timer.__create_and_queue_test_time_advance_timer(11, "oneshot")
-    local _preferences = {}
-    _preferences.alarmStatus = 1 -- "Door/window opened"
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
+    local _preference_updates = { --all preferences changed from defaults
+      alarmStatus=1,
+      visualLedIndications=4,
+      delayOfTamperAlarmCancel=6,
+      highTempThreshold=600,
+      intervalOfTempReports=1,
+      lowTempThreshold=30,
+      reportTamperAlarmCancel=false,
+      tempMeasurementInterval=320,
+      tempReportsThreshold=11,
+      temperatureAlarmReports=1,
+      temperatureOffset=2,
+    }
+    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preference_updates }))
     test.wait_for_events()
     test.socket.zwave:__queue_receive(
       {
@@ -298,45 +340,12 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 2 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 2, configuration_value = 1 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.visualLedIndications = 4 --"Indication of device tampering"
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
@@ -347,447 +356,150 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 3 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 3, configuration_value = 4 })
-    })
-
-    test.mock_time.advance_time(1)
-    _preferences = {}
-    _preferences.delayOfTamperAlarmCancel = 5
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-        test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 30,
-          configuration_value = 5,
+          configuration_value = 6,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 30 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 30, configuration_value = 5 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.reportTamperAlarmCancel = 1
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 31,
-          configuration_value = 1,
+          configuration_value = 0,
           size = 1
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 31 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 31, configuration_value = 1 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.tempMeasurementInterval = 300
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 50,
-          configuration_value = 300,
+          configuration_value = 320,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 50 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 50, configuration_value = 300 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.tempReportsThreshold = 10
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 51,
-          configuration_value = 10,
+          configuration_value = 11,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 51 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 51, configuration_value = 10 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.intervalOfTempReports = 0
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 52,
-          configuration_value = 0,
+          configuration_value = 1,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 52 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 52, configuration_value = 0 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.temperatureOffset = 0
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 53,
-          configuration_value = 0,
+          configuration_value = 2,
           size = 4
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 53 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 53, configuration_value = 0 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.temperatureAlarmReports = 0
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 54,
-          configuration_value = 0,
+          configuration_value = 1,
           size = 1
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 54 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 54, configuration_value = 0 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.highTempThreshold = 540
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 55,
-          configuration_value = 540,
+          configuration_value = 600,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Get({ parameter_number = 55 })
       )
     )
-
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({
-      mock_fibaro_door_window_sensor.id,
-      Configuration:Report({ parameter_number = 55, configuration_value = 540 })
-    })
-
-    test.mock_time.advance_time(1)
-
-    _preferences = {}
-    _preferences.lowTempThreshold = 40
-    test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive(
-      {
-        mock_fibaro_door_window_sensor.id,
-        WakeUp:Notification({})
-      }
-    )
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      Battery:Get({})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_fibaro_door_window_sensor,
-      SensorBinary:Get({})
-    ))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         Configuration:Set({
           parameter_number = 56,
-          configuration_value = 40,
+          configuration_value = 30,
           size = 2
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
@@ -799,9 +511,56 @@ test.register_coroutine_test(
 
     test.socket.zwave:__queue_receive({
       mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 2, configuration_value = 1 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 3, configuration_value = 4 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 31, configuration_value = 1 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 30, configuration_value = 5 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 31, configuration_value = 1 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 50, configuration_value = 300 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 51, configuration_value = 10 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 52, configuration_value = 0 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 53, configuration_value = 0 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 54, configuration_value = 0 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
+      Configuration:Report({ parameter_number = 55, configuration_value = 540 })
+    })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_door_window_sensor.id,
       Configuration:Report({ parameter_number = 56, configuration_value = 40 })
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

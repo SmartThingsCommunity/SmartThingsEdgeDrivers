@@ -33,7 +33,12 @@ zigbeeManufacturer:
     deviceLabel: frient Smoke Detector
     manufacturer: frient A/S
     model: SMSZB-120
-    deviceProfileName: smoke-battery
+    deviceProfileName: smoke-temp-battery-alarm
+  - id: "frient/HESZB-120"
+    deviceLabel: frient Heat Detector
+    manufacturer: frient A/S
+    model: HESZB-120
+    deviceProfileName: heat-temp-battery-alarm
   - id: "Heiman/Orvibo/Gas3"
     deviceLabel: Orvibo Gas Detector
     manufacturer: Heiman
@@ -49,3 +54,13 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: GASSensor-N
     deviceProfileName: smoke-detector
+  - id: "MultIR/MIR-SM200"
+    deviceLabel: MultiIR Smoke Detector MIR-SM200
+    manufacturer: MultIR
+    model: MIR-SM200
+    deviceProfileName: smoke-battery-tamper-no-fw-update
+  - id: ShinaSystem/FAM-300Z
+    deviceLabel: SiHAS Smoke Detector
+    manufacturer: ShinaSystem
+    model: FAM-300Z
+    deviceProfileName: smoke-battery

@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local cc = (require "st.zwave.CommandClass")
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
@@ -19,20 +10,7 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ver
 local WindowShadeDefaults = require "st.zwave.defaults.windowShade"
 local WindowShadeLevelDefaults = require "st.zwave.defaults.windowShadeLevel"
 
-local WINDOW_TREATMENT_VENETIAN_FINGERPRINTS = {
-  {mfr = 0x010F, prod = 0x1D01, model = 0x1000}, -- Fibaro Walli Roller Shutter
-  {mfr = 0x0159, prod = 0x0003, model = 0x0052}, -- Qubino Flush Shutter AC
-  {mfr = 0x0159, prod = 0x0003, model = 0x0053}, -- Qubino Flush Shutter DC
-}
 
-local function can_handle_window_treatment_venetian(opts, driver, device, ...)
-  for _, fingerprint in ipairs(WINDOW_TREATMENT_VENETIAN_FINGERPRINTS) do
-    if device:id_match( fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function shade_event_handler(self, device, cmd)
   WindowShadeDefaults.zwave_handlers[cc.SWITCH_MULTILEVEL][SwitchMultilevel.REPORT](self, device, cmd)
@@ -70,14 +48,11 @@ local window_treatment_venetian = {
       [SwitchMultilevel.REPORT] = shade_event_handler
     }
   },
-  can_handle = can_handle_window_treatment_venetian,
+  can_handle = require("window-treatment-venetian.can_handle"),
   lifecycle_handlers = {
     init = map_components
   },
-  sub_drivers = {
-    require("window-treatment-venetian/fibaro-roller-shutter"),
-    require("window-treatment-venetian/qubino-flush-shutter")
-  }
+  sub_drivers = require("window-treatment-venetian.sub_drivers"),
 }
 
 return window_treatment_venetian

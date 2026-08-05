@@ -1,0 +1,16 @@
+matterGeneric:
+  - id: "elevator"
+    deviceLabel: Elevator
+    deviceTypes:
+      - id: 0xFF02
+    deviceProfileName: elevator
+  - id: "gas-valve"
+    deviceLabel: Gas Valve
+    deviceTypes:
+      - id: 0xFF01
+    deviceProfileName: gas-valve
+  - id: "vent"
+    deviceLabel: Vent
+    deviceTypes:
+      - id: 0xFF03
+    deviceProfileName: vent

@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -38,9 +28,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
@@ -56,7 +44,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
       test.mock_time.advance_time(120)
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -72,7 +63,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.presenceSensor.presence.present()))
       test.mock_time.advance_time(60)
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.presenceSensor.presence.not_present()))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -85,7 +79,10 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -98,7 +95,10 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -111,7 +111,10 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -124,7 +127,10 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(0)))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -137,7 +143,10 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(10)))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -152,7 +161,29 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+    "ZoneStatusChangeNotification with alarm1 triggers motion active and inactive",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00)
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+      test.mock_time.advance_time(120)
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

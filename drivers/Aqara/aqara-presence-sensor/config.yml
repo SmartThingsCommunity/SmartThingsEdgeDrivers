@@ -1,0 +1,5 @@
+name: 'Aqara Presence Sensor'
+packageKey: 'aqara-presence-sensor'
+permissions:
+  lan: {}
+  discovery: {}

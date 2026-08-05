@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -26,19 +15,11 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=1})
 
 local constants = require "qubino-switches/constants/qubino-constants"
 
-local QUBINO_FINGERPRINTS = {
-  {mfr = 0x0159, prod = 0x0001, model = 0x0051, deviceProfile = "qubino-flush-dimmer"}, -- Qubino Flush Dimmer
-  {mfr = 0x0159, prod = 0x0001, model = 0x0052, deviceProfile = "qubino-din-dimmer"}, -- Qubino DIN Dimmer
-  {mfr = 0x0159, prod = 0x0001, model = 0x0053, deviceProfile = "qubino-flush-dimmer-0-10V"}, -- Qubino Flush Dimmer 0-10V
-  {mfr = 0x0159, prod = 0x0001, model = 0x0055, deviceProfile = "qubino-mini-dimmer"},  -- Qubino Mini Dimmer
-  {mfr = 0x0159, prod = 0x0002, model = 0x0051, deviceProfile = "qubino-flush2-relay"}, -- Qubino Flush 2 Relay
-  {mfr = 0x0159, prod = 0x0002, model = 0x0052, deviceProfile = "qubino-flush1-relay"}, -- Qubino Flush 1 Relay
-  {mfr = 0x0159, prod = 0x0002, model = 0x0053, deviceProfile = "qubino-flush1d-relay"}  -- Qubino Flush 1D Relay
-}
+local fingerprints = require("qubino-switches.fingerprints")
 
 local function getDeviceProfile(device, isTemperatureSensorOnboard)
   local newDeviceProfile
-  for _, fingerprint in ipairs(QUBINO_FINGERPRINTS) do
+  for _, fingerprint in ipairs(fingerprints) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
       newDeviceProfile = fingerprint.deviceProfile
       if(isTemperatureSensorOnboard) then
@@ -49,14 +30,6 @@ local function getDeviceProfile(device, isTemperatureSensorOnboard)
     end
   end
   return nil
-end
-
-local function can_handle_qubino_flush_relay(opts, driver, device, cmd, ...)
-  if device:id_match(constants.QUBINO_MFR) then
-    local subdriver = require("qubino-switches")
-    return true, subdriver
-  end
-  return false
 end
 
 local function add_temperature_sensor_if_needed(device)
@@ -112,7 +85,7 @@ end
 
 local qubino_relays = {
   NAME = "Qubino Relays",
-  can_handle = can_handle_qubino_flush_relay,
+  can_handle = require("qubino-switches.can_handle"),
   zwave_handlers = {
     [cc.SENSOR_MULTILEVEL] = {
       [SensorMultilevel.REPORT] = sensor_multilevel_report
@@ -126,10 +99,7 @@ local qubino_relays = {
   lifecycle_handlers = {
     added = device_added
   },
-  sub_drivers = {
-    require("qubino-switches/qubino-relays"),
-    require("qubino-switches/qubino-dimmer")
-  }
+  sub_drivers = require("qubino-switches.sub_drivers"),
 }
 
 return qubino_relays

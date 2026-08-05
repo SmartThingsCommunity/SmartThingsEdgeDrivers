@@ -1,25 +1,15 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local fields = require "switch_utils.fields"
 
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
@@ -40,38 +30,15 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
-        {
-          cluster_id = clusters.OnOff.ID,
-          cluster_type = "SERVER",
-          cluster_revision = 1,
-          feature_map = 0, --u32 bitmap
-        },
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
-      }
-    }
-  }
-})
-
-local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("switch-color-level.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 1,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
-      },
-      device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.ON_OFF, device_type_revision = 1},
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE, device_type_revision = 1},
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE, device_type_revision = 1},
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR, device_type_revision = 1}
       }
     }
   }
@@ -86,32 +53,66 @@ local cluster_subscribe_list = {
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
   clusters.ColorControl.attributes.ColorTemperatureMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.ColorControl.attributes.ColorMode,
 }
 
 local function test_init()
-  test.socket.matter:__set_channel_ordering("relaxed")
+  test.mock_device.add_test_device(mock_device)
+
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
 
-  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_no_hue_sat))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_no_hue_sat)
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
+
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "doConfigure properly sets Extended Color Light and does not attempt to switch profiles",
+  function()
+    mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
+    mock_device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.LevelControl.attributes.Options:write(mock_device, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.ColorControl.attributes.Options:write(mock_device, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+    })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "init creates accurate subscription for Extended Color Light",
+  function()
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_device))
+      end
+    end
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  end,
+  {
+    min_api_version = 17
+  }
+)
 
 test.register_message_test(
   "On command should send the appropriate commands",
@@ -125,6 +126,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -132,6 +141,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -147,6 +159,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -154,207 +174,15 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
-test.register_message_test(
-  "Set level command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, math.floor(20/100.0 * 254), 20, 0 ,0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, true)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
-)
-
-test.register_message_test(
-  "Current level reports should generate appropriate events",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
-    },
-  }
-)
-
-test.register_message_test(
-  "Set color command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device_no_hue_sat, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.saturation(72))
-    }
-  }
-)
 
 local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
 local sat = math.floor((50 * 0xFE) / 100.0 + 0.5)
-
-test.register_message_test(
-  "Set color command should send huesat commands when supported",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorCapabilities:build_test_report_data(mock_device, 1, 0x01)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation:build_test_command_response(mock_device, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, hue)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, sat)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(50))
-    }
-  }
-)
-
 test.register_message_test(
   "Set Hue command should send MoveToHue",
   {
@@ -371,9 +199,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -393,9 +224,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -411,11 +245,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -424,6 +266,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, 1)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
       }
     },
     {
@@ -439,103 +289,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
-  }
-)
-
-test.register_message_test(
-  "X and Y color values should report hue and saturation once both have been received",
+  },
   {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(72))
-    }
-  }
-)
-
-test.register_message_test(
-  "X and Y color values have 0 value",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 0)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(33))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
-    }
-  }
-)
-
-
-test.register_message_test(
-  "Y and X color values should report hue and saturation once both have been received",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(72))
-    }
+     min_api_version = 17
   }
 )
 
@@ -549,7 +305,18 @@ test.register_message_test(
         mock_device.id,
         clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
       }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -577,6 +344,189 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Min and max color temperature attributes set capability constraint using improved temperature conversion rounding",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    }
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Device reports mireds outside of supported range, set capability to min/max value in kelvin",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 160)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6000))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 370)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2800))
+    }
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Capability sets color temp outside of supported range, value sent to device is limited to min/max value in mireds",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {6100} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+      }
+    }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -599,6 +549,9 @@ test.register_message_test(
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 555)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -621,6 +574,9 @@ test.register_message_test(
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 1100)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -648,6 +604,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 2, maximum = 4}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -670,6 +629,600 @@ test.register_message_test(
         clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 10)
       }
     }
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "colorControl capability sent based on CurrentX and CurrentY due to ColorMode",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
+      }
+    )
+    local read_x_y = clusters.ColorControl.attributes.CurrentX:read()
+    read_x_y:merge(clusters.ColorControl.attributes.CurrentY:read())
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        read_x_y
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.capability:__queue_receive(
+      {mock_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    )
+    local read_request = cluster_subscribe_list[1]:read(mock_device)
+    for i, attr in ipairs(cluster_subscribe_list) do
+      if i > 1 then read_request:merge(attr:read(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, read_request})
+    test.wait_for_events()
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+
+local function set_color_mode(device, endpoint, color_mode)
+  test.socket.matter:__queue_receive({
+    device.id,
+    clusters.ColorControl.attributes.ColorMode:build_test_report_data(
+      device, endpoint, color_mode)
+  })
+  local read_req
+  if color_mode == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+    read_req = clusters.ColorControl.attributes.CurrentHue:read()
+    read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
+  else -- color_mode = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
+    read_req = clusters.ColorControl.attributes.CurrentX:read()
+    read_req:merge(clusters.ColorControl.attributes.CurrentY:read())
+  end
+  test.socket.matter:__expect_send({device.id, read_req})
+end
+
+
+
+local function test_init_x_y_color_mode()
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device)
+  set_color_mode(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
+end
+
+test.register_coroutine_test(
+  "X and Y color values should report hue and saturation once both have been received",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end,
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "X and Y color values have 0 value",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 0)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 0)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(33)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(100)
+      )
+    )
+  end,
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Y and X color values should report hue and saturation once both have been received",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end,
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "colorControl capability sent based on CurrentHue and CurrentSaturation due to ColorMode",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
+      }
+    )
+    local read_hue_sat = clusters.ColorControl.attributes.CurrentHue:read()
+    read_hue_sat:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        read_hue_sat
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, 0xFE),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(100)
+      )
+    )
+    test.socket.devices:__expect_send(
+      {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, 0xFE),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(100)
+      )
+    )
+    test.socket.devices:__expect_send(
+      {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    )
+  end,
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 17
+  }
+)
+
+
+
+local function test_init_with_hue_sat_color_mode_set()
+  test.mock_device.add_test_device(mock_device)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  set_color_mode(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
+end
+
+test.register_message_test(
+  "Set color command should send huesat commands when supported",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorCapabilities:build_test_report_data(mock_device, 1, 0x01)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation:build_test_command_response(mock_device, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, hue)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, sat)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(50))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    },
+  },
+  {
+    test_init = test_init_with_hue_sat_color_mode_set,
+    min_api_version = 17
+  }
+)
+
+hue = 0xFE
+sat = 0xFE
+test.register_message_test(
+  "Set color command should clamp invalid huesat values",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorCapabilities:build_test_report_data(mock_device, 1, 0x01)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 110, saturation = 110 } } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation:build_test_command_response(mock_device, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, hue)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(100))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, sat)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    },
+  },
+  {
+    test_init = test_init_with_hue_sat_color_mode_set,
+    min_api_version = 17
+  }
+)
+
+
+
+
+local mock_color_device_no_hue_sat = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-color-level.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR, device_type_revision = 1}
+      }
+    }
+  }
+})
+
+local function test_init_no_hue_sat()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_color_device_no_hue_sat)
+end
+
+test.register_coroutine_test(
+  "Set color command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_color_device_no_hue_sat.id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_color_device_no_hue_sat.id,
+        clusters.ColorControl.server.commands.MoveToColor(mock_color_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_color_device_no_hue_sat.id,
+        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_color_device_no_hue_sat, 1)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_color_device_no_hue_sat.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_color_device_no_hue_sat, 1, 15091)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_color_device_no_hue_sat.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_color_device_no_hue_sat, 1, 21547)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_color_device_no_hue_sat:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_color_device_no_hue_sat:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end,
+  {
+    test_init = test_init_no_hue_sat,
+    min_api_version = 17
+  }
+)
+
+
+
+local mock_device_color_temp = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.ON_OFF, device_type_revision = 1},
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE, device_type_revision = 1}
+      }
+    }
+  }
+})
+
+local function test_init_color_temp()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_color_temp)
+end
+
+test.register_coroutine_test(
+  "doConfigure properly sets Color Temperature Light and does not attempt to switch profiles",
+  function()
+    mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
+    mock_device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "doConfigure" })
+    test.socket.matter:__expect_send({
+      mock_device_color_temp.id,
+      clusters.LevelControl.attributes.Options:write(mock_device_color_temp, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+    })
+    test.socket.matter:__expect_send({
+      mock_device_color_temp.id,
+      clusters.ColorControl.attributes.Options:write(mock_device_color_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+    })
+    mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    test_init = test_init_color_temp,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "init creates accurate subscription for Color Temperature Light",
+  function()
+    local cluster_subscribe_list_color_temp = {
+      clusters.OnOff.attributes.OnOff,
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
+      clusters.ColorControl.attributes.ColorTemperatureMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+    }
+    local subscribe_request = cluster_subscribe_list_color_temp[1]:subscribe(mock_device_color_temp)
+    for i, cluster in ipairs(cluster_subscribe_list_color_temp) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_device_color_temp))
+      end
+    end
+    test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "init" })
+    test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
+  end,
+  {
+    test_init = test_init_color_temp,
+    min_api_version = 17
   }
 )
 

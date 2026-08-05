@@ -1,5 +1,9 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local constants = require "st.zigbee.constants"
 
 local OnOff = clusters.OnOff
 local AnalogInput = clusters.AnalogInput
@@ -22,7 +26,13 @@ end
 
 local function energy_meter_power_consumption_report(device, raw_value)
   -- energy meter
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+  local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
+  if raw_value < offset then
+    --- somehow our value has gone below the offset, so we'll reset the offset, since the device seems to have
+    offset = 0
+    device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
+  end
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value - offset, unit = "Wh" }))
 
   -- report interval
   local current_time = os.time()
@@ -49,6 +59,10 @@ local function round(num)
 end
 
 local function present_value_handler(driver, device, value, zb_rx)
+  -- ignore unexpected event when the device is not private mode
+  local private_mode = device:get_field(PRIVATE_MODE) or 0
+  if private_mode == 0 then return end
+
   local src_endpoint = zb_rx.address_header.src_endpoint.value
   if src_endpoint == POWER_METER_ENDPOINT then
     -- power meter
@@ -68,8 +82,10 @@ end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
-  device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
-  device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
+  if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
+    device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
+    device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
+  end
 end
 
 local aqara_switch_version_handler = {
@@ -89,10 +105,7 @@ local aqara_switch_version_handler = {
       }
     }
   },
-  can_handle = function (opts, driver, device)
-    local private_mode = device:get_field(PRIVATE_MODE) or 0
-    return private_mode == 1
-  end
+  can_handle = require("aqara.version.can_handle")
 }
 
 return aqara_switch_version_handler

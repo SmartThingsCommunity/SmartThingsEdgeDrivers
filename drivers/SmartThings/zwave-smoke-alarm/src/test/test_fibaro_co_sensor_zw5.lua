@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -78,7 +68,10 @@ test.register_coroutine_test(
         Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE})
     ))
     mock_fibaro_CO_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -94,6 +87,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -119,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -144,6 +143,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -168,6 +170,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -192,6 +197,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -216,6 +224,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -240,6 +251,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -263,6 +277,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -288,6 +305,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -312,6 +332,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -336,6 +359,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -365,7 +391,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -373,8 +400,9 @@ test.register_message_test(
 test.register_coroutine_test(
   "Device should be configured after changing device settings",
   function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    local _preferences = {zwaveNotifications = 3} --"Both actions enabled"
+    local _preferences = {zwaveNotifications = 3, overheatThreshold = 55} --"Both actions enabled"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
@@ -387,11 +415,26 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_CO_sensor,
         Configuration:Get({ parameter_number = 2 })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({
+          parameter_number = 22,
+          configuration_value = 55,
+          size = 1
+        })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Get({ parameter_number = 22 })
       )
     )
 
@@ -402,9 +445,14 @@ test.register_coroutine_test(
       Configuration:Report({ parameter_number = 2, configuration_value = 3 })
     })
 
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_CO_sensor.id,
+      Configuration:Report({ parameter_number = 22, configuration_value = 55 })
+    })
+
     test.mock_time.advance_time(1)
 
-    _preferences = {overheatThreshold = 50} --"120 °F / 50°C"
+    _preferences = {overheatThreshold = 50, zwaveNotifications = 0} --"120 °F / 50°C"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
@@ -417,11 +465,26 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_CO_sensor,
         Configuration:Get({ parameter_number = 22 })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({
+          parameter_number = 2,
+          configuration_value = 0,
+          size = 1
+        })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Get({ parameter_number = 2 })
       )
     )
 
@@ -431,7 +494,15 @@ test.register_coroutine_test(
       mock_fibaro_CO_sensor.id,
       Configuration:Report({ parameter_number = 22, configuration_value = 50 })
     })
-  end
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_CO_sensor.id,
+      Configuration:Report({ parameter_number = 2, configuration_value = 3 })
+    })
+
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

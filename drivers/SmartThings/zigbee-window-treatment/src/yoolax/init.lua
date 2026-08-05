@@ -1,41 +1,20 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local Status = require "st.zigbee.generated.types.ZclStatus"
 local WindowCovering = zcl_clusters.WindowCovering
+local window_shade_utils = require "window_shade_utils"
 
 local device_management = require "st.zigbee.device_management"
 
 local LEVEL_UPDATE_TIMEOUT = "__level_update_timeout"
 local MOST_RECENT_SETLEVEL = "__most_recent_setlevel"
 
-local YOOLAX_WINDOW_SHADE_FINGERPRINTS = {
-    { mfr = "Yookee", model = "D10110" },                                 -- Yookee Window Treatment
-    { mfr = "yooksmart", model = "D10110" }                               -- yooksmart Window Treatment
-}
 
-local function is_yoolax_window_shade(opts, driver, device)
-  for _, fingerprint in ipairs(YOOLAX_WINDOW_SHADE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function default_response_handler(driver, device, zb_message)
   local is_success = zb_message.body.zcl_body.status.value
@@ -79,7 +58,8 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  set_shade_level(driver, device, device.preferences.presetPosition, command)
+  local level = window_shade_utils.get_preset_level(device, command.component)
+  set_shade_level(driver, device, level, command)
 end
 
 local function set_window_shade_level(level)
@@ -158,7 +138,7 @@ local yoolax_window_shade = {
       }
     },
   },
-  can_handle = is_yoolax_window_shade
+  can_handle = require("yoolax.can_handle"),
 }
 
 return yoolax_window_shade

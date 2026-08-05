@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2022 SmartThings, Inc.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -22,31 +22,42 @@ local PowerConfiguration = clusters.PowerConfiguration
 local devices = {
   FRIENT_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
-      { mfr = "frient A/S", model = "HMSZB-110" }
+      { mfr = "frient A/S", model = "HMSZB-110" },
+      { mfr = "frient A/S", model = "HMSZB-120" },
+      { mfr = "frient A/S", model = "AQSZB-110" }
     },
     CONFIGURATION = {
       {
         cluster = RelativeHumidity.ID,
         attribute = RelativeHumidity.attributes.MeasuredValue.ID,
         minimum_interval = 60,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
-        reportable_change = 100
+        reportable_change = 300
       },
       {
         cluster = TemperatureMeasurement.ID,
         attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
-        minimum_interval = 60,
-        maximum_interval = 600,
+        minimum_interval = 30,
+        maximum_interval = 3600,
         data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
-        reportable_change = 10
+        reportable_change = 100
+      },
+      {
+        cluster = PowerConfiguration.ID,
+        attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
+        minimum_interval = 30 ,
+        maximum_interval = 21600,
+        data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
+        reportable_change = 1
       }
     }
   },
   EWELINK_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "eWeLink", model = "TH01" },
-      { mfr = "eWeLink", model = "SNZB-02P" }
+      { mfr = "eWeLink", model = "SNZB-02P" },
+      { mfr = "SONOFF", model = "SNZB-02DR2" }
     },
     CONFIGURATION = {
       {

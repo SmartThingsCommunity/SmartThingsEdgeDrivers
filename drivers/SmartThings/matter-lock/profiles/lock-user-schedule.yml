@@ -1,0 +1,27 @@
+name: lock-user-schedule
+components:
+- id: main
+  capabilities:
+  - id: lock
+    version: 1
+    config:
+      values:
+      - key: "lock.value"
+        enabledValues:
+        - locked
+        - unlocked
+        - not fully locked
+  - id: lockAlarm
+    version: 1
+  - id: remoteControlStatus
+    version: 1
+  - id: lockUsers
+    version: 1
+  - id: lockSchedules
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartLock

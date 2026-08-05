@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -21,6 +10,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local presence_utils = require "presence_utils"
 
 -- Needed for building ConfigureReportingResponse msg
 local messages = require "st.zigbee.messages"
@@ -46,9 +36,7 @@ local mock_simple_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_simple_device)end
 
 local function build_config_response_msg(cluster, status)
   local addr_header = messages.AddressHeader(
@@ -90,7 +78,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 17
     }
 )
 
@@ -107,14 +96,28 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, IdentifyCluster.server.commands.Identify(mock_simple_device, 0x05) }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
 local add_device = function()
+  -- The initial presenceSensor event should be send during the device's first time onboarding
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
     capabilities.presenceSensor.presence("present")
   ))
+  test.socket.zigbee:__expect_send({
+    mock_simple_device.id,
+    PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
+  })
+  test.wait_for_events()
+end
+
+local add_device_after_switch_over = function()
+  -- Avoid sending the initial presenceSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.zigbee:__expect_send({
     mock_simple_device.id,
     PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
@@ -147,7 +150,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence.present()))
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -180,14 +186,21 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
     "Added lifecycle should be handlded",
     function ()
       add_device()
-    end
+      add_device_after_switch_over()
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -201,9 +214,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()
-        zigbee_test_utils.init_noop_health_check_timer()
-      end
+      test_init = function()      end,      min_api_version = 17
     }
 )
 
@@ -232,7 +243,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(121)
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -264,7 +278,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(305)
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -294,7 +311,110 @@ test.register_coroutine_test(
         PowerConfiguration.ID
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "battery_config_response_handler cancels pre-existing recurring poll timer",
+  function()
+    -- Place a live timer in the field so the nil-check branch is taken.
+    local pre_timer = test.timer.__create_test_time_advance_timer(60, "interval")
+    mock_simple_device:set_field(presence_utils.RECURRING_POLL_TIMER, pre_timer)
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      build_config_response_msg(PowerConfiguration.ID, 0x00)
+    })
+    -- poke() emits "present" for every inbound zigbee message
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present"))
+    )
+    test.wait_for_events()
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "info_changed with changed check_interval cancels existing recurring poll timer",
+  function()
+    local pre_timer = test.timer.__create_test_time_advance_timer(60, "interval")
+    mock_simple_device:set_field(presence_utils.RECURRING_POLL_TIMER, pre_timer)
+    test.socket.device_lifecycle():__queue_receive(
+      mock_simple_device:generate_info_changed({ preferences = { check_interval = 100 } })
+    )
+    test.wait_for_events()
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+-- Build two additional mock devices (module-level) for checkInterval type variants.
+-- The profile default sets checkInterval = 120 (number); we override after building.
+local mock_device_str_interval = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("smartthings-arrival-sensor.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "SmartThings",
+        model = "tagv4",
+        server_clusters = {0x0000, 0x0001, 0x0003}
+      }
+    }
+  }
+)
+mock_device_str_interval.preferences.checkInterval = "120"  -- string → triggers elseif branch
+
+local mock_device_nil_interval = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("smartthings-arrival-sensor.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "SmartThings",
+        model = "tagv4",
+        server_clusters = {0x0000, 0x0001, 0x0003}
+      }
+    }
+  }
+)
+mock_device_nil_interval.preferences.checkInterval = nil  -- nil → triggers default-return branch
+
+test.register_coroutine_test(
+  "init with string checkInterval uses parsed value for presence timeout",
+  function()
+    test.mock_device.add_test_device(mock_device_str_interval)
+    test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_str_interval.id, "init" })
+    test.wait_for_events()
+    test.mock_time.advance_time(121)
+    test.socket.capability:__expect_send(
+      mock_device_str_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
+    )
+  end,
+  { test_init = function() end, min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "init with nil checkInterval uses default presence timeout",
+  function()
+    test.mock_device.add_test_device(mock_device_nil_interval)
+    test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_nil_interval.id, "init" })
+    test.wait_for_events()
+    test.mock_time.advance_time(121)
+    test.socket.capability:__expect_send(
+      mock_device_nil_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
+    )
+  end,
+  { test_init = function() end, min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

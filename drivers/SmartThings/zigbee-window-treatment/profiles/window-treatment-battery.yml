@@ -8,6 +8,8 @@ components:
     version: 1
   - id: windowShadeLevel
     version: 1
+  - id: statelessWindowShadeLevelStep
+    version: 1
   - id: battery
     version: 1
   - id: firmwareUpdate
@@ -16,6 +18,3 @@ components:
     version: 1
   categories:
   - name: Blind
-preferences:
-  - preferenceId: presetPosition
-    explicit: true

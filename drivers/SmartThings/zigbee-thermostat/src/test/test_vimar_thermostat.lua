@@ -1,16 +1,5 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -69,9 +58,7 @@ local function test_init()
   mock_device_vimar_heating:set_field(VIMAR_CURRENT_PROFILE, ThermostatMode.thermostatMode.heat.NAME, { persist = true })
   mock_device_vimar_cooling:set_field(VIMAR_CURRENT_PROFILE, ThermostatMode.thermostatMode.cool.NAME, { persist = true })
   test.mock_device.add_test_device(mock_device_vimar_heating)
-  test.mock_device.add_test_device(mock_device_vimar_cooling)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device_vimar_cooling)end
 
 test.set_test_init_function(test_init)
 
@@ -98,6 +85,9 @@ test.register_message_test(
         capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -126,6 +116,9 @@ test.register_message_test(
         capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 30.0, unit = "C" })
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -154,6 +147,9 @@ test.register_message_test(
         capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 18.0, unit = "C" })
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -190,7 +186,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device_vimar_cooling)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -226,7 +225,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device_vimar_cooling)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -265,7 +267,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device_vimar_cooling)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -304,7 +309,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device_vimar_cooling)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -365,7 +373,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device_vimar_cooling, 2720)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -402,7 +413,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_vimar_heating)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -438,7 +452,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_vimar_heating)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -477,7 +494,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_vimar_heating)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (SmartThings -> Device)
@@ -516,7 +536,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_vimar_heating)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -577,7 +600,10 @@ test.register_coroutine_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device_vimar_heating, 1920)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -609,6 +635,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -640,6 +669,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -696,6 +728,9 @@ test.register_message_test(
         Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_vimar_heating)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -753,6 +788,9 @@ test.register_message_test(
         Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device_vimar_cooling)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -780,7 +818,10 @@ test.register_coroutine_test(
         }
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test (Device -> SmartThings)
@@ -807,7 +848,10 @@ test.register_coroutine_test(
         }
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
