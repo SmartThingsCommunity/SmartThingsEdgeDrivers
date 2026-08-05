@@ -54,7 +54,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -109,7 +109,6 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 14,
      max_api_version = 19
   }
 )
@@ -204,7 +203,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -219,7 +218,7 @@ test.register_coroutine_test(
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

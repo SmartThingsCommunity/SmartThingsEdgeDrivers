@@ -568,7 +568,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -590,7 +590,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -625,7 +625,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -695,7 +695,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -720,7 +720,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_common,
-    min_api_version = 14
+    
   }
 )
 
@@ -828,7 +828,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

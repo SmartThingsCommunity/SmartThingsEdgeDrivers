@@ -71,7 +71,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 14
+   
 }
 )
 
@@ -109,7 +109,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 14
+   
 }
 )
 
@@ -148,7 +148,7 @@ test.register_message_test(
   },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -196,7 +196,7 @@ test.register_message_test(
   },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -220,7 +220,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -244,7 +244,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -268,7 +268,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -308,7 +308,7 @@ test.register_message_test(
 
 },
 {
-   min_api_version = 14
+   
 }
 )
 
@@ -348,7 +348,7 @@ test.register_message_test(
 
 },
 {
-   min_api_version = 14
+   
 }
 )
 
@@ -373,7 +373,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 14
+     
   }
 )
 -- run the tests

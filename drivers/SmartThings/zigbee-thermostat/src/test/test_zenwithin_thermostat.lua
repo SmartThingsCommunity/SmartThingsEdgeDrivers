@@ -49,7 +49,7 @@ test.register_coroutine_test(
       end
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -69,7 +69,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 test.register_message_test(
@@ -88,7 +88,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -108,7 +108,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -149,7 +149,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -211,7 +211,7 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -291,7 +291,7 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -426,7 +426,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -461,7 +461,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -476,7 +476,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -519,7 +519,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -534,7 +534,7 @@ test.register_coroutine_test(
       assert(mock_device:get_field("minHeatSetpoint") == 500, "minHeatSetpoint field not stored correctly")
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -549,7 +549,7 @@ test.register_coroutine_test(
       assert(mock_device:get_field("maxHeatSetpoint") == 3500, "maxHeatSetpoint field not stored correctly")
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -564,7 +564,7 @@ test.register_coroutine_test(
       assert(mock_device:get_field("minCoolSetpoint") == 1600, "minCoolSetpoint field not stored correctly")
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -579,7 +579,7 @@ test.register_coroutine_test(
       assert(mock_device:get_field("maxCoolSetpoint") == 3200, "maxCoolSetpoint field not stored correctly")
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -617,7 +617,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -655,7 +655,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -691,7 +691,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -727,7 +727,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -884,7 +884,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 

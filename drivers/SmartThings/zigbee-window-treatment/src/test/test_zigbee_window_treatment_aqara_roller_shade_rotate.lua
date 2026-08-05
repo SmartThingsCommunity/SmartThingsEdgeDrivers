@@ -116,7 +116,7 @@ test.register_coroutine_test(
         PREF_REVERSE_OFF) })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -151,7 +151,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -173,7 +173,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -195,7 +195,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -217,7 +217,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -246,7 +246,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -275,7 +275,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -294,7 +294,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -313,7 +313,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -333,7 +333,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -371,7 +371,7 @@ test.register_coroutine_test(
       initializedStateWithGuide.initializedStateWithGuide.initialized()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -395,7 +395,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -427,7 +427,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -446,7 +446,7 @@ test.register_coroutine_test(
       initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -466,7 +466,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -507,7 +507,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, message })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

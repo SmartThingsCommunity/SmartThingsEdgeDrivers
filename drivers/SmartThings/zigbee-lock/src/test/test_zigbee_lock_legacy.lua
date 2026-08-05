@@ -81,7 +81,7 @@ test.register_coroutine_test(
 
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -96,7 +96,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({mock_device.id, Alarm.attributes.AlarmCount:read(mock_device)})
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -116,7 +116,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -136,7 +136,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -163,7 +163,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -196,7 +196,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -215,7 +215,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -234,7 +234,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -253,7 +253,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -273,7 +273,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -284,7 +284,7 @@ test.register_coroutine_test(
       expect_reload_all_codes_messages()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -303,7 +303,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -345,7 +345,7 @@ test.register_coroutine_test(
       ))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -395,7 +395,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -453,7 +453,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false } })))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -471,7 +471,7 @@ test.register_coroutine_test(
       capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false } })))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -545,7 +545,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -580,7 +580,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -615,7 +615,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -654,7 +654,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -689,7 +689,7 @@ test.register_coroutine_test(
           capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false } })))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -746,7 +746,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -777,7 +777,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -843,7 +843,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -862,7 +862,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -881,7 +881,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -909,7 +909,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -939,7 +939,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } })))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 

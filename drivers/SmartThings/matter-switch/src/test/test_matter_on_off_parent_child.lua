@@ -874,7 +874,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_switch) end,
-    min_api_version = 14
+    
   }
 )
 

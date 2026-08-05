@@ -66,7 +66,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -90,7 +90,7 @@ test.register_coroutine_test(
       capabilities.batteryLevel.battery("normal")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -108,7 +108,7 @@ test.register_coroutine_test(
     capabilities.batteryLevel.battery("normal")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -126,7 +126,7 @@ test.register_coroutine_test(
     capabilities.batteryLevel.battery("critical")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -144,7 +144,7 @@ test.register_coroutine_test(
     capabilities.batteryLevel.battery("normal")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -162,7 +162,7 @@ test.register_coroutine_test(
     capabilities.batteryLevel.battery("warning")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -180,7 +180,7 @@ test.register_coroutine_test(
     capabilities.batteryLevel.battery("critical")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -198,7 +198,7 @@ test.register_coroutine_test(
       capabilities.contactSensor.contact.closed()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -216,7 +216,7 @@ test.register_coroutine_test(
       capabilities.contactSensor.contact.open()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

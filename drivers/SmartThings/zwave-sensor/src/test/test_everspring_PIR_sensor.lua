@@ -58,7 +58,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -81,7 +81,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -108,7 +108,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -130,7 +130,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -153,7 +153,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 14
+       
     }
 )
 
@@ -203,7 +203,7 @@ test.register_coroutine_test(
       ))
     end,
     {
-       min_api_version = 14
+       
     }
 )
 

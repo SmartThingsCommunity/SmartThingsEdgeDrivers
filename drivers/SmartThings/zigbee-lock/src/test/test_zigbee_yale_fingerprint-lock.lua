@@ -48,7 +48,7 @@ test.register_message_test(
     },
     {
        test_init = test_init,
-       min_api_version = 14
+       
     }
 )
 

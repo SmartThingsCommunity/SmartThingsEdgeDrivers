@@ -63,7 +63,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -91,7 +91,7 @@ test.register_coroutine_test(
         data_types.Uint8, updates.preferences["stse.sensitivity"]) })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -119,7 +119,7 @@ test.register_coroutine_test(
         data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -147,7 +147,7 @@ test.register_coroutine_test(
         data_types.Uint8, updates.preferences["stse.approachDistance"]) })
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -165,7 +165,7 @@ test.register_coroutine_test(
       PresenceSensor.presence("present")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -183,7 +183,7 @@ test.register_coroutine_test(
       PresenceSensor.presence("not present")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -206,7 +206,7 @@ test.register_coroutine_test(
       MovementSensor.movement("noMovement")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -229,7 +229,7 @@ test.register_coroutine_test(
       MovementSensor.movement("noMovement")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -252,7 +252,7 @@ test.register_coroutine_test(
       MovementSensor.movement("noMovement")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -275,7 +275,7 @@ test.register_coroutine_test(
       MovementSensor.movement("noMovement")))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

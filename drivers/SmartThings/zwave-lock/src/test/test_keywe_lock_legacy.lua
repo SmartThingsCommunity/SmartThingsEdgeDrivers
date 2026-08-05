@@ -46,7 +46,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -59,7 +59,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

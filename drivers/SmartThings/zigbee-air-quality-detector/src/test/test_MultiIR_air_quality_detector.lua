@@ -73,7 +73,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_AQI_messge})
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -95,7 +95,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -117,7 +117,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -137,7 +137,7 @@ test.register_coroutine_test(
       capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "good"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -157,7 +157,7 @@ test.register_coroutine_test(
       capabilities.fineDustHealthConcern.fineDustHealthConcern.good()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -177,7 +177,7 @@ test.register_coroutine_test(
       capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.good()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -197,7 +197,7 @@ test.register_coroutine_test(
      capabilities.dustHealthConcern.dustHealthConcern.good()))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -215,7 +215,7 @@ test.register_coroutine_test(
       capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 1000.0, unit = "mg/m^3"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -235,7 +235,7 @@ test.register_coroutine_test(
       capabilities.tvocHealthConcern.tvocHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -253,7 +253,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "good"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -271,7 +271,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "moderate"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -289,7 +289,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "slightlyUnhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -307,7 +307,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -325,7 +325,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "veryUnhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -343,7 +343,7 @@ test.register_coroutine_test(
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "hazardous"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -363,7 +363,7 @@ test.register_coroutine_test(
       capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "moderate"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -383,7 +383,7 @@ test.register_coroutine_test(
       capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -403,7 +403,7 @@ test.register_coroutine_test(
       capabilities.fineDustHealthConcern.fineDustHealthConcern({value = "moderate"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -423,7 +423,7 @@ test.register_coroutine_test(
       capabilities.fineDustHealthConcern.fineDustHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -443,7 +443,7 @@ test.register_coroutine_test(
       capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -463,7 +463,7 @@ test.register_coroutine_test(
       capabilities.dustHealthConcern.dustHealthConcern({value = "unhealthy"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 
@@ -483,7 +483,7 @@ test.register_coroutine_test(
       capabilities.tvocHealthConcern.tvocHealthConcern({value = "good"})))
   end,
   {
-     min_api_version = 14
+     
   }
 )
 

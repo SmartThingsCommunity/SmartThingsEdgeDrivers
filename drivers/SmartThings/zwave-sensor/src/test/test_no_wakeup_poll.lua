@@ -100,7 +100,7 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed",
-    min_api_version = 14
+    
   }
 )
 

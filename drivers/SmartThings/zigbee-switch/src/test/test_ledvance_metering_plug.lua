@@ -70,7 +70,7 @@ test.register_coroutine_test(
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
   end,
   {
-    min_api_version = 14
+    
   }
 )
 
@@ -100,7 +100,7 @@ test.register_coroutine_test(
     assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
   end,
   {
-    min_api_version = 14
+    
   }
 )
 
