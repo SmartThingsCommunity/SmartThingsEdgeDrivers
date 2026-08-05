@@ -447,7 +447,10 @@ test.register_coroutine_test(
 			)
 		})
 	end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
 	"Alarm off command should send StartWarning stop",
@@ -474,7 +477,10 @@ test.register_coroutine_test(
 			)
 		})
 	end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
 	"Default response to StartWarning should emit alarm events",
@@ -500,7 +506,10 @@ test.register_coroutine_test(
 		)
 		test.wait_for_events()
 	end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()
 

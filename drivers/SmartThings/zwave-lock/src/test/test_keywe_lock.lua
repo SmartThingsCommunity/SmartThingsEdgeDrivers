@@ -89,6 +89,9 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({ mock_device.id, Notification:Report({notification_type = 6, event = 25}) } )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="manual"}})))
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()
