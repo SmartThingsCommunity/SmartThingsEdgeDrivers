@@ -449,7 +449,7 @@ test.register_coroutine_test(
 	end
 ,
     {
-      min_api_version = 15
+      min_api_version = 17
     })
 
 test.register_coroutine_test(
@@ -479,7 +479,7 @@ test.register_coroutine_test(
 	end
 ,
     {
-      min_api_version = 15
+      min_api_version = 17
     })
 
 test.register_coroutine_test(
@@ -508,7 +508,7 @@ test.register_coroutine_test(
 	end
 ,
     {
-      min_api_version = 15
+      min_api_version = 17
     })
 
 test.run_registered_tests()
