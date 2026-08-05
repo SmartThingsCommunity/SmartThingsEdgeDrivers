@@ -17,17 +17,17 @@ components:
     version: 1
   categories:
     - name: SmokeDetector
-automation:
-  conditions:
-    - label: "Smoke Detection Status"
-      displayType: list
-      list:
-        alternatives:
-          - key: fireAlarm
-            value: Smoke Alarm Detected
-            type: active
-          - key: noSound
-            value: No Smoke Alarm Detected
-            type: inactive
-        value: soundDetection.value
-        valueType: string
+# automation:
+#   conditions:
+#     - label: "Smoke Detection Status"
+#       displayType: list
+#       list:
+#         alternatives:
+#           - key: fireAlarm
+#             value: Smoke Alarm Detected
+#             type: active
+#           - key: noSound
+#             value: No Smoke Alarm Detected
+#             type: inactive
+#         value: soundDetection.value
+#         valueType: string
