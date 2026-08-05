@@ -1,0 +1,43 @@
+name: air-purifier-hepa-ac-temperature-humidity-fan-aqs-pm25-tvoc-meas
+components:
+- id: main
+  label: Main
+  capabilities:
+  - id: airPurifierFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: fineDustSensor
+    version: 1
+  - id: tvocMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: airQualityHealthConcern
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: hepaFilter
+  label: Hepa Filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: activatedCarbonFilter
+  label: Activated Carbon Filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: AirPurifier

@@ -13,25 +13,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Creates file "$/files.csv", among others
-      - id: file_changes
-        name: Gather file changes
-        uses: trilom/file-changes-action@1.2.4
-        with:
-          output: ','
-          fileOutput: ','
-
-      # For verification
-      - name: Show files changed
-        run: |
-          cat $HOME/files.csv
+      - name: Gather file changes
+        id: changed-files
+        uses: tj-actions/changed-files@v47
 
       - name: Run python script
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
           python ./.github/scripts/check_duplicates.py
 
       - name: Upload duplicate profile comment artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: duplicate_profile_comment
           path: |
@@ -40,7 +33,7 @@ jobs:
       - run: echo ${{ github.event.number }} > pr_number.txt
 
       - name: Upload PR info
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: |

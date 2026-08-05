@@ -1,0 +1,6 @@
+name: 'Matter HRAP'
+packageKey: 'matter-hrap'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter HRAP devices"
+vendorSupportInformation: "https://support.smartthings.com"

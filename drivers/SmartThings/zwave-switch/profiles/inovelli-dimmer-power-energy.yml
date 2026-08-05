@@ -27,24 +27,48 @@ components:
   categories:
   - name: Light
 - id: button1
+  label: Down Button
   capabilities:
   - id: button
     version: 1
   categories:
   - name: RemoteController
 - id: button2
+  label: Up Button
   capabilities:
     - id: button
       version: 1
   categories:
     - name: RemoteController
 - id: button3
+  label: Config Button
   capabilities:
     - id: button
       version: 1
   categories:
     - name: RemoteController
 preferences:
+  - name: "notificationChild"
+    title: "Add Child Device - Notification"
+    description: "Create Separate Child Device for Notification Control"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: "notificationType"
+    title: "Notification Effect"
+    description: "This is the notification effect used by the notification child device"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Clear"
+        "1": "Solid"
+        "2": "Chase"
+        "3": "Fast Blink"
+        "4": "Slow Blink"
+        "5": "Pulse"
+      default: 1
   - name: "dimmingSpeed"
     title: "Dimming Speed"
     description: "How fast or slow the light changes state when you hold the switch.

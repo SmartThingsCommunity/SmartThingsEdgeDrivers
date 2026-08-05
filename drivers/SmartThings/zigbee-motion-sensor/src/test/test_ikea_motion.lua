@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -44,9 +34,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
@@ -70,6 +58,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -109,7 +100,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -129,7 +123,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(180)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -150,7 +147,10 @@ test.register_coroutine_test(
       }
     )
     test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -209,7 +209,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -232,7 +235,38 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Second OnWithTimedOff cancels existing timer and resets motion",
+  function()
+    local frm_ctrl = FrameCtrl(0x01)
+    -- Pre-register two timers: first will be cancelled, second will fire
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    -- First motion event
+    local first_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    first_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, first_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Second motion event before first timer fires - cancels first timer
+    local second_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    second_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, second_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Only the second timer fires
+    test.mock_time.advance_time(180)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

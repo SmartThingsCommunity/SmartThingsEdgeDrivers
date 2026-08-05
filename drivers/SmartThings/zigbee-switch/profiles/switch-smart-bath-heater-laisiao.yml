@@ -1,0 +1,62 @@
+name: switch-smart-bath-heater-laisiao
+components:  
+  - id: main
+    label: "待机"
+    capabilities:
+      - id: switch
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch2
+    label: "照明"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch3
+    label: "强暖"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch4
+    label: "弱暖"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch5
+    label: "换气"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch6
+    label: "自然风"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch7
+    label: "干燥"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater
+  - id: switch8
+    label: "摆页"
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: BathroomHeater

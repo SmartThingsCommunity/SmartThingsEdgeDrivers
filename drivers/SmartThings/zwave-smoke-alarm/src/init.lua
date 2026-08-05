@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -30,7 +20,7 @@ local preferencesMap = require "preferences"
 local function update_preferences(self, device, args)
   local preferences = preferencesMap.get_device_parameters(device)
   for id, value in pairs(device.preferences) do
-    if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
+    if not (args and args.old_st_store and args.old_st_store.preferences) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
       device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
     end
@@ -83,18 +73,14 @@ local driver_template = {
     capabilities.temperatureAlarm,
     capabilities.temperatureMeasurement
   },
-  sub_drivers = {
-    require("zwave-smoke-co-alarm-v1"),
-    require("zwave-smoke-co-alarm-v2"),
-    require("fibaro-smoke-sensor"),
-    require("apiv6_bugfix"),
-  },
+  sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure,
     added = device_added
-  }
+  },
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)

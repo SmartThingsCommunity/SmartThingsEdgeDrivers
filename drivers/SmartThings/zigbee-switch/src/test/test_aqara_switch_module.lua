@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -51,9 +40,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -67,7 +54,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -81,7 +71,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -95,7 +88,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -103,9 +99,13 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "on", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -113,9 +113,13 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "off", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -134,7 +138,10 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -158,7 +165,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 1000000.0 }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -170,7 +180,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -182,7 +195,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

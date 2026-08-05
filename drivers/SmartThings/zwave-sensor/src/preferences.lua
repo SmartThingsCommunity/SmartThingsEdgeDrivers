@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -148,7 +138,33 @@ local devices = {
       ledLowBrightness = {parameter_number = 82, size = 2},
       ledHighBrightness = {parameter_number = 83, size = 2}
     }
-  }
+  },
+  SHELLY_WAVE_MOTION_SENSOR = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_types = 0x0100,
+      product_ids = {0x0082}
+    },
+    PARAMETERS = {
+      ledOpnClsChangeStat = {parameter_number = 157, size = 1},
+      sensitivity = {parameter_number = 158, size = 1},
+      blindTime = {parameter_number = 159, size = 2},
+      motionNotdetRepT = {parameter_number = 160, size = 2},
+    },
+  },
+  ZOOZ_ZSE42_WATER_LEAK = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x7000,
+      product_ids = 0xE002
+    },
+    PARAMETERS = {
+      ledIndicator = { parameter_number = 1, size = 1 },
+      leakAlertClearDelay = { parameter_number = 2, size = 4 },
+      batteryThreshold = { parameter_number = 3, size = 1 },
+      lowBatteryAlert = { parameter_number = 4, size = 1 },
+    },
+  },
 }
 local preferences = {}
 
@@ -156,7 +172,7 @@ preferences.update_preferences = function(driver, device, args)
   local prefs = preferences.get_device_parameters(device)
   if prefs ~= nil then
     for id, value in pairs(device.preferences) do
-      if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
+      if not (args and args.old_st_store and args.old_st_store.preferences) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
         local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
         device:send(Configuration:Set({parameter_number = prefs[id].parameter_number, size = prefs[id].size, configuration_value = new_parameter_value}))
       end

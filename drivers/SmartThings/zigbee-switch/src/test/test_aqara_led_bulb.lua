@@ -1,16 +1,5 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -18,6 +7,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local capabilities = require "st.capabilities"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -53,20 +43,27 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "Handle added lifecycle",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+      PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Configure should configure all necessary attributes and refresh device",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
 
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID
-          , MFG_CODE, data_types.Uint8, 1)
-      }
-    )
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnTransitionTime:write(mock_device, 0) })
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OffTransitionTime:write(mock_device, 0) })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -110,7 +107,78 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17,
+     max_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes and refresh device",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.commands.MoveToColorTemperature(mock_device, 200, 0)
+      }
+    )
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Level.ID)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Level.attributes.CurrentLevel:configure_reporting(mock_device, 1, 3600, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, ColorControl.ID)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.ColorTemperatureMireds:configure_reporting(mock_device, 1, 3600, 16)
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.ColorTempPhysicalMaxMireds:configure_reporting(mock_device, 1, 43200, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
+      }
+    )
+
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+     min_api_version = 20
+  }
 )
 
 test.register_coroutine_test(
@@ -120,6 +188,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = { 200 } } })
 
+    mock_device:expect_native_cmd_handler_registration("colorTemperature", "setColorTemperature")
     local temp_in_mired = math.floor(1000000 / 200)
     test.socket.zigbee:__expect_send(
       {
@@ -133,7 +202,10 @@ test.register_coroutine_test(
         ColorControl.commands.MoveToColorTemperature(mock_device, temp_in_mired, 0x0000)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -145,7 +217,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

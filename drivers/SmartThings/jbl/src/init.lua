@@ -82,6 +82,11 @@ local function update_connection(driver, device, device_ip, device_info)
   local conn_info = driver.discovery_helper.get_connection_info(driver, device_dni, device_ip, device_info)
 
   local credential = device:get_field(fields.CREDENTIAL)
+  if not credential then
+    log.error("update_connection : failed to find credential, dni = " .. tostring(device_dni))
+    device:offline()
+    return
+  end
 
   conn_info:add_header(CREDENTIAL_KEY_HEADER, credential)
 
@@ -179,6 +184,16 @@ local function device_init(driver, device)
 
   refresh(driver, device, nil)
   device:set_field(fields._INIT, true, { persist = false })
+
+  device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
+    capabilities.mediaPlayback.commands.play.NAME,
+    capabilities.mediaPlayback.commands.pause.NAME,
+  }))
+
+  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+    capabilities.mediaTrackControl.commands.nextTrack.NAME,
+    capabilities.mediaTrackControl.commands.previousTrack.NAME,
+  }))
 end
 
 local lan_driver = Driver("jbl",
@@ -204,7 +219,6 @@ local lan_driver = Driver("jbl",
       [capabilities.mediaPlayback.ID] = {
         [capabilities.mediaPlayback.commands.play.NAME] = jbl_capability_handler.playback_play_handler,
         [capabilities.mediaPlayback.commands.pause.NAME] = jbl_capability_handler.playback_pause_handler,
-        [capabilities.mediaPlayback.commands.stop.NAME] = jbl_capability_handler.playback_stop_handler,
       },
       [capabilities.audioNotification.ID] = {
         [capabilities.audioNotification.commands.playTrack.NAME] = jbl_capability_handler.audioNotification_handler,

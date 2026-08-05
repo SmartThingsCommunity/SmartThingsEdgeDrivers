@@ -1,8 +1,13 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
+local window_treatment_utils = require "window_treatment_utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -10,8 +15,8 @@ local AnalogOutput = clusters.AnalogOutput
 local Groups = clusters.Groups
 
 local deviceInitialization = capabilities["stse.deviceInitialization"]
-local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
-local softTouch = capabilities["stse.softTouch"]
+local reverseCurtainDirection = "stse.reverseCurtainDirection"
+local softTouch = "stse.softTouch"
 local setInitializedStateCommandName = "setInitializedState"
 
 local INIT_STATE = "initState"
@@ -26,20 +31,7 @@ local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
 local APPLICATION_VERSION = "application_version"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.curtain" },
-  { mfr = "LUMI", model = "lumi.curtain.v1" },
-  { mfr = "LUMI", model = "lumi.curtain.aq2" }
-}
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function window_shade_level_cmd(driver, device, command)
   aqara_utils.shade_level_cmd(driver, device, command)
@@ -131,12 +123,12 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
-    local softTouchPrefValue = device.preferences[softTouch.ID]
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection]
+    local softTouchPrefValue = device.preferences[softTouch]
 
     -- reverse direction
     if reverseCurtainDirectionPrefValue ~= nil and
-        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
+        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection] then
       local raw_value = reverseCurtainDirectionPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -150,7 +142,7 @@ local function device_info_changed(driver, device, event, args)
 
     -- soft touch
     if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch] then
       local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -168,8 +160,8 @@ end
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
   device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }, {visibility = {displayed = false}}))
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
-  device:emit_event(capabilities.windowShade.windowShade.closed())
+  window_treatment_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShadeLevel, capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
+  window_treatment_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShade, capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
   device:emit_event(deviceInitialization.initializedState.notInitialized())
 
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
@@ -215,11 +207,8 @@ local aqara_window_treatment_handler = {
       }
     }
   },
-  sub_drivers = {
-    require("aqara.roller-shade"),
-    require("aqara.version")
-  },
-  can_handle = is_aqara_products
+  sub_drivers = require("aqara.sub_drivers"),
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_window_treatment_handler

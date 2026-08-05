@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
@@ -73,35 +76,47 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.MultiPressComplete,
 }
 
+-- All messages queued and expectations set are done before the driver is actually run
 local function test_init()
+  -- we dont want the integration test framework to generate init/doConfigure, we are doing that here
+  -- so we can set the proper expectations on those events.
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device) -- make sure the cache is populated
+
+  -- added results in a profile update
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  mock_device:expect_metadata_update({ profile = "4-button-battery" })
+
+  -- init results in subscription interaction
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  mock_device:expect_metadata_update({ profile = "4-button-battery" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+
+  --doConfigure sets the provisioing state to provisioned
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  -- simulate the profile change update taking affect and the device info changing
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "4-buttons-battery"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
-
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 50)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
 
+-- this one is failing because it expects added or
 test.register_message_test(
   "Handle single press sequence, no hold", {
   {
@@ -119,6 +134,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -149,6 +167,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button2", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -171,7 +192,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.held({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -193,7 +217,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -214,7 +241,10 @@ test.register_coroutine_test(
         mock_device, 50, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -251,7 +281,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.double({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -276,7 +309,10 @@ test.register_coroutine_test(
         mock_device, 30, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -301,7 +337,10 @@ test.register_coroutine_test(
         mock_device, 50, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -336,6 +375,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.held({state_change = true}))
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -372,6 +414,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
   },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -417,6 +462,9 @@ test.register_message_test(
       )
     }
   },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -438,6 +486,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -459,6 +510,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("button4",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -480,6 +534,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -517,6 +574,9 @@ test.register_message_test(
     message = mock_device:generate_test_message("main", button_attr.double({state_change = true}))
   },
 
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -554,6 +614,9 @@ test.register_message_test(
     message = mock_device:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
   },
 
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -576,6 +639,9 @@ test.register_message_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       ),
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -618,6 +684,9 @@ test.register_message_test(
     }
   }
   -- no double event
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -673,6 +742,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("button4", button_attr.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 -- run the tests

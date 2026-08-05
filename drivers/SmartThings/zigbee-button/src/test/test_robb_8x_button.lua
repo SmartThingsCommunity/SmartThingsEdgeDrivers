@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local base64 = require "st.base64"
@@ -58,9 +47,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 )
 
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -137,7 +124,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -211,6 +201,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.button.button.up_hold({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -289,6 +282,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -331,12 +327,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_add_hub_to_group(0xE903)
     test.socket.zigbee:__expect_add_hub_to_group(0xE904)
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__set_channel_ordering("relaxed")
 
@@ -390,7 +390,62 @@ test.register_coroutine_test(
       mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
-  end
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    for button_name, _ in pairs(mock_device.profile.components) do
+      if button_name ~= "main" and (button_name == "button1" or button_name == "button3" or button_name == "button5" or button_name == "button7") then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "up_hold" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      elseif button_name ~= "main" and (button_name == "button2" or button_name == "button4" or button_name == "button6" or button_name == "button8") then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "down_hold" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      else
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            "main",
+            capabilities.button.supportedButtonValues({ "pushed", "up_hold", "down_hold" },
+              { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            "main",
+            capabilities.button.numberOfButtons({ value = 8 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -429,6 +484,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -444,7 +502,10 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

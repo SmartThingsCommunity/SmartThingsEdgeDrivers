@@ -1,0 +1,17 @@
+name: fan-generic
+components:
+- id: main
+  capabilities:
+  - id: airConditionerFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Fan
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-fan

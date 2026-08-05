@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.defaults.switch
@@ -25,28 +14,6 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local dualSwitchConfigurationsMap = require "zwave-dual-switch/dual_switch_configurations"
 local utils = require "st.utils"
-
-local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
-  { mfr = 0x0086, prod = 0x0103, model = 0x008C }, -- Aeotec Switch 1
-  { mfr = 0x0086, prod = 0x0003, model = 0x008C }, -- Aeotec Switch 1
-  { mfr = 0x0258, prod = 0x0003, model = 0x008B }, -- NEO Coolcam Switch 1
-  { mfr = 0x0258, prod = 0x0003, model = 0x108B }, -- NEO Coolcam Switch 1
-  { mfr = 0x0312, prod = 0xC000, model = 0xC004 }, -- EVA Switch 1
-  { mfr = 0x0312, prod = 0xFF00, model = 0xFF05 }, -- Minoston Switch 1
-  { mfr = 0x0312, prod = 0xC000, model = 0xC007 }, -- Evalogik Switch 1
-  { mfr = 0x010F, prod = 0x1B01, model = 0x1000 }, -- Fibaro Walli Double Switch
-  { mfr = 0x027A, prod = 0xA000, model = 0xA003 }  -- Zooz Double Plug
-}
-
-local function can_handle_zwave_dual_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_DUAL_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("zwave-dual-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function find_child(parent, src_channel)
   if src_channel == 1 then
@@ -117,6 +84,20 @@ local function do_refresh(driver, device, command)
   end
 end
 
+-- Do not use native handlers due to unique component to endpoint mapping
+local function switch_on_handler(driver, device, cmd)
+  switch_defaults.capability_handlers[capabilities.switch.commands.on](driver, device, cmd, false)
+end
+
+local function switch_off_handler(driver, device, cmd)
+  switch_defaults.capability_handlers[capabilities.switch.commands.off](driver, device, cmd, false)
+end
+
+local function set_level_handler(driver, device, cmd)
+  local defaults = require "st.zwave.defaults.switchLevel"
+  defaults.capability_handlers[capabilities.switchLevel.commands.setLevel](driver, device, cmd, false)
+end
+
 local function switch_report(driver, device, cmd)
   switch_defaults.zwave_handlers[cc.SWITCH_BINARY][SwitchBinary.REPORT](driver, device, cmd)
 
@@ -139,13 +120,20 @@ local zwave_dual_switch = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    }
+    },
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = switch_on_handler,
+      [capabilities.switch.commands.off.NAME] = switch_off_handler,
+    },
+    [capabilities.switchLevel.ID] = {
+      [capabilities.switchLevel.commands.setLevel.NAME] = set_level_handler,
+    },
   },
   lifecycle_handlers = {
     added = device_added,
     init = device_init
   },
-  can_handle = can_handle_zwave_dual_switch
+  can_handle = require("zwave-dual-switch.can_handle")
 }
 
 return zwave_dual_switch

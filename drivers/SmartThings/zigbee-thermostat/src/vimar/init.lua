@@ -1,16 +1,6 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local device_management = require "st.zigbee.device_management"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -38,11 +28,6 @@ local VIMAR_THERMOSTAT_MODE_MAP = {
   [ThermostatSystemMode.HEAT] = ThermostatMode.thermostatMode.heat,
 }
 
-local VIMAR_THERMOSTAT_FINGERPRINT = {
-  mfr = "Vimar",
-  model = "WheelThermostat_v1.0"
-}
-
 -- NOTE: This is a global variable to use in order to save the current thermostat profile
 local VIMAR_CURRENT_PROFILE = "_vimarThermostatCurrentProfile"
 
@@ -50,10 +35,6 @@ local VIMAR_THERMOSTAT_HEATING_PROFILE = "thermostat-fanless-heating-no-fw"
 local VIMAR_THERMOSTAT_COOLING_PROFILE = "thermostat-fanless-cooling-no-fw"
 
 
-local vimar_thermostat_can_handle = function(opts, driver, device)
-  return device:get_manufacturer() == VIMAR_THERMOSTAT_FINGERPRINT.mfr and
-      device:get_model() == VIMAR_THERMOSTAT_FINGERPRINT.model
-end
 
 local vimar_thermostat_supported_modes_handler = function(driver, device, supported_modes)
   device:emit_event(
@@ -182,7 +163,7 @@ local vimar_thermostat_subdriver = {
     }
   },
   doConfigure = vimar_thermostat_do_configure,
-  can_handle = vimar_thermostat_can_handle
+  can_handle = require("vimar.can_handle"),
 }
 
 return vimar_thermostat_subdriver

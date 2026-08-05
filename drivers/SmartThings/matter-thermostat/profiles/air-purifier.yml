@@ -1,0 +1,14 @@
+name: air-purifier
+components:
+- id: main
+  capabilities:
+  - id: airPurifierFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier

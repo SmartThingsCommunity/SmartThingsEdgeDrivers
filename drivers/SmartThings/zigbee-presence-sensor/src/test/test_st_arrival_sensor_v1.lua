@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -68,6 +57,7 @@ end
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local add_device = function()
+  -- The initial presenceSensor event should be send during the device's first time onboarding
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
     capabilities.presenceSensor.presence("present")
@@ -75,10 +65,14 @@ local add_device = function()
   test.wait_for_events()
 end
 
-local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+local add_device_after_switch_over = function()
+  -- Avoid sending the initial presenceSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
+  test.wait_for_events()
 end
+
+local function test_init()
+  test.mock_device.add_test_device(mock_simple_device)end
 
 test.set_test_init_function(test_init)
 
@@ -102,7 +96,10 @@ test.register_coroutine_test(
         test.wait_for_events()
         test.mock_time.advance_time(7)
       end
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -120,7 +117,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -128,7 +126,11 @@ test.register_coroutine_test(
     "Added lifecycle should be handlded",
     function ()
       add_device()
-    end
+      add_device_after_switch_over()
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -140,7 +142,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -153,7 +158,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -166,7 +174,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(75)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -179,7 +190,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -193,9 +207,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()
-        zigbee_test_utils.init_noop_health_check_timer()
-      end
+      test_init = function()      end,      min_api_version = 17
     }
 )
 

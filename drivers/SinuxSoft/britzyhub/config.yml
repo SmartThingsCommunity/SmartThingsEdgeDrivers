@@ -1,0 +1,6 @@
+name: 'BritzyHub Matter'
+packageKey: 'britzyhub-matter'
+permissions:
+  matter: {}
+description: "SmartThings Edge driver for BritzyHub Matter devices."
+vendorSupportInformation: "https://sinux.kr"

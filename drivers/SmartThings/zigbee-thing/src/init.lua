@@ -19,6 +19,7 @@ local zigbee_thing_template = {
   supported_capabilities = {
     capabilities.refresh,
   },
+  health_check = false,
 }
 
 local zigbee_thing = ZigbeeDriver("zigbee_thing", zigbee_thing_template)

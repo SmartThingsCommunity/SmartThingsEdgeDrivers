@@ -143,7 +143,8 @@ test.register_message_test(
     table.unpack(refresh_commands)
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -161,7 +162,8 @@ test.register_message_test(
     table.unpack(refresh_commands)
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -178,6 +180,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -194,6 +199,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(1))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -216,6 +224,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool", "auto" }, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -237,6 +248,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto", "circulate" }, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -256,7 +270,18 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -277,6 +302,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 22 }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -294,6 +322,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode({ value = "heat" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -311,6 +342,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode({ value = "circulate" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -331,6 +365,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 21.5, unit = 'C' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -351,6 +388,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 68, unit = 'F' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -376,6 +416,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.heating())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -401,7 +444,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -426,7 +472,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -451,7 +500,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -476,7 +528,10 @@ test.register_coroutine_test(
             ThermostatMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -501,7 +556,10 @@ test.register_coroutine_test(
         ThermostatMode:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -531,7 +589,10 @@ test.register_coroutine_test(
                               })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -582,7 +643,10 @@ test.register_coroutine_test(
                                 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -632,7 +696,65 @@ test.register_coroutine_test(
                                 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Setting the heating setpoint should generate the appropriate commands and round values not at half-degree increments",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpoint:Report(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              scale = 1,
+              value = 68
+            })
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 68, unit = "F" })
+      )
+    )
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 70.2 } } })
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpoint:Set({
+                                setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                                value = 70,
+                                precision = 0,
+                                size = 1,
+                                scale = 1,
+                              })
+      )
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpoint:Get({
+                                setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1
+                              })
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

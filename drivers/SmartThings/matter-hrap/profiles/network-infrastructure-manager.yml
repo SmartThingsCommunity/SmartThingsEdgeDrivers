@@ -1,0 +1,16 @@
+name: network-infrastructure-manager
+components:
+- id: main
+  capabilities:
+  - id: threadBorderRouter
+    version: 1
+  - id: threadNetwork
+    version: 1
+  - id: wifiInformation
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Networking

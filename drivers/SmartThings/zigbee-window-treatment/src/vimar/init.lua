@@ -1,20 +1,10 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 local windowShade = capabilities.windowShade.windowShade
@@ -27,20 +17,8 @@ local windowShade = capabilities.windowShade.windowShade
 local VIMAR_SHADES_OPENING = "_vimarShadesOpening"
 local VIMAR_SHADES_CLOSING = "_vimarShadesClosing"
 
-local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
-    { mfr = "Vimar", model = "Window_Cov_v1.0" },
-    { mfr = "Vimar", model = "Window_Cov_Module_v1.0" }
-}
 
 -- UTILS to check manufacturer details
-local is_zigbee_window_shade = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_WINDOW_SHADE_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 -- ATTRIBUTE HANDLER FOR CurrentPositionLiftPercentage
 local function current_position_attr_handler(driver, device, value, zb_rx)
@@ -124,7 +102,7 @@ end
 
 -- COMMAND HANDLER for PresetPosition
 local function window_shade_preset_handler(driver, device, command)
-  local level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   command.args.shadeLevel = level
   window_shade_set_level_handler(driver, device, command)
 end
@@ -134,6 +112,20 @@ local device_init = function(self, device)
   -- Reset Status
   device:set_field(VIMAR_SHADES_CLOSING, false)
   device:set_field(VIMAR_SHADES_OPENING, false)
+
+  -- for windowshadepreset update migration
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+    device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    -- These should only ever be nil once (and at the same time) for already-installed devices
+    -- It can be removed after migration is complete
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+
+    local preset_position = window_shade_utils.get_preset_level(device, "main")
+
+    device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    device:set_field(window_shade_utils.PRESET_LEVEL_KEY, preset_position, {persist = true})
+  end
 end
 
 -- DRIVER HANDLER CONFIGURATION
@@ -162,7 +154,7 @@ local vimar_handler = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = is_zigbee_window_shade,
+  can_handle = require("vimar.can_handle"),
 }
 
 return vimar_handler

@@ -24,17 +24,54 @@ def getChangedDrivers() {
   return drivers
 }
 
+def get_region() {
+  def url = env.JENKINS_URL?.trim()
+  if (url?.endsWith('/')) {
+    url = url[0..-2]
+  }
+
+  def region = url?.endsWith('.cn') ? 'cn' : 'global'
+  return region
+}
+
+// Gate artifactory-credentials for prod nodes in cn due to a docker authentication error arising in that environment
+def getDockerCredentialId() {
+    def nodeLabel = params.NODE_LABEL ?: 'production'
+    def region = get_region()
+    if (nodeLabel == 'production' && region == 'cn') {
+      return 'artifactory-credentials'
+    }
+    else {
+      return ''
+    }
+}
+// Gate RegistryUrl for prod nodes in cn due to a docker authentication error arising in that environment
+def getRegistryUrl() {
+  def nodeLabel = params.NODE_LABEL ?: 'production'
+  def region = get_region()
+  if (nodeLabel == 'production' && region == 'cn') {
+    return 'https://registry.artifactoryedge.streleng.cn'
+  } else {
+    // Default
+    return ''
+  }
+}
+
 pipeline {
   agent {
     docker {
       image 'python:3.10'
-      label 'production'
+      label  "${params.NODE_LABEL ?: 'production'}"
+      registryUrl getRegistryUrl()
+      registryCredentialsId getDockerCredentialId()
       args '--entrypoint= -u 0:0'
     }
   }
   environment {
     BRANCH = getEnvName()
     CHANGED_DRIVERS = getChangedDrivers()
+    ENVIRONMENT = "${env.NODE_LABEL.toUpperCase()}"
+    FAILURE_FILE = "failures.log"
   }
   stages {
     stage('requirements') {
@@ -51,17 +88,15 @@ pipeline {
       }
     }
     stage('update') {
-      matrix {
-        axes {
-          axis {
-            name 'ENVIRONMENT'
-            values 'DEV', 'STAGING', 'ACCEPTANCE', 'PRODUCTION'
-          }
-        }
-        stages {
-          stage('environment_update') {
-            steps {
-              sh 'python3 tools/deploy.py'
+      stages {
+        stage('environment_update') {
+          steps {
+            sh 'python3 tools/deploy.py'
+            script {
+              if (fileExists(env.FAILURE_FILE)) {
+                currentBuild.description += readFile(env.FAILURE_FILE)
+                currentBuild.result = 'UNSTABLE'
+              }
             }
           }
         }
@@ -69,4 +104,3 @@ pipeline {
     }
   }
 }
-

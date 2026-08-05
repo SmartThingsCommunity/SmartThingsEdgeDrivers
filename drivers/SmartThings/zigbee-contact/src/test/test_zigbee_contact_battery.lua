@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -65,9 +54,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device_sengled)
   test.mock_device.add_test_device(mock_device_nyce)
-  test.mock_device.add_test_device(mock_device_visonic)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device_visonic)end
 
 local test_devices = {}
 test_devices[mock_device_visonic.id] = mock_device_visonic
@@ -99,7 +86,10 @@ test.register_coroutine_test(
           test.wait_for_events()
         end
       end
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -116,6 +106,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_sengled:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -133,6 +126,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_nyce:generate_test_message("main", capabilities.battery.battery(100))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 

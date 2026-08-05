@@ -1,19 +1,9 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
 
@@ -22,18 +12,8 @@ local Level = zcl_clusters.Level
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local WindowCovering = zcl_clusters.WindowCovering
 
-local SOFTWARE_VERSION = "software_version"
-local MIN_WINDOW_COVERING_VERSION = 1093
 local DEFAULT_LEVEL = 0
 
-local is_axis_gear_version = function(opts, driver, device)
-  local version = device:get_field(SOFTWARE_VERSION) or 0
-
-  if version >= MIN_WINDOW_COVERING_VERSION then
-    return true
-  end
-  return false
-end
 
 -- Commands
 local function window_shade_set_level(device, command, level)
@@ -52,7 +32,7 @@ local function window_shade_level_cmd_handler(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   window_shade_set_level(device, command, level)
 end
 
@@ -141,7 +121,7 @@ local axis_handler_version = {
       }
     }
   },
-  can_handle = is_axis_gear_version,
+  can_handle = require("axis.axis_version.can_handle"),
 }
 
 return axis_handler_version

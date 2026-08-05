@@ -124,6 +124,21 @@ zigbeeManufacturer:
     manufacturer: Resideo Korea
     model: DT300ST-M000
     deviceProfileName: thermostat-resideo-dt300st-m000
+  - id: "Resideo Korea/MC200ST"
+    deviceLabel: Valve Controller
+    manufacturer: Resideo Korea
+    model: MC200ST
+    deviceProfileName: thermostat-resideo-dt300st-m000
+  - id: "LUMI/lumi.airrtc.agl001"
+    deviceLabel: Aqara Smart Radiator Thermostat E1
+    manufacturer: LUMI
+    model: lumi.airrtc.agl001
+    deviceProfileName: thermostat-aqara
+  - id: "WALL HERO/ACL-403STC1"
+    deviceLabel: WALLHERO Thermostat ACL-403STC1
+    manufacturer: WALL HERO
+    model: ACL-403STC1
+    deviceProfileName: thermostat-thirty-buttons-wallhero
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat

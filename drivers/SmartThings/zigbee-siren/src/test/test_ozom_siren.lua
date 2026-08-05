@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2022 SmartThings, Inc.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -38,9 +38,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -62,6 +60,9 @@ test.register_message_test(
                                                                               data_types.Enum8(0))
         }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -96,7 +97,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -120,7 +124,8 @@ test.register_message_test(
       },
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 17
     }
 )
 

@@ -1,182 +1,165 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local utils = require "st.utils"
+local version = require "version"
+
+local fields = require "sensor_utils.fields"
+local device_cfg = require "sensor_utils.device_configuration"
+local attribute_handlers = require "sensor_handlers.attribute_handlers"
 
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
 if not pcall(function(cluster) return clusters[cluster] end,
              "PressureMeasurement") then
-  clusters.PressureMeasurement = require "PressureMeasurement"
+  clusters.PressureMeasurement = require "embedded_clusters.PressureMeasurement"
 end
 
-local BATTERY_CHECKED = "__battery_checked"
-
-local HUE_MANUFACTURER_ID = 0x100B
-
-local function supports_battery_percentage_remaining(device)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
-    return true
-  end
-  return false
+-- Include driver-side definitions when lua libs api version is < 10
+if version.api < 10 then
+  clusters.AirQuality = require "embedded_clusters.AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+  clusters.SmokeCoAlarm = require "embedded_clusters.SmokeCoAlarm"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
-local function check_for_battery(device)
-  local profile_name = ""
-
-  if device:supports_capability(capabilities.motionSensor) then
-    profile_name = profile_name .. "-motion"
-  end
-
-  if device:supports_capability(capabilities.contactSensor) then
-    profile_name = profile_name .. "-contact"
-  end
-
-  if device:supports_capability(capabilities.illuminanceMeasurement) then
-    profile_name = profile_name .. "-illuminance"
-  end
-
-  if device:supports_capability(capabilities.temperatureMeasurement) then
-    profile_name = profile_name .. "-temperature"
-  end
-
-  if device:supports_capability(capabilities.relativeHumidityMeasurement) then
-    profile_name = profile_name .. "-humidity"
-  end
-
-  if device:supports_capability(capabilities.atmosphericPressureMeasurement) then
-    profile_name = profile_name .. "-pressure"
-  end
-
-  if supports_battery_percentage_remaining(device) then
-    profile_name = profile_name .. "-battery"
-  end
-
-  -- remove leading "-"
-  profile_name = string.sub(profile_name, 2)
-
-  device:try_update_metadata({profile = profile_name})
-  device:set_field(BATTERY_CHECKED, 1, {persist = true})
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.BooleanStateConfiguration = require "embedded_clusters.BooleanStateConfiguration"
 end
 
-local function device_init(driver, device)
-  log.info("device init")
-  if not device:get_field(BATTERY_CHECKED) then
-    check_for_battery(device)
+-- Include driver-side definitions when lua libs api version is < 21
+-- TODO: change this to < 20 once the lua libs have been updated for hub-core 61
+if version.api < 21 then
+  clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+end
+
+local SensorLifecycleHandlers = {}
+
+function SensorLifecycleHandlers.do_configure(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    device:send(clusters.PowerSource.attributes.AttributeList:read())
+  else
+    device_cfg.match_profile(driver, device, fields.battery_support.NO_BATTERY)
   end
+end
+
+function SensorLifecycleHandlers.device_init(driver, device)
+  device.log.info("device init")
+  device_cfg.set_boolean_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
-local function info_changed(driver, device, event, args)
+function SensorLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
+    device_cfg.set_boolean_device_type_per_endpoint(driver, device)
     device:subscribe()
   end
-end
-
-local function illuminance_attr_handler(driver, device, ib, response)
-  local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
-end
-
-local function temperature_attr_handler(driver, device, ib, response)
-  local measured_value = ib.data.value
-  if measured_value ~= nil then
-    local temp = measured_value / 100.0
-    local unit = "C"
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  if not device.preferences then
+    return
   end
-end
-
-local function humidity_attr_handler(driver, device, ib, response)
-  local measured_value = ib.data.value
-  if measured_value ~= nil then
-    local humidity = utils.round(measured_value / 100.0)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
-  end
-end
-
-local function boolean_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
-  end
-end
-
-local function battery_percent_remaining_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
-  end
-end
-
-local function occupancy_attr_handler(driver, device, ib, response)
-  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
-end
-
-local function pressure_attr_handler(driver, device, ib, response)
-  local measured_value = ib.data.value
-  if measured_value ~= nil then
-    local kPa = utils.round(measured_value / 10.0)
-    local unit = "kPa"
-    device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = kPa, unit = unit}))
+  for dt_name, info in pairs(fields.BOOLEAN_DEVICE_TYPE_INFO) do
+    local dt_ep = device:get_field(dt_name)
+    if dt_ep and info.sensitivity_preference and (device.preferences[info.sensitivity_preference] ~= args.old_st_store.preferences[info.sensitivity_preference]) then
+      local sensitivity_preference = device.preferences[info.sensitivity_preference]
+      if sensitivity_preference == "2" then -- high
+        local max_sensitivity_level = device:get_field(info.sensitivity_max) - 1
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, max_sensitivity_level))
+      elseif sensitivity_preference == "1" then -- medium
+        local medium_sensitivity_level = math.floor((device:get_field(info.sensitivity_max) + 1) / 2)
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, medium_sensitivity_level))
+      elseif sensitivity_preference == "0" then -- low
+        local min_sensitivity_level = 0
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, min_sensitivity_level))
+      end
+    end
   end
 end
 
 local matter_driver_template = {
   lifecycle_handlers = {
-    init = device_init,
-    infoChanged = info_changed
+    doConfigure = SensorLifecycleHandlers.do_configure,
+    init = SensorLifecycleHandlers.device_init,
+    infoChanged = SensorLifecycleHandlers.info_changed,
   },
   matter_handlers = {
     attr = {
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      [clusters.BooleanState.ID] = {
+        [clusters.BooleanState.attributes.StateValue.ID] = attribute_handlers.boolean_state_value_handler
       },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler
+      [clusters.BooleanStateConfiguration.ID] = {
+        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = attribute_handlers.sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = attribute_handlers.supported_sensitivity_levels_handler,
+      },
+      [clusters.FlowMeasurement.ID] = {
+        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.flow_measured_value_handler,
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MAX)
       },
       [clusters.IlluminanceMeasurement.ID] = {
-        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
-      },
-      [clusters.BooleanState.ID] = {
-        [clusters.BooleanState.attributes.StateValue.ID] = boolean_attr_handler
-      },
-      [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
+        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.illuminance_measured_value_handler
       },
       [clusters.OccupancySensing.ID] = {
-        [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
+        [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_measured_value_handler,
+      },
+      [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
       },
       [clusters.PressureMeasurement.ID] = {
-        [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
+        [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.pressure_measured_value_handler,
+      },
+      [clusters.RelativeHumidityMeasurement.ID] = {
+        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
+      },
+      [clusters.SoilMeasurement.ID] = {
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue.ID] = attribute_handlers.soil_moisture_measured_value_handler,
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits.ID] = attribute_handlers.soil_moisture_measurement_limits_handler
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
+      },
+      [clusters.Thermostat.ID] = {
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = attribute_handlers.temperature_measured_value_handler -- TemperatureMeasurement.MeasuredValue handler can support this attibute
       },
     }
   },
-  -- TODO Once capabilities all have default handlers move this info there, and
-  -- use `supported_capabilities`
   subscribed_attributes = {
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining
     },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
+    },
+    [capabilities.contactSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue
+    },
+    [capabilities.flowMeasurement.ID] = {
+      clusters.FlowMeasurement.attributes.MeasuredValue,
+      clusters.FlowMeasurement.attributes.MinMeasuredValue,
+      clusters.FlowMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.hardwareFault.ID] = {
+      clusters.BooleanStateConfiguration.attributes.SensorFault,
+      -- THESE ARE USED IN THE CASE OF THE SMOKE CO ALARM.
+      -- TODO: move this unique subscription logic into the subdriver
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
+      clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
@@ -184,27 +167,145 @@ local matter_driver_template = {
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
-    [capabilities.contactSensor.ID] = {
-      clusters.BooleanState.attributes.StateValue
+    [capabilities.presenceSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
     },
-    [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining
+    [capabilities.rainSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits
+    },
+    [capabilities.temperatureAlarm.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+      clusters.Thermostat.attributes.LocalTemperature
+    },
+    [capabilities.waterSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    -- AIR QUALITY SENSOR SPECIFIC CAPABILITIES --
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.atmosphericPressureMeasurement.ID] = {
       clusters.PressureMeasurement.attributes.MeasuredValue
     },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.dustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.formaldehydeMeasurement.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.nitrogenDioxideMeasurement.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.ozoneMeasurement.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.radonMeasurement.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.veryFineDustSensor.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    -- SMOKE CO ALARM SPECIFIC CAPABILITIES --
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.smokeDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
   },
-  capability_handlers = {
+  subscribed_events = {
+    [capabilities.button.ID] = {
+      clusters.Switch.events.InitialPress,
+      clusters.Switch.events.LongPress,
+      clusters.Switch.events.MultiPressComplete,
+    }
   },
+  capability_handlers = {},
   supported_capabilities = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.presenceSensor,
+    capabilities.button,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
+    capabilities.waterSensor,
+    capabilities.temperatureAlarm,
+    capabilities.rainSensor,
+    capabilities.hardwareFault,
+    capabilities.flowMeasurement,
   },
+  sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 local matter_driver = MatterDriver("matter-sensor", matter_driver_template)

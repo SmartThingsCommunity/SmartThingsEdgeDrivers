@@ -1,465 +1,515 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
 local log = require "log"
+local version = require "version"
+local MatterDriver = require "st.matter.driver"
+local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
+local attribute_handlers = require "thermostat_handlers.attribute_handlers"
+local capability_handlers = require "thermostat_handlers.capability_handlers"
+local fields = require "thermostat_utils.fields"
+local thermostat_utils = require "thermostat_utils.utils"
+local embedded_cluster_utils = require "thermostat_utils.embedded_cluster_utils"
 
-local MatterDriver = require "st.matter.driver"
-local utils = require "st.utils"
+if version.api < 10 then
+  clusters.HepaFilterMonitoring = require "embedded_clusters.HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "embedded_clusters.ActivatedCarbonFilterMonitoring"
+  clusters.AirQuality = require "embedded_clusters.AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
+end
 
-local THERMOSTAT_MODE_MAP = {
-  [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
-  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]              = capabilities.thermostatMode.thermostatMode.auto,
-  [clusters.Thermostat.types.ThermostatSystemMode.COOL]              = capabilities.thermostatMode.thermostatMode.cool,
-  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]              = capabilities.thermostatMode.thermostatMode.heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING] = capabilities.thermostatMode.thermostatMode.emergency_heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]          = capabilities.thermostatMode.thermostatMode.fanonly
-}
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+end
 
-local THERMOSTAT_OPERATING_MODE_MAP = {
-  [0]		= capabilities.thermostatOperatingState.thermostatOperatingState.heating,
-  [1]		= capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
-  [2]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
-}
+if version.api < 13 then
+  clusters.WaterHeaterMode = require "embedded_clusters.WaterHeaterMode"
+end
 
-local setpoint_limit_device_field = {
-  MIN_HEAT = "MIN_HEAT",
-  MAX_HEAT = "MAX_HEAT",
-  MIN_COOL = "MIN_COOL",
-  MAX_COOL = "MAX_COOL",
-  MIN_DEADBAND = "MIN_DEADBAND",
-}
+local ThermostatLifecycleHandlers = {}
 
-local subscribed_attributes = {
-  [capabilities.temperatureMeasurement.ID] = {
-    clusters.Thermostat.attributes.LocalTemperature,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue
-  },
-  [capabilities.relativeHumidityMeasurement.ID] = {
-    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-  },
-  [capabilities.thermostatMode.ID] = {
-    clusters.Thermostat.attributes.SystemMode,
-    clusters.Thermostat.attributes.ControlSequenceOfOperation
-  },
-  [capabilities.thermostatOperatingState.ID] = {
-    clusters.Thermostat.attributes.ThermostatRunningState
-  },
-  [capabilities.thermostatFanMode.ID] = {
-    clusters.FanControl.attributes.FanModeSequence,
-    clusters.FanControl.attributes.FanMode
-  },
-  [capabilities.thermostatCoolingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint
-  },
-  [capabilities.thermostatHeatingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint
-  },
-  [capabilities.battery.ID] = {
-    clusters.PowerSource.attributes.BatPercentRemaining
-  }
-}
+function ThermostatLifecycleHandlers.device_added(driver, device)
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
+  req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
+  req:merge(clusters.FanControl.attributes.WindSupport:read(device))
+  req:merge(clusters.FanControl.attributes.RockSupport:read(device))
 
-local function find_default_endpoint(device, cluster)
-  local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(cluster)
-  table.sort(eps)
-  for _, v in ipairs(eps) do
-    if v ~= 0 then --0 is the matter RootNode endpoint
-      return v
-    end
+  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
+  if #thermostat_eps > 0 then
+    req:merge(clusters.Thermostat.attributes.AttributeList:read(device))
+  else
+    device:set_field(fields.profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, false)
   end
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return res
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    req:merge(clusters.PowerSource.attributes.AttributeList:read(device))
+  else
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY)
+  end
+  device:send(req)
+  local heat_pump_eps = thermostat_utils.get_endpoints_by_device_type(device, fields.HEAT_PUMP_DEVICE_TYPE_ID) or {}
+  if #heat_pump_eps > 0 then
+    local thermostat_eps = thermostat_utils.get_endpoints_by_device_type(device, fields.THERMOSTAT_DEVICE_TYPE_ID) or {}
+    local component_to_endpoint_map = {
+      ["thermostatOne"] = thermostat_eps[1],
+      ["thermostatTwo"] = thermostat_eps[2],
+    }
+    device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, {persist = true})
+  end
 end
 
-local function component_to_endpoint(device, component_name)
-  -- Use the find_default_endpoint function to return the first endpoint that
-  -- supports a given cluster.
-  return find_default_endpoint(device, clusters.Thermostat.ID)
+function ThermostatLifecycleHandlers.do_configure(driver, device)
+  local device_cfg = require "thermostat_utils.device_configuration"
+  device_cfg.match_profile(device)
 end
 
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_component_to_endpoint_fn(component_to_endpoint)
+function ThermostatLifecycleHandlers.driver_switched(driver, device)
+  local device_cfg = require "thermostat_utils.device_configuration"
+  device_cfg.match_profile(device)
 end
 
-local function info_changed(driver, device, event, args)
-  --Note this is needed because device:subscribe() does not recalculate
-  -- the subscribed attributes each time it is run, that only happens at init.
-  -- This will change in the 0.48.x release of the lua libs.
-  for cap_id, attributes in pairs(subscribed_attributes) do
-    if device:supports_capability_by_id(cap_id) then
-      for _, attr in ipairs(attributes) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
+function ThermostatLifecycleHandlers.device_init(driver, device)
+  if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) and (version.api < 15 or version.rpc < 9) then
+    -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
+    -- library function to utilize optional capabilities
+    device:extend_device("supports_capability_by_id", thermostat_utils.supports_capability_by_id_modular)
   end
   device:subscribe()
-end
-
-local function do_configure(driver, device)
-  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
-  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
-  local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-  local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  local profile_name = "thermostat"
-  --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
-  if #thermo_eps == 1 then
-    if #humidity_eps > 0 and #fan_eps > 0 then
-      profile_name = profile_name .. "-humidity" .. "-fan"
-    elseif #humidity_eps > 0 then
-      profile_name = profile_name .. "-humidity"
-    elseif #fan_eps > 0 then
-      profile_name = profile_name .. "-fan"
-    end
-
-    if #heat_eps == 0 and #cool_eps == 0 then
-      log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
-      return
-    elseif #heat_eps > 0 and #cool_eps == 0 then
-      profile_name = profile_name .. "-heating-only"
-    elseif #cool_eps > 0 and #heat_eps == 0 then
-      profile_name = profile_name .. "-cooling-only"
-    end
-
-    -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-    -- to determine support for ThermostatRunningState
-    -- Add nobattery profiles if updated
-    profile_name = profile_name .. "-nostate"
-
-    if #battery_eps == 0 then
-      profile_name = profile_name .. "-nobattery"
-    end
-
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
-  else
-    log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
-  end
-
-  --Query setpoint limits if needed
-  local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read())
-  end
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-  end
-  if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-  end
-  if #setpoint_limit_read.info_blocks ~= 0 then
-    device:send(setpoint_limit_read)
-  end
-end
-
-local function device_added(driver, device)
-  device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
-  device:send(clusters.FanControl.attributes.FanModeSequence:read(device))
-end
-
-local function temp_event_handler(attribute)
-  return function(driver, device, ib, response)
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
-  end
-end
-
-local function humidity_attr_handler(driver, device, ib, response)
-  local humidity = math.floor(ib.data.value / 100.0)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
-end
-
-local function system_mode_handler(driver, device, ib, response)
-  if THERMOSTAT_MODE_MAP[ib.data.value] then
-    device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
-    local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
-    -- TODO: remove -- this has been fixed upstream
-    local sm = utils.deep_copy(supported_modes)
-    -- if we get a mode report from the thermostat that isn't in the supported modes, then we need to update the supported modes
-    for _, mode in ipairs(supported_modes) do
-      if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-        return
-      end
-    end
-    -- if we get here, then the reported mode was not in our mode map
-    table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(sm))
-  end
-end
-
-local function running_state_handler(driver, device, ib, response)
-  for mode, operating_state in pairs(THERMOSTAT_OPERATING_MODE_MAP) do
-    if ((ib.data.value >> mode) & 1) > 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, operating_state())
-      return
+  device:set_component_to_endpoint_fn(thermostat_utils.component_to_endpoint)
+  device:set_endpoint_to_component_fn(thermostat_utils.endpoint_to_component)
+  thermostat_utils.handle_thermostat_operating_state_info(device)
+  if not device:get_field(fields.setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
+    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+    --Query min setpoint deadband if needed
+    if #auto_eps ~= 0 and device:get_field(fields.setpoint_limit_device_field.MIN_DEADBAND) == nil then
+      device:send(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatOperatingState.thermostatOperatingState.idle())
-end
 
-local function sequence_of_operation_handler(driver, device, ib, response)
-  -- the values reported here are kind of limited in terms of our mapping, i.e. there's no way to know about whether
-  -- or not the device supports emergency heat or fan only
-  local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
-  if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
-  elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
-  elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME) -- auto isn't _guaranteed_ by the spec
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(supported_modes))
-end
-
-local function fan_mode_handler(driver, device, ib, response)
-  if ib.data.value == clusters.FanControl.attributes.FanMode.AUTO or
-    ib.data.value == clusters.FanControl.attributes.FanMode.SMART then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.auto())
-  elseif ib.data.value ~= clusters.FanControl.attributes.FanMode.OFF then -- we don't have an "off" value
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.on())
+  -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+  -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+  if #embedded_cluster_utils.get_endpoints(
+      device,
+      clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
+    ) == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false})
   end
 end
 
-local function fan_mode_sequence_handler(driver, device, ib, response)
-  -- Our thermostat fan mode control is probably not granular enough to handle the supported modes here well
-  -- definitely meant for actual fans and not HVAC fans
-  if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
-    ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-      {capabilities.thermostatFanMode.thermostatFanMode.auto.NAME, capabilities.thermostatFanMode.thermostatFanMode.on.NAME}))
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-      {capabilities.thermostatFanMode.thermostatFanMode.on.NAME}))
+function ThermostatLifecycleHandlers.info_changed(driver, device, event, args)
+  if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
+    -- This indicates the device should be using a modular profile, so
+    -- re-up subscription with new capabilities using the modular supports_capability override
+    device:extend_device("supports_capability_by_id", thermostat_utils.supports_capability_by_id_modular)
+  end
+
+  if not thermostat_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
+    thermostat_utils.handle_thermostat_operating_state_info(device)
+    device:subscribe()
   end
 end
 
-local function set_thermostat_mode(driver, device, cmd)
-  local mode_id = nil
-  for value, mode in pairs(THERMOSTAT_MODE_MAP) do
-    if mode.NAME == cmd.args.mode then
-      mode_id = value
-      break
-    end
-  end
-  if mode_id then
-    device:send(clusters.Thermostat.attributes.SystemMode:write(device, device:component_to_endpoint(cmd.component), mode_id))
-  end
-end
-
-local thermostat_mode_setter = function(mode_name)
-  return function(driver, device, cmd)
-    return set_thermostat_mode(driver, device, {component = cmd.component, args = {mode = mode_name}})
-  end
-end
-
-local function set_thermostat_fan_mode(driver, device, cmd)
-  local fan_mode_id = nil
-  if cmd.args.mode == capabilities.thermostatFanMode.thermostatFanMode.auto.NAME then
-    fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
-  elseif cmd.args.mode == capabilities.thermostatFanMode.thermostatFanMode.on.NAME then
-    fan_mode_id = clusters.FanControl.attributes.FanMode.ON
-  end
-  if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
-  end
-end
-
-local function thermostat_fan_mode_setter(mode_name)
-  return function(driver, device, cmd)
-    return set_thermostat_fan_mode(driver, device, {component = cmd.component, args = {mode = mode_name}})
-  end
-end
-
-local function set_setpoint(setpoint)
-  return function(driver, device, cmd)
-    local value = cmd.args.setpoint
-    if (value >= 40) then -- assume this is a fahrenheit value
-      value = utils.f_to_c(value)
-    end
-
-    -- Gather cached setpoint values when considering setpoint limits
-    -- Note: cached values should always exist, but defaults are chosen just in case to prevent
-    -- nil operation errors, and deadband logic from triggering.
-    local cached_cooling_val, cooling_setpoint = device:get_latest_state(
-      cmd.component, capabilities.thermostatCoolingSetpoint.ID,
-      capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME,
-      100, { value = 100, unit = "C" }
-    )
-    if cooling_setpoint and cooling_setpoint.unit == "F" then
-      cached_cooling_val = utils.f_to_c(cached_cooling_val)
-    end
-    local cached_heating_val, heating_setpoint = device:get_latest_state(
-      cmd.component, capabilities.thermostatHeatingSetpoint.ID,
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME,
-      0, { value = 0, unit = "C" }
-    )
-    if heating_setpoint and heating_setpoint.unit == "F" then
-      cached_heating_val = utils.f_to_c(cached_heating_val)
-    end
-    local is_auto_capable = #device:get_endpoints(
-      clusters.Thermostat.ID,
-      {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE}
-    ) > 0
-
-    --Check setpoint limits for the device
-    local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
-    local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
-    if setpoint_type == "Heat" then
-      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or 100
-      if value < min or value > max then
-        log.warn(string.format(
-          "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
-          value, min, max
-        ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
-        return
-      end
-      if is_auto_capable and value > (cached_cooling_val - deadband) then
-        log.warn(string.format(
-          "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s)",
-          value, cooling_setpoint, deadband
-        ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
-        return
-      end
-    else
-      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or 100
-      if value < min or value > max then
-        log.warn(string.format(
-          "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
-          value, min, max
-        ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
-        return
-      end
-      if is_auto_capable and value < (cached_heating_val + deadband) then
-        log.warn(string.format(
-          "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s)",
-          value, heating_setpoint, deadband
-        ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
-        return
-      end
-    end
-    device:send(setpoint:write(device, device:component_to_endpoint(cmd.component), utils.round(value * 100.0)))
-  end
-end
-
-local function setpoint_limit_handler(limit_field)
-  return function(driver, device, ib, response)
-    local val = ib.data.value / 100.0
-    log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
-    device:set_field(limit_field, val, { persist = true })
-  end
-end
-
-local function min_deadband_limit_handler(driver, device, ib, response)
-  local val = ib.data.value / 10.0
-  log.info("Setting " .. setpoint_limit_device_field.MIN_DEADBAND .. " to " .. string.format("%s", val))
-  device:set_field(setpoint_limit_device_field.MIN_DEADBAND, val, { persist = true })
-end
-
-local function battery_percent_remaining_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
-  end
+function ThermostatLifecycleHandlers.device_removed(driver, device)
+  device.log.info("device removed")
 end
 
 local matter_driver_template = {
   lifecycle_handlers = {
-    init = device_init,
-    added = device_added,
-    doConfigure = do_configure,
-    infoChanged = info_changed,
+    added = ThermostatLifecycleHandlers.device_added,
+    doConfigure = ThermostatLifecycleHandlers.do_configure,
+    driverSwitched = ThermostatLifecycleHandlers.driver_switched,
+    infoChanged = ThermostatLifecycleHandlers.info_changed,
+    init = ThermostatLifecycleHandlers.device_init,
+    removed = ThermostatLifecycleHandlers.device_removed,
   },
   matter_handlers = {
     attr = {
-      [clusters.Thermostat.ID] = {
-        [clusters.Thermostat.attributes.LocalTemperature.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
-        [clusters.Thermostat.attributes.OccupiedCoolingSetpoint.ID] = temp_event_handler(capabilities.thermostatCoolingSetpoint.coolingSetpoint),
-        [clusters.Thermostat.attributes.OccupiedHeatingSetpoint.ID] = temp_event_handler(capabilities.thermostatHeatingSetpoint.heatingSetpoint),
-        [clusters.Thermostat.attributes.SystemMode.ID] = system_mode_handler,
-        [clusters.Thermostat.attributes.ThermostatRunningState.ID] = running_state_handler,
-        [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = sequence_of_operation_handler,
-        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_HEAT),
-        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_HEAT),
-        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_COOL),
-        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_COOL),
-        [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = min_deadband_limit_handler,
+      [clusters.ActivatedCarbonFilterMonitoring.ID] = {
+        [clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.ID] = attribute_handlers.activated_carbon_filter_change_indication_handler,
+        [clusters.ActivatedCarbonFilterMonitoring.attributes.Condition.ID] = attribute_handlers.activated_carbon_filter_condition_handler,
+      },
+      [clusters.AirQuality.ID] = {
+        [clusters.AirQuality.attributes.AirQuality.ID] = attribute_handlers.air_quality_handler,
+      },
+      [clusters.ElectricalEnergyMeasurement.ID] = {
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
+      },
+      [clusters.ElectricalPowerMeasurement.ID] = {
+        [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = attribute_handlers.active_power_handler
       },
       [clusters.FanControl.ID] = {
-        [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
-        [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler
+        [clusters.FanControl.attributes.FanMode.ID] = attribute_handlers.fan_mode_handler,
+        [clusters.FanControl.attributes.FanModeSequence.ID] = attribute_handlers.fan_mode_sequence_handler,
+        [clusters.FanControl.attributes.PercentCurrent.ID] = attribute_handlers.percent_current_handler,
+        [clusters.FanControl.attributes.RockSetting.ID] = attribute_handlers.rock_setting_handler,
+        [clusters.FanControl.attributes.RockSupport.ID] = attribute_handlers.rock_support_handler,
+        [clusters.FanControl.attributes.WindSetting.ID] = attribute_handlers.wind_setting_handler,
+        [clusters.FanControl.attributes.WindSupport.ID] = attribute_handlers.wind_support_handler,
       },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
+      [clusters.HepaFilterMonitoring.ID] = {
+        [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = attribute_handlers.hepa_filter_change_indication_handler,
+        [clusters.HepaFilterMonitoring.attributes.Condition.ID] = attribute_handlers.hepa_filter_condition_handler,
       },
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = attribute_handlers.on_off_handler,
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
-      }
-    }
-  },
-  subscribed_attributes = subscribed_attributes,
-  capability_handlers = {
-    [capabilities.thermostatMode.ID] = {
-      [capabilities.thermostatMode.commands.setThermostatMode.NAME] = set_thermostat_mode,
-      [capabilities.thermostatMode.commands.auto.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.auto.NAME),
-      [capabilities.thermostatMode.commands.off.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.off.NAME),
-      [capabilities.thermostatMode.commands.cool.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.cool.NAME),
-      [capabilities.thermostatMode.commands.heat.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.heat.NAME),
-      [capabilities.thermostatMode.commands.emergencyHeat.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.emergency_heat.NAME)
+        [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
+      },
+      [clusters.RelativeHumidityMeasurement.ID] = {
+        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.relative_humidity_measured_value_handler
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.setpoint_limit_device_field.MAX_TEMP),
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_handler_factory(capabilities.temperatureMeasurement.temperature),
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.setpoint_limit_device_field.MIN_TEMP),
+      },
+      [clusters.Thermostat.ID] = {
+        [clusters.Thermostat.attributes.AttributeList.ID] = attribute_handlers.thermostat_attribute_list_handler,
+        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = attribute_handlers.abs_cool_setpoint_limit_factory(fields.setpoint_limit_device_field.MAX_COOL),
+        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = attribute_handlers.abs_heat_setpoint_limit_factory(fields.setpoint_limit_device_field.MAX_HEAT),
+        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = attribute_handlers.abs_cool_setpoint_limit_factory(fields.setpoint_limit_device_field.MIN_COOL),
+        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = attribute_handlers.abs_heat_setpoint_limit_factory(fields.setpoint_limit_device_field.MIN_HEAT),
+        [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = attribute_handlers.control_sequence_of_operation_handler,
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = attribute_handlers.temperature_handler_factory(capabilities.temperatureMeasurement.temperature),
+        [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = attribute_handlers.min_setpoint_deadband_handler,
+        [clusters.Thermostat.attributes.OccupiedCoolingSetpoint.ID] = attribute_handlers.temperature_handler_factory(capabilities.thermostatCoolingSetpoint.coolingSetpoint),
+        [clusters.Thermostat.attributes.OccupiedHeatingSetpoint.ID] = attribute_handlers.temperature_handler_factory(capabilities.thermostatHeatingSetpoint.heatingSetpoint),
+        [clusters.Thermostat.attributes.SystemMode.ID] = attribute_handlers.system_mode_handler,
+        [clusters.Thermostat.attributes.ThermostatRunningState.ID] = attribute_handlers.thermostat_running_state_handler,
+      },
+      [clusters.WaterHeaterMode.ID] = {
+        [clusters.WaterHeaterMode.attributes.CurrentMode.ID] = attribute_handlers.water_heater_current_mode_handler,
+        [clusters.WaterHeaterMode.attributes.SupportedModes.ID] = attribute_handlers.water_heater_supported_modes_handler
+      },
+      -- CONCENTRATION MEASUREMENT CLUSTERS --
+      [clusters.CarbonDioxideConcentrationMeasurement.ID] = {
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonDioxide, fields.units.PPM),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.carbonDioxideMeasurement.NAME),
+      },
+      [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern),
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.carbonMonoxideMeasurement.NAME, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel, fields.units.PPM),
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.carbonMonoxideMeasurement.NAME),
+      },
+      [clusters.FormaldehydeConcentrationMeasurement.ID] = {
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern),
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, fields.units.PPM),
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.formaldehydeMeasurement.NAME),
+      },
+      [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern),
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.nitrogenDioxideMeasurement.NAME, capabilities.nitrogenDioxideMeasurement.nitrogenDioxide, fields.units.PPM),
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.nitrogenDioxideMeasurement.NAME),
+      },
+      [clusters.OzoneConcentrationMeasurement.ID] = {
+        [clusters.OzoneConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.ozoneHealthConcern.ozoneHealthConcern),
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.ozoneMeasurement.NAME, capabilities.ozoneMeasurement.ozone, fields.units.PPM),
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.ozoneMeasurement.NAME),
+      },
+      [clusters.Pm1ConcentrationMeasurement.ID] = {
+        [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
+        [clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.veryFineDustSensor.NAME, capabilities.veryFineDustSensor.veryFineDustLevel, fields.units.UGM3),
+        [clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.veryFineDustSensor.NAME),
+      },
+      [clusters.Pm10ConcentrationMeasurement.ID] = {
+        [clusters.Pm10ConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.dustHealthConcern.dustHealthConcern),
+        [clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.dustSensor.NAME, capabilities.dustSensor.dustLevel, fields.units.UGM3),
+        [clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.dustSensor.NAME),
+      },
+      [clusters.Pm25ConcentrationMeasurement.ID] = {
+        [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, fields.units.UGM3),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.fineDustSensor.NAME),
+      },
+      [clusters.RadonConcentrationMeasurement.ID] = {
+        [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.radonHealthConcern.radonHealthConcern),
+        [clusters.RadonConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.radonMeasurement.NAME, capabilities.radonMeasurement.radonLevel, fields.units.PCIL),
+        [clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.radonMeasurement.NAME),
+      },
+      [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = attribute_handlers.concentration_level_value_factory(capabilities.tvocHealthConcern.tvocHealthConcern),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.concentration_measured_value_factory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, fields.units.PPB),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = attribute_handlers.concentration_measurement_unit_factory(capabilities.tvocMeasurement.NAME),
+      },
     },
-    [capabilities.thermostatFanMode.ID] = {
-      [capabilities.thermostatFanMode.commands.setThermostatFanMode.NAME] = set_thermostat_fan_mode,
-      [capabilities.thermostatFanMode.commands.fanAuto.NAME] = thermostat_fan_mode_setter(capabilities.thermostatFanMode.thermostatFanMode.auto.NAME),
-      [capabilities.thermostatFanMode.commands.fanOn.NAME] = thermostat_fan_mode_setter(capabilities.thermostatFanMode.thermostatFanMode.on.NAME)
+  },
+  capability_handlers = {
+    [capabilities.airConditionerFanMode.ID] = {
+      [capabilities.airConditionerFanMode.commands.setFanMode.NAME] = capability_handlers.fan_mode_command_factory(capabilities.airConditionerFanMode)
+    },
+    [capabilities.airPurifierFanMode.ID] = {
+      [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = capability_handlers.fan_mode_command_factory(capabilities.airPurifierFanMode)
+    },
+    [capabilities.fanMode.ID] = {
+      [capabilities.fanMode.commands.setFanMode.NAME] = capability_handlers.fan_mode_command_factory(capabilities.fanMode)
+    },
+    [capabilities.fanOscillationMode.ID] = {
+      [capabilities.fanOscillationMode.commands.setFanOscillationMode.NAME] = capability_handlers.handle_set_fan_oscillation_mode,
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = capability_handlers.handle_fan_speed_set_percent,
+    },
+    [capabilities.filterState.ID] = {
+      [capabilities.filterState.commands.resetFilter.NAME] = capability_handlers.handle_filter_state_reset_filter,
+    },
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = capability_handlers.handle_set_mode,
+    },
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.off.NAME] = capability_handlers.handle_switch_off,
+      [capabilities.switch.commands.on.NAME] = capability_handlers.handle_switch_on,
     },
     [capabilities.thermostatCoolingSetpoint.ID] = {
-      [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedCoolingSetpoint)
+      [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = capability_handlers.thermostat_set_setpoint_factory(clusters.Thermostat.attributes.OccupiedCoolingSetpoint)
     },
     [capabilities.thermostatHeatingSetpoint.ID] = {
-      [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
-    }
+      [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = capability_handlers.thermostat_set_setpoint_factory(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
+    },
+    [capabilities.thermostatFanMode.ID] = {
+      [capabilities.thermostatFanMode.commands.fanAuto.NAME] = capability_handlers.thermostat_fan_mode_command_factory(capabilities.thermostatFanMode.thermostatFanMode.auto.NAME),
+      [capabilities.thermostatFanMode.commands.fanOn.NAME] = capability_handlers.thermostat_fan_mode_command_factory(capabilities.thermostatFanMode.thermostatFanMode.on.NAME),
+      [capabilities.thermostatFanMode.commands.setThermostatFanMode.NAME] = capability_handlers.fan_mode_command_factory(capabilities.thermostatFanMode),
+    },
+    [capabilities.thermostatMode.ID] = {
+      [capabilities.thermostatMode.commands.auto.NAME] = capability_handlers.thermostat_mode_command_factory(capabilities.thermostatMode.thermostatMode.auto.NAME),
+      [capabilities.thermostatMode.commands.cool.NAME] = capability_handlers.thermostat_mode_command_factory(capabilities.thermostatMode.thermostatMode.cool.NAME),
+      [capabilities.thermostatMode.commands.emergencyHeat.NAME] = capability_handlers.thermostat_mode_command_factory(capabilities.thermostatMode.thermostatMode.emergency_heat.NAME),
+      [capabilities.thermostatMode.commands.heat.NAME] = capability_handlers.thermostat_mode_command_factory(capabilities.thermostatMode.thermostatMode.heat.NAME),
+      [capabilities.thermostatMode.commands.off.NAME] = capability_handlers.thermostat_mode_command_factory(capabilities.thermostatMode.thermostatMode.off.NAME),
+      [capabilities.thermostatMode.commands.setThermostatMode.NAME] = capability_handlers.handle_set_thermostat_mode,
+    },
+    [capabilities.windMode.ID] = {
+      [capabilities.windMode.commands.setWindMode.NAME] = capability_handlers.handle_set_wind_mode,
+    },
+  },
+  subscribed_attributes = {
+    [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.airPurifierFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel
+    },
+    [capabilities.energyMeter.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported
+    },
+    [capabilities.fanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.fanOscillationMode.ID] = {
+      clusters.FanControl.attributes.RockSupport,
+      clusters.FanControl.attributes.RockSetting
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      clusters.FanControl.attributes.PercentCurrent
+    },
+    [capabilities.filterState.ID] = {
+      clusters.HepaFilterMonitoring.attributes.Condition,
+      clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
+    },
+    [capabilities.filterStatus.ID] = {
+      clusters.HepaFilterMonitoring.attributes.ChangeIndication,
+      clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
+    },
+    [capabilities.mode.ID] = {
+      clusters.WaterHeaterMode.attributes.CurrentMode,
+      clusters.WaterHeaterMode.attributes.SupportedModes
+    },
+    [capabilities.powerConsumptionReport.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported
+    },
+    [capabilities.powerMeter.ID] = {
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.switch.ID] = {
+      clusters.OnOff.attributes.OnOff
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.Thermostat.attributes.LocalTemperature,
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
+    },
+    [capabilities.thermostatFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.thermostatHeatingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
+    },
+    [capabilities.thermostatMode.ID] = {
+      clusters.Thermostat.attributes.SystemMode,
+      clusters.Thermostat.attributes.ControlSequenceOfOperation
+    },
+    [capabilities.thermostatOperatingState.ID] = {
+      clusters.Thermostat.attributes.ThermostatRunningState
+    },
+    [capabilities.windMode.ID] = {
+      clusters.FanControl.attributes.WindSupport,
+      clusters.FanControl.attributes.WindSetting
+    },
+    --  AIR QUALITY SENSOR DEVICE TYPE SPECIFIC CAPABILITIES --
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
+    [capabilities.atmosphericPressureMeasurement.ID] = {
+      clusters.PressureMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.dustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.formaldehydeMeasurement.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.nitrogenDioxideMeasurement.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.ozoneMeasurement.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.radonMeasurement.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.veryFineDustSensor.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
   },
   supported_capabilities = {
-    capabilities.thermostatMode,
-    capabilities.thermostatHeatingSetpoint,
+    capabilities.airConditionerFanMode,
+    capabilities.airQualityHealthConcern,
+    capabilities.airPurifierFanMode,
+    capabilities.battery,
+    capabilities.batteryLevel,
+    capabilities.carbonDioxideHealthConcern,
+    capabilities.carbonDioxideMeasurement,
+    capabilities.carbonMonoxideHealthConcern,
+    capabilities.carbonMonoxideMeasurement,
+    capabilities.dustHealthConcern,
+    capabilities.dustSensor,
+    capabilities.energyMeter,
+    capabilities.fanMode,
+    capabilities.fanOscillationMode,
+    capabilities.fanSpeedPercent,
+    capabilities.filterState,
+    capabilities.filterStatus,
+    capabilities.fineDustHealthConcern,
+    capabilities.fineDustSensor,
+    capabilities.formaldehydeHealthConcern,
+    capabilities.formaldehydeMeasurement,
+    capabilities.mode,
+    capabilities.nitrogenDioxideHealthConcern,
+    capabilities.nitrogenDioxideMeasurement,
+    capabilities.ozoneHealthConcern,
+    capabilities.ozoneMeasurement,
+    capabilities.powerConsumptionReport,
+    capabilities.powerMeter,
+    capabilities.radonHealthConcern,
+    capabilities.radonMeasurement,
     capabilities.thermostatCoolingSetpoint,
     capabilities.thermostatFanMode,
+    capabilities.thermostatHeatingSetpoint,
+    capabilities.thermostatMode,
     capabilities.thermostatOperatingState,
-    capabilities.battery,
+    capabilities.tvocHealthConcern,
+    capabilities.tvocMeasurement,
+    capabilities.veryFineDustHealthConcern,
+    capabilities.veryFineDustSensor,
+    capabilities.windMode,
   },
 }
 

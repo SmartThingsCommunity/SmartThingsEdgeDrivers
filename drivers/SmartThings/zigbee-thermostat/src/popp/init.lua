@@ -1,17 +1,6 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
--- Zigbee driver utilities
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local data_types = require "st.zigbee.data_types"
@@ -33,14 +22,6 @@ local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 local TemperatureAlarm = capabilities.temperatureAlarm
 local Switch = capabilities.switch
-
-local POPP_THERMOSTAT_FINGERPRINTS = { {
-  mfr = "D5X84YU",
-  model = "eT093WRO"
-}, {
-  mfr = "D5X84YU",
-  model = "eT093WRG"
-} }
 
 local STORED_HEAT_MODE = "stored_heat_mode"
 
@@ -114,15 +95,6 @@ local PREFERENCE_TABLES = {
 
 local SUPPORTED_MODES = { ThermostatMode.thermostatMode.heat.NAME, ThermostatMode.thermostatMode.eco.NAME }
 
-local is_popp_thermostat = function(opts, driver, device)
-  for _, fingerprint in ipairs(POPP_THERMOSTAT_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 -- Helpers
 
 -- has member check function
@@ -167,8 +139,8 @@ local turn_switch_on = function(driver, device)
   end
 end
 
--- Custom setpoint command handler
-local setpoint_cmd_handler = function(driver, device, cmd)
+-- custom thermostatMode_handler
+local thermostat_mode_handler = function(driver, device, cmd)
   local payload
   local mode = cmd.args.mode
 
@@ -182,7 +154,7 @@ local setpoint_cmd_handler = function(driver, device, cmd)
     -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
     local p2 = last_setpointTemp & 0xFF
     local p3 = last_setpointTemp >> 8
-    local type = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.heat.NAME) or 'eco'
+    local type = 0x00 -- eco
 
     if mode == ThermostatMode.thermostatMode.heat.NAME then
       -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
@@ -210,11 +182,31 @@ local setpoint_cmd_handler = function(driver, device, cmd)
 end
 
 -- temperature setpoint handler
-local handle_set_setpoint = function(driver, device, command)
+local thermostat_setpoint_handler = function(driver, device, command)
   local value = command.args.setpoint
+  local type = 0x00 -- default eco
 
-  -- write new setpoint
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, value * 100))
+  local mode = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.NAME, 'eco')
+
+  if mode == ThermostatMode.thermostatMode.heat.NAME then
+    -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
+    type = 0x01
+  elseif mode == ThermostatMode.thermostatMode.eco.NAME then
+    -- Setpoint type "0": the behavior will be the same as setting the attribute "Occupied Heating Setpoint" to the same value
+    type = 0x00
+  end
+
+  -- prepare setpoint for correct 4 char dec format
+  local setpointTemp = math.floor(value * 100)
+
+  -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
+  local p2 = setpointTemp & 0xFF
+  local p3 = setpointTemp >> 8
+
+  -- send thermostat setpoint command
+  local payload = string.char(type, p2, p3)
+  device:send(cluster_base.build_manufacturer_specific_command(device, Thermostat.ID, THERMOSTAT_SETPOINT_CMD_ID,
+    MFG_CODE, payload))
 
   -- turn thermostat ventile on
   turn_switch_on(driver, device)
@@ -305,7 +297,6 @@ local function device_init(driver, device)
     -- Add the manufacturer-specific attributes to generate their configure reporting and bind requests
     for _, config in pairs(cluster_configurations) do
       device:add_configured_attribute(config)
-      device:add_monitored_attribute(config)
     end
     -- initial set of heating mode
     local stored_heat_mode = device:get_field(STORED_HEAT_MODE) or 'eco'
@@ -377,10 +368,10 @@ local popp_thermostat = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     },
     [ThermostatHeatingSetpoint.ID] = {
-      [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = handle_set_setpoint
+      [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = thermostat_setpoint_handler
     },
     [ThermostatMode.ID] = {
-      [ThermostatMode.commands.setThermostatMode.NAME] = setpoint_cmd_handler
+      [ThermostatMode.commands.setThermostatMode.NAME] = thermostat_mode_handler
     },
     [Switch.ID] = {
       [Switch.commands.on.NAME] = switch_handler_factory('on'),
@@ -406,7 +397,7 @@ local popp_thermostat = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  can_handle = is_popp_thermostat
+  can_handle = require("popp.can_handle"),
 }
 
 return popp_thermostat

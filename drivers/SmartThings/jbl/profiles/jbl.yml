@@ -10,12 +10,10 @@ components:
           enabledValues:
             - 'playing'
             - 'paused'
-            - 'stopped'
         - key: "{{enumCommands}}"
           enabledValues:
             - 'play'
             - 'pause'
-            - 'stop'
   - id: mediaTrackControl
     version: 1
   - id: audioMute

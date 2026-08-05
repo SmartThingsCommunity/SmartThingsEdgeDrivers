@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 
@@ -37,7 +26,6 @@ local devices = {
   EWELINK_HEIMAN = {
     FINGERPRINTS = {
       { mfr = "eWeLink", model = "DS01" },
-      { mfr = "eWeLink", model = "SNZB-04P" },
       { mfr = "HEIMAN", model = "DoorSensor-N" }
     },
     CONFIGURATION = {
@@ -92,7 +80,7 @@ local devices = {
       { mfr = "Sercomm Corp.", model = "SZ-DWS04" },
       { mfr = "DAWON_DNS", model = "SS-B100-ZB" },
       { mfr = "frient A/S", model = "WISZB-120" },
-      { mfr = "frient A/S", model = "WISZB-121" },
+      { mfr = "frient A/S", model = "WISZB-131" },
       { mfr = "Compacta", model = "ZBWDS" }
     },
     CONFIGURATION = {
@@ -111,6 +99,37 @@ local devices = {
         maximum_interval = 1800,
         data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
         reportable_change = 100
+      }
+    }
+  },
+  FRIENT_CONTACT_SENSOR_WISZB_121 = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "WISZB-121" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = IASZone.ID,
+        attribute = IASZone.attributes.ZoneStatus.ID,
+        minimum_interval = 30,
+        maximum_interval = 300,
+        data_type = IASZone.attributes.ZoneStatus.base_type,
+        reportable_change = 1
+      }
+    }
+  },
+  FRIENT_VIBRATION_SENSOR_WISZB_137 = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "WISZB-137" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = IASZone.ID,
+        attribute = IASZone.attributes.ZoneStatus.ID,
+        minimum_interval = 0,
+        maximum_interval = 3600,
+        data_type = IASZone.attributes.ZoneStatus.base_type,
+        reportable_change = 1,
+        endpoint = 0x2D
       }
     }
   }

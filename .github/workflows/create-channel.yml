@@ -14,7 +14,7 @@ jobs:
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
     steps:
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: upload-driver-packages.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -48,6 +48,7 @@ jobs:
           url: 'https://api.smartthings.com/distchannels/'
           method: GET
           bearerToken: ${{ secrets.TOKEN }}
+          timeout: 10000
       - name: Store channel name
         uses: actions/github-script@v5
         with:
@@ -89,7 +90,7 @@ jobs:
         driver: ${{ fromJSON(needs.download-artifacts.outputs.drivers) }}
     steps:
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: upload-driver-packages.yml
           name: ${{ matrix.driver }}

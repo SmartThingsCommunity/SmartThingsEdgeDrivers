@@ -1,0 +1,7 @@
+name: 'SCU200 InSite Energy Management System'
+packageKey: 'ABB.SCU200'
+description: "SmartThings driver for SCU200 InSite Energy Management System"
+vendorSupportInformation: "https://support.smartthings.com"
+permissions:
+  lan: {}
+  discovery: {}

@@ -9,7 +9,6 @@ local function smartthings_playback_capability_handler(driver, device, capabilit
   local st_status_to_jbl_playback_status_table = {
     paused = "pause",
     playing = "play",
-    stopped = "stop",
   }
 
   local conn_info = device:get_field(fields.CONN_INFO)
@@ -32,10 +31,6 @@ end
 
 function capability_handler.playback_pause_handler(driver, device, args)
   smartthings_playback_capability_handler(driver, device, "paused")
-end
-
-function capability_handler.playback_stop_handler(driver, device, args)
-  smartthings_playback_capability_handler(driver, device, "stopped")
 end
 
 function capability_handler.next_track_handler(driver, device, args)

@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -20,24 +11,12 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 
-local SMOKE_CO_ALARM_V2_FINGERPRINTS = {
-  { manufacturerId = 0x010F, productType = 0x1201, productId = 0x1000 }, -- Fibaro CO Sensor
-  { manufacturerId = 0x010F, productType = 0x1201, productId = 0x1001 }  -- Fibaro CO Sensor
-}
 
 --- Determine whether the passed device is Smoke Alarm
 ---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @return boolean true if the device is smoke co alarm
-local function can_handle_v2_alarm(opts, driver, device, cmd, ...)
-  for _, fingerprint in ipairs(SMOKE_CO_ALARM_V2_FINGERPRINTS) do
-    if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local device_added = function(self, device)
   device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
@@ -94,13 +73,11 @@ local zwave_alarm = {
     }
   },
   NAME = "Z-Wave smoke and CO alarm V2",
-  can_handle = can_handle_v2_alarm,
+  can_handle = require("zwave-smoke-co-alarm-v2.can_handle"),
   lifecycle_handlers = {
     added = device_added
   },
-  sub_drivers = {
-    require("zwave-smoke-co-alarm-v2/fibaro-co-sensor-zw5")
-  }
+  sub_drivers = require("zwave-smoke-co-alarm-v2.sub_drivers"),
 }
 
 return zwave_alarm

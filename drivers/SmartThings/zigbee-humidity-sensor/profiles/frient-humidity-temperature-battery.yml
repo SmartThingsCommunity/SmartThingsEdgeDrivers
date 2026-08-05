@@ -1,0 +1,39 @@
+name: frient-humidity-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: TempHumiditySensor
+preferences:
+  - preferenceId: humidityOffset
+    explicit: true
+  - title: "Humidity Sensitivity (%)"
+    name: humiditySensitivity
+    description: "Minimum change in humidity level to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 50
+      default: 3
+  - preferenceId: tempOffset
+    explicit: true
+  - title: "Temperature Sensitivity (°C)"
+    name: temperatureSensitivity
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0

@@ -1,0 +1,24 @@
+name: thermostat
+components:
+  - id: main
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+      - id: thermostatHeatingSetpoint
+        version: 1
+        config:
+          values:
+            - key: "heatingSetpoint.value"
+              range: [5, 30]
+              step: 0.5
+      - id: thermostatMode
+        version: 1
+        config:
+          values:
+            - key: "thermostatMode.value"
+      - id: battery
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Thermostat

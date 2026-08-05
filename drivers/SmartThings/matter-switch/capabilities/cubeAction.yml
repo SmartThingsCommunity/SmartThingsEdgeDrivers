@@ -1,0 +1,29 @@
+id: stse.cubeAction
+version: 1
+status: proposed
+name: Cube Action
+ephemeral: false
+attributes:
+  cubeAction:
+    schema:
+      type: object
+      properties:
+        value:
+          title: ActionType
+          type: string
+          enum:
+            - noAction
+            - shake
+            - rotate
+            - pickUpAndHold
+            - flipToSide1
+            - flipToSide2
+            - flipToSide3
+            - flipToSide4
+            - flipToSide5
+            - flipToSide6
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

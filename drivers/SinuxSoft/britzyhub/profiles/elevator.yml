@@ -1,0 +1,10 @@
+name: elevator
+components:
+  - id: main
+    capabilities:
+      - id: elevatorCall
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Elevator

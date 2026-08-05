@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -18,23 +8,12 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Alarm
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
 
-local ZWAVE_SOUND_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x014A, productType = 0x0005, productId = 0x000F } --Ecolink Firefighter
-}
 
 --- Determine whether the passed device is zwave-sound-sensor
 ---
 --- @param driver Driver driver instance
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
-local function can_handle_zwave_sound_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_SOUND_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 --- Default handler for alarm command class reports
 ---
@@ -73,7 +52,7 @@ local zwave_sound_sensor = {
     added = added_handler,
   },
   NAME = "zwave sound sensor",
-  can_handle = can_handle_zwave_sound_sensor,
+  can_handle = require("zwave-sound-sensor.can_handle"),
 }
 
 return zwave_sound_sensor

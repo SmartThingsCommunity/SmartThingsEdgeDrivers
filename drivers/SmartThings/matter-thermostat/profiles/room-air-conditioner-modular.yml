@@ -1,0 +1,38 @@
+name: room-air-conditioner-modular
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+    optional: true
+  - id: thermostatMode
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    optional: true
+  - id: thermostatCoolingSetpoint
+    version: 1
+    optional: true
+  - id: thermostatOperatingState
+    version: 1
+    optional: true
+  - id: airConditionerFanMode
+    version: 1
+    optional: true
+  - id: fanSpeedPercent
+    version: 1
+    optional: true
+  - id: windMode
+    version: 1
+    optional: true
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirConditioner
+

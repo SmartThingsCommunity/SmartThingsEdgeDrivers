@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local constants = require "st.zwave.constants"
@@ -18,6 +8,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
 
 -- supported comand classes: SWITCH_MULTILEVEL
 local window_shade_switch_multilevel_endpoints = {
@@ -38,6 +29,9 @@ local mock_springs_window_fashion_shade = test.mock_device.build_test_zwave_devi
 
 local function test_init()
   test.mock_device.add_test_device(mock_springs_window_fashion_shade)
+  test.socket.capability:__expect_send(
+    mock_springs_window_fashion_shade:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition"}, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
@@ -48,7 +42,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_springs_window_fashion_shade.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(
@@ -69,7 +63,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

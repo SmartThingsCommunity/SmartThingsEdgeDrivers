@@ -1,0 +1,18 @@
+name: rvc-clean-mode
+components:
+  - id: main
+    label: Main
+    capabilities:
+      - id: robotCleanerOperatingState
+        version: 1
+      - id: mode
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: RobotCleaner
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-rvc

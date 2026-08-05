@@ -1,0 +1,4 @@
+name: 'Matter Appliance'
+packageKey: 'matter-appliance'
+permissions:
+  matter: {}

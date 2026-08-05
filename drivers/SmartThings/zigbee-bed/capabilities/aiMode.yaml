@@ -1,0 +1,57 @@
+id: stse.aiMode
+version: 1
+status: proposed
+name: AI Mode
+ephemeral: false
+attributes:
+  left:
+    schema:
+      type: object
+      properties:
+        value:
+          title: left
+          type: string
+          enum:
+            - "on"
+            - "off"
+      additionalProperties: false
+      required:
+        - value
+    setter: leftControl
+    enumCommands: []
+  right:
+    schema:
+      type: object
+      properties:
+        value:
+          title: right
+          type: string
+          enum:
+            - "on"
+            - "off"
+      additionalProperties: false
+      required:
+        - value
+    setter: rightControl
+    enumCommands: []
+commands:
+  leftControl:
+    name: leftControl
+    arguments:
+      - name: leftControl
+        optional: false
+        schema:
+          type: string
+          enum:
+            - "on"
+            - "off"
+  rightControl:
+    name: rightControl
+    arguments:
+      - name: rightControl
+        optional: false
+        schema:
+          type: string
+          enum:
+            - "on"
+            - "off"

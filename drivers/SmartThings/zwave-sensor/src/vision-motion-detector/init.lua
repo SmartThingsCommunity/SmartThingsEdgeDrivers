@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -21,24 +12,6 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
-
-local VISION_MOTION_DETECTOR_FINGERPRINTS = {
-  { manufacturerId = 0x0109, productType = 0x2002, productId = 0x0205 } -- Vision Motion Detector ZP3102
-}
-
---- Determine whether the passed device is zwave-plus-motion-temp-sensor
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
-local function can_handle_vision_motion_detector(opts, driver, device, ...)
-  for _, fingerprint in ipairs(VISION_MOTION_DETECTOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 --- Handler for notification report command class from sensor
 ---
@@ -87,7 +60,8 @@ local vision_motion_detector = {
     doConfigure = do_configure,
   },
   NAME = "Vision motion detector",
-  can_handle = can_handle_vision_motion_detector
+  can_handle = require("vision-motion-detector.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return vision_motion_detector

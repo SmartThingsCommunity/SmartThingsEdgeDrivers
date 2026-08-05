@@ -1,0 +1,32 @@
+name: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
+components:
+- id: main
+  label: Main
+  capabilities:
+  - id: airPurifierFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: windMode
+    version: 1
+  - id: airQualityHealthConcern
+    version: 1
+  - id: fineDustSensor
+    version: 1
+  - id: fineDustHealthConcern
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: hepaFilter
+  label: Hepa Filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: AirPurifier

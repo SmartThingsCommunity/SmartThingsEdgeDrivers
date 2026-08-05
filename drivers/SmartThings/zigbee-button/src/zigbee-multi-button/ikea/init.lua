@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
@@ -22,6 +12,7 @@ local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
 local utils = require 'st.utils'
 local zdo_messages = require "st.zigbee.zdo"
 local supported_values = require "zigbee-multi-button.supported_values"
+local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -29,20 +20,7 @@ local Groups = clusters.Groups
 
 local ENTRIES_READ = "ENTRIES_READ"
 
-local IKEA_MFG = {
-  { mfr = "IKEA of Sweden" },
-  { mfr = "KE" },
-  { mfr = "\02KE" }
-}
 
-local can_handle_ikea = function(opts, driver, device)
-  for _, fingerprint in ipairs(IKEA_MFG) do
-    if device:get_manufacturer() == fingerprint.mfr then
-      return true
-    end
-  end
-  return false
-end
 
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
@@ -80,8 +58,8 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
-end
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
+  end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
   for _, binding_table in pairs(zb_rx.body.zdo_body.binding_table_entries) do
@@ -139,12 +117,8 @@ local ikea_of_sweden = {
       }
     }
   },
-  sub_drivers = {
-    require("zigbee-multi-button.ikea.TRADFRI_remote_control"),
-    require("zigbee-multi-button.ikea.TRADFRI_on_off_switch"),
-    require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
-  },
-  can_handle = can_handle_ikea
+  sub_drivers = require("zigbee-multi-button.ikea.sub_drivers"),
+  can_handle = require("zigbee-multi-button.ikea.can_handle"),
 }
 
 return ikea_of_sweden

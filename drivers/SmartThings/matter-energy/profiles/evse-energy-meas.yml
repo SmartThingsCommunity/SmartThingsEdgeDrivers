@@ -1,0 +1,22 @@
+#EVSE with Electrical Energy Measurement Cluster in Electrical Sensor
+name: evse-energy-meas
+components:
+- id: main
+  capabilities:
+  - id: evseState
+    version: 1
+  - id: evseChargingSession
+    version: 1
+  - id: mode
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ElectricVehicleCharger
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-evse

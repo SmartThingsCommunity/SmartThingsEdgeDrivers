@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -55,13 +44,24 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+    })
     test.wait_for_events()
 
     test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -106,7 +106,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -122,6 +125,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -138,6 +144,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 

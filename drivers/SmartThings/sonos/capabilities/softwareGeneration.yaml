@@ -1,0 +1,17 @@
+id: stus.softwareGeneration
+version: 1
+status: proposed
+name: Software Generation
+ephemeral: false
+attributes:
+  generation:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

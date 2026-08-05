@@ -1,0 +1,22 @@
+id: stse.antiLockStatus
+version: 1
+status: proposed
+name: Anti lock status
+ephemeral: false
+attributes:
+  antiLockStatus:
+    schema:
+      type: object
+      properties:
+        value:
+          title: Anti-Lock status
+          type: string
+          enum:
+            - "enabled"
+            - "disabled"
+            - "unknown"
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

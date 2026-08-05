@@ -1,0 +1,6 @@
+matterGeneric:
+  - id: "matter/pump"
+    deviceLabel: Matter Pump
+    deviceTypes:
+      - id: 0x0303
+    deviceProfileName: pump-level
