@@ -25,12 +25,8 @@ def getChangedDrivers() {
 }
 
 def get_region() {
-  def url = env.JENKINS_URL?.trim()
-  if (url?.endsWith('/')) {
-    url = url[0..-2]
-  }
-
-  def region = url?.endsWith('.cn') ? 'cn' : 'global'
+  def uri = new URI(env.JENKINS_URL)
+  def region = uri.host.endsWith('.cn') ? 'cn' : 'global'
   return region
 }
 
@@ -42,7 +38,7 @@ def getDockerCredentialId() {
       return 'artifactory-credentials'
     }
     else {
-      return ''
+      return 'artifactory'
     }
 }
 // Gate RegistryUrl for prod nodes in cn due to a docker authentication error arising in that environment
