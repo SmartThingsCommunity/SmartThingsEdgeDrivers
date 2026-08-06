@@ -158,6 +158,19 @@ local function _emit_light_events_inner(light_device, light_repr)
   end
 end
 
+-- A sufficiently small color temp command can transform to the same value (in mireks) that a device already has, so the bridge
+-- may not respond to said command. To avoid any odd behaviors in this case, we should emit a kelvin value change event immediately
+function AttributeEmitters.emit_color_temp_when_mirek_unchanged(device, clamped_kelvin, mirek)
+  local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
+  if current_color_temp then
+    local current_mirek = math.floor(utils.kelvin_to_mirek(current_color_temp))
+    if current_mirek == mirek then
+      log.debug(string.format("Color temp change from %dK to %dK results in same mirek value (%d), emitting event directly", current_color_temp, clamped_kelvin, mirek))
+      device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
+    end
+  end
+end
+
 function AttributeEmitters.connectivity_update(child_device, zigbee_status)
   if child_device == nil or (child_device and child_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")

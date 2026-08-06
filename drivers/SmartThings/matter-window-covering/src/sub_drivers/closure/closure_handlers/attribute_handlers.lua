@@ -8,6 +8,7 @@ local version = require "version"
 if version.api < 20 then
   clusters.ClosureControl = require "embedded_clusters.ClosureControl"
   clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
+  clusters.Global = require "embedded_clusters.Global"
 end
 
 local fields = require "sub_drivers.closure.closure_utils.fields"
@@ -63,6 +64,9 @@ end
 function ClosureAttrHandlers.tag_list_handler(driver, device, ib, response)
   if not ib.data.elements then return end
   local tag_value
+  if version.api < 16 then
+    clusters.Global.types.SemanticTagStruct:augment_type(ib.data)
+  end
   for _, v in ipairs(ib.data.elements) do
     local tag = v.elements
     if tag and tag.namespace_id and tag.namespace_id.value == 0x44 then

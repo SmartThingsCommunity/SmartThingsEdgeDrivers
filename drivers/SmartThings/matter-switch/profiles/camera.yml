@@ -134,6 +134,9 @@ deviceConfig:
     - component: main
       capability: motionSensor
       version: 1
+    - component: main
+      capability: videoCapture2
+      version: 1
   automation:
     conditions:
     - component: main

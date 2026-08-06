@@ -1,4 +1,3 @@
-import csv
 import os
 import yaml
 from pathlib import Path
@@ -101,51 +100,49 @@ def compare_components(prof1, prof2):
 
     return True
 
-with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
-    csvreader = csv.reader(csvfile)
-    changed_files = next(csvreader)
+changed_files = os.environ.get('ALL_CHANGED_FILES', '').split()
 
-    for file in changed_files:
-        file_basename = os.path.basename(file)
-        file_directory = os.path.dirname(file)
+for file in changed_files:
+    file_basename = os.path.basename(file)
+    file_directory = os.path.dirname(file)
 
-        if '/profiles/' in file:
-            print('\nNEW PROFILE:\n%s is a profile! Comparing to other profiles...' % file)
+    if '/profiles/' in file:
+        print('\nNEW PROFILE:\n%s is a profile! Comparing to other profiles...' % file)
 
-            os.chdir(file_directory)
-            new_profile = file_basename
+        os.chdir(file_directory)
+        new_profile = file_basename
 
-            # Skip deleted files and track them for warning
-            if not os.path.exists(new_profile):
-                print("Skipping %s - file was deleted" % new_profile)
-                deleted_profiles.append(file)
-                os.chdir(cwd)
-                continue
+        # Skip deleted files and track them for warning
+        if not os.path.exists(new_profile):
+            print("Skipping %s - file was deleted" % new_profile)
+            deleted_profiles.append(file)
+            os.chdir(cwd)
+            continue
 
-            for current_profile in os.listdir("./"):
-                # compare to YAML files that are not the same file
-                # Compare only .yml files and only files that have not already been found to be a duplicate
-                if current_profile != new_profile and Path(current_profile).suffix == ".yml" and (current_profile, new_profile) not in duplicate_pairs:
-                    print("Comparing %s vs %s" % (new_profile, current_profile))
-                    with open(new_profile) as new_data, open(current_profile) as current_data:
-                        new_profile_map = yaml.safe_load(new_data)
-                        current_profile_map = yaml.safe_load(current_data)
+        for current_profile in os.listdir("./"):
+            # compare to YAML files that are not the same file
+            # Compare only .yml files and only files that have not already been found to be a duplicate
+            if current_profile != new_profile and Path(current_profile).suffix == ".yml" and (current_profile, new_profile) not in duplicate_pairs:
+                print("Comparing %s vs %s" % (new_profile, current_profile))
+                with open(new_profile) as new_data, open(current_profile) as current_data:
+                    new_profile_map = yaml.safe_load(new_data)
+                    current_profile_map = yaml.safe_load(current_data)
 
-                        ''' Compare profiles. A duplicate is defined as follows:
-                            - categories must be the same
-                            - capabilities must be the same, with some ordering restrictions
-                            - top capability must match, but subsequent ordering does not matter
-                            - embedded configs must be the same, but certain values can be ordered differently (i.e. enabledValues)
-                            - preferences must be the same
-                        '''
-                        if(compare_preferences(new_profile_map, current_profile_map) == True and
-                           compare_metadata(new_profile_map, current_profile_map) == True and
-                           compare_components(new_profile_map, current_profile_map) == True):
-                            print("%s and %s are duplicates!\n" % (new_profile, current_profile))
-                            duplicate_pairs.append((new_profile, current_profile))
+                    ''' Compare profiles. A duplicate is defined as follows:
+                        - categories must be the same
+                        - capabilities must be the same, with some ordering restrictions
+                        - top capability must match, but subsequent ordering does not matter
+                        - embedded configs must be the same, but certain values can be ordered differently (i.e. enabledValues)
+                        - preferences must be the same
+                    '''
+                    if(compare_preferences(new_profile_map, current_profile_map) == True and
+                       compare_metadata(new_profile_map, current_profile_map) == True and
+                       compare_components(new_profile_map, current_profile_map) == True):
+                        print("%s and %s are duplicates!\n" % (new_profile, current_profile))
+                        duplicate_pairs.append((new_profile, current_profile))
 
-        # return to original directory
-        os.chdir(cwd)
+    # return to original directory
+    os.chdir(cwd)
 
 with open("profile-comment-body.md", "w") as f:
     if duplicate_pairs:

@@ -2,9 +2,13 @@
 -- Licensed under the Apache License, Version 2.0
 
 local function can_handle_keywe_lock(opts, self, device, cmd, ...)
-  local KEYWE_MFR = 0x037B
-  if device.zwave_manufacturer_id == KEYWE_MFR then
-    return true, require("keywe-lock")
+  local consts = require("lock_utils.constants")
+  local slga_migrated = device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED)
+  if slga_migrated then
+    local KEYWE_MFR = 0x037B
+    if device.zwave_manufacturer_id == KEYWE_MFR then
+      return true, require("legacy-handlers.keywe-lock")
+    end
   end
   return false
 end

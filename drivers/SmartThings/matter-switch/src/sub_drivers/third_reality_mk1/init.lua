@@ -81,6 +81,7 @@ end
 
 local function driver_switched(driver, device)
   match_profile(driver, device)
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 local function initial_press_event_handler(driver, device, ib, response)

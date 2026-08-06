@@ -429,6 +429,7 @@ local function device_added(driver, device)
         capabilities.fanOscillationMode.fanOscillationMode.NAME) == nil then
     device:emit_event(capabilities.fanOscillationMode.fanOscillationMode(OSC.SWING))
   end
+  device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
 end
 
 local function send_night_light(device, new)
