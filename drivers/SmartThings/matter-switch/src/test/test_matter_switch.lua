@@ -93,7 +93,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-    min_api_version = 17
+    
   }
 )
 
@@ -110,7 +110,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   end,
   {
-    min_api_version = 17
+    
   }
 )
 
@@ -143,7 +143,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -176,7 +176,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -204,7 +204,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -229,7 +229,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -291,7 +291,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -316,7 +316,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -346,7 +346,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -376,7 +376,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -448,7 +448,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -526,7 +526,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -551,7 +551,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -576,7 +576,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -606,7 +606,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -631,7 +631,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -676,7 +676,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -694,7 +694,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -759,7 +759,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    
   }
 )
 
@@ -791,7 +791,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    
   }
 )
 
@@ -823,7 +823,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    
   }
 )
 
@@ -881,7 +881,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    
   }
 )
 
@@ -979,7 +979,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_with_hue_sat_color_mode_set,
-    min_api_version = 17
+    
   }
 )
 
@@ -1065,7 +1065,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_with_hue_sat_color_mode_set,
-    min_api_version = 17
+    
   }
 )
 
@@ -1143,7 +1143,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_hue_sat,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -1195,7 +1195,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_color_temp,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -1222,7 +1222,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_color_temp,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

@@ -177,7 +177,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_for_lifecycle_tests,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -193,7 +193,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_for_lifecycle_tests,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -207,7 +207,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_for_generate_info_changed_tests,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -238,7 +238,7 @@ test.register_message_test(
     },
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -289,7 +289,7 @@ test.register_message_test(
     }
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -320,6 +320,9 @@ test.register_message_test(
         clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device, extended_color_ep_id)
       }
     },
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -354,7 +357,7 @@ test.register_message_test(
     }
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -460,7 +463,7 @@ test.register_message_test(
     },
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -514,7 +517,7 @@ test.register_message_test(
     },
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -613,7 +616,7 @@ test.register_message_test(
     },
   },
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -692,7 +695,7 @@ test.register_coroutine_test(
     test_init = function()
       test.mock_device.add_test_device(mock_plug)
     end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -710,7 +713,7 @@ test.register_coroutine_test(
     test_init = function()
       test.mock_device.add_test_device(mock_plug)
     end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -771,7 +774,7 @@ test.register_coroutine_test(
     test_init = function()
       test.mock_device.add_test_device(mock_plug_profile_override)
     end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -871,7 +874,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_switch) end,
-    min_api_version = 17
+    
   }
 )
 

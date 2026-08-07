@@ -61,7 +61,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 17
+    
   }
 )
 
@@ -77,7 +77,7 @@ test.register_coroutine_test(
     assert(mock_device.profile.id == current_profile, "Profile should not change on driverSwitched")
   end,
   {
-    min_api_version = 17
+    
   }
 )
 
@@ -112,7 +112,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 
@@ -134,7 +134,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     
   }
 )
 

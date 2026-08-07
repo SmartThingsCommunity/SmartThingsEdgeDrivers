@@ -59,7 +59,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_simple_device.id, zigbee_test_utils.build_bind_request(mock_simple_device, zigbee_test_utils.mock_hub_eui, Basic.ID) })
     test.socket.zigbee:__expect_send({ mock_simple_device.id, Basic.attributes.ApplicationVersion:configure_reporting(mock_simple_device, 30, 300, 1) })
     mock_simple_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -89,7 +92,10 @@ test.register_coroutine_test(
         tuya_utils.build_send_tuya_command(mock_simple_device, '\x05', tuya_utils.DP_TYPE_ENUM, '\x00', 1)
       }
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -131,7 +137,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_simple_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -152,7 +161,10 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main",  capabilities.windowShade.windowShade.opening())
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -173,7 +185,10 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main",  capabilities.windowShade.windowShade.closing())
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -189,7 +204,10 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x01', 0) }
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -205,7 +223,10 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x3c', 0) }
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -221,7 +242,10 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 0) }
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -242,7 +266,10 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main",  capabilities.windowShade.windowShade("partially open"))
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -259,7 +286,10 @@ test.register_message_test(
         -- For _TZE284_nladmfvf, level is inverted: 100 - 10 = 90 (0x5A)
         message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x5a', 0) }
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -276,7 +306,10 @@ test.register_message_test(
         -- For _TZE284_nladmfvf, level is inverted: 100 - 0 = 100 (0x64), but clamped to 0 so 100 - 0 = 100
         message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x64', 0) }
       }
-    }
+    },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -305,7 +338,10 @@ test.register_coroutine_test(
       mock_simple_device.id,
       tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 0)
     })
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -334,7 +370,10 @@ test.register_coroutine_test(
       mock_simple_device.id,
       tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x00', 0)
     })
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -363,7 +402,10 @@ test.register_coroutine_test(
       mock_simple_device.id,
       tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x64', 0)
     })
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -405,7 +447,10 @@ test.register_coroutine_test(
       mock_simple_device.id,
       tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 1)
     })
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

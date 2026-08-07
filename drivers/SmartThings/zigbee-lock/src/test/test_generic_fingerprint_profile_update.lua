@@ -46,7 +46,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
   end,
   {
-     min_api_version = 17
+     
   }
 )
 

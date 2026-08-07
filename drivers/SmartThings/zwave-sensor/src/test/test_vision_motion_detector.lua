@@ -58,7 +58,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       
     }
 )
 
@@ -80,7 +80,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       
     }
 )
 
@@ -102,7 +102,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       
     }
 )
 
@@ -124,7 +124,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       
     }
 )
 
@@ -163,7 +163,7 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed",
-      min_api_version = 17
+      
     }
 )
 
@@ -187,7 +187,7 @@ test.register_coroutine_test(
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       
     }
 )
 

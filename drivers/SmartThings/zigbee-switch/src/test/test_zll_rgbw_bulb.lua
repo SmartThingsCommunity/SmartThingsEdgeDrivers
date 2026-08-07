@@ -195,7 +195,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end,
   {
-    min_api_version = 17,
     max_api_version = 19
   }
 )
@@ -248,7 +247,6 @@ test.register_coroutine_test(
         test.mock_device.add_test_device(mock_device)
         test.timer.__create_and_queue_test_time_advance_timer(5*60, "interval", "polling")
       end,
-      min_api_version = 17,
       max_api_version = 19
     }
 )
@@ -301,7 +299,6 @@ test.register_coroutine_test(
 
   end,
   {
-     min_api_version = 17,
      max_api_version = 19
   }
 )
@@ -354,7 +351,6 @@ test.register_coroutine_test(
 
   end,
   {
-     min_api_version = 17,
      max_api_version = 19
   }
 )
@@ -407,7 +403,6 @@ test.register_coroutine_test(
 
   end,
   {
-     min_api_version = 17,
      max_api_version = 19
   }
 )
@@ -462,7 +457,6 @@ test.register_coroutine_test(
 
   end,
   {
-     min_api_version = 17,
      max_api_version = 19
   }
 )
@@ -491,7 +485,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
   end,
   {
-     min_api_version = 17
   }
 )
 
@@ -519,7 +512,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end,
   {
-     min_api_version = 17
   }
 )
 
@@ -549,7 +541,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end,
   {
-     min_api_version = 17
   }
 )
 

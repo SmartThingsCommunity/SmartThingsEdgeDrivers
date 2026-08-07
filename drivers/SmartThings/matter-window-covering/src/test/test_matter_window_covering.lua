@@ -520,7 +520,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
