@@ -11,8 +11,13 @@ local switch_utils = require "switch_utils"
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
+local COMPONENT_INTERLOCK = "interlock"
+local SUPPORTED_INTERLOCK = { "normal", "interlock" }
+local COMPONENT_DEVICE_MODE = "devicemode"
+local SUPPORTED_DEVICE_MODE = { "wet_contact_mode", "dry_contact_closed_pulse_mode", "dry_contact_on_off_mode" }
 local FINGERPRINTS = require("aqara.multi-switch.fingerprints")
 
+-- Number of switch endpoints (parent + children) for this model, from the fingerprint table.
 local function get_children_amount(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
@@ -21,6 +26,7 @@ local function get_children_amount(device)
   end
 end
 
+-- Profile name to assign to the created child devices for this model.
 local function get_child_profile_name(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
@@ -37,6 +43,7 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
+-- Create one EDGE_CHILD device per extra switch endpoint and initialize parent-only state.
 local function device_added(driver, device)
   -- Only create children for the actual Zigbee device and not the children
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
@@ -44,7 +51,8 @@ local function device_added(driver, device)
     if children_amount >= 2 then
       for i = 2, children_amount, 1 do
         if find_child(device, i) == nil then
-          local name = string.format("%s%d", string.sub(device.label, 0, -2), i)
+          -- child shares the parent's label (endpoint 1 is the parent, 2..n are children)
+          local name = string.format("%s", device.label)
           local child_profile = get_child_profile_name(device)
           local metadata = {
             type = "EDGE_CHILD",
@@ -60,22 +68,36 @@ local function device_added(driver, device)
     end
 
     -- for wireless button
-    device:emit_event(capabilities.button.numberOfButtons({ value = children_amount },
-      { visibility = { displayed = false } }))
-    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    device:emit_event(capabilities.button.numberOfButtons({ value = children_amount }, { visibility = { displayed = false } }))
 
-    device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
+    -- report the static supported modes for the interlock / devicemode components (when present)
+    if device.profile.components[COMPONENT_INTERLOCK] then
+      device:emit_component_event(device.profile.components[COMPONENT_INTERLOCK], capabilities.mode.supportedModes(SUPPORTED_INTERLOCK, { visibility = { displayed = false } }))
+    end
+    if device.profile.components[COMPONENT_DEVICE_MODE] then
+      device:emit_component_event(device.profile.components[COMPONENT_DEVICE_MODE], capabilities.mode.supportedModes(SUPPORTED_DEVICE_MODE, { visibility = { displayed = false } }))
+    end
+
+    -- acn047 (Dual Relay Module T2) must not be forced into Aqara private mode; all other
+    -- multi-switch models are switched into private mode here.
+    if device:get_model() ~= "lumi.switch.acn047" then
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
+    end
   elseif device.network_type == "DEVICE_EDGE_CHILD" then
-    device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
-      { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
   end
-  device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } }))
-  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } }))
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({ state_change = false }))
+  -- restore the last known power/energy (instead of resetting to 0) so values survive re-adds
+  if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
+    local lastPower = device:get_latest_state("main", capabilities.powerMeter.ID, capabilities.powerMeter.power.NAME) or 0.0
+    local lastEnergy = device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) or 0.0
+    device:emit_event(capabilities.powerMeter.power({ value = lastPower, unit = "W" }))
+    device:emit_event(capabilities.energyMeter.energy({ value = lastEnergy, unit = "Wh" }))
+  end
 end
 
+-- Register the endpoint->child routing function so reports from child endpoints reach the children.
 local function device_init(self, device)
   -- for multiple switch
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
