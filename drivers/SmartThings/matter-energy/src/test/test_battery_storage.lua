@@ -269,7 +269,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("importedEnergy",
         capabilities.powerConsumptionReport.powerConsumption({
           energy = 200,
-          deltaEnergy = 0.0,
+          deltaEnergy = 100,
           start = "1970-01-01T00:15:01Z",
           ["end"] = "1970-01-01T00:48:20Z"
         }))
@@ -278,20 +278,20 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
         .CumulativeEnergyExported:build_test_report_data(mock_device,
       BATTERY_STORAGE_EP,
-      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 400000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) --400Wh
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 500000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) --500Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("exportedEnergy",
       capabilities.energyMeter.energy({
-        value = 400, unit = "Wh"
+        value = 500, unit = "Wh"
       }))
     )
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("exportedEnergy",
         capabilities.powerConsumptionReport.powerConsumption({
-          energy = 400,
-          deltaEnergy = 0.0,
+          energy = 500,
+          deltaEnergy = 100,
           start = "1970-01-01T00:15:01Z",
           ["end"] = "1970-01-01T00:48:20Z"
         }))
