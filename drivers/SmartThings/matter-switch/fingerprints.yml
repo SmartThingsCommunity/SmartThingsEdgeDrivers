@@ -929,6 +929,16 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x000A
     deviceProfileName: matter-bridge
+  - id: "4741/4"
+    deviceLabel: Domovea server basic
+    vendorId: 0x1285
+    productId: 0x0004
+    deviceProfileName: matter-bridge
+  - id: "4741/3"
+    deviceLabel: Domovea server plus
+    vendorId: 0x1285
+    productId: 0x0003
+    deviceProfileName: matter-bridge
 # HAOJAI
   - id: "5530/4113"
     deviceLabel: HAOJAI Smart Switch 3-key
