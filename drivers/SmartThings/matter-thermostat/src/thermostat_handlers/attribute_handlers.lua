@@ -177,7 +177,9 @@ function AttributeHandlers.abs_heat_setpoint_limit_factory(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- heating setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
+          device:set_field(fields.setpoint_limit_device_field.MIN_HEAT, 4.5)
+          device:set_field(fields.setpoint_limit_device_field.MAX_HEAT, 32)
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 4.5, maximum = 32, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
@@ -201,7 +203,9 @@ function AttributeHandlers.abs_cool_setpoint_limit_factory(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- cooling setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
+          device:set_field(fields.setpoint_limit_device_field.MIN_COOL, 15.5)
+          device:set_field(fields.setpoint_limit_device_field.MAX_COOL, 37)
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 15.5, maximum = 37, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
