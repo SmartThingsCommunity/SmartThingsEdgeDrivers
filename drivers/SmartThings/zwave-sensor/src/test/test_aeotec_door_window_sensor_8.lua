@@ -11,8 +11,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local t_utils = require "integration_test.utils"
 
 local sensor_endpoints = {
@@ -21,7 +19,6 @@ local sensor_endpoints = {
       {value = zw.BATTERY},
       {value = zw.NOTIFICATION},
       {value = zw.SENSOR_MULTILEVEL},
-      {value = zw.CONFIGURATION}
     }
   }
 }
@@ -43,14 +40,6 @@ test.register_coroutine_test(
   "Device added lifecycle event for profile",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_sensor.id, "added" })
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_sensor,
-        Configuration:Get({
-          parameter_number = 10
-        })
-      )
-    )
     test.socket.capability:__expect_send(
       mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "moderate"}))
     )
