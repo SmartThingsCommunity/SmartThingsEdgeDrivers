@@ -10,8 +10,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
 local MoldHealthConcern = capabilities.moldHealthConcern
 local ContactSensor = capabilities.contactSensor
