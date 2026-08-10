@@ -3,7 +3,7 @@
 
 local AEOTEC_DOOR_WINDOW_SENSOR_8_FINGERPRINTS = {
   { manufacturerId = 0x0371, productId = 0x0037 }, -- Aeotec Door Window Sensor 8 EU/US/AU
-  { manufacturerId = 0x0371, productId = 0x0039 } -- Aeotec Aerq 8 EU/US/AU
+  { manufacturerId = 0x0371, productId = 0x0039 }  -- Aeotec Aerq 8 EU/US/AU
 }
 
 local function can_handle_aeotec_door_window_sensor_8(opts, driver, device, ...)

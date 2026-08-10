@@ -23,10 +23,6 @@ local PowerSource = capabilities.powerSource
 local ContactSensor = capabilities.contactSensor
 local PanicAlarm = capabilities.panicAlarm
 
-local AEOTEC_WATER_SENSOR_8_FINGERPRINTS = {
-  { manufacturerId = 0x0371, productId = 0x0038 } -- Aeotec Water Sensor 8 EU/US/AU
-}
-
 local DEVICE_PROFILES = {
   [0] = { profile = "aeotec-water-sensor-8"},
   [1] = { profile = "aeotec-water-sensor-8-smoke"},
@@ -39,21 +35,11 @@ local DEVICE_PROFILES = {
   [8] = { profile = "aeotec-water-sensor-8-panic"}
 }
 
-local function can_handle_aeotec_water_sensor_8(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEOTEC_WATER_SENSOR_8_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("aeotec-water-sensor-8")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function set_profile(device, profile)
   local current = device:get_field("active_profile")
   if current ~= profile.profile then
     device:try_update_metadata({ profile = profile.profile })
-    device:set_field("active_profile", profile.profile)
+    device:set_field("active_profile", profile.profile, {persist = true})
 
     -- Set supported modes and default value based on profile
     if profile.profile == "aeotec-water-sensor-8" then
@@ -233,7 +219,7 @@ local aeotec_water_sensor_8 = {
     added = added_handler,
   },
   NAME = "Aeotec Water Sensor  8",
-  can_handle = can_handle_aeotec_water_sensor_8
+  can_handle = require("aeotec-water-sensor-8.can_handle"),
 }
 
 return aeotec_water_sensor_8

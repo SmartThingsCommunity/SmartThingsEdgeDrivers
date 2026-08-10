@@ -23,8 +23,6 @@ local RelativeHumidityMeasurement = capabilities.relativeHumidityMeasurement
 local DewPoint = capabilities.dewPoint
 
 local function added_handler(driver, device)
-  device:send(Configuration:Get({ parameter_number = 10 }))
-
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
 
   -- Default value

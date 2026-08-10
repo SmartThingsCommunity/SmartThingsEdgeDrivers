@@ -184,7 +184,7 @@ local devices = {
       parameter64 = {parameter_number = 64, size = 1},
     }
   },
-   AEOTEC_DOOR_WINDOW_SENSOR_8 = {
+  AEOTEC_DOOR_WINDOW_SENSOR_8 = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
       product_types = {0x0002, 0x0102, 0x0202},
