@@ -16,7 +16,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     zigbee_endpoints = {
       [1] = {
         id = 1,
-        manufacturer = "ManDai Technology",
+        manufacturer = "FIRSTLED",
         model = "DC2DC12MiV1",
         server_clusters = { 0x0006, 0x0008, 0x0300 }
       }
