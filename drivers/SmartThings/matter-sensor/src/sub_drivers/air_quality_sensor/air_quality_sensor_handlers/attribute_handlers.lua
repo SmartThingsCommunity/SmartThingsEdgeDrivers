@@ -4,6 +4,7 @@
 local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local aqs_fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
+local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
 
 local AirQualitySensorAttributeHandlers = {}
 
@@ -24,19 +25,16 @@ end
 
 function AirQualitySensorAttributeHandlers.measured_value_factory(capability_name, attribute, target_unit)
   return function(driver, device, ib, response)
-    if ib.data.value then
-      local reporting_unit = device:get_field(capability_name.."_unit") or aqs_fields.unit_default[capability_name]
-      local conversion_function = aqs_fields.conversion_tables[reporting_unit][target_unit]
-      if conversion_function then
-        local converted_value = conversion_function(ib.data.value)
-        device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = converted_value, unit = aqs_fields.unit_strings[target_unit]}))
-        -- handle case where device profile supports both fineDustLevel and dustLevel
+    if not ib.data.value then return end
+    local reporting_unit = device:get_field(capability_name.."_unit") or aqs_fields.unit_default[capability_name]
+    local converted_value = aqs_utils.convert_value_to_unit(ib.data.value, reporting_unit, target_unit, capability_name)
+
+    if converted_value then
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = converted_value, unit = aqs_fields.unit_strings[target_unit]}))
+      -- handle case where device profile supports both fineDustLevel and dustLevel
         if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
           device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = converted_value, unit = aqs_fields.unit_strings[target_unit]}))
         end
-      else
-        device.log.info_with({hub_logs=true}, string.format("Unsupported unit conversion from %s to %s", aqs_fields.unit_strings[reporting_unit], aqs_fields.unit_strings[target_unit]))
-      end
     end
   end
 end

@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
@@ -612,7 +617,7 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         start = "1970-01-01T00:15:01Z",
         ["end"] = "1970-01-01T00:48:20Z",
-        deltaEnergy = -4.0,
+        deltaEnergy = 19.0,
         energy = 19.0
       }))
     )

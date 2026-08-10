@@ -245,6 +245,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -258,6 +266,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, 1)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
       }
     },
     {
@@ -288,6 +304,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
       }
     }
   },
@@ -389,6 +413,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6000))
@@ -399,6 +431,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 370)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
       }
     },
     {
@@ -445,6 +485,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -458,6 +506,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
       }
     },
     {

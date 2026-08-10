@@ -7,7 +7,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local shus_mattress_profile_def = t_utils.get_profile_definition("shus-smart-mattress.yml")
 test.add_package_capability("aiMode.yaml")
@@ -17,6 +16,8 @@ test.add_package_capability("rightControl.yaml")
 test.add_package_capability("strongExpMode.yaml")
 test.add_package_capability("yoga.yaml")
 test.add_package_capability("mattressHardness.yaml")
+
+local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local PRIVATE_CLUSTER_ID = 0xFCC2
 local MFG_CODE = 0x1235

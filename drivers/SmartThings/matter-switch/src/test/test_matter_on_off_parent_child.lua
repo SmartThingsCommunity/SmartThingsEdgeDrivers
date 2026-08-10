@@ -294,6 +294,36 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Extended Color Child: SetColor command should be handled correctly",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_children[extended_color_ep_id].id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, extended_color_ep_id, 15182, 21547, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device, extended_color_ep_id)
+      }
+    },
+  }
+)
+
+test.register_message_test(
   "Extended Color Child: X and Y color values should report hue and saturation once both have been received",
   {
     {
@@ -329,60 +359,8 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Extended Color Child: colorTemperatureRange, setColorTemperature, stepColorTemperatureByPercent handled appropriately",
+  "Extended Color Child: colorTemperatureRange, setColorTemperature, colorTemperature, stepColorTemperatureByPercent handled appropriately",
   {
-    -- setColorTemperature before a color temperature range is set
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_children[extended_color_ep_id].id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, extended_color_ep_id, 15182, 21547, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device, extended_color_ep_id)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, extended_color_ep_id, 15091)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, extended_color_ep_id, 21547)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[extended_color_ep_id]:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[extended_color_ep_id]:generate_test_message("main", capabilities.colorControl.saturation(72))
-    },
-
     -- colorTemperatureRange testing
     {
       channel = "matter",
@@ -416,6 +394,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[extended_color_ep_id].id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -423,6 +409,29 @@ test.register_message_test(
         clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, extended_color_ep_id, 555, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
       }
     }, -- 555 is expected since it is re-bounded by the given range
+
+    -- colorTemperature testing
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, extended_color_ep_id, 555)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[extended_color_ep_id]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
+    },
 
     -- stepColorTemperatureByPercent testing
     {
@@ -451,7 +460,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 

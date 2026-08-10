@@ -42,7 +42,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
-  subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -184,6 +183,29 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
+    },
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Handle unknown LockState value from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, 0xFF
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unknown()),
     },
   },
   {
@@ -361,10 +383,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-end,
-{
-   min_api_version = 17
-}
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

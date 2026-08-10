@@ -97,13 +97,10 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
 
 local function configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 3)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 4)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 5)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.button.pushed({state_change = false})))
 end
 
 local function test_init()

@@ -335,6 +335,28 @@ local function test_aqs_device_type_update_modular_profile(generic_mock_device, 
 end
 
 test.register_coroutine_test(
+  "Handle driverSwitched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_modular_fingerprint.id, "driverSwitched" })
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    mock_device_modular_fingerprint:expect_metadata_update({ profile = "aqs-modular", optional_component_capabilities = {{"main", {"tvocMeasurement"}}} })
+    mock_device_modular_fingerprint:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    test_init = test_init_modular_fingerprint,
+  }
+)
+
+test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - all clusters",
   function()
     local expected_metadata_all = {

@@ -417,7 +417,8 @@ function CameraAttributeHandlers.triggers_handler(driver, device, ib, response)
       augmentationDuration = trigger.augmentation_duration.value,
       maxDuration = trigger.max_duration.value,
       blindDuration = trigger.blind_duration.value,
-      sensitivity = camera_utils.feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and trigger.sensitivity.value
+      sensitivity = camera_utils.feature_supported(device, clusters.ZoneManagement.ID,
+        clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and trigger.sensitivity.value or nil
     })
   end
   device:emit_event_for_endpoint(ib, capabilities.zoneManagement.triggers(triggers))

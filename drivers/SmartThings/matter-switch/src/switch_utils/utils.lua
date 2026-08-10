@@ -21,6 +21,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local utils = {}
 
 function utils.tbl_contains(array, value)
@@ -402,12 +407,13 @@ function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_
 
   local previous_imported_report = utils.get_latest_state_for_endpoint(device, endpoint_id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local delta_energy = total_imported_energy_wh - previous_imported_report.energy
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
   device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
+    deltaEnergy = delta_energy >= 0.0 and delta_energy or total_imported_energy_wh, -- clarifying assumption: a negative delta means the meter was reset
     energy = total_imported_energy_wh
   }))
 end
@@ -430,7 +436,7 @@ function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sens
     table.sort(associated_endpoint_ids)
     local primary_associated_ep_id = associated_endpoint_ids[1]
     -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
-    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags, {persist = true})
     utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_sensor_ep.endpoint_id, string.format("%d", primary_associated_ep_id), { persist = true })
     return true
   end
@@ -544,16 +550,14 @@ function utils.subscribe(device)
       devices_seen[checked_device.id] = true -- only loop through any device once
     end
   end
-  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
-  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
-  -- attributes and not events.
-  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
 
   -- If the type of battery support has not yet been determined, add the PowerSource AttributeList to the list of
   -- subscribed attributes in order to determine which if any battery capability should be used.
   if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
     subscribe_request:with_info_block(ib)
+    attributes_seen[clusters.PowerSource.ID] = attributes_seen[clusters.PowerSource.ID] or {}
+    attributes_seen[clusters.PowerSource.ID][clusters.PowerSource.attributes.AttributeList.ID] = ib
   end
 
   -- If the power topology of the device has not yet been determined, add the AvailableEndpoints (for SET topology)
@@ -565,11 +569,20 @@ function utils.subscribe(device)
     if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
       local ib = im.InteractionInfoBlock(nil, clusters.PowerTopology.ID, clusters.PowerTopology.attributes.AvailableEndpoints.ID)
       subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.PowerTopology.ID] = attributes_seen[clusters.PowerTopology.ID] or {}
+      attributes_seen[clusters.PowerTopology.ID][clusters.PowerTopology.attributes.AvailableEndpoints.ID] = ib
     elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
       local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID)
       subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.Descriptor.ID] = attributes_seen[clusters.Descriptor.ID] or {}
+      attributes_seen[clusters.Descriptor.ID][clusters.Descriptor.attributes.PartsList.ID] = ib
     end
   end
+
+  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
+  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
+  -- attributes and not events.
+  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
 
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)

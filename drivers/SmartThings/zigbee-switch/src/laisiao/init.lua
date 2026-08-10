@@ -5,8 +5,6 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local configurations = require "configurations"
 
-
-
 local function component_to_endpoint(device, component_id)
   if component_id == "main" then
     return device.fingerprinted_endpoint_id
