@@ -52,10 +52,9 @@ local zigbee_valve_driver_template = {
   lifecycle_handlers = {
     added = device_added
   },
-  sub_drivers = {
-    require("sinope"),
-    require("sonoff")
-  }
+  sub_drivers = require("sub_drivers"),
+  health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_valve_driver_template, zigbee_valve_driver_template.supported_capabilities)
