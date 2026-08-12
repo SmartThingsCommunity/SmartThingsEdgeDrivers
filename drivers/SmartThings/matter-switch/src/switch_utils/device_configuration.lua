@@ -39,6 +39,7 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
       local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
+        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_profile))
         driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
