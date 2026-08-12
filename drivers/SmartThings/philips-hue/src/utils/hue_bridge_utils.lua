@@ -146,8 +146,12 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
+        -- json.decode (dkjson) returns `value, position, err` -- `position` (the index it
+        -- stopped scanning at) is a non-nil number even on a fully successful decode, so it
+        -- has to be captured and discarded here rather than accidentally landing in `err`,
+        -- which would otherwise make every SSE message look like a JSON parse error.
         ---@type HueSseEvent[], string?
-        local events, err = table.unpack(json_result, 1, json_result.n)
+        local events, _, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
           log.error_with(
