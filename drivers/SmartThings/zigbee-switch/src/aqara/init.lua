@@ -37,6 +37,7 @@ local SUPPORTED_INTERLOCK = { "normal", "interlock" }
 local COMPONENT_DEVICE_MODE = "devicemode"
 -- Relay working modes mapped to their raw device values. dry_contact_open_pulse_mode (raw 2) is
 -- intentionally not exposed; the remaining modes keep their original device values (on_off stays 3).
+-- This mode is not supported by the Aqara app and cannot be entered by the device, so it is omitted.
 local DEVICE_MODE_TO_VALUE = {
   wet_contact_mode = 0,
   dry_contact_closed_pulse_mode = 1,
