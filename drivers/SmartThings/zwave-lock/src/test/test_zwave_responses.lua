@@ -100,7 +100,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "user_code_report: sync completes when the last slot is reached",
@@ -140,7 +143,10 @@ test.register_coroutine_test(
     assert(mock_device:get_field(constants.DRIVER_STATE.BUSY) == false,
       "BUSY must be false after sync completes")
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "user_code_report: out-of-band ENABLED code creates user and credential entries",
@@ -173,7 +179,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- user_code_event_handler (ACCESS_CONTROL Notification:Report)
@@ -208,7 +217,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "user_code_event: multi-byte event_parameter uses byte 3 to extract user_id",
@@ -239,7 +251,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- door_operation_event_handler (ACCESS_CONTROL Notification:Report)
@@ -279,7 +294,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "door_operation_event: KEYPAD_UNLOCK_OPERATION with unknown credential sets userIndex from event_parameter",
@@ -306,7 +324,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "door_operation_event: AUTO_LOCK_LOCKED_OPERATION emits locked with auto method",
@@ -327,7 +348,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- DoorLock:OperationReport → lock state
@@ -346,7 +370,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "OperationReport: DOOR_UNSECURED emits unlocked event",
@@ -360,7 +387,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- users_number_report: UserCode:UsersNumberReport
@@ -388,6 +418,9 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()

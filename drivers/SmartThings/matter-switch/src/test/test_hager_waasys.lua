@@ -592,7 +592,10 @@ test.register_coroutine_test("Test: 4-Button Device Detection - Profile Changes 
     }))
   })
 
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press, and Held Events on 4-Button Device", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -796,7 +799,10 @@ test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press
     )
   })
   test.socket.capability:__expect_send(matter_device:generate_test_message("button4", capabilities.button.button.held({ state_change = true })))
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 15) and OnOff (Type 256) Device Types with Child Creation", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -889,7 +895,10 @@ test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 1
     parent.id,
     clusters.OnOff.attributes.OnOff:subscribe(parent, nil)
   })
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: 2G Relay - Profile Changes Between light-binary and 2-button Based On Endpoint Availability", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1131,7 +1140,10 @@ test.register_coroutine_test("Test: 2G Relay - Profile Changes Between light-bin
     parent_device_id = parent.id,
     parent_assigned_child_key = "4"
   })
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: Dimmer Device - Child Creation for Dimmable Endpoint with Button Support", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1227,7 +1239,10 @@ test.register_coroutine_test("Test: Dimmer Device - Child Creation for Dimmable 
     clusters.LevelControl.server.commands.MoveToLevelWithOnOff(child_dimmer, 3, 51, nil, 0, 0)
   })
 
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: 1G Dimmer - Initialization and Profile Update to light-level", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1236,7 +1251,10 @@ test.register_coroutine_test("Test: 1G Dimmer - Initialization and Profile Updat
   add_matter_device(dimmer, parent, "2-button")
   test.wait_for_events()
   configure_parent(parent)
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: 1G Dimmer - Host Commands and Level Control Capabilities", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1308,7 +1326,10 @@ test.register_coroutine_test("Test: 1G Dimmer - Host Commands and Level Control 
     parent_1g.id,
     clusters.LevelControl.server.commands.MoveToLevelWithOnOff(dimmer, 4, 51, nil, 0, 0)
   })
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: PIR Device - Initialization with Motion and Illuminance Capabilities", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1318,7 +1339,10 @@ test.register_coroutine_test("Test: PIR Device - Initialization with Motion and 
   test.wait_for_events()
   configure_parent(parent_pir)
 
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: PIR Device - Complete Functionality with Motion, Illuminance, and Dimmer Support", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1472,7 +1496,10 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
   })
   test.socket.capability:__expect_send(child_dimmer:generate_test_message("main", capabilities.switchLevel.level(50)))
   parent_pir.expect_native_attr_handler_registration(parent_pir, "switchLevel", "level")
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile with Window Covering Child Device", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1610,7 +1637,10 @@ test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile
   test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
   test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
 
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test("Test: Window Covering - Preference Changes for Reverse Polarity and Preset Position", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1775,6 +1805,9 @@ test.register_coroutine_test("Test: Window Covering - Preference Changes for Rev
     parent.id,
     cluster_base.subscribe(parent, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil)
   })
-end)
+end,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()
