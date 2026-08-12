@@ -195,3 +195,4 @@ preferences:
       options:
         0: "Celsius"
         1: "Fahrenheit"
+      default: 0
