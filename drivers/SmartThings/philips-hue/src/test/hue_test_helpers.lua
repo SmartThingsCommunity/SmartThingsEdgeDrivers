@@ -142,6 +142,17 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
   local mock_sse_connection
 
   local function test_init()
+    -- The driver template unconditionally spawns StrayDeviceHelper, a background thread with its
+    -- own perpetually re-arming 30-second timeout. Now that cosock's timers actually fire (see
+    -- cosock/timers.lua), that keeps the mock scheduler legitimately advancing mock time forever
+    -- chasing it -- which, without this, can let some other, shorter-lived timeout a test needs
+    -- to answer first (e.g. an injected refresh's 45-second REST reply-channel timeout) elapse
+    -- for real before this test's own coroutine ever gets a turn to respond. See
+    -- integration_test.set_test_coroutine_priority for the full rationale; scoped to Hue only
+    -- since it changes *when* the test coroutine runs relative to background timers, which other
+    -- drivers' test suites haven't been verified against.
+    test.set_test_coroutine_priority(true)
+
     test.mock_device.add_test_device(mock_bridge)
     test.mock_device.add_test_device(mock_light)
 
