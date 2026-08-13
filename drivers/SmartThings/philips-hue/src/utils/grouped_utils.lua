@@ -14,6 +14,12 @@ local grouped_utils = {}
 
 grouped_utils.GROUP_TYPES = {room = true, zone = true}
 
+-- Lets tests (and, in principle, a future driver preference) suppress group scanning entirely,
+-- without needing to mock rooms/zones REST responses or race the scan's own 45-second debounce
+-- timing against whatever else a test is asserting on the same connection. Defaults to true;
+-- production code never touches this.
+grouped_utils.scanning_enabled = true
+
 --- Build up mapping of hue device id to SmartThings device record
 ---@param bridge_device HueBridgeDevice
 ---@return table
@@ -301,6 +307,9 @@ end
 
 
 function grouped_utils.queue_group_scan(driver, bridge_device)
+  if not grouped_utils.scanning_enabled then
+    return
+  end
   local queue = bridge_device:get_field(Fields.GROUPS_SCAN_QUEUE)
   if queue == nil then
     local tx, rx = cosock.channel.new()

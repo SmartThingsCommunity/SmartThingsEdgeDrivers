@@ -109,6 +109,16 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
     -- for the REST-only fixture it's just reset false for hygiene, since onopen never runs there.
     disco.disco_api_instances = {}
     disco.discovery_active = opts.enable_sse or false
+    -- grouped_utils.scanning_enabled is the same class of singleton, reset here for the same
+    -- hygiene reason. It defaults off for every fixture built by this helper: added unconditionally
+    -- triggers a group scan for every light, whose own 45-second debounce would otherwise fire at
+    -- some timing-dependent point during any test (now that cosock's timers actually work) and
+    -- send real, unmocked rooms/zones REST requests that interleave with whatever the test itself
+    -- is asserting on the same connection. A test that specifically wants to exercise group
+    -- scanning should set it back to true itself, the same way mark_bridge_initialized overrides
+    -- a different fixture default below.
+    local grouped_utils = require "utils.grouped_utils"
+    grouped_utils.scanning_enabled = false
     disco.device_state_disco_cache[light_rid] = {
       hue_provided_name = "Hue Light",
       id = light_rid,
