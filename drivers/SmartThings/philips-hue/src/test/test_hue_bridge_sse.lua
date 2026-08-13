@@ -257,43 +257,55 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "a dropped SSE connection marks everything offline",
+  "a dropped SSE connection marks everything offline, then reconnecting brings it back online",
   function()
-    local sse = connect_sse()
+    local sse, rest = connect_sse()
 
-    -- Not covered here: reconnecting successfully and coming back online. eventsource.lua's
-    -- closed_action sleeps _reconnect_time_millis via a plain cosock.socket.sleep() before
-    -- looping back to CONNECTING and reconnecting. That delay genuinely is mock-time-driven
-    -- end to end (cosock/timers.lua's clock resolves, via lua_libs/socket/init.lua's
-    -- _envlibrequire("socket"), to this harness's mocked os.time() -- confirmed by tracing the
-    -- require chain, not a real unmocked clock as first suspected), but cosock/timers.lua's
-    -- timers.run() has a genuine off-by-one: `timeoutat < now` means a timer whose remaining
-    -- time computes to exactly 0 can never fire, because mock_socket.lua's os.__advance_time(0)
-    -- is a legitimate no-op and nothing else pushes mock time strictly *past* an exact boundary.
-    -- Loosening that to `<=` (a timer due "at t" should fire once time *reaches* t) was tried and
-    -- reverted: it's more correct in isolation, but it also makes previously-inert background
-    -- retry loops elsewhere -- e.g. grouped_utils.scan_groups's rooms/zones scan, which has no
-    -- mock response in any of these fixtures and was, before the fix, permanently stuck rather
-    -- than actively retrying -- start retrying at full speed, racking up thousands of cycles and
-    -- eventually tripping cosock's own single-waiter invariant in unrelated, previously-rock-solid
-    -- tests (test_hue_light_commands.lua, test_hue_light_refresh.lua). A `retry: 0` SSE field
-    -- (shortening the delay to the exact same problematic zero) plus a real `os.execute` sleep
-    -- was tried as a workaround; it does not reliably work either, and for a good reason once
-    -- traced through: os.execute sleeps real wall-clock time, which cosock/timers.lua's mocked
-    -- clock never reads at all, so any apparent success is pure coincidence -- some *other*,
-    -- unrelated background timeout's own advance happening to land past this one's deadline as a
-    -- side effect, not a real mechanism. Reliably testing this path needs a real fix that
-    -- addresses both cosock/timers.lua's due-check *and* the previously-dormant-retry-loop
-    -- fallout together (e.g. also giving grouped_utils.scan_groups's retry loop a mock response
-    -- or a bounded retry count), which is a bigger, riskier piece of work than fits here.
     sse:close_connection()
-
     test.wait_for_events()
 
     assert(mock_devices_api.__is_device_online(mock_bridge.id) == false,
       "expected the bridge to be marked offline after the SSE connection errored")
     assert(mock_devices_api.__is_device_online(mock_light.id) == false,
       "expected the light to be marked offline after the SSE connection errored")
+
+    -- eventsource.lua's closed_action sleeps the default 1-second reconnect delay (genuinely
+    -- mock-time-driven end to end now that cosock's timers fire correctly, and now that
+    -- integration_test.set_test_coroutine_priority lets this test's own coroutine answer it
+    -- before any *other* pending timeout can race ahead of it) before looping back to CONNECTING
+    -- and reconnecting to the same address. Reserve the next "sse" connection and queue its
+    -- handshake response *before* triggering that reconnect (rather than reacting afterward) --
+    -- see mock_lan_socket.lua's get_labeled comment: this is exactly the "arm it ahead of time"
+    -- case reserve/claim priority was built for.
+    local reconnect_sse = get_bridge_server():reserve_connection("sse")
+    reconnect_sse:queue_sse_headers(200)
+    test.wait_for_events()
+
+    reconnect_sse:expect_http_request("GET", "/eventstream/clip/v2", {
+      headers = { accept = "text/event-stream" },
+    })
+
+    -- onopen's connectivity poll runs again on reconnect; answer with this fixture's own light
+    -- reporting "connected" this time (unlike the first connect's answer_initial_light_refresh
+    -- calls, which deliberately used an unrelated device id to avoid this), so both the bridge
+    -- (marked online directly by onopen) and the light (marked online by this status) end up
+    -- back online, matching what a real reconnect looks like.
+    rest:queue_http_response(200, {}, {
+      errors = {},
+      data = { { owner = { rid = HUE_DEVICE_ID }, status = "connected" } },
+    })
+    test.wait_for_events()
+    rest:expect_http_request("GET", "/clip/v2/resource/zigbee_connectivity")
+
+    -- A "connected" status also injects another refresh capability command for the light --
+    -- the same shape as the ones LightLifecycleHandlers.added/.init already trigger.
+    expect_switch_and_level_emit()
+    answer_initial_light_refresh(rest)
+
+    assert(mock_devices_api.__is_device_online(mock_bridge.id) == true,
+      "expected the bridge to be marked online again after the SSE connection reconnected")
+    assert(mock_devices_api.__is_device_online(mock_light.id) == true,
+      "expected the light to be marked online again after the reconnect's connectivity poll found it connected")
   end
 )
 
