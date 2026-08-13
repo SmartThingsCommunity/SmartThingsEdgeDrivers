@@ -18,10 +18,12 @@ local HueApi = require "hue.api"
 --- a steady, already-paired state instead of falling into their discovery/long-poll paths --
 --- those paths are covered separately in test_hue_bridge_discovery.lua.
 ---
---- SSE is deliberately left uninitialized: `driver.joined_bridges`/`driver.datastore
---- .bridge_netinfo` are intentionally NOT populated for the bridge's own network-init step, so
---- `do_bridge_network_init` (which opens a persistent event-stream connection) never runs.
---- These fixtures are for REST-path tests only.
+--- SSE is deliberately left uninitialized by default: `driver.joined_bridges`/`driver.datastore
+--- .bridge_netinfo` are populated with a swversion below `PhilipsHueApi.MIN_CLIP_V2_SWVERSION`,
+--- so `do_bridge_network_init` (which opens a persistent event-stream connection) never runs.
+--- Pass `opts = { enable_sse = true }` to `build_paired_bridge_and_light` to get the mirror image
+--- instead -- a qualifying swversion and `driver.joined_bridges` pre-set, so `do_bridge_network_init`
+--- runs for real (see `test_hue_bridge_sse.lua`).
 local M = {}
 
 M.BRIDGE_IP = "192.168.1.15"
@@ -34,13 +36,18 @@ M.API_KEY = "test-api-key"
 --- @param profile_filename string the light's profile YAML filename
 --- @param device_template_overrides table|nil additional fields to merge into the light's
 ---   device template (e.g. `{ label = "..." }`)
+--- @param opts table|nil `{ enable_sse = boolean }` -- see the module doc comment above
 --- @return table mock_bridge
 --- @return table mock_light
 --- @return fun() get_bridge_server returns the current test run's
 ---   `integration_test.LanMockServer` for the bridge address; only valid to call from within a
 ---   test body (i.e. after `test_init` has run)
 --- @return fun() test_init must be passed to `test.set_test_init_function`
-function M.build_paired_bridge_and_light(light_rid, light_state, profile_filename, device_template_overrides)
+--- @return fun() get_sse_connection only meaningful when `opts.enable_sse` is true; returns the
+---   `integration_test.LanMockServer` handle bound to the bridge's SSE connection, valid once the
+---   driver's `EventSource` has actually connected (see `test_hue_bridge_sse.lua`)
+function M.build_paired_bridge_and_light(light_rid, light_state, profile_filename, device_template_overrides, opts)
+  opts = opts or {}
   local mock_bridge = test.mock_device.build_test_lan_device({
     label = "Hue Bridge",
     profile = t_utils.get_profile_definition("hue-bridge.yml"),
@@ -64,14 +71,28 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
 
   test.add_test_env_setup_func(function(driver)
     driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
-    -- A swversion below PhilipsHueApi.MIN_CLIP_V2_SWVERSION routes both the bridge's
-    -- "added"/"init" background retry loops into their terminal "ignored bridge" branch
-    -- instead of retrying forever (which, since mock time advances instantly on every sleep,
-    -- would spin the scheduler in a tight loop and hang the test) -- and, since
-    -- driver.joined_bridges never becomes true, this also means do_bridge_network_init (which
-    -- opens the persistent SSE event-stream connection) never runs. That's intentional: these
-    -- fixtures are for REST-path tests only.
-    driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = "0", modelid = "BSB002" }
+    if opts.enable_sse then
+      -- A qualifying swversion, plus driver.joined_bridges pre-set, routes
+      -- BridgeLifecycleHandlers.init straight into its synchronous branch that calls
+      -- do_bridge_network_init (which opens the persistent SSE event-stream connection) --
+      -- see test_hue_bridge_sse.lua. Note the invariant this relies on: do_bridge_network_init
+      -- also synchronously drains driver._devices_pending_refresh on the caller's thread before
+      -- returning, and if that were non-empty it could open a REST connection to the same
+      -- host:port *before* the SSE coroutine gets its first scheduler turn -- racing whatever
+      -- connection reservation a test made for the SSE stream. It's empty by default; don't
+      -- populate it in a test that also uses opts.enable_sse.
+      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = tostring(HueApi.MIN_CLIP_V2_SWVERSION), modelid = "BSB002" }
+      driver.joined_bridges[M.BRIDGE_DNI] = true
+    else
+      -- A swversion below PhilipsHueApi.MIN_CLIP_V2_SWVERSION routes both the bridge's
+      -- "added"/"init" background retry loops into their terminal "ignored bridge" branch
+      -- instead of retrying forever (which, since mock time advances instantly on every sleep,
+      -- would spin the scheduler in a tight loop and hang the test) -- and, since
+      -- driver.joined_bridges never becomes true, this also means do_bridge_network_init (which
+      -- opens the persistent SSE event-stream connection) never runs. That's intentional: these
+      -- fixtures are for REST-path tests only.
+      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = "0", modelid = "BSB002" }
+    end
     driver.datastore.api_keys = driver.datastore.api_keys or {}
     driver.datastore.api_keys[M.BRIDGE_DNI] = M.API_KEY
 
@@ -81,8 +102,13 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
     -- has no idea this module-level cache exists). Without clearing it, a *stale* PhilipsHueApi
     -- instance from a previous test would get picked up here instead of a fresh one -- its
     -- background control thread was wiped by the reset, so requests made against it would
-    -- silently never reach the (also freshly reset) mock socket at all.
+    -- silently never reach the (also freshly reset) mock socket at all. discovery_active is the
+    -- same class of singleton -- for the SSE fixture it's pre-set true so do_bridge_network_init's
+    -- onopen skips its rediscovery scan (Discovery.scan_bridge_and_update_devices, which would
+    -- otherwise make its own real mDNS/REST calls this fixture doesn't set up responses for);
+    -- for the REST-only fixture it's just reset false for hygiene, since onopen never runs there.
     disco.disco_api_instances = {}
+    disco.discovery_active = opts.enable_sse or false
     disco.device_state_disco_cache[light_rid] = {
       hue_provided_name = "Hue Light",
       id = light_rid,
@@ -103,6 +129,8 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
     }
   end)
 
+  local mock_sse_connection
+
   local function test_init()
     test.mock_device.add_test_device(mock_bridge)
     test.mock_device.add_test_device(mock_light)
@@ -113,6 +141,24 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
     mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, M.API_KEY, {})
 
     mock_bridge_server = lan_test_utils.build_mock_server(M.BRIDGE_IP, 443)
+    if opts.enable_sse then
+      -- Reserved here, synchronously, before any lifecycle delivery happens. Two things race to
+      -- connect to this address right after test_init returns: the SSE EventSource's own
+      -- background coroutine (spawned inside do_bridge_network_init, which runs synchronously
+      -- during the bridge's `init` handling) and LightLifecycleHandlers.added's
+      -- unconditionally-injected "refresh" capability command (light.lua's join_light path).
+      -- Whichever connects first claims this reservation -- which one that actually is isn't
+      -- reliably ordered (it can flip on unrelated timing, e.g. table/coroutine hashing), so
+      -- test_hue_bridge_sse.lua doesn't assume an order; it identifies which physical connection
+      -- ended up being "sse" after the fact instead of trusting this reservation to always match
+      -- the SSE stream. The other connection falls through to the address's default (shared)
+      -- entry, same as every REST-only fixture -- and since all of the bridge's REST traffic
+      -- shares one persistent connection (one PhilipsHueApi instance, one worker thread
+      -- processing requests serially), that's the *only* other connection this fixture ever
+      -- makes. See test_hue_bridge_sse.lua's answer_initial_light_refresh, which drains that
+      -- connection's unconditional first request so it doesn't block later REST calls behind it.
+      mock_sse_connection = mock_bridge_server:reserve_connection("sse")
+    end
 
     -- Registering this expectation here -- rather than inside a test body -- matters, not just
     -- for style: Hue's driver template unconditionally spawns a StrayDeviceHelper background
@@ -133,7 +179,12 @@ function M.build_paired_bridge_and_light(light_rid, light_state, profile_filenam
     return mock_bridge_server
   end
 
-  return mock_bridge, mock_light, get_bridge_server, test_init
+  local function get_sse_connection()
+    assert(mock_sse_connection, "get_sse_connection() called without opts.enable_sse, or before test_init() has run")
+    return mock_sse_connection
+  end
+
+  return mock_bridge, mock_light, get_bridge_server, test_init, get_sse_connection
 end
 
 --- `LightLifecycleHandlers.init` unconditionally emits a levelRange event on every light's
