@@ -130,6 +130,12 @@ local function handle_group_scan_response(group_kind, driver, hue_id_to_device, 
   return resp.data
 end
 
+-- Cap how many times scan_groups will retry a failed rooms/zones fetch, backing off between
+-- attempts, rather than hammering the bridge forever on a bad response (an empty/errored body
+-- resolves immediately, with no built-in throttling of its own -- unlike a real timeout, which is
+-- naturally rate-limited by the REST client's own settimeout).
+local GROUP_SCAN_MAX_ATTEMPTS = 5
+
 --- @param driver HueDriver
 --- @param bridge_device HueBridgeDevice
 --- @param api PhilipsHueApi
@@ -138,13 +144,25 @@ function grouped_utils.scan_groups(driver, bridge_device, api, hue_id_to_device)
   local rooms, zones
   -- These are the hue light/other service ids rather than the hue device ids
   local light_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
-  while not (rooms and zones) do
+  local backoff = utils.backoff_builder(30, 1, 0.5)
+  for attempt = 1, GROUP_SCAN_MAX_ATTEMPTS do
     if not rooms then
       rooms = handle_group_scan_response("rooms", driver, hue_id_to_device, light_id_to_device, api:get_rooms())
     end
     if not zones then
       zones = handle_group_scan_response("zones", driver, hue_id_to_device, light_id_to_device, api:get_zones())
     end
+    if rooms and zones then break end
+    if attempt == GROUP_SCAN_MAX_ATTEMPTS then
+      log.error_with({ hub_logs = true },
+        string.format(
+          "Giving up on group scan for bridge %s after %d attempts; will retry on the next scan trigger",
+          (bridge_device.label or bridge_device.id or "unknown bridge"), attempt
+        )
+      )
+      return
+    end
+    cosock.socket.sleep(backoff())
   end
   -- Combine rooms and zones.
   for _, zone in ipairs(zones) do

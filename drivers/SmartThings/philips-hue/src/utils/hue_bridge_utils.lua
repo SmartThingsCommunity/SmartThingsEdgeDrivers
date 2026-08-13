@@ -26,6 +26,10 @@ local grouped_utils = require "utils.grouped_utils"
 ---@class hue_bridge_utils
 local hue_bridge_utils = {}
 
+-- Cap how many times onopen's connectivity-status poll (below) will retry a failed or
+-- empty-but-successful response before giving up and moving on to the group scan anyway.
+local CONNECTIVITY_POLL_MAX_ATTEMPTS = 5
+
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 ---@param bridge_url string
@@ -71,18 +75,17 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         local scanned = false
-        local connectivity_status, rest_err
-
-        while true do
-          if scanned then break end
-          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+        -- Bounded, backed off the same way grouped_utils.scan_groups is: an empty-but-successful
+        -- response, or a fast error response, would otherwise retry this REST call forever with
+        -- no throttling of its own (unlike a real timeout, which is naturally rate-limited by the
+        -- REST client's own settimeout).
+        local backoff = utils.backoff_builder(30, 1, 0.5)
+        for attempt = 1, CONNECTIVITY_POLL_MAX_ATTEMPTS do
+          local connectivity_status, rest_err = bridge_api:get_connectivity_status()
           if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
               bridge_device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
-            goto continue
-          end
-
-          if connectivity_status.errors and #connectivity_status.errors > 0 then
+          elseif connectivity_status.errors and #connectivity_status.errors > 0 then
             log.error(
               string.format(
                 "Hue Bridge %s replied with the following error message(s) " ..
@@ -93,10 +96,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             for idx, err in ipairs(connectivity_status.errors) do
               log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
             end
-            goto continue
-          end
-
-          if connectivity_status.data and #connectivity_status.data > 0 then
+          elseif connectivity_status.data and #connectivity_status.data > 0 then
             scanned = true
             for _, status in ipairs(connectivity_status.data) do
               local hue_device_id = (status.owner and status.owner.rid) or ""
@@ -125,7 +125,17 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           end
 
-          ::continue::
+          if scanned then break end
+          if attempt == CONNECTIVITY_POLL_MAX_ATTEMPTS then
+            log.error_with({ hub_logs = true },
+              string.format(
+                "Giving up on connectivity status scan for bridge %s after %d attempts",
+                (bridge_device.label or bridge_device.id or "unknown bridge"), attempt
+              )
+            )
+          else
+            cosock.socket.sleep(backoff())
+          end
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
