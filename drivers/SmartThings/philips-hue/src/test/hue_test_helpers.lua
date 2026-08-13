@@ -151,4 +151,18 @@ function M.expect_light_init_events(mock_light)
   )
 end
 
+--- Refresh (and other per-device flows) check that the bridge has finished initializing via
+--- Fields._INIT, which is normally set inside do_bridge_network_init once bridge setup fully
+--- completes -- the same step that creates the bridge's SSE EventSource. Since SSE connects to
+--- the same host:port as REST calls, and the mock LAN socket models one connection per address,
+--- letting do_bridge_network_init run for real would interleave the SSE connection's own bytes
+--- into REST-focused assertions. Call this from within a test body (after the automatic
+--- added/init lifecycle burst has already run -- i.e. as the first statement in the test, not
+--- from test_init) to mark the bridge initialized directly instead.
+---
+--- @param mock_bridge table
+function M.mark_bridge_initialized(mock_bridge)
+  mock_bridge:set_field(Fields._INIT, true, {})
+end
+
 return M
