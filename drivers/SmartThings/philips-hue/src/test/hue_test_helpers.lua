@@ -237,4 +237,107 @@ function M.mark_bridge_initialized(mock_bridge)
   mock_bridge:set_field(Fields._INIT, true, {})
 end
 
+--- Build a paired bridge and generic child device (button, sensor, etc.)
+--- Similar to build_paired_bridge_and_light but without light-specific assumptions
+---
+--- @param child_rid string the Hue resource ID for the child device
+--- @param child_state table the device state to seed `device_state_disco_cache` with
+--- @param profile_filename string the child device's profile YAML filename
+--- @param device_type string the parent_assigned_child_key prefix (e.g., "button", "motion", "contact")
+--- @param init_event_expectations fun(mock_child)|nil optional function to register init event expectations
+--- @param device_template_overrides table|nil additional fields for the child device template
+--- @param opts table|nil `{ enable_sse = boolean }` -- SSE is typically required for buttons/sensors
+--- @return table mock_bridge
+--- @return table mock_child
+--- @return fun() get_bridge_server
+--- @return fun() test_init
+--- @return fun() get_sse_connection
+function M.build_paired_bridge_and_child(child_rid, child_state, profile_filename, device_type, init_event_expectations, device_template_overrides, opts)
+  opts = opts or {}
+  local mock_bridge = test.mock_device.build_test_lan_device({
+    label = "Hue Bridge",
+    profile = t_utils.get_profile_definition("hue-bridge.yml"),
+    device_network_id = M.BRIDGE_DNI,
+  })
+
+  local child_template = {
+    label = child_state.hue_provided_name or ("Hue " .. device_type),
+    profile = t_utils.get_profile_definition(profile_filename),
+    parent_assigned_child_key = device_type .. ":" .. child_rid,
+    parent_device_id = mock_bridge.id,
+  }
+  for k, v in pairs(device_template_overrides or {}) do
+    child_template[k] = v
+  end
+  local mock_child = test.mock_device.build_test_lan_device(child_template)
+
+  local mock_bridge_server
+
+  test.add_test_env_setup_func(function(driver)
+    driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
+    if opts.enable_sse then
+      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = tostring(HueApi.MIN_CLIP_V2_SWVERSION), modelid = "BSB002" }
+      driver.joined_bridges[M.BRIDGE_DNI] = true
+    else
+      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = "0", modelid = "BSB002" }
+    end
+    driver.datastore.api_keys = driver.datastore.api_keys or {}
+    driver.datastore.api_keys[M.BRIDGE_DNI] = M.API_KEY
+
+    local disco = require "disco"
+    disco.disco_api_instances = {}
+    disco.discovery_active = opts.enable_sse or false
+    local grouped_utils = require "utils.grouped_utils"
+    grouped_utils.scanning_enabled = false
+    
+    -- Ensure parent_device_id is set correctly in child state
+    child_state.parent_device_id = mock_bridge.id
+    
+    -- Populate disco cache with child device state
+    disco.device_state_disco_cache[child_rid] = child_state
+  end)
+
+  local mock_sse_connection
+
+  local function test_init()
+    test.set_test_coroutine_priority(true)
+
+    test.mock_device.add_test_device(mock_bridge)
+    test.mock_device.add_test_device(mock_child)
+
+    mock_bridge:set_field(Fields.DEVICE_TYPE, "bridge", {})
+    mock_bridge:set_field(Fields.BRIDGE_ID, M.BRIDGE_DNI, {})
+    mock_bridge:set_field(Fields.IPV4, M.BRIDGE_IP, {})
+    mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, M.API_KEY, {})
+    -- Mark bridge as already added to prevent lifecycle handlers from treating child as stray
+    mock_bridge:set_field(Fields._ADDED, true, { persist = true })
+    -- Don't mark _INIT yet if SSE is enabled - let do_bridge_network_init run to set up SSE
+    if not opts.enable_sse then
+      mock_bridge:set_field(Fields._INIT, true, { persist = true })
+    end
+
+    mock_bridge_server = lan_test_utils.build_mock_server(M.BRIDGE_IP, 443)
+    if opts.enable_sse then
+      mock_sse_connection = mock_bridge_server:reserve_connection("sse")
+    end
+
+    -- Allow caller to register device-specific init expectations
+    if init_event_expectations then
+      init_event_expectations(mock_child)
+    end
+  end
+
+  local function get_bridge_server()
+    assert(mock_bridge_server, "get_bridge_server() called before test_init() has run")
+    return mock_bridge_server
+  end
+
+  local function get_sse_connection()
+    assert(mock_sse_connection, "get_sse_connection() called without opts.enable_sse, or before test_init() has run")
+    return mock_sse_connection
+  end
+
+  return mock_bridge, mock_child, get_bridge_server, test_init, get_sse_connection
+end
+
 return M
