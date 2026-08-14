@@ -26,10 +26,6 @@ local grouped_utils = require "utils.grouped_utils"
 ---@class hue_bridge_utils
 local hue_bridge_utils = {}
 
--- Cap how many times onopen's connectivity-status poll (below) will retry a failed or
--- empty-but-successful response before giving up and moving on to the group scan anyway.
-local CONNECTIVITY_POLL_MAX_ATTEMPTS = 5
-
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 ---@param bridge_url string
@@ -75,12 +71,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         local scanned = false
-        -- Bounded, backed off the same way grouped_utils.scan_groups is: an empty-but-successful
-        -- response, or a fast error response, would otherwise retry this REST call forever with
-        -- no throttling of its own (unlike a real timeout, which is naturally rate-limited by the
-        -- REST client's own settimeout).
         local backoff = utils.backoff_builder(30, 1, 0.5)
-        for attempt = 1, CONNECTIVITY_POLL_MAX_ATTEMPTS do
+        while true do
           local connectivity_status, rest_err = bridge_api:get_connectivity_status()
           if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
@@ -126,16 +118,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
           end
 
           if scanned then break end
-          if attempt == CONNECTIVITY_POLL_MAX_ATTEMPTS then
-            log.error_with({ hub_logs = true },
-              string.format(
-                "Giving up on connectivity status scan for bridge %s after %d attempts",
-                (bridge_device.label or bridge_device.id or "unknown bridge"), attempt
-              )
-            )
-          else
-            cosock.socket.sleep(backoff())
-          end
+          cosock.socket.sleep(backoff())
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
