@@ -96,4 +96,80 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "setColor command converts HSV to XY and sends PUT with color",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_light.id,
+      { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 0, saturation = 100 } } },
+    })
+    queue_ok_response()
+    test.wait_for_events()
+
+    local req = get_bridge_server():assert_http_request_received(
+      "PUT",
+      "/clip/v2/resource/light/" .. LIGHT_RID
+    )
+    -- Verify the request body has the expected structure
+    local body = require("dkjson").decode(req:get_body())
+    assert(body.color ~= nil, "Expected color in body")
+    assert(body.color.xy ~= nil, "Expected color.xy in body")
+    assert(type(body.color.xy.x) == "number", "Expected color.xy.x to be a number")
+    assert(type(body.color.xy.y) == "number", "Expected color.xy.y to be a number")
+    assert(body.on ~= nil and body.on.on == true, "Expected light to be turned on")
+  end
+)
+
+test.register_coroutine_test(
+  "setHue command uses existing saturation and sends PUT with color",
+  function()
+    -- Set initial saturation field
+    mock_light:set_field("_color_saturation", 50)
+    
+    test.socket.capability:__queue_receive({
+      mock_light.id,
+      { capability = "colorControl", component = "main", command = "setHue", args = { 240 } }, -- Blue hue
+    })
+    queue_ok_response()
+    test.wait_for_events()
+
+    local req = get_bridge_server():assert_http_request_received(
+      "PUT",
+      "/clip/v2/resource/light/" .. LIGHT_RID
+    )
+    -- Verify color.xy structure exists
+    local body = require("dkjson").decode(req:get_body())
+    assert(body.color ~= nil, "Expected color in body")
+    assert(body.color.xy ~= nil, "Expected color.xy in body")
+    assert(type(body.color.xy.x) == "number", "Expected color.xy.x to be a number")
+    assert(type(body.color.xy.y) == "number", "Expected color.xy.y to be a number")
+  end
+)
+
+test.register_coroutine_test(
+  "setSaturation command uses existing hue and sends PUT with color",
+  function()
+    -- Set initial hue field
+    mock_light:set_field("_color_hue", 120) -- Green hue
+    
+    test.socket.capability:__queue_receive({
+      mock_light.id,
+      { capability = "colorControl", component = "main", command = "setSaturation", args = { 75 } },
+    })
+    queue_ok_response()
+    test.wait_for_events()
+
+    local req = get_bridge_server():assert_http_request_received(
+      "PUT",
+      "/clip/v2/resource/light/" .. LIGHT_RID
+    )
+    -- Verify color.xy structure exists
+    local body = require("dkjson").decode(req:get_body())
+    assert(body.color ~= nil, "Expected color in body")
+    assert(body.color.xy ~= nil, "Expected color.xy in body")
+    assert(type(body.color.xy.x) == "number", "Expected color.xy.x to be a number")
+    assert(type(body.color.xy.y) == "number", "Expected color.xy.y to be a number")
+  end
+)
+
 test.run_registered_tests()
