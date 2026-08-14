@@ -1,6 +1,5 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local mock_lan_socket = require "integration_test.mock_lan_socket"
 local hue_test_helpers = require "test.hue_test_helpers"
 local Fields = require "fields"
 
@@ -80,23 +79,11 @@ local mock_bridge, mock_remote, get_bridge_server, base_test_init, get_sse_conne
 
 test.set_test_init_function(base_test_init)
 
---- Identify which connection is SSE vs REST
-local function identify_sse_and_rest_connections()
-  test.wait_for_events()
-  local labeled_conn = mock_lan_socket.tcp_registry.get_labeled(hue_test_helpers.BRIDGE_IP, 443, "sse")
-  if not labeled_conn then
-    return get_sse_connection(), get_bridge_server()
-  end
-  local sent_so_far = table.concat(labeled_conn.sent_log or {})
-  if sent_so_far:match("^GET /eventstream/clip/v2 ") then
-    return get_sse_connection(), get_bridge_server()
-  end
-  return get_bridge_server(), get_sse_connection()
-end
-
 --- Helper to connect SSE stream for 4-button remote
 local function connect_sse_for_multibutton()
-  local sse, rest = identify_sse_and_rest_connections()
+  local sse, rest = hue_test_helpers.identify_sse_and_rest_connections(
+    hue_test_helpers.BRIDGE_IP, 443, get_sse_connection, get_bridge_server
+  )
   
   -- Drain the button's injected refresh REST calls (from init's _REFRESH_AFTER_INIT)
   -- 4-button remote refresh: 1+2+3+4+5 = 8 total REST calls

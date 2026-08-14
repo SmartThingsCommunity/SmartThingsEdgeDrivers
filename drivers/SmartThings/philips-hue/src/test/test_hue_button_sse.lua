@@ -1,6 +1,5 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local mock_lan_socket = require "integration_test.mock_lan_socket"
 local hue_test_helpers = require "test.hue_test_helpers"
 local Fields = require "fields"
 
@@ -49,25 +48,11 @@ local mock_bridge, mock_button, get_bridge_server, base_test_init, get_sse_conne
 
 test.set_test_init_function(base_test_init)
 
---- Identify which connection is SSE vs REST (adapted from test_hue_bridge_sse.lua)
-local function identify_sse_and_rest_connections()
-  test.wait_for_events()
-  local labeled_conn = mock_lan_socket.tcp_registry.get_labeled(hue_test_helpers.BRIDGE_IP, 443, "sse")
-  if not labeled_conn then
-    -- Fallback if labeled connection doesn't exist
-    return get_sse_connection(), get_bridge_server()
-  end
-  local sent_so_far = table.concat(labeled_conn.sent_log or {})
-  if sent_so_far:match("^GET /eventstream/clip/v2 ") then
-    return get_sse_connection(), get_bridge_server()
-  end
-  -- If the labeled connection is NOT SSE, then the order is swapped
-  return get_bridge_server(), get_sse_connection()
-end
-
---- Helper to connect SSE stream (simplified - no refresh draining yet)
+--- Helper to connect SSE stream for button device
 local function connect_sse_for_button()
-  local sse, rest = identify_sse_and_rest_connections()
+  local sse, rest = hue_test_helpers.identify_sse_and_rest_connections(
+    hue_test_helpers.BRIDGE_IP, 443, get_sse_connection, get_bridge_server
+  )
   
   -- Drain the button's injected refresh REST calls (from init's _REFRESH_AFTER_INIT)
   -- Button refresh sequence (see refresh_handlers.lua + disco/button.lua):

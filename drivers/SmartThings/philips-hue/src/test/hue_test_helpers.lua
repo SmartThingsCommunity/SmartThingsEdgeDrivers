@@ -340,4 +340,85 @@ function M.build_paired_bridge_and_child(child_rid, child_state, profile_filenam
   return mock_bridge, mock_child, get_bridge_server, test_init, get_sse_connection
 end
 
+--- Identifies which connection is SSE vs REST when both race to connect.
+---
+--- The SSE EventSource and the bridge's REST API both connect to the same host:port.
+--- During test_init, a labeled "sse" connection is reserved, but which physical connection
+--- claims that reservation isn't reliably ordered (it can flip depending on unrelated timing).
+--- This helper inspects the sent bytes on the labeled connection to determine which is which.
+---
+--- Usage pattern (from test body, after SSE connection has been made):
+---   local sse, rest = hue_test_helpers.identify_sse_and_rest_connections(
+---     hue_test_helpers.BRIDGE_IP, 443, get_sse_connection, get_bridge_server
+---   )
+---
+--- @param bridge_ip string the bridge IP address (typically hue_test_helpers.BRIDGE_IP)
+--- @param bridge_port number the bridge port (typically 443)
+--- @param get_sse_connection fun() returns the SSE connection handle from fixture
+--- @param get_bridge_server fun() returns the REST server handle from fixture
+--- @return integration_test.LanMockServer sse the SSE stream connection
+--- @return integration_test.LanMockServer rest the bridge's persistent REST connection
+function M.identify_sse_and_rest_connections(bridge_ip, bridge_port, get_sse_connection, get_bridge_server)
+  local mock_lan_socket = require "integration_test.mock_lan_socket"
+  test.wait_for_events()
+  local labeled_conn = mock_lan_socket.tcp_registry.get_labeled(bridge_ip, bridge_port, "sse")
+  if not labeled_conn then
+    -- Fallback if labeled connection doesn't exist
+    return get_sse_connection(), get_bridge_server()
+  end
+  local sent_so_far = table.concat(labeled_conn.sent_log or {})
+  if sent_so_far:match("^GET /eventstream/clip/v2 ") then
+    return get_sse_connection(), get_bridge_server()
+  end
+  -- If the labeled connection is NOT SSE, then the order is swapped
+  return get_bridge_server(), get_sse_connection()
+end
+
+--- SSE Test Pattern Documentation
+---
+--- When testing devices that rely on SSE events (buttons, sensors), follow this pattern:
+---
+--- 1. **Fixture Setup**: Use build_paired_bridge_and_child() with enable_sse = true
+---    - Provide complete device state in disco cache
+---    - Register init event expectations (supportedButtonValues, initial capability values)
+---    - Note: init handler injects a refresh command via _REFRESH_AFTER_INIT field
+---
+--- 2. **Connection Helper**: Create a connect_sse_for_<device_type>() function that:
+---    a. Calls identify_sse_and_rest_connections() to determine which connection is which
+---    b. Drains the device's refresh REST call sequence (device-specific, see below)
+---    c. Answers the SSE handshake: assert GET /eventstream/clip/v2, queue_sse_headers(200)
+---    d. Answers the onopen connectivity poll: queue zigbee_connectivity response
+---    e. Returns (sse, rest) handles
+---
+--- 3. **Device-Specific Refresh Sequences**:
+---    - Single button: 5 REST calls
+---      GET device (for services), GET zigbee_connectivity, GET device (again),
+---      GET button/{rid}, GET device_power/{rid}
+---    - 4-button remote: 8 REST calls
+---      GET device, GET zigbee_connectivity, GET device,
+---      GET button/{rid1}, GET button/{rid2}, GET button/{rid3}, GET button/{rid4},
+---      GET device_power/{rid}
+---    - Motion sensor: 7 REST calls
+---      GET device, GET zigbee_connectivity, GET device,
+---      GET motion/{rid}, GET temperature/{rid}, GET light_level/{rid}, GET device_power/{rid}
+---    - Light: 3 REST calls (see test_hue_bridge_sse.lua)
+---      GET device, GET zigbee_connectivity, GET light/{rid}
+---
+--- 4. **Test Body Pattern**:
+---    local sse = connect_sse_for_<device_type>()
+---    test.socket.capability:__expect_send(...)  -- register expectation
+---    sse:queue_sse_event({...})  -- send SSE event
+---    test.wait_for_events()
+---
+--- 5. **SSE Event Format**:
+---    {
+---      { type = "update", data = { { type = "button", id = BUTTON_RID, ... } } }
+---    }
+---
+--- 6. **Multi-Attribute Updates**: Use relaxed ordering when events can arrive in any order:
+---    test.socket.capability:__set_channel_ordering("relaxed")
+---
+--- See test_hue_button_sse.lua, test_hue_multibutton_sse.lua, and
+--- test_hue_motion_sensor_sse.lua for complete examples.
+
 return M
