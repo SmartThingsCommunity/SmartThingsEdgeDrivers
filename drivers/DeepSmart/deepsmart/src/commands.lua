@@ -43,7 +43,7 @@ function command_handler.set_switch(_, device, command)
   local devtype = wisers.get_dev_type(device)
   local addrtypes = {}
   -- get devtype onoff addrtype
-  if (devtype == config.ENUM.AC or devtype == config.ENUM.HEATER or devtype == config.ENUM.NEWFAN) then
+  if (devtype == config.ENUM.AC or devtype == config.ENUM.HEATER or devtype == config.ENUM.NEWFAN or devtype == config.ENUM.SWITCH or devtype == config.ENUM.SLIDER or devtype == config.ENUM.HUE) then
     addrtypes[1] = config.DEVICE.ONOFF
   else
     addrtypes[1] = 0
@@ -59,6 +59,40 @@ function command_handler.set_switch(_, device, command)
   end
   log.error('no response from device')
   return 0
+end
+
+----------------
+-- Switch level command
+----------------
+function command_handler.set_level(_, device, command)
+  local lvl = command.args.level
+  local success = wisers.control(device, command, {config.SLIDER.BRIGHT})
+  -- Check if success
+  if success then
+    if lvl == 0 then
+      device:emit_event(caps.switch.switch.off())
+    else
+      device:emit_event(caps.switch.switch.on())
+    end
+    device:emit_event(caps.switchLevel.level(lvl))
+    return
+  end
+  log.error('no response from device')
+end
+
+----------------
+-- Color control command
+----------------
+function command_handler.set_color(_, device, command)
+  local success = wisers.control(device, command, {config.HUE.HUE})
+
+  -- Check if success
+  if success then
+    device:emit_event(caps.switch.switch.on())
+    device:emit_event(caps.colorTemperature.colorTemperature(command.args.temperature))
+    return
+  end
+  log.error('no response from device')
 end
 
 ----------------
@@ -129,6 +163,62 @@ function command_handler.set_setheatingpoint(driver, device, command)
   -- Check if success
   if success then
     return device:emit_event(caps.thermostatHeatingSetpoint.heatingSetpoint({value=command.args.setpoint,unit='C'}))
+  end
+  log.error('no response from device')
+end
+
+----------------
+-- Window Shade command (open/close/pause)
+----------------
+function command_handler.set_shade(_, device, command)
+  local cmd = command.command
+  log.info('hub control device '..device.parent_assigned_child_key..' shade '..cmd)
+  -- determine addrtypes based on command
+  local addrtypes = {}
+  if (cmd == 'open') then
+      addrtypes[1] = config.CURTAIN.OPEN
+      addrtypes[2] = config.CURTAIN.CLOSE
+  elseif (cmd == 'close') then
+      addrtypes[1] = config.CURTAIN.OPEN
+      addrtypes[2] = config.CURTAIN.CLOSE
+  elseif (cmd == 'pause') then
+    addrtypes[1] = config.CURTAIN.PAUSE
+  else
+    addrtypes[1] = config.CURTAIN.PAUSE
+  end
+  local success = wisers.control(device, command, addrtypes)
+  if success then
+    device:online()
+    if cmd == 'close' then
+      return device:emit_event(caps.windowShade.windowShade.closed())
+    elseif cmd == 'open' then
+      return device:emit_event(caps.windowShade.windowShade.open())
+    elseif cmd == 'pause' then
+      return device:emit_event(caps.windowShade.windowShade.paused())
+    end
+    -- pause: no state change, just acknowledge
+    return
+  end
+  log.error('no response from device')
+  return 0
+end
+
+----------------
+-- Window Shade Level command
+----------------
+function command_handler.set_shade_level(_, device, command)
+  local level = command.args.shadeLevel
+  log.info('hub control device '..device.parent_assigned_child_key..' shade level '..level)
+  local success = wisers.control(device, command, {config.CURTAIN.LEVEL})
+  if success then
+    device:online()
+    device:emit_event(caps.windowShadeLevel.shadeLevel(level))
+    if level == 0 then
+      device:emit_event(caps.windowShade.windowShade.closed())
+    elseif level == 100 then
+      device:emit_event(caps.windowShade.windowShade.open())
+    end
+    return
   end
   log.error('no response from device')
 end
