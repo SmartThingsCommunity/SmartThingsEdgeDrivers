@@ -9,11 +9,11 @@ components:
     version: 1
     config:
       values:
-        - key: supportedSoundTypes.value
+        - key: soundDetected.value
           enabledValues:
             - noSound
             - fireAlarm
-  - id: switch
+  - id: safetyValve
     version: 1
   categories:
     - name: SmokeDetector

@@ -15,8 +15,12 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
+--- @type st.zwave.CommandClass.ApplicationStatus
+local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+--- @type st.zwave.CommandClass.SwitchBinary
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
 local FIREAVERT_APPLIANCE_SHUTOFF_FINGERPRINTS = {
     { manufacturerId = 0x045D, productType = 0x0004, productId = 0x0601 }, -- FireAvert Appliance Shutoff - 120V
@@ -38,37 +42,47 @@ local function can_handle_fireavert_appliance_shutoff_e(opts, driver, device, ..
     else return false end
 end
 
---- Handler for notification report command class from sensor
----
---- @param self st.zwave.Driver
+--- Only ever fires when the device attempts to turn the switch back on and this is rejected.
+--- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
---- @param cmd st.zwave.CommandClass.Notification.Report
-local function notification_report_handler(self, device, cmd)
-  local event = nil
-  if cmd.args.notification_type == Notification.notification_type.SMOKE then
-    -- First, ensure that control is still valid
-    if cmd.args.event == Notification.event.smoke.DETECTED then
-      event = capabilities.soundDetection.soundDetected.fireAlarm()
-    elseif cmd.args.event == Notification.event.smoke.STATE_IDLE then
-      event = capabilities.soundDetection.soundDetected.noSound()
-    end
-  elseif cmd.args.notification_type == Notification.notification_type.POWER_MANAGEMENT then
-    if (cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED) then
-      event = capabilities.applianceUtilization.status.inUse()
-    elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
-      event = capabilities.applianceUtilization.status.notInUse()
-    end
-  end
-  -- While the device supports other notifications, they are out of scope for WWST certification.
-  if event ~= nil then 
-    print("Notification event: %s", event)
-    device:emit_event(event) 
-  end
-  if status ~= nil then 
-    print("Notification status %s set", status)
-    device:emit_event(status) 
-  end
+--- @param cmd st.zwave.CommandClass.ApplicationStatus.ApplicationRejectedRequest
+local function app_rejected_handler(driver, device, cmd)
+  print("Application rejected received from device, unable to rearm")
+  --- Reset the UI switch to match the current relay state.
+  device:emit_event(capabilities.switch.switch.off({state_change = true}))
 end
+
+
+--- Handle a Switch OFF command from the application.
+--- 
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param command ST level capability command
+local function st_switch_off_handler(driver, device, command)
+  device:send(SwitchBinary:Set({
+      target_value = SwitchBinary.value.OFF_DISABLE,
+      duration = 0
+    })
+  )
+  device:send(SwitchBinary:Get({}))
+end
+
+--- Handle a Switch ON command from the application.
+--- Switching on is not allowed in some cases, so that is handled through the ApplicationRejected
+--- handler.
+--- 
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param command ST level capability command
+local function st_switch_on_handler(driver, device, command)
+  device:send(SwitchBinary:Set({
+      target_value = SwitchBinary.value.ON_ENABLE,
+      duration = 0
+    })
+  )
+  device:send(SwitchBinary:Get({}))
+end
+
 
 --- Configuration lifecycle event handler.
 ---
@@ -83,8 +97,14 @@ end
 
 local fireavert_appliance_shutoff_e = {
   zwave_handlers = {
-    [cc.NOTIFICATION] = {
-      [Notification.REPORT] = notification_report_handler
+    [cc.APPLICATION_STATUS] = {
+      [ApplicationStatus.APPLICATION_REJECTED_REQUEST] = app_rejected_handler,
+    }
+  },
+  capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.off.NAME] = st_switch_off_handler,
+      [capabilities.switch.commands.on.NAME] = st_switch_on_handler
     },
   },
   lifecycle_handlers = {

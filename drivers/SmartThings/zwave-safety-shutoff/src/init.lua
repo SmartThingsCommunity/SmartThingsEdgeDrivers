@@ -41,25 +41,19 @@ end
 local initial_events_map = {
   [capabilities.soundDetection.ID] = capabilities.soundDetection.soundDetected.noSound(),
   [capabilities.applianceUtilization.ID] = capabilities.applianceUtilization.status.notInUse(),
-  [capabilities.switch.ID] = capabilities.switch.switch.off()
 }
 
 local function added_handler(self, device)
   for id, event in pairs(initial_events_map) do
     if device:supports_capability_by_id(id) then
       device:emit_event(event)
+      -- Also emit event specifying the supported soundDetected types and setup functions
+      if id == capabilities.soundDetection.ID then
+          device:emit_event(capabilities.soundDetection.supportedSoundTypes({"noSound", "fireAlarm"}, {visibility = { displayed = false }}))
+          device:emit_event(capabilities.soundDetection.soundDetectionState("enabled", {visibilty = {displayed = false}}))
+      end
     end
   end
-end
-
---- Only ever fires when the device attempts to turn the switch back on and this is rejected.
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd st.zwave.CommandClass.ApplicationStatus.ApplicationRejectedRequest
-local function app_rejected_handler(driver, device, cmd)
-  print("Application rejected received from device, unable to rearm")
-  --- Reset the UI switch to match the current relay state.
-  device:emit_event(capabilities.switch.switch.off({state_change = true}))
 end
 
 local function device_init(self, device)
@@ -101,51 +95,75 @@ end
 --- @param cmd st.zwave.CommandClass.SwitchBinary.Report
 local function switch_report_handler(driver, device, cmd)
   -- This is the only place the switch_state mirror should change value.
-  -- TODO: fix device changing value
-  local isDeviceChanging = false;
+  local isDeviceChanging = true -- Eventually trigger this if needed based on current status
+  local useValve = device:supports_capability(capabilities.safetyValve)
   if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
-    device:emit_event(capabilities.switch.switch.off({state_change = isDeviceChanging}))
+    if useValve then 
+      device:emit_event(capabilities.safetyValve.valve.closed())
+    else 
+      device:emit_event(capabilities.switch.switch.off({state_change = isDeviceChanging}))
+    end
     --- Also turn off power meter UI element, appliance is obviously not drawing power if
     --- the switch is off
     if (device:supports_capability(capabilities.applianceUtilization)) then
       device:emit_event(capabilities.applianceUtilization.status.notInUse())
     end
   else
-    device:emit_event(capabilities.switch.switch.on({state_change = isDeviceChanging}))
+    if useValve then
+      device:emit_event(capabilities.safetyValve.valve.open({state_change = isDeviceChanging}))
+    else 
+      device:emit_event(capabilities.switch.switch.on({state_change = isDeviceChanging}))
+    end 
   end
 end
 
---- Handle a Switch OFF command from the application.
---- Switching on is not allowed in many cases so that behavior
---- is inherited by the subdriver as needed. 
---- 
---- @param driver st.zwave.Driver
+
+--- Handler for notification report command class from sensor
+---
+--- @param self st.zwave.Driver
 --- @param device st.zwave.Device
---- @param command ST level capability command
-local function st_switch_off_handler(driver, device, command)
-  device:send(SwitchBinary:Set({
-      target_value = SwitchBinary.value.OFF_DISABLE,
-      duration = 0
-    })
-  )
-  device:send(SwitchBinary:Get({}))
+--- @param cmd st.zwave.CommandClass.Notification.Report
+local function notification_report_handler(self, device, cmd)
+  local event = nil
+  local status = nil
+  local set_status = device:get_field("notification_set_status")
+  if cmd.args.notification_type == Notification.notification_type.SMOKE then
+    -- First, ensure that control is still valid
+    if (cmd.args.notification_status == Notification.notification_status.OFF and set_status == "sound_disable") then -- State IDLE is 0, this may be a report for notifications enabled.
+      status = capabilities.soundDetection.soundDetectionState.disabled()
+      print("Notifications disabled successfully")
+    elseif (set_status == "sound_enable") then
+      status = capabilities.soundDetection.soundDetectionState.enabled()
+      print("Notifications enabled successfully")
+    end
+
+    if (set_status == nil or set_status ~= "none") then
+      device:set_field("notification_set_status", "none")
+    end
+    -- Now check and see what the sound state is
+    if cmd.args.event == Notification.event.smoke.DETECTED then
+      event = capabilities.soundDetection.soundDetected.fireAlarm()
+    elseif cmd.args.event == Notification.event.smoke.STATE_IDLE then
+      event = capabilities.soundDetection.soundDetected.noSound()
+    end
+  elseif (device:supports_capability(capabilities.applianceUtilization) and cmd.args.notification_type == Notification.notification_type.POWER_MANAGEMENT) then
+    if (cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED) then
+      event = capabilities.applianceUtilization.status.inUse()
+    elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
+      event = capabilities.applianceUtilization.status.notInUse()
+    end
+  end
+  -- While the device supports other notifications, they are out of scope for WWST certification.
+  if status ~= nil then 
+    print("Notification status %s set", status)
+    device:emit_event(status) 
+  end
+  if event ~= nil then 
+    print("Notification event: %s", event)
+    device:emit_event(event) 
+  end
 end
 
---- Handle a Switch ON command from the application.
---- Switching on is not allowed in many cases so that behavior
---- is inherited by the subdriver as needed. 
---- 
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param command ST level capability command
-local function st_switch_on_handler(driver, device, command)
-  device:send(SwitchBinary:Set({
-      target_value = SwitchBinary.value.ON_ENABLE,
-      duration = 0
-    })
-  )
-  device:send(SwitchBinary:Get({}))
-end
 
 --- Handle a 'Disable sound detection' command from SmartThings.
 --- 
@@ -164,6 +182,7 @@ local function st_sound_detection_disable_handler(driver, device, command)
       event = Notification.event.smoke.DETECTED
     })
   )
+  device:set_field("notification_set_status", "sound_disable")
 end
 
 --- Handle an 'Enable sound detection' command from SmartThings.
@@ -183,6 +202,7 @@ local function st_sound_detection_enable_handler(driver, device, command)
       event = Notification.event.smoke.DETECTED
     })
   )
+  device:set_field("notification_set_status", "sound_enable")
 end
 
 local driver_template = {
@@ -199,21 +219,17 @@ local driver_template = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     },
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.off.NAME] = st_switch_off_handler,
-      [capabilities.switch.commands.on.NAME] = st_switch_on_handler
-    },
     [capabilities.soundDetection.ID] = {
       [capabilities.soundDetection.commands.disableSoundDetection.NAME] = st_sound_detection_disable_handler,
       [capabilities.soundDetection.commands.enableSoundDetection.NAME] = st_sound_detection_enable_handler,
     }
   },
   zwave_handlers = {
+    [cc.NOTIFICATION] = {
+      [Notification.REPORT] = notification_report_handler,
+    },
     [cc.SWITCH_BINARY] = {
       [SwitchBinary.REPORT] = switch_report_handler,
-    },
-    [cc.APPLICATION_STATUS] = {
-      [ApplicationStatus.APPLICATION_REJECTED_REQUEST] = app_rejected_handler,
     }
   }
 }
