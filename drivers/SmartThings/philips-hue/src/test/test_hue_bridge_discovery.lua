@@ -72,8 +72,8 @@ test.register_coroutine_test(
     stop_discovery()
     test.wait_for_events()
 
-    bridge_server:expect_http_request("GET", "/api/config")
-    bridge_server:expect_http_request(
+    bridge_server:assert_http_request_received("GET", "/api/config")
+    bridge_server:assert_http_request_received(
       "POST",
       "/api",
       { body = { devicetype = "smartthings_edge_driver#" .. BRIDGE_IP, generateclientkey = true } }
@@ -110,8 +110,8 @@ test.register_coroutine_test(
     stop_discovery()
     test.wait_for_events()
 
-    bridge_server:expect_http_request("GET", "/api/config")
-    bridge_server:expect_http_request(
+    bridge_server:assert_http_request_received("GET", "/api/config")
+    bridge_server:assert_http_request_received(
       "POST",
       "/api",
       { body = { devicetype = "smartthings_edge_driver#" .. BRIDGE_IP, generateclientkey = true } }

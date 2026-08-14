@@ -31,7 +31,7 @@ test.register_coroutine_test(
     queue_ok_response()
     test.wait_for_events()
 
-    get_bridge_server():expect_http_request(
+    get_bridge_server():assert_http_request_received(
       "PUT",
       "/clip/v2/resource/light/" .. LIGHT_RID,
       {
@@ -52,7 +52,7 @@ test.register_coroutine_test(
     queue_ok_response()
     test.wait_for_events()
 
-    get_bridge_server():expect_http_request(
+    get_bridge_server():assert_http_request_received(
       "PUT",
       "/clip/v2/resource/light/" .. LIGHT_RID,
       { body = { on = { on = false } } }
@@ -70,7 +70,7 @@ test.register_coroutine_test(
     queue_ok_response()
     test.wait_for_events()
 
-    get_bridge_server():expect_http_request(
+    get_bridge_server():assert_http_request_received(
       "PUT",
       "/clip/v2/resource/light/" .. LIGHT_RID,
       { body = { dimming = { brightness = 42 } } }
@@ -88,7 +88,7 @@ test.register_coroutine_test(
     queue_ok_response()
     test.wait_for_events()
 
-    get_bridge_server():expect_http_request(
+    get_bridge_server():assert_http_request_received(
       "PUT",
       "/clip/v2/resource/light/" .. LIGHT_RID,
       { body = { color_temperature = { mirek = 333 }, on = { on = true } } }

@@ -55,9 +55,9 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     local server = get_bridge_server()
-    server:expect_http_request("GET", "/clip/v2/resource/device/" .. HUE_DEVICE_ID)
-    server:expect_http_request("GET", "/clip/v2/resource/zigbee_connectivity/" .. ZIGBEE_RID)
-    server:expect_http_request("GET", "/clip/v2/resource/light/" .. LIGHT_RID)
+    server:assert_http_request_received("GET", "/clip/v2/resource/device/" .. HUE_DEVICE_ID)
+    server:assert_http_request_received("GET", "/clip/v2/resource/zigbee_connectivity/" .. ZIGBEE_RID)
+    server:assert_http_request_received("GET", "/clip/v2/resource/light/" .. LIGHT_RID)
   end
 )
 

@@ -60,7 +60,7 @@ end)
 --- reservation test_init made isn't reliably ordered (it can flip depending on unrelated timing,
 --- e.g. table/coroutine hashing) -- so this doesn't assume an order; it peeks at whichever
 --- connection actually claimed the "sse" label's first sent bytes (a non-consuming read, unlike
---- `expect_http_request`) to tell the two apart, then returns them correctly identified.
+--- `assert_http_request_received`) to tell the two apart, then returns them correctly identified.
 ---
 --- @return integration_test.LanMockServer sse the real SSE stream
 --- @return integration_test.LanMockServer rest the bridge's persistent REST connection
@@ -97,9 +97,9 @@ local function answer_initial_light_refresh(rest)
     data = { { id = LIGHT_RID, on = { on = true }, dimming = { brightness = 80 } } },
   })
   test.wait_for_events()
-  rest:expect_http_request("GET", "/clip/v2/resource/device/" .. HUE_DEVICE_ID)
-  rest:expect_http_request("GET", "/clip/v2/resource/zigbee_connectivity/" .. ZIGBEE_RID)
-  rest:expect_http_request("GET", "/clip/v2/resource/light/" .. LIGHT_RID)
+  rest:assert_http_request_received("GET", "/clip/v2/resource/device/" .. HUE_DEVICE_ID)
+  rest:assert_http_request_received("GET", "/clip/v2/resource/zigbee_connectivity/" .. ZIGBEE_RID)
+  rest:assert_http_request_received("GET", "/clip/v2/resource/light/" .. LIGHT_RID)
 end
 
 --- Drives one full SSE connect: identifies which connection is which (see above), drains the
@@ -118,7 +118,7 @@ local function connect_sse()
   answer_initial_light_refresh(rest) -- LightLifecycleHandlers.added's injected refresh
   answer_initial_light_refresh(rest) -- LightLifecycleHandlers.init's injected refresh
 
-  sse:expect_http_request("GET", "/eventstream/clip/v2", {
+  sse:assert_http_request_received("GET", "/eventstream/clip/v2", {
     headers = { accept = "text/event-stream" },
   })
   sse:queue_sse_headers(200)
@@ -146,7 +146,7 @@ local function connect_sse()
   -- loop's `scanned` flag has flipped and this REST round trip is fully done -- otherwise this
   -- task can still be mid-flight, holding the persistent REST connection, when a later test
   -- action tries to use it for something else.
-  rest:expect_http_request("GET", "/clip/v2/resource/zigbee_connectivity")
+  rest:assert_http_request_received("GET", "/clip/v2/resource/zigbee_connectivity")
   test.wait_for_events()
 
   assert(mock_devices_api.__is_device_online(mock_bridge.id) == true,
@@ -237,7 +237,7 @@ test.register_coroutine_test(
     })
     test.wait_for_events()
 
-    rest:expect_http_request("GET", "/clip/v2/resource/light/" .. NEW_LIGHT_RID)
+    rest:assert_http_request_received("GET", "/clip/v2/resource/light/" .. NEW_LIGHT_RID)
   end
 )
 
@@ -281,7 +281,7 @@ test.register_coroutine_test(
     reconnect_sse:queue_sse_headers(200)
     test.wait_for_events()
 
-    reconnect_sse:expect_http_request("GET", "/eventstream/clip/v2", {
+    reconnect_sse:assert_http_request_received("GET", "/eventstream/clip/v2", {
       headers = { accept = "text/event-stream" },
     })
 
@@ -295,7 +295,7 @@ test.register_coroutine_test(
       data = { { owner = { rid = HUE_DEVICE_ID }, status = "connected" } },
     })
     test.wait_for_events()
-    rest:expect_http_request("GET", "/clip/v2/resource/zigbee_connectivity")
+    rest:assert_http_request_received("GET", "/clip/v2/resource/zigbee_connectivity")
 
     -- A "connected" status also injects another refresh capability command for the light --
     -- the same shape as the ones LightLifecycleHandlers.added/.init already trigger.
