@@ -21,6 +21,11 @@ local function queue_ok_response()
   get_bridge_server():queue_http_response(200, {}, { data = { { rid = LIGHT_RID, rtype = "light" } } })
 end
 
+-- NOTE: Profile compatibility is implicitly tested here. The white-and-color-ambiance profile
+-- supports all capabilities: switch, switchLevel, colorControl, and colorTemperature.
+-- Tests for profile-restricted lights (white-only, white-ambiance) are in other test files
+-- where those specific profiles make sense in context (e.g., test_hue_light_refresh.lua).
+
 test.register_coroutine_test(
   "switch on command sends a PUT to turn the light on",
   function()
