@@ -898,6 +898,36 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x60B3
     deviceProfileName: light-color-level
+  - id: "4999/10240"
+    deviceLabel: Govee Monitor Light Bar
+    vendorId: 0x1387
+    productId: 0x2800
+    deviceProfileName: light-color-level
+  - id: "4999/6833"
+    deviceLabel: Govee COB Strip Light 2 9.8ft/3m
+    vendorId: 0x1387
+    productId: 0x1AB1
+    deviceProfileName: light-color-level
+  - id: "4999/6834"
+    deviceLabel: Govee COB Strip Light 2 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x1AB2
+    deviceProfileName: light-color-level
+  - id: "4999/6835"
+    deviceLabel: Govee COB Strip Light 2 32.8ft/10m
+    vendorId: 0x1387
+    productId: 0x1AB3
+    deviceProfileName: light-color-level
+  - id: "4999/6818"
+    deviceLabel: Govee COB Strip Light 2 Pro 6.5ft/2m
+    vendorId: 0x1387
+    productId: 0x1AA2
+    deviceProfileName: light-color-level
+  - id: "4999/6821"
+    deviceLabel: Govee COB Strip Light 2 Pro 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x1AA5
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
