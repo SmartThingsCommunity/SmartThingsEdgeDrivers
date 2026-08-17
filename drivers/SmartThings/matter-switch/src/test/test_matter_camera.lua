@@ -1,12 +1,19 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local version = require "version"
+local test = require "integration_test"
+if version.api < 17 then
+  -- Run an empty test suite to avoid an error being thrown
+  test.run_registered_tests()
+  os.exit(0)
+end
+
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
 local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local t_utils = require "integration_test.utils"
-local test = require "integration_test"
 local uint32 = require "st.matter.data_types.Uint32"
 
 test.disable_startup_messages()
@@ -666,7 +673,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -732,7 +739,7 @@ test.register_coroutine_test(
     assert(not configure_buttons_called, "configure_buttons should not be called when capability state is unchanged")
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -759,7 +766,7 @@ test.register_coroutine_test(
     assert(reconcile_called, "reconcile_profile_and_capabilities should be called")
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -807,7 +814,7 @@ test.register_coroutine_test(
     assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -857,7 +864,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -900,7 +907,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -929,7 +936,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -973,7 +980,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1004,7 +1011,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1054,7 +1061,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1079,7 +1086,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1132,7 +1139,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1256,7 +1263,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1274,7 +1281,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1292,7 +1299,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1347,7 +1354,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1371,7 +1378,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1389,7 +1396,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1407,7 +1414,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1455,7 +1462,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1493,7 +1500,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1519,7 +1526,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1548,7 +1555,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.sounds.selectedSound(2)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1591,7 +1598,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1632,7 +1639,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1658,7 +1665,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1698,7 +1705,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1734,7 +1741,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1759,7 +1766,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1826,7 +1833,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1934,7 +1941,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1960,7 +1967,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1985,7 +1992,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2017,7 +2024,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2098,7 +2105,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2130,7 +2137,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2155,7 +2162,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2229,7 +2236,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2302,7 +2309,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2378,7 +2385,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2470,7 +2477,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2576,7 +2583,7 @@ test.register_coroutine_test(
     )
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -2652,7 +2659,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -3263,7 +3270,7 @@ test.register_coroutine_test(
     camera_cfg.reconcile_profile_and_capabilities = original_reconcile
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -3304,7 +3311,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -3316,7 +3323,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_per_zone_sensitivity,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -3328,7 +3335,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_user_defined_zone,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -3347,7 +3354,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_user_defined_zone,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -3364,7 +3371,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_user_defined_zone,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 

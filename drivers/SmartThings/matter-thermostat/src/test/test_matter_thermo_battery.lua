@@ -107,7 +107,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -129,7 +129,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-batteryLevel" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -144,7 +144,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

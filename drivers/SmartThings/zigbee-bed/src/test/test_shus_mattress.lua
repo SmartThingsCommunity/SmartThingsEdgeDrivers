@@ -7,7 +7,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local shus_mattress_profile_def = t_utils.get_profile_definition("shus-smart-mattress.yml")
 test.add_package_capability("aiMode.yaml")
@@ -17,6 +16,8 @@ test.add_package_capability("rightControl.yaml")
 test.add_package_capability("strongExpMode.yaml")
 test.add_package_capability("yoga.yaml")
 test.add_package_capability("mattressHardness.yaml")
+
+local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local PRIVATE_CLUSTER_ID = 0xFCC2
 local MFG_CODE = 0x1235
@@ -85,7 +86,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0011_messge})
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -130,7 +131,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0011_messge})
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -148,7 +149,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -166,7 +167,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -184,7 +185,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -202,7 +203,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -220,7 +221,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -238,7 +239,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -256,7 +257,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -274,7 +275,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -292,7 +293,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -310,7 +311,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -328,7 +329,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -346,7 +347,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -364,7 +365,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.leftBackHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -382,7 +383,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.leftWaistHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -400,7 +401,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.leftHipHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -418,7 +419,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.rightBackHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -436,7 +437,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.rightWaistHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -454,7 +455,7 @@ test.register_coroutine_test(
       custom_capabilities.mattressHardness.rightHipHardness(1)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -472,7 +473,7 @@ test.register_coroutine_test(
       custom_capabilities.yoga.state.both()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -490,7 +491,7 @@ test.register_coroutine_test(
       custom_capabilities.yoga.state.right()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -508,7 +509,7 @@ test.register_coroutine_test(
       custom_capabilities.yoga.state.left()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -526,7 +527,7 @@ test.register_coroutine_test(
       custom_capabilities.yoga.state.stop()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -544,7 +545,7 @@ test.register_coroutine_test(
       custom_capabilities.ai_mode.left.off()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -562,7 +563,7 @@ test.register_coroutine_test(
       custom_capabilities.ai_mode.left.on()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -580,7 +581,7 @@ test.register_coroutine_test(
       custom_capabilities.ai_mode.right.on()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -598,7 +599,7 @@ test.register_coroutine_test(
       custom_capabilities.ai_mode.right.off()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -616,7 +617,7 @@ test.register_coroutine_test(
       custom_capabilities.auto_inflation.inflationState.off()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -634,7 +635,7 @@ test.register_coroutine_test(
       custom_capabilities.auto_inflation.inflationState.on()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -652,7 +653,7 @@ test.register_coroutine_test(
       custom_capabilities.strong_exp_mode.expState.off()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -670,7 +671,7 @@ test.register_coroutine_test(
       custom_capabilities.strong_exp_mode.expState.on()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -688,7 +689,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -705,7 +706,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -722,7 +723,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -739,7 +740,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -756,7 +757,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -773,7 +774,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -790,7 +791,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -807,7 +808,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -826,7 +827,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftback.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -845,7 +846,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftwaist.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -864,7 +865,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.lefthip.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -883,7 +884,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftback.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -902,7 +903,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftwaist.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -921,7 +922,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.lefthip.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -940,7 +941,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightback.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -959,7 +960,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightwaist.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -978,7 +979,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.righthip.soft()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -997,7 +998,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightback.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1016,7 +1017,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.rightwaist.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1035,7 +1036,7 @@ test.register_coroutine_test(
       custom_capabilities.right_control.righthip.hard()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1052,7 +1053,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1069,7 +1070,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1086,7 +1087,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1111,7 +1112,7 @@ test.register_coroutine_test(
       custom_capabilities.left_control.leftback("idle", { visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

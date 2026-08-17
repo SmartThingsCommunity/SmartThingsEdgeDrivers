@@ -118,7 +118,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -152,7 +152,7 @@ test.register_coroutine_test(
     test_init = function()
       test_init()
     end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
