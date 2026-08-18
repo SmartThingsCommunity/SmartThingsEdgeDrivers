@@ -18,203 +18,23 @@ local HueApi = require "hue.api"
 --- a steady, already-paired state instead of falling into their discovery/long-poll paths --
 --- those paths are covered separately in test_hue_bridge_discovery.lua.
 ---
---- SSE is deliberately left uninitialized by default: `driver.joined_bridges`/`driver.datastore
---- .bridge_netinfo` are populated with a swversion below `PhilipsHueApi.MIN_CLIP_V2_SWVERSION`,
---- so `do_bridge_network_init` (which opens a persistent event-stream connection) never runs.
---- Pass `opts = { enable_sse = true }` to `build_paired_bridge_and_light` to get the mirror image
---- instead -- a qualifying swversion and `driver.joined_bridges` pre-set, so `do_bridge_network_init`
---- runs for real (see `test_hue_bridge_sse.lua`).
+--- ## RECOMMENDED USAGE
+---
+--- Use HueDeviceBuilder to create test fixtures with ConnectionScenario 2.0 for REST
+--- expectations and SSE event handling. See the documentation sections below for examples.
 local M = {}
 
 M.BRIDGE_IP = "192.168.1.15"
 M.BRIDGE_DNI = "AA:BB:CC:DD:EE:FF"
 M.API_KEY = "test-api-key"
 
---- @param light_rid string the Hue resource ID for the light
---- @param light_state table the `HueLightInfo`-shaped state to seed `device_state_disco_cache`
----   with, e.g. `{ on = { on = true }, dimming = { brightness = 100 }, color = {...} }`
---- @param profile_filename string the light's profile YAML filename
---- @param device_template_overrides table|nil additional fields to merge into the light's
----   device template (e.g. `{ label = "..." }`)
---- @param opts table|nil `{ enable_sse = boolean }` -- see the module doc comment above
---- @return table mock_bridge
---- @return table mock_light
---- @return fun() get_bridge_server returns the current test run's
----   `integration_test.LanMockServer` for the bridge address; only valid to call from within a
----   test body (i.e. after `test_init` has run)
---- @return fun() test_init must be passed to `test.set_test_init_function`
---- @return fun() get_sse_connection only meaningful when `opts.enable_sse` is true; returns the
----   `integration_test.LanMockServer` handle bound to the bridge's SSE connection, valid once the
----   driver's `EventSource` has actually connected (see `test_hue_bridge_sse.lua`)
-function M.build_paired_bridge_and_light(light_rid, light_state, profile_filename, device_template_overrides, opts)
-  opts = opts or {}
-  local mock_bridge = test.mock_device.build_test_lan_device({
-    label = "Hue Bridge",
-    profile = t_utils.get_profile_definition("hue-bridge.yml"),
-    device_network_id = M.BRIDGE_DNI,
-  })
-
-  local light_template = {
-    label = "Hue Light",
-    profile = t_utils.get_profile_definition(profile_filename),
-    -- Must match the "<device_type>:<rid>" format check_parent_assigned_child_key expects, or
-    -- device_init's post-processing will issue an (unexpected, in these tests) metadata update.
-    parent_assigned_child_key = "light:" .. light_rid,
-    parent_device_id = mock_bridge.id,
-  }
-  for k, v in pairs(device_template_overrides or {}) do
-    light_template[k] = v
-  end
-  local mock_light = test.mock_device.build_test_lan_device(light_template)
-
-  local mock_bridge_server
-
-  test.add_test_env_setup_func(function(driver)
-    driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
-    if opts.enable_sse then
-      -- A qualifying swversion, plus driver.joined_bridges pre-set, routes
-      -- BridgeLifecycleHandlers.init straight into its synchronous branch that calls
-      -- do_bridge_network_init (which opens the persistent SSE event-stream connection) --
-      -- see test_hue_bridge_sse.lua. Note the invariant this relies on: do_bridge_network_init
-      -- also synchronously drains driver._devices_pending_refresh on the caller's thread before
-      -- returning, and if that were non-empty it could open a REST connection to the same
-      -- host:port *before* the SSE coroutine gets its first scheduler turn -- racing whatever
-      -- connection reservation a test made for the SSE stream. It's empty by default; don't
-      -- populate it in a test that also uses opts.enable_sse.
-      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = tostring(HueApi.MIN_CLIP_V2_SWVERSION), modelid = "BSB002" }
-      driver.joined_bridges[M.BRIDGE_DNI] = true
-    else
-      -- A swversion below PhilipsHueApi.MIN_CLIP_V2_SWVERSION routes both the bridge's
-      -- "added"/"init" background retry loops into their terminal "ignored bridge" branch
-      -- instead of retrying forever (which, since mock time advances instantly on every sleep,
-      -- would spin the scheduler in a tight loop and hang the test) -- and, since
-      -- driver.joined_bridges never becomes true, this also means do_bridge_network_init (which
-      -- opens the persistent SSE event-stream connection) never runs. That's intentional: these
-      -- fixtures are for REST-path tests only.
-      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = "0", modelid = "BSB002" }
-    end
-    driver.datastore.api_keys = driver.datastore.api_keys or {}
-    driver.datastore.api_keys[M.BRIDGE_DNI] = M.API_KEY
-
-    local disco = require "disco"
-    -- disco is a module-level singleton that isn't necessarily reloaded between tests within
-    -- the same file (integration_test.reset_tests() clears cosock's own thread bookkeeping, but
-    -- has no idea this module-level cache exists). Without clearing it, a *stale* PhilipsHueApi
-    -- instance from a previous test would get picked up here instead of a fresh one -- its
-    -- background control thread was wiped by the reset, so requests made against it would
-    -- silently never reach the (also freshly reset) mock socket at all. discovery_active is the
-    -- same class of singleton -- for the SSE fixture it's pre-set true so do_bridge_network_init's
-    -- onopen skips its rediscovery scan (Discovery.scan_bridge_and_update_devices, which would
-    -- otherwise make its own real mDNS/REST calls this fixture doesn't set up responses for);
-    -- for the REST-only fixture it's just reset false for hygiene, since onopen never runs there.
-    disco.disco_api_instances = {}
-    disco.discovery_active = opts.enable_sse or false
-    -- grouped_utils.scanning_enabled is the same class of singleton, reset here for the same
-    -- hygiene reason. It defaults off for every fixture built by this helper: added unconditionally
-    -- triggers a group scan for every light, whose own 45-second debounce would otherwise fire at
-    -- some timing-dependent point during any test (now that cosock's timers actually work) and
-    -- send real, unmocked rooms/zones REST requests that interleave with whatever the test itself
-    -- is asserting on the same connection. A test that specifically wants to exercise group
-    -- scanning should set it back to true itself, the same way mark_bridge_initialized overrides
-    -- a different fixture default below.
-    local grouped_utils = require "utils.grouped_utils"
-    grouped_utils.scanning_enabled = false
-    disco.device_state_disco_cache[light_rid] = {
-      hue_provided_name = "Hue Light",
-      id = light_rid,
-      on = light_state.on or { on = true },
-      color = light_state.color,
-      dimming = light_state.dimming,
-      color_temperature = light_state.color_temperature,
-      mode = light_state.mode,
-      parent_device_id = mock_bridge.id,
-      hue_device_id = light_state.hue_device_id or (light_rid .. "-device"),
-      hue_device_data = {
-        product_data = {
-          manufacturer_name = "Signify Netherlands B.V.",
-          model_id = "TEST",
-          product_name = "Hue Light",
-        },
-      },
-    }
-  end)
-
-  local mock_sse_connection
-
-  local function test_init()
-    -- The driver template unconditionally spawns StrayDeviceHelper, a background thread with its
-    -- own perpetually re-arming 30-second timeout. Now that cosock's timers actually fire (see
-    -- cosock/timers.lua), that keeps the mock scheduler legitimately advancing mock time forever
-    -- chasing it -- which, without this, can let some other, shorter-lived timeout a test needs
-    -- to answer first (e.g. an injected refresh's 45-second REST reply-channel timeout) elapse
-    -- for real before this test's own coroutine ever gets a turn to respond. See
-    -- integration_test.set_test_coroutine_priority for the full rationale; scoped to Hue only
-    -- since it changes *when* the test coroutine runs relative to background timers, which other
-    -- drivers' test suites haven't been verified against.
-    test.set_test_coroutine_priority(true)
-
-    test.mock_device.add_test_device(mock_bridge)
-    test.mock_device.add_test_device(mock_light)
-
-    mock_bridge:set_field(Fields.DEVICE_TYPE, "bridge", {})
-    mock_bridge:set_field(Fields.BRIDGE_ID, M.BRIDGE_DNI, {})
-    mock_bridge:set_field(Fields.IPV4, M.BRIDGE_IP, {})
-    mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, M.API_KEY, {})
-
-    mock_bridge_server = lan_test_utils.build_mock_server(M.BRIDGE_IP, 443)
-    if opts.enable_sse then
-      -- Reserved here, synchronously, before any lifecycle delivery happens. Two things race to
-      -- connect to this address right after test_init returns: the SSE EventSource's own
-      -- background coroutine (spawned inside do_bridge_network_init, which runs synchronously
-      -- during the bridge's `init` handling) and LightLifecycleHandlers.added's
-      -- unconditionally-injected "refresh" capability command (light.lua's join_light path).
-      -- Whichever connects first claims this reservation -- which one that actually is isn't
-      -- reliably ordered (it can flip on unrelated timing, e.g. table/coroutine hashing), so
-      -- test_hue_bridge_sse.lua doesn't assume an order; it identifies which physical connection
-      -- ended up being "sse" after the fact instead of trusting this reservation to always match
-      -- the SSE stream. The other connection falls through to the address's default (shared)
-      -- entry, same as every REST-only fixture -- and since all of the bridge's REST traffic
-      -- shares one persistent connection (one PhilipsHueApi instance, one worker thread
-      -- processing requests serially), that's the *only* other connection this fixture ever
-      -- makes. See test_hue_bridge_sse.lua's answer_initial_light_refresh, which drains that
-      -- connection's unconditional first request so it doesn't block later REST calls behind it.
-      mock_sse_connection = mock_bridge_server:reserve_connection("sse")
-    end
-
-    -- Registering this expectation here -- rather than inside a test body -- matters, not just
-    -- for style: Hue's driver template unconditionally spawns a StrayDeviceHelper background
-    -- thread that loops on a 30-second-timeout channel receive forever. Since mock time
-    -- advances instantly on any timeout, that thread always has an active timeout pending, so
-    -- the mock scheduler's fallback that lets a test's own coroutine take its very first turn
-    -- (which only fires when *no* thread has a pending timeout) never triggers -- a test body's
-    -- coroutine would simply never run. The automatic startupState/device_lifecycle "init"
-    -- delivery this framework already does happens *before* any of that (it's queued
-    -- synchronously, ahead of `require "init"`), which is exactly why it still works -- so
-    -- lifecycle-triggered expectations need to be registered the same way, from here, rather
-    -- than from inside a coroutine test body.
-    M.expect_light_init_events(mock_light)
-  end
-
-  local function get_bridge_server()
-    assert(mock_bridge_server, "get_bridge_server() called before test_init() has run")
-    return mock_bridge_server
-  end
-
-  local function get_sse_connection()
-    assert(mock_sse_connection, "get_sse_connection() called without opts.enable_sse, or before test_init() has run")
-    return mock_sse_connection
-  end
-
-  return mock_bridge, mock_light, get_bridge_server, test_init, get_sse_connection
-end
 
 --- `LightLifecycleHandlers.init` unconditionally emits a levelRange event on every light's
---- first init, regardless of bridge/pairing state. `build_paired_bridge_and_light`'s `test_init`
---- already calls this; only call it directly if building a fixture by hand.
+--- first init, regardless of bridge/pairing state. HueDeviceBuilder's `test_init` already
+--- calls this; only call it directly if building a fixture by hand.
 ---
 --- Must be called from `test_init` (synchronous setup, before `require "init"` runs) rather
---- than from within a coroutine test body -- see the comment in `build_paired_bridge_and_light`
---- for why that distinction matters here.
+--- than from within a coroutine test body for proper event expectation timing.
 ---
 --- @param mock_light table
 function M.expect_light_init_events(mock_light)
@@ -237,188 +57,1206 @@ function M.mark_bridge_initialized(mock_bridge)
   mock_bridge:set_field(Fields._INIT, true, {})
 end
 
---- Build a paired bridge and generic child device (button, sensor, etc.)
---- Similar to build_paired_bridge_and_light but without light-specific assumptions
+
+--- ## Test Pattern with ConnectionScenario 2.0
 ---
---- @param child_rid string the Hue resource ID for the child device
---- @param child_state table the device state to seed `device_state_disco_cache` with
---- @param profile_filename string the child device's profile YAML filename
---- @param device_type string the parent_assigned_child_key prefix (e.g., "button", "motion", "contact")
---- @param init_event_expectations fun(mock_child)|nil optional function to register init event expectations
---- @param device_template_overrides table|nil additional fields for the child device template
---- @param opts table|nil `{ enable_sse = boolean }` -- SSE is typically required for buttons/sensors
+--- Use HueDeviceBuilder to create test fixtures and ConnectionScenario 2.0 helpers
+--- for REST expectations and SSE event building.
+---
+--- ### Example: Button Device with SSE
+---
+--- ```lua
+--- local builder = hue_test_helpers.HueDeviceBuilder.new()
+---   :with_bridge()
+---   :with_button("button-rid", { num_buttons = 1, battery = 85 })
+---   :enable_sse()
+---
+--- local mock_bridge, mock_button, get_bridge_server, test_init, get_sse_connection = builder:start()
+---
+--- -- Setup ConnectionScenario 2.0
+--- local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+--- local rest, sse = conns.rest, conns.sse
+---
+--- hue_test_helpers.setup_scenario_test_init(test_init, scenario)
+---
+--- -- Use helper functions:
+--- hue_test_helpers.expect_device_info(rest, device_id, services)
+--- hue_test_helpers.setup_sse_expectations(sse, rest)
+---
+--- -- Send SSE events:
+--- http.queue_sse_event(sse, { hue_test_helpers.button_event(button_rid, "short_release") })
+--- ```
+---
+--- ### HueDeviceBuilder Methods:
+---
+--- - `with_bridge(ip, dni, api_key)` - Configure bridge (all optional)
+--- - `with_light(rid, state, profile)` - Add light device
+--- - `with_button(rid, config, profile)` - Add button device
+--- - `with_motion(rid, config)` - Add motion sensor
+--- - `with_contact(rid, config)` - Add contact sensor
+--- - `enable_sse()` - Enable SSE support
+--- - `start()` - Build fixtures
+---
+--- ### Helper Functions:
+---
+--- **Connection Setup:**
+--- - `create_hue_scenario(options)` - Create ConnectionScenario with REST/SSE
+--- - `setup_scenario_test_init(base, scenario, additional)` - Setup test init
+---
+--- **REST Expectations:**
+--- - `expect_device_info()`, `expect_zigbee_connectivity()`, `expect_device_power()`
+--- - `expect_button_resource()`, `expect_motion_resource()`, `expect_light_resource()`
+--- - `setup_sse_expectations()` - SSE handshake
+---
+--- **SSE Event Builders:**
+--- - `button_event()`, `motion_event()`, `light_event()`
+--- - `contact_event()`, `temperature_event()`, `light_level_event()`
+
+--- @class HueDeviceBuilder
+--- Fluent API for building Hue test fixtures with sensible defaults.
+--- Provides a clean, declarative way to set up bridge + child devices for tests.
+local HueDeviceBuilder = {}
+HueDeviceBuilder.__index = HueDeviceBuilder
+
+--- Create a new HueDeviceBuilder instance.
+---
+--- @return HueDeviceBuilder
+function M.HueDeviceBuilder_new()
+  local instance = {
+    bridge_ip = M.BRIDGE_IP,
+    bridge_dni = M.BRIDGE_DNI,
+    api_key = M.API_KEY,
+    sse_enabled = false,  -- Use different name to avoid shadowing enable_sse() method
+    children = {},  -- Array of child device configs
+  }
+  return setmetatable(instance, HueDeviceBuilder)
+end
+
+--- Configure the bridge (optional - uses sensible defaults).
+---
+--- @param ip string|nil bridge IP (default: hue_test_helpers.BRIDGE_IP)
+--- @param dni string|nil device network ID (default: hue_test_helpers.BRIDGE_DNI)
+--- @param key string|nil API key (default: hue_test_helpers.API_KEY)
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_bridge(ip, dni, key)
+  if ip then self.bridge_ip = ip end
+  if dni then self.bridge_dni = dni end
+  if key then self.api_key = key end
+  return self
+end
+
+--- Add a light device to the fixture.
+---
+--- @param rid string Hue resource ID for the light
+--- @param state table|nil initial state with fields matching Hue API format:
+---   - on: table with 'on' field (default: {on=true})
+---   - dimming: table with 'brightness' field (default: {brightness=100})
+---   - color: table with xy and gamut (optional)
+---   - color_temperature: table with mirek and schema (optional)
+---   - mode: string (default: "normal")
+---   - hue_device_id: string (default: rid.."-device")
+---   - label: string (default: "Hue Light")
+--- @param profile string|nil profile filename (default: "white-and-color-ambiance.yml")
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_light(rid, state, profile)
+  state = state or {}
+  local device_id = state.hue_device_id or (rid .. "-device")
+  
+  -- Build discovery cache state for the light
+  local disco_state = {
+    hue_provided_name = state.label or "Hue Light",
+    id = rid,
+    on = state.on or { on = true },
+    color = state.color,
+    dimming = state.dimming or { brightness = 100 },
+    color_temperature = state.color_temperature,
+    mode = state.mode or "normal",
+    hue_device_id = device_id,
+    hue_device_data = {
+      product_data = {
+        manufacturer_name = "Signify Netherlands B.V.",
+        model_id = "TEST",
+        product_name = state.label or "Hue Light",
+      },
+    },
+  }
+  
+  table.insert(self.children, {
+    type = "light",
+    rid = rid,
+    profile = profile or "white-and-color-ambiance.yml",
+    state = disco_state,
+    init_expectations = function(mock_device)
+      -- Lights always emit levelRange on init
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", 
+          capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 })
+        )
+      )
+    end
+  })
+  return self
+end
+
+--- Add a button device to the fixture.
+---
+--- @param rid string Hue resource ID for the first button
+--- @param config table configuration with:
+---   - num_buttons: number of buttons (default 1)
+---   - battery: battery level (default 85)
+---   - label: device label (default "Hue Button")
+---   - device_id: device ID (default: rid .. "-device")
+---   - power_rid: power resource ID (default: rid .. "-power")
+---   - button_rids: array of button RIDs (default: {rid, ...})
+--- @param profile string|nil profile filename (auto-selected based on num_buttons)
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_button(rid, config, profile)
+  config = config or {}
+  local num_buttons = config.num_buttons or 1
+  local device_id = config.device_id or (rid .. "-device")
+  local power_rid = config.power_rid or (rid .. "-power")
+  
+  -- Build button RIDs array
+  local button_rids = config.button_rids or {rid}
+  if #button_rids < num_buttons then
+    for i = #button_rids + 1, num_buttons do
+      table.insert(button_rids, rid .. "-button" .. i)
+    end
+  end
+  
+  -- Auto-select profile based on number of buttons
+  if not profile then
+    if num_buttons == 1 then
+      profile = "single-button.yml"
+    elseif num_buttons == 4 then
+      profile = "4-button-remote.yml"
+    else
+      profile = "single-button.yml"  -- fallback
+    end
+  end
+  
+  -- Build state table
+  local state = {
+    id = rid,
+    hue_provided_name = config.label or "Hue Button",
+    hue_device_id = device_id,
+    num_buttons = num_buttons,
+    power_state = { battery_level = config.battery or 85 },
+    power_id = power_rid,
+  }
+  
+  -- Add button-specific fields
+  for i = 1, num_buttons do
+    state["button" .. i] = {
+      event_values = config.event_values or { "short_release", "long_press", "long_release" }
+    }
+    state["button" .. i .. "_id"] = button_rids[i]
+  end
+  
+  table.insert(self.children, {
+    type = "button",
+    rid = rid,
+    profile = profile,
+    state = state,
+    num_buttons = num_buttons,
+    battery = config.battery or 85,  -- Store for later use in init_expectations
+    -- init_expectations will be created in start() based on sse_enabled
+  })
+  return self
+end
+
+--- Add a motion sensor to the fixture.
+---
+--- @param rid string Hue resource ID for the motion sensor
+--- @param config table|nil configuration with:
+---   - battery: battery level (default 85)
+---   - motion: initial motion state (default false)
+---   - temperature: temperature in Celsius (default 20.0)
+---   - light_level: light level (default 30000)
+---   - label: device label (default "Hue Motion Sensor")
+---   - device_id: device ID (default: rid .. "-device")
+---   - power_rid: power resource ID (default: rid .. "-power")
+---   - temperature_rid: temperature resource ID (default: rid .. "-temp")
+---   - light_level_rid: light level resource ID (default: rid .. "-light")
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_motion(rid, config)
+  config = config or {}
+  local device_id = config.device_id or (rid .. "-device")
+  local power_rid = config.power_rid or (rid .. "-power")
+  local temperature_rid = config.temperature_rid or (rid .. "-temp")
+  local light_level_rid = config.light_level_rid or (rid .. "-light")
+  
+  -- Build discovery cache state for the motion sensor
+  local state = {
+    id = rid,
+    hue_provided_name = config.label or "Hue Motion Sensor",
+    hue_device_id = device_id,
+    motion = { motion = config.motion or false, motion_valid = true },
+    motion_enabled = true,
+    temperature = { temperature = config.temperature or 20.0, temperature_valid = true },
+    temperature_id = temperature_rid,
+    temperature_enabled = true,
+    light = { light_level = config.light_level or 30000, light_level_valid = true },
+    light_level_id = light_level_rid,
+    light_level_enabled = true,
+    power_state = { battery_level = config.battery or 85 },
+    power_id = power_rid,
+    sensor_list = {
+      id = "motion",
+      power_id = "device_power",
+      temperature_id = "temperature",
+      light_level_id = "light_level"
+    }
+  }
+  
+  table.insert(self.children, {
+    type = "motion",
+    rid = rid,
+    profile = "motion-sensor.yml",
+    state = state,
+    battery = config.battery or 85,
+    motion = config.motion or false,
+    temperature = config.temperature or 20.0,
+    light_level = config.light_level or 30000,
+    -- init_expectations will be created in start() based on sse_enabled
+  })
+  return self
+end
+
+--- Add a contact sensor to the fixture.
+---
+--- @param rid string Hue resource ID for the contact sensor
+--- @param config table|nil configuration with:
+---   - battery: battery level (default 85)
+---   - contact_state: initial contact state "contact"=closed, "no_contact"=open (default "contact")
+---   - tamper: tamper state (default "not_tampered")
+---   - label: device label (default "Hue Contact Sensor")
+---   - device_id: device ID (default: rid .. "-device")
+---   - power_rid: power resource ID (default: rid .. "-power")
+---   - tamper_rid: tamper resource ID (default: rid .. "-tamper")
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_contact(rid, config)
+  config = config or {}
+  local device_id = config.device_id or (rid .. "-device")
+  local power_rid = config.power_rid or (rid .. "-power")
+  local tamper_rid = config.tamper_rid or (rid .. "-tamper")
+  
+  -- Build discovery cache state for the contact sensor
+  local state = {
+    id = rid,
+    hue_provided_name = config.label or "Hue Contact Sensor",
+    hue_device_id = device_id,
+    contact_report = { state = config.contact_state or "contact" },  -- "contact" = closed, "no_contact" = open
+    contact_enabled = true,
+    tamper_reports = { { state = config.tamper or "not_tampered" } },
+    tamper_id = tamper_rid,
+    power_state = { battery_level = config.battery or 85 },
+    power_id = power_rid,
+    sensor_list = {
+      id = "contact",
+      power_id = "device_power",
+      tamper_id = "tamper"
+    }
+  }
+  
+  table.insert(self.children, {
+    type = "contact",
+    rid = rid,
+    profile = "contact-sensor.yml",
+    state = state,
+    battery = config.battery or 85,
+    contact_state = config.contact_state or "contact",
+    tamper = config.tamper or "not_tampered",
+    -- init_expectations will be created in start() based on sse_enabled
+  })
+  return self
+end
+
+--- Enable SSE support for this fixture.
+---
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:enable_sse()
+  self.sse_enabled = true
+  return self
+end
+
+--- Build the fixture and return handles.
+--- This creates all mock devices and returns functions to access them.
+---
 --- @return table mock_bridge
---- @return table mock_child
+--- @return table... mock_children (one per child device)
 --- @return fun() get_bridge_server
---- @return fun() test_init
---- @return fun() get_sse_connection
-function M.build_paired_bridge_and_child(child_rid, child_state, profile_filename, device_type, init_event_expectations, device_template_overrides, opts)
-  opts = opts or {}
+--- @return fun() test_init (must be passed to test.set_test_init_function)
+--- @return fun() get_sse_connection (only if enable_sse was called)
+function HueDeviceBuilder:start()
   local mock_bridge = test.mock_device.build_test_lan_device({
     label = "Hue Bridge",
     profile = t_utils.get_profile_definition("hue-bridge.yml"),
-    device_network_id = M.BRIDGE_DNI,
+    device_network_id = self.bridge_dni,
   })
-
-  local child_template = {
-    label = child_state.hue_provided_name or ("Hue " .. device_type),
-    profile = t_utils.get_profile_definition(profile_filename),
-    parent_assigned_child_key = device_type .. ":" .. child_rid,
-    parent_device_id = mock_bridge.id,
-  }
-  for k, v in pairs(device_template_overrides or {}) do
-    child_template[k] = v
+  
+  local mock_children = {}
+  for _, child_config in ipairs(self.children) do
+    local child_template = {
+      label = child_config.state.hue_provided_name,
+      profile = t_utils.get_profile_definition(child_config.profile),
+      parent_assigned_child_key = child_config.type .. ":" .. child_config.rid,
+      parent_device_id = mock_bridge.id,
+    }
+    table.insert(mock_children, test.mock_device.build_test_lan_device(child_template))
   end
-  local mock_child = test.mock_device.build_test_lan_device(child_template)
-
+  
   local mock_bridge_server
-
+  local mock_sse_connection
+  
   test.add_test_env_setup_func(function(driver)
     driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
-    if opts.enable_sse then
-      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = tostring(HueApi.MIN_CLIP_V2_SWVERSION), modelid = "BSB002" }
-      driver.joined_bridges[M.BRIDGE_DNI] = true
+    if self.sse_enabled then
+      driver.datastore.bridge_netinfo[self.bridge_dni] = {
+        ip = self.bridge_ip,
+        swversion = tostring(HueApi.MIN_CLIP_V2_SWVERSION),
+        modelid = "BSB002"
+      }
+      driver.joined_bridges[self.bridge_dni] = true
     else
-      driver.datastore.bridge_netinfo[M.BRIDGE_DNI] = { ip = M.BRIDGE_IP, swversion = "0", modelid = "BSB002" }
+      driver.datastore.bridge_netinfo[self.bridge_dni] = {
+        ip = self.bridge_ip,
+        swversion = "0",
+        modelid = "BSB002"
+      }
     end
     driver.datastore.api_keys = driver.datastore.api_keys or {}
-    driver.datastore.api_keys[M.BRIDGE_DNI] = M.API_KEY
-
+    driver.datastore.api_keys[self.bridge_dni] = self.api_key
+    
     local disco = require "disco"
     disco.disco_api_instances = {}
-    disco.discovery_active = opts.enable_sse or false
+    disco.discovery_active = self.sse_enabled or false
     local grouped_utils = require "utils.grouped_utils"
     grouped_utils.scanning_enabled = false
     
-    -- Ensure parent_device_id is set correctly in child state
-    child_state.parent_device_id = mock_bridge.id
-    
-    -- Populate disco cache with child device state
-    disco.device_state_disco_cache[child_rid] = child_state
+    -- Populate disco cache with child device states
+    for i, child_config in ipairs(self.children) do
+      child_config.state.parent_device_id = mock_bridge.id
+      disco.device_state_disco_cache[child_config.rid] = child_config.state
+    end
   end)
-
-  local mock_sse_connection
-
+  
   local function test_init()
     test.set_test_coroutine_priority(true)
-
+    
     test.mock_device.add_test_device(mock_bridge)
-    test.mock_device.add_test_device(mock_child)
-
-    mock_bridge:set_field(Fields.DEVICE_TYPE, "bridge", {})
-    mock_bridge:set_field(Fields.BRIDGE_ID, M.BRIDGE_DNI, {})
-    mock_bridge:set_field(Fields.IPV4, M.BRIDGE_IP, {})
-    mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, M.API_KEY, {})
-    -- Mark bridge as already added to prevent lifecycle handlers from treating child as stray
-    mock_bridge:set_field(Fields._ADDED, true, { persist = true })
-    -- Don't mark _INIT yet if SSE is enabled - let do_bridge_network_init run to set up SSE
-    if not opts.enable_sse then
-      mock_bridge:set_field(Fields._INIT, true, { persist = true })
+    for _, mock_child in ipairs(mock_children) do
+      test.mock_device.add_test_device(mock_child)
     end
-
-    mock_bridge_server = lan_test_utils.build_mock_server(M.BRIDGE_IP, 443)
-    if opts.enable_sse then
+    
+    mock_bridge:set_field(Fields.DEVICE_TYPE, "bridge", {})
+    mock_bridge:set_field(Fields.BRIDGE_ID, self.bridge_dni, {})
+    mock_bridge:set_field(Fields.IPV4, self.bridge_ip, {})
+    mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, self.api_key, {})
+    
+    -- Check if we have any non-light children (buttons, sensors, etc.)
+    -- These need the bridge marked as _ADDED to avoid being treated as stray devices
+    local has_non_light_children = false
+    for _, child_config in ipairs(self.children) do
+      if child_config.type ~= "light" then
+        has_non_light_children = true
+        break
+      end
+    end
+    
+    if has_non_light_children then
+      mock_bridge:set_field(Fields._ADDED, true, { persist = true })
+      -- Don't mark _INIT yet if SSE is enabled - let do_bridge_network_init run to set up SSE
+      if not self.sse_enabled then
+        mock_bridge:set_field(Fields._INIT, true, { persist = true })
+      end
+    end
+    
+    mock_bridge_server = lan_test_utils.build_mock_server(self.bridge_ip, 443)
+    if self.sse_enabled then
       mock_sse_connection = mock_bridge_server:reserve_connection("sse")
     end
-
-    -- Allow caller to register device-specific init expectations
-    if init_event_expectations then
-      init_event_expectations(mock_child)
+    
+    -- Register init expectations for all children
+    -- Generate init_expectations based on device type and SSE status
+    for i, child_config in ipairs(self.children) do
+      local mock_child = mock_children[i]
+      
+      if child_config.type == "button" then
+        -- Button devices emit supportedButtonValues for each component
+        local components = {"main"}
+        for j = 2, child_config.num_buttons do
+          table.insert(components, "button" .. j)
+        end
+        
+        for _, component in ipairs(components) do
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message(component, 
+              capabilities.button.supportedButtonValues(
+                { "pushed", "held" },
+                { visibility = { displayed = false } }
+              )
+            )
+          )
+        end
+        
+        -- Battery event from refresh during init (only if SSE is enabled)
+        if self.sse_enabled then
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.battery.battery(child_config.battery)
+            )
+          )
+        end
+        
+      elseif child_config.type == "motion" then
+        -- Motion sensors emit battery event from refresh during init (only if SSE enabled)
+        if self.sse_enabled then
+          test.socket.capability:__set_channel_ordering("relaxed")
+          
+          -- Motion state
+          local motion_value = child_config.motion and "active" or "inactive"
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.motionSensor.motion[motion_value]()
+            )
+          )
+          
+          -- Temperature
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.temperatureMeasurement.temperature({ 
+                value = child_config.temperature, 
+                unit = "C" 
+              })
+            )
+          )
+          
+          -- Illuminance (convert light_level to lux: lux = round(10^((light_level - 1) / 10000)))
+          -- Note: round() is math.floor(val + 0.5) to match st.utils.round
+          local lux = math.floor(10 ^ ((child_config.light_level - 1) / 10000) + 0.5)
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.illuminanceMeasurement.illuminance(lux)
+            )
+          )
+          
+          -- Battery
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.battery.battery(child_config.battery)
+            )
+          )
+        end
+        
+      elseif child_config.type == "contact" then
+        -- Contact sensors emit multiple events from refresh during init (only if SSE enabled)
+        if self.sse_enabled then
+          test.socket.capability:__set_channel_ordering("relaxed")
+          
+          -- Contact state
+          local contact_value = (child_config.contact_state == "no_contact") and "open" or "closed"
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.contactSensor.contact[contact_value]()
+            )
+          )
+          
+          -- Tamper state
+          local tamper_value = (child_config.tamper == "tampered") and "detected" or "clear"
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.tamperAlert.tamper[tamper_value]()
+            )
+          )
+          
+          -- Battery
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main", 
+              capabilities.battery.battery(child_config.battery)
+            )
+          )
+        end
+        
+      elseif child_config.type == "light" then
+        -- Lights always emit levelRange on init
+        test.socket.capability:__expect_send(
+          mock_child:generate_test_message("main", 
+            capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 })
+          )
+        )
+      end
     end
   end
-
+  
   local function get_bridge_server()
     assert(mock_bridge_server, "get_bridge_server() called before test_init() has run")
     return mock_bridge_server
   end
-
+  
   local function get_sse_connection()
-    assert(mock_sse_connection, "get_sse_connection() called without opts.enable_sse, or before test_init() has run")
+    assert(mock_sse_connection, "get_sse_connection() called without enable_sse(), or before test_init() has run")
     return mock_sse_connection
   end
-
-  return mock_bridge, mock_child, get_bridge_server, test_init, get_sse_connection
+  
+  -- Return mock_bridge, all mock_children, get_bridge_server, test_init, get_sse_connection
+  local results = {mock_bridge}
+  for _, mock_child in ipairs(mock_children) do
+    table.insert(results, mock_child)
+  end
+  table.insert(results, get_bridge_server)
+  table.insert(results, test_init)
+  if self.sse_enabled then
+    table.insert(results, get_sse_connection)
+  end
+  
+  return table.unpack(results)
 end
 
---- Identifies which connection is SSE vs REST when both race to connect.
+-- Export HueDeviceBuilder via a constructor function
+M.HueDeviceBuilder = {
+  new = M.HueDeviceBuilder_new
+}
+
+--- ConnectionScenario 2.0 Test Helpers
+--- These helpers reduce boilerplate when using the new connection_scenario framework
+
+--- Create a ConnectionScenario configured for Hue bridge testing.
 ---
---- The SSE EventSource and the bridge's REST API both connect to the same host:port.
---- During test_init, a labeled "sse" connection is reserved, but which physical connection
---- claims that reservation isn't reliably ordered (it can flip depending on unrelated timing).
---- This helper inspects the sent bytes on the labeled connection to determine which is which.
----
---- Usage pattern (from test body, after SSE connection has been made):
----   local sse, rest = hue_test_helpers.identify_sse_and_rest_connections(
----     hue_test_helpers.BRIDGE_IP, 443, get_sse_connection, get_bridge_server
----   )
----
---- @param bridge_ip string the bridge IP address (typically hue_test_helpers.BRIDGE_IP)
---- @param bridge_port number the bridge port (typically 443)
---- @param get_sse_connection fun() returns the SSE connection handle from fixture
---- @param get_bridge_server fun() returns the REST server handle from fixture
---- @return integration_test.LanMockServer sse the SSE stream connection
---- @return integration_test.LanMockServer rest the bridge's persistent REST connection
-function M.identify_sse_and_rest_connections(bridge_ip, bridge_port, get_sse_connection, get_bridge_server)
-  local mock_lan_socket = require "integration_test.mock_lan_socket"
-  test.wait_for_events()
-  local labeled_conn = mock_lan_socket.tcp_registry.get_labeled(bridge_ip, bridge_port, "sse")
-  if not labeled_conn then
-    -- Fallback if labeled connection doesn't exist
-    return get_sse_connection(), get_bridge_server()
+--- @param options table|nil Configuration options:
+---   - host: Bridge IP (default: hue_test_helpers.BRIDGE_IP)
+---   - port: Bridge port (default: 443)
+---   - rest: Include REST connection (default: true)
+---   - rest_name: Name for REST connection (default: "rest")
+---   - rest_method: HTTP method for REST matcher (default: "GET")
+---   - rest_ordering: Ordering for REST connection (default: "relaxed")
+---   - sse: Include SSE connection (default: false)
+---   - put: Include PUT connection (default: false)
+---   - get: Include GET connection (default: false)
+--- @return table scenario The ConnectionScenario instance
+--- @return table connections Table of connection handles: { rest = ..., sse = ..., put_conn = ..., get_conn = ... }
+function M.create_hue_scenario(options)
+  options = options or {}
+  local connection_scenario = require "integration_test.connection_scenario"
+  local http = require "integration_test.connection_scenario_http"
+  
+  local scenario = connection_scenario.new({
+    host = options.host or M.BRIDGE_IP,
+    port = options.port or 443
+  })
+  
+  local connections = {}
+  
+  -- REST connection (default)
+  if options.rest ~= false then
+    connections.rest = scenario:connection(options.rest_name or "rest", {
+      matcher = http.matcher(options.rest_method or "GET", "/clip/v2/resource/"),
+      ordering = options.rest_ordering or "relaxed"
+    })
   end
-  local sent_so_far = table.concat(labeled_conn.sent_log or {})
-  if sent_so_far:match("^GET /eventstream/clip/v2 ") then
-    return get_sse_connection(), get_bridge_server()
+  
+  -- SSE connection
+  if options.sse then
+    connections.sse = scenario:connection("sse", {
+      matcher = http.matcher("GET", "/eventstream/clip/v2")
+    })
   end
-  -- If the labeled connection is NOT SSE, then the order is swapped
-  return get_bridge_server(), get_sse_connection()
+  
+  -- PUT connection (for light commands)
+  if options.put then
+    connections.put_conn = scenario:connection("put_conn", {
+      matcher = http.matcher("PUT", "/clip/v2/resource/"),
+      ordering = "relaxed"
+    })
+  end
+  
+  -- GET connection (for refresh operations when PUT is also needed)
+  if options.get then
+    connections.get_conn = scenario:connection("get_conn", {
+      matcher = http.matcher("GET", "/clip/v2/resource/"),
+      ordering = "relaxed"
+    })
+  end
+  
+  return scenario, connections
 end
 
---- SSE Test Pattern Documentation
+--- Setup test_init function with scenario activation.
 ---
---- When testing devices that rely on SSE events (buttons, sensors), follow this pattern:
+--- @param base_test_init function The base test_init function returned by HueDeviceBuilder
+--- @param scenario table The ConnectionScenario instance
+--- @param additional_setup function|nil Optional additional setup to run before scenario:activate()
+function M.setup_scenario_test_init(base_test_init, scenario, additional_setup)
+  local test = require "integration_test"
+  local function test_init()
+    base_test_init()
+    if additional_setup then
+      additional_setup()
+    end
+    scenario:activate()
+  end
+  test.set_test_init_function(test_init)
+end
+
+--- Expect a Hue device info request (GET /clip/v2/resource/device/{id}).
 ---
---- 1. **Fixture Setup**: Use build_paired_bridge_and_child() with enable_sse = true
----    - Provide complete device state in disco cache
----    - Register init event expectations (supportedButtonValues, initial capability values)
----    - Note: init handler injects a refresh command via _REFRESH_AFTER_INIT field
+--- @param connection table The connection handle
+--- @param device_id string The device ID
+--- @param services table Array of service objects
+--- @param options table|nil Options:
+---   - name: Device name (default: "Device")
+---   - metadata: Full metadata table (overrides name)
+---   - product_data: Product data table
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: true)
+function M.expect_device_info(connection, device_id, services, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/device/" .. device_id, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "device",
+        id = device_id,
+        metadata = options.metadata or { name = options.name or "Device" },
+        product_data = options.product_data,
+        services = services
+      }}
+    },
+    reusable = options.reusable ~= false
+  })
+end
+
+--- Expect a Hue zigbee connectivity request (GET /clip/v2/resource/zigbee_connectivity/{id}).
 ---
---- 2. **Connection Helper**: Create a connect_sse_for_<device_type>() function that:
----    a. Calls identify_sse_and_rest_connections() to determine which connection is which
----    b. Drains the device's refresh REST call sequence (device-specific, see below)
----    c. Answers the SSE handshake: assert GET /eventstream/clip/v2, queue_sse_headers(200)
----    d. Answers the onopen connectivity poll: queue zigbee_connectivity response
----    e. Returns (sse, rest) handles
+--- @param connection table The connection handle
+--- @param zigbee_rid string The zigbee connectivity resource ID
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - connectivity_status: Connection status (default: "connected")
+---   - owner: Owner resource ID
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_zigbee_connectivity(connection, zigbee_rid, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  local data_entry = {
+    type = "zigbee_connectivity",
+    id = zigbee_rid,
+    status = options.connectivity_status or "connected"
+  }
+  
+  if options.owner then
+    data_entry.owner = { rid = options.owner }
+  end
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/zigbee_connectivity/" .. zigbee_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = { data_entry }
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue device power request (GET /clip/v2/resource/device_power/{id}).
 ---
---- 3. **Device-Specific Refresh Sequences**:
----    - Single button: 5 REST calls
----      GET device (for services), GET zigbee_connectivity, GET device (again),
----      GET button/{rid}, GET device_power/{rid}
----    - 4-button remote: 8 REST calls
----      GET device, GET zigbee_connectivity, GET device,
----      GET button/{rid1}, GET button/{rid2}, GET button/{rid3}, GET button/{rid4},
----      GET device_power/{rid}
----    - Motion sensor: 7 REST calls
----      GET device, GET zigbee_connectivity, GET device,
----      GET motion/{rid}, GET temperature/{rid}, GET light_level/{rid}, GET device_power/{rid}
----    - Light: 3 REST calls (see test_hue_bridge_sse.lua)
----      GET device, GET zigbee_connectivity, GET light/{rid}
+--- @param connection table The connection handle
+--- @param power_rid string The device power resource ID
+--- @param battery_level number Battery level (0-100)
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_device_power(connection, power_rid, battery_level, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/device_power/" .. power_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "device_power",
+        id = power_rid,
+        power_state = { battery_level = battery_level }
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue button resource request (GET /clip/v2/resource/button/{id}).
 ---
---- 4. **Test Body Pattern**:
----    local sse = connect_sse_for_<device_type>()
----    test.socket.capability:__expect_send(...)  -- register expectation
----    sse:queue_sse_event({...})  -- send SSE event
----    test.wait_for_events()
+--- @param connection table The connection handle
+--- @param button_rid string The button resource ID
+--- @param options table|nil Options:
+---   - control_id: Button control ID (default: 1)
+---   - event_values: Array of supported event values (default: {"short_release", "long_press", "long_release"})
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_button_resource(connection, button_rid, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/button/" .. button_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "button",
+        id = button_rid,
+        metadata = { control_id = options.control_id or 1 },
+        button = {
+          button_report = { event = "initial_press", updated = "2024-01-01T00:00:00Z" },
+          event_values = options.event_values or { "short_release", "long_press", "long_release" }
+        }
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue motion sensor resource request (GET /clip/v2/resource/motion/{id}).
 ---
---- 5. **SSE Event Format**:
----    {
----      { type = "update", data = { { type = "button", id = BUTTON_RID, ... } } }
----    }
+--- @param connection table The connection handle
+--- @param motion_rid string The motion sensor resource ID
+--- @param is_active boolean Motion detected state
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_motion_resource(connection, motion_rid, is_active, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/motion/" .. motion_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "motion",
+        id = motion_rid,
+        motion = { motion = is_active, motion_valid = true },
+        enabled = true
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue temperature sensor resource request (GET /clip/v2/resource/temperature/{id}).
 ---
---- 6. **Multi-Attribute Updates**: Use relaxed ordering when events can arrive in any order:
----    test.socket.capability:__set_channel_ordering("relaxed")
+--- @param connection table The connection handle
+--- @param temperature_rid string The temperature sensor resource ID
+--- @param temperature number Temperature in Celsius
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_temperature_resource(connection, temperature_rid, temperature, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/temperature/" .. temperature_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "temperature",
+        id = temperature_rid,
+        temperature = { temperature = temperature, temperature_valid = true },
+        enabled = true
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue light level sensor resource request (GET /clip/v2/resource/light_level/{id}).
 ---
---- See test_hue_button_sse.lua, test_hue_multibutton_sse.lua, and
---- test_hue_motion_sensor_sse.lua for complete examples.
+--- @param connection table The connection handle
+--- @param light_level_rid string The light level sensor resource ID
+--- @param light_level number Light level value
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_light_level_resource(connection, light_level_rid, light_level, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/light_level/" .. light_level_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "light_level",
+        id = light_level_rid,
+        light = { light_level = light_level, light_level_valid = true },
+        enabled = true
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue contact sensor resource request (GET /clip/v2/resource/contact/{id}).
+---
+--- @param connection table The connection handle
+--- @param contact_rid string The contact sensor resource ID
+--- @param state string Contact state: "contact" (closed) or "no_contact" (open)
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_contact_resource(connection, contact_rid, state, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/contact/" .. contact_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "contact",
+        id = contact_rid,
+        contact_report = { state = state },
+        enabled = true
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue tamper sensor resource request (GET /clip/v2/resource/tamper/{id}).
+---
+--- @param connection table The connection handle
+--- @param tamper_rid string The tamper sensor resource ID
+--- @param state string Tamper state: "tampered" or "not_tampered"
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_tamper_resource(connection, tamper_rid, state, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/tamper/" .. tamper_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = {{
+        type = "tamper",
+        id = tamper_rid,
+        tamper_reports = {{ state = state }}
+      }}
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Expect a Hue light resource request (GET /clip/v2/resource/light/{id}).
+---
+--- @param connection table The connection handle
+--- @param light_rid string The light resource ID
+--- @param on_state boolean Light on/off state
+--- @param brightness number|nil Brightness level (0-100)
+--- @param options table|nil Options:
+---   - status: HTTP status (default: 200)
+---   - color: Color object with xy coordinates
+---   - color_temperature: Color temperature object with mirek
+---   - reusable: Make expectation reusable (default: false)
+function M.expect_light_resource(connection, light_rid, on_state, brightness, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  local light_data = {
+    type = "light",
+    id = light_rid,
+    on = { on = on_state }
+  }
+  
+  if brightness then
+    light_data.dimming = { brightness = brightness }
+  end
+  
+  if options.color then
+    light_data.color = options.color
+  end
+  
+  if options.color_temperature then
+    light_data.color_temperature = options.color_temperature
+  end
+  
+  return http.expect_request(connection, "GET", "/clip/v2/resource/light/" .. light_rid, {
+    status = options.status or 200,
+    body = {
+      errors = {},
+      data = { light_data }
+    },
+    reusable = options.reusable
+  })
+end
+
+--- Setup SSE connection expectations (handshake + connectivity poll).
+---
+--- @param sse_connection table The SSE connection handle
+--- @param rest_connection table The REST connection handle
+--- @param options table|nil Options:
+---   - handshake_reusable: Make handshake expectation reusable (default: true)
+---   - poll_reusable: Make connectivity poll expectation reusable (default: false)
+function M.setup_sse_expectations(sse_connection, rest_connection, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  -- SSE handshake
+  http.expect_sse_handshake(sse_connection, "/eventstream/clip/v2", options.handshake_reusable ~= false)
+  
+  -- Connectivity poll after SSE opens
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/zigbee_connectivity", {
+    status = 200,
+    body = {
+      errors = {},
+      data = {{ type = "zigbee_connectivity", status = "connected" }}
+    },
+    reusable = options.poll_reusable
+  })
+end
+
+--- SSE Event Builders
+--- These helpers create properly structured SSE event tables
+
+--- Create a button SSE event.
+---
+--- @param button_rid string The button resource ID
+--- @param event_type string Event type: "short_release", "long_press", "long_release", etc.
+--- @param options table|nil Options:
+---   - timestamp: Event timestamp (default: "2024-01-01T12:00:00Z")
+---   - battery_level: Include battery level in event
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.button_event(button_rid, event_type, options)
+  options = options or {}
+  
+  local button_data = {
+    type = "button",
+    id = button_rid,
+    button = {
+      button_report = {
+        event = event_type,
+        updated = options.timestamp or "2024-01-01T12:00:00Z"
+      }
+    }
+  }
+  
+  if options.battery_level then
+    button_data.power_state = { battery_level = options.battery_level }
+  end
+  
+  return {
+    type = options.update_type or "update",
+    data = { button_data }
+  }
+end
+
+--- Create a motion sensor SSE event.
+---
+--- @param motion_rid string The motion sensor resource ID
+--- @param is_active boolean Motion detected state
+--- @param options table|nil Options:
+---   - motion_valid: Motion valid flag (default: true)
+---   - battery_level: Include battery level in event
+---   - temperature: Include temperature in event
+---   - light_level: Include light level in event
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.motion_event(motion_rid, is_active, options)
+  options = options or {}
+  
+  local motion_data = {
+    type = "motion",
+    id = motion_rid,
+    motion = {
+      motion = is_active,
+      motion_valid = options.motion_valid ~= false
+    }
+  }
+  
+  if options.battery_level then
+    motion_data.power_state = { battery_level = options.battery_level }
+  end
+  
+  if options.temperature then
+    motion_data.temperature = {
+      temperature = options.temperature,
+      temperature_valid = true
+    }
+  end
+  
+  if options.light_level then
+    motion_data.light = {
+      light_level = options.light_level,
+      light_level_valid = true
+    }
+  end
+  
+  return {
+    type = options.update_type or "update",
+    data = { motion_data }
+  }
+end
+
+--- Create a contact sensor SSE event.
+---
+--- @param contact_rid string The contact sensor resource ID
+--- @param state string Contact state: "contact" (closed) or "no_contact" (open)
+--- @param options table|nil Options:
+---   - battery_level: Include battery level in event
+---   - tamper_state: Include tamper state in event
+---   - temperature: Include temperature in event
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.contact_event(contact_rid, state, options)
+  options = options or {}
+  
+  local contact_data = {
+    type = "contact",
+    id = contact_rid,
+    contact_report = { state = state }
+  }
+  
+  if options.battery_level then
+    contact_data.power_state = { battery_level = options.battery_level }
+  end
+  
+  if options.tamper_state then
+    contact_data.tamper_reports = {{ state = options.tamper_state }}
+  end
+  
+  if options.temperature then
+    contact_data.temperature = {
+      temperature = options.temperature,
+      temperature_valid = true
+    }
+  end
+  
+  return {
+    type = options.update_type or "update",
+    data = { contact_data }
+  }
+end
+
+--- Create a tamper sensor SSE event.
+---
+--- @param tamper_rid string The tamper sensor resource ID
+--- @param state string Tamper state: "tampered" or "not_tampered"
+--- @param options table|nil Options:
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.tamper_event(tamper_rid, state, options)
+  options = options or {}
+  
+  return {
+    type = options.update_type or "update",
+    data = {{
+      type = "tamper",
+      id = tamper_rid,
+      tamper_reports = {{ state = state }}
+    }}
+  }
+end
+
+--- Create a light SSE event.
+---
+--- @param light_rid string The light resource ID
+--- @param on_state boolean Light on/off state
+--- @param brightness number|nil Brightness level (0-100)
+--- @param options table|nil Options:
+---   - color: Color object with xy coordinates
+---   - color_temperature: Color temperature object with mirek
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.light_event(light_rid, on_state, brightness, options)
+  options = options or {}
+  
+  local light_data = {
+    type = "light",
+    id = light_rid,
+    on = { on = on_state }
+  }
+  
+  if brightness then
+    light_data.dimming = { brightness = brightness }
+  end
+  
+  if options.color then
+    light_data.color = options.color
+  end
+  
+  if options.color_temperature then
+    light_data.color_temperature = options.color_temperature
+  end
+  
+  return {
+    type = options.update_type or "update",
+    data = { light_data }
+  }
+end
+
+--- Create a temperature sensor SSE event.
+---
+--- @param temperature_rid string The temperature sensor resource ID
+--- @param temperature number Temperature in Celsius
+--- @param options table|nil Options:
+---   - temperature_valid: Temperature valid flag (default: true)
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.temperature_event(temperature_rid, temperature, options)
+  options = options or {}
+  
+  return {
+    type = options.update_type or "update",
+    data = {{
+      type = "temperature",
+      id = temperature_rid,
+      temperature = {
+        temperature = temperature,
+        temperature_valid = options.temperature_valid ~= false
+      }
+    }}
+  }
+end
+
+--- Create a light level sensor SSE event.
+---
+--- @param light_level_rid string The light level sensor resource ID
+--- @param light_level number Light level value
+--- @param options table|nil Options:
+---   - light_level_valid: Light level valid flag (default: true)
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.light_level_event(light_level_rid, light_level, options)
+  options = options or {}
+  
+  return {
+    type = options.update_type or "update",
+    data = {{
+      type = "light_level",
+      id = light_level_rid,
+      light = {
+        light_level = light_level,
+        light_level_valid = options.light_level_valid ~= false
+      }
+    }}
+  }
+end
+
+--- Helper to escape a Hue UUID for use in Lua pattern matching.
+--- Converts: "11111111-1111-1111-1111-111111111111"
+--- To: "11111111%-1111%-1111%-1111%-111111111111"
+---
+--- @param uuid string The UUID to escape
+--- @return string Escaped UUID suitable for Lua patterns
+function M.escape_uuid(uuid)
+  return uuid:gsub("%-", "%%-")
+end
 
 return M

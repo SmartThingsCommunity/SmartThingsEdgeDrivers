@@ -1,3 +1,10 @@
+--- Test for button device lifecycle (added/init/removed).
+--- Migrated to use connection_scenario 2.0.
+---
+--- Note: This test doesn't make HTTP requests during lifecycle operations,
+--- so no ConnectionScenario setup is needed. It primarily validates that
+--- lifecycle handlers complete without errors.
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local hue_test_helpers = require "test.hue_test_helpers"
@@ -8,39 +15,17 @@ local BUTTON_DEVICE_ID = "aaaaaaaa-bbbb-cccc-dddd-222222222222"
 local POWER_RID = "aaaaaaaa-bbbb-cccc-dddd-333333333333"
 
 -- Single button device fixture WITHOUT SSE (lifecycle only)
-local mock_bridge, mock_button, get_bridge_server, base_test_init, get_sse_connection =
-  hue_test_helpers.build_paired_bridge_and_child(
-    BUTTON_RID,
-    {
-      id = BUTTON_RID,
-      hue_provided_name = "Hue Button",
-      hue_device_id = BUTTON_DEVICE_ID,
-      num_buttons = 1,
-      button1 = {
-        event_values = { "short_release", "long_press", "long_release" }
-      },
-      button1_id = BUTTON_RID,
-      power_state = { battery_level = 85 },
-      power_id = POWER_RID,
-    },
-    "single-button.yml",
-    "button",
-    function(mock_device)
-      -- Register expectation for supportedButtonValues emit during init
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", 
-          capabilities.button.supportedButtonValues(
-            { "pushed", "held" },
-            { visibility = { displayed = false } }
-          )
-        )
-      )
-    end,
-    nil,  -- No device template overrides
-    { enable_sse = false }  -- No SSE for lifecycle-only test
-  )
+local mock_bridge, mock_button, get_bridge_server, test_init =
+  hue_test_helpers.HueDeviceBuilder.new()
+    :with_bridge()
+    :with_button(BUTTON_RID, {
+      battery = 85,
+      device_id = BUTTON_DEVICE_ID,
+      power_rid = POWER_RID,
+    })
+    :start()
 
-test.set_test_init_function(base_test_init)
+test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Button device lifecycle completes successfully",

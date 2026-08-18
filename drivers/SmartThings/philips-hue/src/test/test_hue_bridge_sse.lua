@@ -1,7 +1,15 @@
+--- Test for Hue bridge SSE connection lifecycle.
+--- Migrated to use connection_scenario 2.0.
+---
+--- This test uses a hybrid approach combining helpers with dynamic queueing:
+--- - Uses SSE event builder helpers (light_event()) for cleaner event construction
+--- - Uses dynamic queue_http_response() and queue_sse_event() for complex lifecycle timing
+--- - Cannot use pre-defined expectations because each test needs different response sequences
+--- - The double-refresh pattern (both .added and .init inject refresh) requires dynamic handling
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local mock_devices_api = require "integration_test.mock_devices_api"
-local mock_lan_socket = require "integration_test.mock_lan_socket"
 local hue_test_helpers = require "test.hue_test_helpers"
 
 local LIGHT_RID = "22222222-2222-2222-2222-222222222222"
@@ -12,18 +20,16 @@ local NEW_DEVICE_RID = "66666666-6666-6666-6666-666666666666"
 local NEW_LIGHT_RID = "77777777-7777-7777-7777-777777777777"
 local NEW_LIGHT_NAME = "New Hue Light"
 
-local mock_bridge, mock_light, get_bridge_server, test_init, get_sse_connection =
-  hue_test_helpers.build_paired_bridge_and_light(
-    LIGHT_RID,
-    {
+local mock_bridge, mock_light, get_bridge_server, base_test_init, get_sse_connection =
+  hue_test_helpers.HueDeviceBuilder.new()
+    :with_bridge()
+    :with_light(LIGHT_RID, {
       on = { on = true },
       dimming = { brightness = 80 },
       hue_device_id = HUE_DEVICE_ID,
-    },
-    "white-and-color-ambiance.yml",
-    nil,
-    { enable_sse = true }
-  )
+    })
+    :enable_sse()
+    :start()
 
 local function expect_switch_and_level_emit()
   test.socket.capability:__expect_send(
@@ -51,28 +57,9 @@ end
 -- full SSE connect sequence below -- independently, same as any other Hue test file.)
 test.set_test_init_function(function()
   expect_switch_and_level_emit() -- from .added's injected refresh
-  test_init()                    -- registers .init's levelRange emit
+  base_test_init()               -- registers .init's levelRange emit
   expect_switch_and_level_emit() -- from .init's injected refresh
 end)
-
---- That injected refresh's own connect() and the SSE EventSource's own connect() both race for
---- this address right after test_init returns, and *which one* claims the single "sse"
---- reservation test_init made isn't reliably ordered (it can flip depending on unrelated timing,
---- e.g. table/coroutine hashing) -- so this doesn't assume an order; it peeks at whichever
---- connection actually claimed the "sse" label's first sent bytes (a non-consuming read, unlike
---- `assert_http_request_received`) to tell the two apart, then returns them correctly identified.
----
---- @return integration_test.LanMockServer sse the real SSE stream
---- @return integration_test.LanMockServer rest the bridge's persistent REST connection
-local function identify_sse_and_rest_connections()
-  test.wait_for_events()
-  local sse_entry = mock_lan_socket.tcp_registry.get_labeled(hue_test_helpers.BRIDGE_IP, 443, "sse")
-  local sent_so_far = table.concat(sse_entry.sent_log)
-  if sent_so_far:match("^GET /eventstream/clip/v2 ") then
-    return get_sse_connection(), get_bridge_server()
-  end
-  return get_bridge_server(), get_sse_connection()
-end
 
 --- Answers the REST calls `LightLifecycleHandlers.added`'s injected refresh makes (see above) --
 --- the same zigbee-connectivity-then-light-state sequence test_hue_light_refresh.lua exercises
@@ -81,9 +68,13 @@ end
 --- request has to be drained before anything else can get its response -- otherwise it blocks
 --- every later REST call (including the SSE onopen's own connectivity poll) behind it.
 ---
---- @param rest integration_test.LanMockServer the bridge's REST connection (see
----   identify_sse_and_rest_connections)
-local function answer_initial_light_refresh(rest)
+--- @param rest integration_test.connection_scenario.Connection the bridge's REST connection
+--- @param light_on boolean|nil whether the light should be on (default: true)
+--- @param light_brightness number|nil the light brightness (default: 80)
+local function answer_initial_light_refresh(rest, light_on, light_brightness)
+  light_on = light_on == nil and true or light_on
+  light_brightness = light_brightness or 80
+  
   rest:queue_http_response(200, {}, {
     errors = {},
     data = { { services = { { rtype = "zigbee_connectivity", rid = ZIGBEE_RID } } } },
@@ -94,7 +85,7 @@ local function answer_initial_light_refresh(rest)
   })
   rest:queue_http_response(200, {}, {
     errors = {},
-    data = { { id = LIGHT_RID, on = { on = true }, dimming = { brightness = 80 } } },
+    data = { { id = LIGHT_RID, on = { on = light_on }, dimming = { brightness = light_brightness } } },
   })
   test.wait_for_events()
   rest:assert_http_request_received("GET", "/clip/v2/resource/device/" .. HUE_DEVICE_ID)
@@ -102,7 +93,7 @@ local function answer_initial_light_refresh(rest)
   rest:assert_http_request_received("GET", "/clip/v2/resource/light/" .. LIGHT_RID)
 end
 
---- Drives one full SSE connect: identifies which connection is which (see above), drains the
+--- Drives one full SSE connect: gets the connections, drains the
 --- unconditional initial light refresh, then the EventSource handshake, then the
 --- connectivity-status poll `onopen` makes before it settles (which also finishes flushing the
 --- light's own `init` lifecycle -- its levelRange emit shares scheduler turns with all of this,
@@ -111,10 +102,13 @@ end
 --- bridge/light/EventSource per test (see above), so there's no persistent connection to share
 --- across tests the way there might be within a single production run.
 ---
---- @return integration_test.LanMockServer sse
---- @return integration_test.LanMockServer rest
+--- @return integration_test.connection_scenario.Connection sse
+--- @return integration_test.connection_scenario.Connection rest
 local function connect_sse()
-  local sse, rest = identify_sse_and_rest_connections()
+  test.wait_for_events()
+  local sse = get_sse_connection()
+  local rest = get_bridge_server()
+  
   answer_initial_light_refresh(rest) -- LightLifecycleHandlers.added's injected refresh
   answer_initial_light_refresh(rest) -- LightLifecycleHandlers.init's injected refresh
 
@@ -169,11 +163,9 @@ test.register_coroutine_test(
   function()
     local sse = connect_sse()
 
+    -- Use helper to build the SSE event
     sse:queue_sse_event({
-      {
-        type = "update",
-        data = { { type = "light", id = LIGHT_RID, on = { on = false }, dimming = { brightness = 42 } } },
-      },
+      hue_test_helpers.light_event(LIGHT_RID, false, 42)
     })
     test.socket.capability:__expect_send(
       mock_light:generate_test_message("main", capabilities.switch.switch.off())
