@@ -874,7 +874,7 @@ zwaveManufacturer:
     productId: 0x1000
     deviceProfileName: metering-switch
   - id: 0312/FF00/FF0E
-    deviceLabel: Minoston Outlet
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF0E
