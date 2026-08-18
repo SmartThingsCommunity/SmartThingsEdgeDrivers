@@ -879,6 +879,12 @@ zwaveManufacturer:
     productType: 0xFF00
     productId: 0xFF0E
     deviceProfileName: metering-switch
+  - id: "0312/FF01/FF97"
+    deviceLabel: IP65 Outdoor Zwave Smart Plug with 2 Individual Outlets
+    manufacturerId: 0x0312
+    productId: 0xFF97
+    productType: 0xFF01
+    deviceProfileName: switch-binary
   - id: Evolve/RelaySwitch
     deviceLabel: Evolve Switch
     manufacturerId: 0x0113
