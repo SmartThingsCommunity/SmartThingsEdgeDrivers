@@ -179,7 +179,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -245,7 +245,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -253,7 +256,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({}))
   end,
-  { test_init = function() test.mock_device.add_test_device(mock_device_modular) end }
+  {
+    test_init = function() test.mock_device.add_test_device(mock_device_modular) end,
+    min_api_version = 15
+  }
 )
 
 local function initialize_subscribe_request(mock_device, subscribed_attributes)
@@ -318,7 +324,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -326,7 +335,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({}))
   end,
-  { test_init = function() test.mock_device.add_test_device(mock_device_modular) end }
+  {
+    test_init = function() test.mock_device.add_test_device(mock_device_modular) end,
+    min_api_version = 15
+  }
 )
 
 -- run tests
