@@ -27,6 +27,8 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: AirQualityDetector
 preferences:
   - preferenceId: humidityOffset
     explicit: true

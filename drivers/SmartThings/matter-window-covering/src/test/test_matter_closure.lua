@@ -11,6 +11,11 @@ local version = require "version"
 if version.api < 20 then
   clusters.ClosureControl = require "embedded_clusters.ClosureControl"
   clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
+  clusters.Global = require "embedded_clusters.Global"
+end
+
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
 -- ---------------------------------------------------------------------------
@@ -295,7 +300,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -318,7 +326,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -338,7 +349,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -358,7 +372,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -378,7 +395,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -422,7 +442,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -437,7 +460,10 @@ test.register_coroutine_test(
         mock_device, 10, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
       )
     })
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -452,7 +478,10 @@ test.register_coroutine_test(
         mock_device, 10, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
       )
     })
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -465,7 +494,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.ClosureControl.server.commands.Stop(mock_device, 10)
     })
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -479,7 +511,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -494,7 +529,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.ClosureDimension.server.commands.SetTarget(mock_device, 11, 75 * 100)
     })
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -509,7 +547,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.ClosureDimension.server.commands.SetTarget(mock_device, 12, 40 * 100)
     })
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -529,7 +570,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("windowShade1", capabilities.windowShadeLevel.shadeLevel(60))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -549,7 +593,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("windowShade2", capabilities.windowShadeLevel.shadeLevel(25))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -569,7 +616,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("windowShade1", capabilities.windowShadeLevel.shadeLevel(0))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -589,7 +639,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("windowShade1", capabilities.windowShadeLevel.shadeLevel(100))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 -- ---------------------------------------------------------------------------
@@ -617,7 +670,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("main", capabilities.doorControl.door.closing())
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -641,7 +697,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("main", capabilities.doorControl.door.opening())
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -662,8 +721,12 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("main", capabilities.doorControl.door.closed())
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
+
 
 test.register_coroutine_test(
   "doorControl open following OverallCurrentState FULLY_OPENED", function()
@@ -683,7 +746,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("main", capabilities.doorControl.door.open())
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -705,7 +771,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("main", capabilities.doorControl.door.open())
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -721,7 +790,10 @@ test.register_coroutine_test(
       )
     })
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -737,9 +809,11 @@ test.register_coroutine_test(
       )
     })
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 15
+  }
 )
-
 test.register_coroutine_test(
   "ClosureDimension CurrentState on endpoint 11 emits level on door1 for door device", function()
     update_profile_door()
@@ -758,7 +832,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("door1", capabilities.level.level(75))
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -779,7 +856,10 @@ test.register_coroutine_test(
       mock_door_device:generate_test_message("door2", capabilities.level.level(30))
     )
   end,
-  {test_init = test_init_door}
+  {
+    test_init = test_init_door,
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

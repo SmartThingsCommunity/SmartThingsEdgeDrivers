@@ -1,6 +1,8 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local fields = require "sensor_utils.fields"
+
 local utils = {}
 
 -- Sanity check bounds for soil moisture measurement limits (percent)
@@ -13,6 +15,15 @@ end
 
 function utils.set_field_for_endpoint(device, field, endpoint, value, additional_params)
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
+function utils.get_product_override_field(device, override_key)
+  if device.manufacturer_info
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id]
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id]
+  then
+    return fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id][override_key]
+  end
 end
 
 function utils.tbl_contains(array, value)

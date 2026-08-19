@@ -39,6 +39,7 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatChargeLevel:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -94,7 +95,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

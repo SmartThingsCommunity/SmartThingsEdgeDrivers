@@ -6,11 +6,12 @@ local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 
 return function(opts, driver, device)
-  local EVE_MANUFACTURER_ID = 0x130A
-  -- this sub driver does NOT support child devices, and ONLY supports Eve devices
-  -- that do NOT support the Electrical Sensor device type
+  local EVE_PRIVATE_CLUSTER_ID = 0x130AFC01
+  -- this sub driver loads for devices that:
+  -- 1. Contain the Eve Private Cluster (0x130AFC01)
+  -- 2. Do NOT have the Standard Electrical Sensor device type
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-    device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and
+    #device:get_endpoints(EVE_PRIVATE_CLUSTER_ID) > 0 and
     #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR) == 0 then
     return true, require("sub_drivers.eve_energy")
   end

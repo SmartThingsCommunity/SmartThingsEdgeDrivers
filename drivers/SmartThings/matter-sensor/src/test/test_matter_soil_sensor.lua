@@ -7,10 +7,15 @@ local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local version = require "version"
 
-clusters.Global = require "embedded_clusters.Global"
+if version.api < 13 then
+  clusters.Global = require "embedded_clusters.Global"
+end
 
 if version.api < 21 then
   clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+  -- The SOIL_MOISTURE MeasurementTypeEnum variant was added to the Global MeasurementTypeEnum
+  -- def in lua libs in api version 21.
+  clusters.Global.types.MeasurementTypeEnum = require "embedded_clusters.Global.types.MeasurementTypeEnum"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -75,7 +80,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
@@ -100,7 +108,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Temperature reports should generate correct messages",
@@ -115,7 +126,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Min and max temperature attributes set capability constraint",
@@ -139,7 +153,10 @@ test.register_coroutine_test(
       )
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Soil moisture is reported raw when no limits are set",
@@ -154,9 +171,15 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 55 }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 local function build_soil_moisture_limits(min_value, max_value)
+  if version.api < 21 then
+    clusters.Global.types.MeasurementTypeEnum = require "embedded_clusters.Global.types.MeasurementTypeEnum"
+  end
   return clusters.Global.types.MeasurementAccuracyStruct({
     measurement_type = clusters.Global.types.MeasurementTypeEnum.SOIL_MOISTURE,
     measured = true,
@@ -186,7 +209,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 25 }))
     )
   end
-)
+,
+    {
+      min_api_version = 17
+    })
 
 test.register_coroutine_test(
   "Soil moisture scaling rounds correctly",
@@ -216,6 +242,9 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 90 }))
     )
   end
-)
+,
+    {
+      min_api_version = 17
+    })
 
 test.run_registered_tests()

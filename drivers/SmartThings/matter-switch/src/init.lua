@@ -29,6 +29,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local SwitchLifecycleHandlers = {}
 
 function SwitchLifecycleHandlers.device_added(driver, device)
@@ -61,6 +66,7 @@ function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
     device_cfg.match_profile(driver, device)
   end
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
@@ -373,7 +379,9 @@ local matter_driver_template = {
     switch_utils.lazy_load_if_possible("sub_drivers.aqara_cube"),
     switch_utils.lazy_load("sub_drivers.camera"),
     switch_utils.lazy_load_if_possible("sub_drivers.eve_energy"),
+    switch_utils.lazy_load_if_possible("sub_drivers.hager"),
     switch_utils.lazy_load_if_possible("sub_drivers.ikea_scroll"),
+    switch_utils.lazy_load_if_possible("sub_drivers.third_reality_garage_door"),
     switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1")
   },
   shared_device_thread_enabled = true,

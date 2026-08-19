@@ -361,7 +361,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -396,7 +396,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"battery"}}} })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -431,7 +431,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -467,7 +467,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -503,7 +503,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -540,7 +540,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -574,7 +574,10 @@ test.register_coroutine_test(
     )
     mock_device_modular:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
   end,
-  { test_init = test_init_modular }
+  {
+    test_init = test_init_modular,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -582,7 +585,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({}))
   end,
-  { test_init = test_init_modular }
+  {
+    test_init = test_init_modular,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -619,13 +625,13 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_modular,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
 
 local mock_nuki_smart_lock_ultra = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("lock-nocodes-notamper.yml"),
+  profile = t_utils.get_profile_definition("lock-unlatch.yml"),
   manufacturer_info = {
     vendor_id = 0x135D,
     product_id = 0x00A1,
@@ -692,7 +698,7 @@ test.register_coroutine_test(
       test.mock_device.add_test_device(mock_nuki_smart_lock_ultra)
       mock_nuki_smart_lock_ultra:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist = true}) -- assume this has been set previously
     end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

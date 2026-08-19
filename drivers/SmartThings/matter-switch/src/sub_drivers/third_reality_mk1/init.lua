@@ -36,7 +36,6 @@ local function configure_buttons(device)
       device.log.info(string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
       device:emit_event_for_endpoint(ep, supportedButtonValues_event)
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     else
       device.log.info(string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
@@ -82,6 +81,7 @@ end
 
 local function driver_switched(driver, device)
   match_profile(driver, device)
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 local function initial_press_event_handler(driver, device, ib, response)
