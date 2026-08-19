@@ -77,7 +77,7 @@ test.register_coroutine_test(
       PRIVATE_THERM0STAT_VALVE_DETECTION_SWITCH_ID, MFG_CODE, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -92,7 +92,7 @@ test.register_coroutine_test(
       PRIVATE_ANTIFREEZE_MODE_TEMPERATURE_SETTING_ID, MFG_CODE, data_types.Uint32, 500) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -120,7 +120,7 @@ test.register_coroutine_test(
     capabilities.hardwareFault.hardwareFault.clear()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -158,7 +158,7 @@ test.register_coroutine_test(
       valveCalibration.calibrationState.calibrationFailure()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -190,7 +190,7 @@ test.register_coroutine_test(
       invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -258,7 +258,7 @@ test.register_coroutine_test(
       invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -286,7 +286,7 @@ test.register_coroutine_test(
       capabilities.lock.lock.locked()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -305,7 +305,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -366,7 +366,7 @@ test.register_coroutine_test(
       PRIVATE_VALVE_SWITCH_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -380,7 +380,7 @@ test.register_coroutine_test(
       PRIVATE_VALVE_CALIBRATION_ID, MFG_CODE, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -395,7 +395,7 @@ test.register_coroutine_test(
       PRIVATE_CHILD_LOCK_ID, MFG_CODE, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 --]]
@@ -470,7 +470,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

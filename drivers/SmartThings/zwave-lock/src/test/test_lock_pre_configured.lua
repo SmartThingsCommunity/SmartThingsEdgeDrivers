@@ -205,7 +205,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- updateUser — pre-configured device
@@ -240,7 +243,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "updateUser (pre-configured): returns failure for a userIndex that does not exist",
@@ -273,7 +279,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- deleteUser with associated credential — exercises clear_pin_code_response
@@ -324,7 +333,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- addCredential response states — set_pin_code_response
@@ -365,7 +377,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "addCredential (pre-configured): emits duplicate when the lock rejects with DUPLICATE_CODE",
@@ -392,7 +407,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "addCredential (pre-configured): emits failure when the lock returns available",
@@ -419,7 +437,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- updateCredential response states — set_pin_code_response
@@ -450,7 +471,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "updateCredential (pre-configured): returns failure immediately for a non-existent credentialIndex",
@@ -472,7 +496,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- deleteCredential standalone (lockCredentials.DELETE path)
@@ -509,6 +536,9 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()

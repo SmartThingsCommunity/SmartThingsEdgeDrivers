@@ -69,21 +69,71 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Lifecycle - added test",
+  "Lifecycle - added test : parent device",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 3 },
     { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" })))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" })))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    -- On the first onboarding there is no previous power/energy state, so both meters are initialized to 0
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" })))
+  end,
+  {
+     min_api_version = 14
+  }
+)
 
+test.register_coroutine_test(
+  "Lifecycle - added test : power/energy already reported should be restored instead of reset to 0",
+  function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+    mock_device:set_field(LAST_REPORT_TIME, os.time() - 60 * 20)
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+
+    -- report power and energy first so the device has a last known meter state
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device,
+        SinglePrecisionFloat(0, 9, 0.953125)):from_endpoint(POWER_METER_ENDPOINT)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.powerMeter.power({ value = 1000.0, unit = "W" })))
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device,
+        SinglePrecisionFloat(0, 9, 0.953125)):from_endpoint(ENERGY_METER_ENDPOINT)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.energyMeter.energy({ value = 1000000.0, unit = "Wh" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 1000000.0 })))
+    test.wait_for_events()
+
+    -- re-adding the device must restore the reported values rather than blank them out
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 3 },
+    { visibility = { displayed = false } })))
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+        data_types.Uint8, 1) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
+    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.powerMeter.power({ value = 1000.0, unit = "W" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.energyMeter.energy({ value = 1000000.0, unit = "Wh" })))
   end,
   {
      min_api_version = 17
@@ -91,7 +141,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Lifecycle - added test",
+  "Lifecycle - added test : child device",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
@@ -100,9 +150,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    -- the child profile has no powerMeter/energyMeter, so no meter initialization event is sent
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -121,7 +172,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -138,7 +189,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -155,7 +206,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -172,7 +223,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -189,7 +240,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -203,7 +254,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -217,7 +268,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -231,7 +282,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -245,7 +296,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -262,7 +313,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -279,7 +330,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -301,7 +352,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -328,7 +379,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -343,7 +394,7 @@ test.register_coroutine_test(
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -358,7 +409,7 @@ test.register_coroutine_test(
         CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
