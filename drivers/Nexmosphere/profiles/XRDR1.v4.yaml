@@ -1,0 +1,42 @@
+{
+  "id": "93885eee-d3ed-4382-9bca-e22c70e87550",
+  "name": "XRDR1.v4",
+  "metadata": {
+    "vid": "1eec65a4-4313-3c7d-a53a-b9cd6a2289c5",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [],
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "nexmosphere.numberAndStatus",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "Scanner",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
