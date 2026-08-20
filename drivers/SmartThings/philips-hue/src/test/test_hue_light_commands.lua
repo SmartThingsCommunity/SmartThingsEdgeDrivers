@@ -1,5 +1,5 @@
 --- Test for Hue light command handling (switch, level, color, temperature).
---- Migrated to use connection_scenario 2.0 with helper functions.
+--- Uses ConnectionScenario 2.0 for PUT command testing.
 
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
@@ -7,17 +7,18 @@ local http = require "integration_test.connection_scenario_http"
 
 local LIGHT_RID = "11111111-1111-1111-1111-111111111111"
 
-local mock_bridge, mock_light, get_bridge_server, base_test_init = 
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_light(LIGHT_RID, {
-      on = { on = true },
-      dimming = { brightness = 100 },
-      color = { xy = { x = 0.3, y = 0.3 }, gamut = { red = { x = 0.7, y = 0.3 }, green = { x = 0.2, y = 0.7 }, blue = { x = 0.15, y = 0.05 } } },
-      color_temperature = { mirek = 366, mirek_schema = { mirek_minimum = 153, mirek_maximum = 500 } },
-      mode = "normal",
-    }, "white-and-color-ambiance.yml")
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_light(LIGHT_RID, {
+    on = { on = true },
+    dimming = { brightness = 100 },
+    color = { xy = { x = 0.3, y = 0.3 }, gamut = { red = { x = 0.7, y = 0.3 }, green = { x = 0.2, y = 0.7 }, blue = { x = 0.15, y = 0.05 } } },
+    color_temperature = { mirek = 366, mirek_schema = { mirek_minimum = 153, mirek_maximum = 500 } },
+    mode = "normal",
+  }, "white-and-color-ambiance.yml")
+  :start()
+
+local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for PUT command testing
 local scenario, conns = hue_test_helpers.create_hue_scenario({ 
@@ -27,7 +28,7 @@ local scenario, conns = hue_test_helpers.create_hue_scenario({
 local rest = conns.rest
 
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 -- NOTE: Profile compatibility is implicitly tested here. The white-and-color-ambiance profile
 -- supports all capabilities: switch, switchLevel, colorControl, and colorTemperature.

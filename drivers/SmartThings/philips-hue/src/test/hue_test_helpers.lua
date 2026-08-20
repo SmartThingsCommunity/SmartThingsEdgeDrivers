@@ -66,24 +66,25 @@ end
 --- ### Example: Button Device with SSE
 ---
 --- ```lua
---- local builder = hue_test_helpers.HueDeviceBuilder.new()
+--- local fixtures = hue_test_helpers.HueDeviceBuilder.new()
 ---   :with_bridge()
 ---   :with_button("button-rid", { num_buttons = 1, battery = 85 })
 ---   :enable_sse()
+---   :start()
 ---
---- local mock_bridge, mock_button, get_bridge_server, test_init, get_sse_connection = builder:start()
+--- local mock_bridge, mock_button = fixtures.bridge, fixtures.devices[1]
 ---
 --- -- Setup ConnectionScenario 2.0
 --- local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
 --- local rest, sse = conns.rest, conns.sse
 ---
---- hue_test_helpers.setup_scenario_test_init(test_init, scenario)
+--- -- Setup expectations using device-specific helper
+--- hue_test_helpers.setup_button_init_expectations(rest, sse, fixtures.configs.button[1])
 ---
---- -- Use helper functions:
---- hue_test_helpers.expect_device_info(rest, device_id, services)
---- hue_test_helpers.setup_sse_expectations(sse, rest)
+--- -- Activate scenario
+--- hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 ---
---- -- Send SSE events:
+--- -- Send SSE events in tests:
 --- http.queue_sse_event(sse, { hue_test_helpers.button_event(button_rid, "short_release") })
 --- ```
 ---
@@ -95,7 +96,11 @@ end
 --- - `with_motion(rid, config)` - Add motion sensor
 --- - `with_contact(rid, config)` - Add contact sensor
 --- - `enable_sse()` - Enable SSE support
---- - `start()` - Build fixtures
+--- - `start()` - Build fixtures and return structured object:
+---   - `fixtures.bridge` - Mock bridge device
+---   - `fixtures.devices` - Array of mock child devices
+---   - `fixtures.test_init` - Function to pass to test.set_test_init_function
+---   - `fixtures.configs` - Device configs by type (button, light, motion, contact)
 ---
 --- ### Helper Functions:
 ---
@@ -103,7 +108,13 @@ end
 --- - `create_hue_scenario(options)` - Create ConnectionScenario with REST/SSE
 --- - `setup_scenario_test_init(base, scenario, additional)` - Setup test init
 ---
---- **REST Expectations:**
+--- **Device-Type Init Expectations (High-Level):**
+--- - `setup_button_init_expectations(rest, sse, button_config, options)` - All button init expectations
+--- - `setup_light_init_expectations(rest, light_config, options)` - All light init expectations
+--- - `setup_motion_init_expectations(rest, sse, motion_config, options)` - All motion sensor init expectations
+--- - `setup_contact_init_expectations(rest, sse, contact_config, options)` - All contact sensor init expectations
+---
+--- **Low-Level REST Expectations:**
 --- - `expect_device_info()`, `expect_zigbee_connectivity()`, `expect_device_power()`
 --- - `expect_button_resource()`, `expect_motion_resource()`, `expect_light_resource()`
 --- - `setup_sse_expectations()` - SSE handshake
@@ -111,6 +122,7 @@ end
 --- **SSE Event Builders:**
 --- - `button_event()`, `motion_event()`, `light_event()`
 --- - `contact_event()`, `temperature_event()`, `light_level_event()`
+
 
 --- @class HueDeviceBuilder
 --- Fluent API for building Hue test fixtures with sensible defaults.
@@ -380,14 +392,14 @@ function HueDeviceBuilder:enable_sse()
   return self
 end
 
---- Build the fixture and return handles.
---- This creates all mock devices and returns functions to access them.
+--- Build the fixture and return a structured fixtures object.
+--- This creates all mock devices and returns them with their configurations.
 ---
---- @return table mock_bridge
---- @return table... mock_children (one per child device)
---- @return fun() get_bridge_server
---- @return fun() test_init (must be passed to test.set_test_init_function)
---- @return fun() get_sse_connection (only if enable_sse was called)
+--- @return table fixtures with fields:
+---   - bridge: mock bridge device
+---   - devices: array of mock child devices
+---   - test_init: function to pass to test.set_test_init_function
+---   - configs: table of device configs by type (button, light, motion, contact)
 function HueDeviceBuilder:start()
   local mock_bridge = test.mock_device.build_test_lan_device({
     label = "Hue Bridge",
@@ -405,9 +417,6 @@ function HueDeviceBuilder:start()
     }
     table.insert(mock_children, test.mock_device.build_test_lan_device(child_template))
   end
-  
-  local mock_bridge_server
-  local mock_sse_connection
   
   test.add_test_env_setup_func(function(driver)
     driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
@@ -470,11 +479,6 @@ function HueDeviceBuilder:start()
       if not self.sse_enabled then
         mock_bridge:set_field(Fields._INIT, true, { persist = true })
       end
-    end
-    
-    mock_bridge_server = lan_test_utils.build_mock_server(self.bridge_ip, 443)
-    if self.sse_enabled then
-      mock_sse_connection = mock_bridge_server:reserve_connection("sse")
     end
     
     -- Register init expectations for all children
@@ -589,28 +593,81 @@ function HueDeviceBuilder:start()
     end
   end
   
-  local function get_bridge_server()
-    assert(mock_bridge_server, "get_bridge_server() called before test_init() has run")
-    return mock_bridge_server
+  -- Build configuration objects for each device type
+  local configs = {}
+  for i, child_config in ipairs(self.children) do
+    local device_key = child_config.type
+    if not configs[device_key] then
+      configs[device_key] = {}
+    end
+    
+    -- Build config based on device type
+    if child_config.type == "button" then
+      table.insert(configs[device_key], {
+        rid = child_config.rid,
+        device_id = child_config.state.hue_device_id,
+        label = child_config.state.hue_provided_name,
+        num_buttons = child_config.num_buttons,
+        battery = child_config.battery,
+        power_rid = child_config.state.power_id,
+        zigbee_rid = child_config.state.zigbee_connectivity_id or (child_config.rid .. "-zigbee"),
+        button_rids = {}  -- Will be populated if needed
+      })
+      -- Add button RIDs for multi-button devices
+      for j = 1, child_config.num_buttons do
+        table.insert(configs[device_key][#configs[device_key]].button_rids, child_config.state["button" .. j .. "_id"])
+      end
+      
+    elseif child_config.type == "light" then
+      table.insert(configs[device_key], {
+        rid = child_config.rid,
+        device_id = child_config.state.hue_device_id,
+        label = child_config.state.hue_provided_name,
+        zigbee_rid = child_config.state.zigbee_connectivity_id or (child_config.rid .. "-zigbee"),
+        on = child_config.state.on,
+        dimming = child_config.state.dimming,
+        color = child_config.state.color,
+        color_temperature = child_config.state.color_temperature,
+        mode = child_config.state.mode
+      })
+      
+    elseif child_config.type == "motion" then
+      table.insert(configs[device_key], {
+        rid = child_config.rid,
+        device_id = child_config.state.hue_device_id,
+        label = child_config.state.hue_provided_name,
+        battery = child_config.battery,
+        motion = child_config.motion,
+        temperature = child_config.temperature,
+        light_level = child_config.light_level,
+        power_rid = child_config.state.power_id,
+        zigbee_rid = child_config.state.zigbee_connectivity_id or (child_config.rid .. "-zigbee"),
+        temperature_rid = child_config.state.temperature_id,
+        light_level_rid = child_config.state.light_level_id
+      })
+      
+    elseif child_config.type == "contact" then
+      table.insert(configs[device_key], {
+        rid = child_config.rid,
+        device_id = child_config.state.hue_device_id,
+        label = child_config.state.hue_provided_name,
+        battery = child_config.battery,
+        contact_state = child_config.contact_state,
+        tamper = child_config.tamper,
+        power_rid = child_config.state.power_id,
+        zigbee_rid = child_config.state.zigbee_connectivity_id or (child_config.rid .. "-zigbee"),
+        tamper_rid = child_config.state.tamper_id
+      })
+    end
   end
   
-  local function get_sse_connection()
-    assert(mock_sse_connection, "get_sse_connection() called without enable_sse(), or before test_init() has run")
-    return mock_sse_connection
-  end
-  
-  -- Return mock_bridge, all mock_children, get_bridge_server, test_init, get_sse_connection
-  local results = {mock_bridge}
-  for _, mock_child in ipairs(mock_children) do
-    table.insert(results, mock_child)
-  end
-  table.insert(results, get_bridge_server)
-  table.insert(results, test_init)
-  if self.sse_enabled then
-    table.insert(results, get_sse_connection)
-  end
-  
-  return table.unpack(results)
+  -- Return structured fixtures object
+  return {
+    bridge = mock_bridge,
+    devices = mock_children,
+    test_init = test_init,
+    configs = configs
+  }
 end
 
 -- Export HueDeviceBuilder via a constructor function
@@ -1257,6 +1314,318 @@ end
 --- @return string Escaped UUID suitable for Lua patterns
 function M.escape_uuid(uuid)
   return uuid:gsub("%-", "%%-")
+end
+
+--- Device-Type-Specific Init Expectation Setup Helpers
+--- These high-level helpers configure all standard init-time expectations for a device type.
+
+--- Setup standard init-time expectations for a button device.
+---
+--- This configures expectations for:
+--- - Device info query
+--- - Zigbee connectivity query
+--- - Button resource queries (one per button)
+--- - Device power/battery query
+--- - SSE handshake (if sse_connection provided)
+--- - Room and zone resource queries (empty responses)
+---
+--- @param rest_connection table The REST connection handle
+--- @param sse_connection table|nil The SSE connection handle (optional, for SSE-enabled tests)
+--- @param button_config table Button configuration with fields:
+---   - device_id: Hue device ID
+---   - label: Device label/name
+---   - zigbee_rid: Zigbee connectivity resource ID
+---   - button_rids: Array of button resource IDs
+---   - power_rid: Device power resource ID
+---   - battery: Battery level (0-100)
+--- @param options table|nil Options:
+---   - services: Override default services array
+---   - reusable: Make device info reusable (default: true)
+function M.setup_button_init_expectations(rest_connection, sse_connection, button_config, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  -- Default services if not provided
+  local services = options.services or {
+    { rtype = "zigbee_connectivity", rid = button_config.zigbee_rid },
+    { rtype = "button", rid = button_config.button_rids[1] },
+    { rtype = "device_power", rid = button_config.power_rid }
+  }
+  
+  -- 1. Device info
+  M.expect_device_info(rest_connection, button_config.device_id, services, {
+    name = button_config.label,
+    product_data = { product_name = button_config.label },
+    reusable = options.reusable ~= false
+  })
+  
+  -- 2. Zigbee connectivity
+  M.expect_zigbee_connectivity(rest_connection, button_config.zigbee_rid)
+  
+  -- 3. Button resources (one per button)
+  for _, button_rid in ipairs(button_config.button_rids) do
+    M.expect_button_resource(rest_connection, button_rid)
+  end
+  
+  -- 4. Device power
+  M.expect_device_power(rest_connection, button_config.power_rid, button_config.battery)
+  
+  -- 5. SSE handshake (if SSE enabled)
+  if sse_connection then
+    M.setup_sse_expectations(sse_connection, rest_connection)
+  end
+  
+  -- 6. Room resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/room", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+  
+  -- 7. Zone resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/zone", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+end
+
+--- Setup standard init-time expectations for a light device.
+---
+--- This configures expectations for:
+--- - Device info query
+--- - Zigbee connectivity query
+--- - Light resource query with initial state
+--- - Room and zone resource queries (empty responses)
+---
+--- @param rest_connection table The REST connection handle
+--- @param light_config table Light configuration with fields:
+---   - device_id: Hue device ID
+---   - rid: Light resource ID
+---   - label: Device label/name
+---   - zigbee_rid: Zigbee connectivity resource ID
+---   - on: On state table { on = boolean }
+---   - dimming: Dimming table { brightness = number }
+---   - color: Optional color table
+---   - color_temperature: Optional color temperature table
+--- @param options table|nil Options:
+---   - services: Override default services array
+---   - reusable: Make expectations reusable (default: true)
+function M.setup_light_init_expectations(rest_connection, light_config, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  -- Default services if not provided
+  local services = options.services or {
+    { rtype = "zigbee_connectivity", rid = light_config.zigbee_rid },
+    { rtype = "light", rid = light_config.rid }
+  }
+  
+  -- 1. Device info
+  M.expect_device_info(rest_connection, light_config.device_id, services, {
+    name = light_config.label,
+    reusable = options.reusable ~= false
+  })
+  
+  -- 2. Zigbee connectivity
+  M.expect_zigbee_connectivity(rest_connection, light_config.zigbee_rid, {
+    reusable = options.reusable ~= false
+  })
+  
+  -- 3. Light resource with state
+  local light_body = {
+    id = light_config.rid,
+    on = light_config.on,
+    dimming = light_config.dimming
+  }
+  if light_config.color then
+    light_body.color = light_config.color
+  end
+  if light_config.color_temperature then
+    light_body.color_temperature = light_config.color_temperature
+  end
+  if light_config.mode then
+    light_body.mode = light_config.mode
+  end
+  
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/light/" .. light_config.rid, {
+    status = 200,
+    body = { errors = {}, data = { light_body } },
+    reusable = options.reusable ~= false
+  })
+  
+  -- 4. Room resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/room", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+  
+  -- 5. Zone resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/zone", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+end
+
+--- Setup standard init-time expectations for a motion sensor device.
+---
+--- This configures expectations for:
+--- - Device info query
+--- - Zigbee connectivity query
+--- - Motion sensor resource query
+--- - Temperature sensor resource query
+--- - Light level sensor resource query
+--- - Device power/battery query
+--- - SSE handshake (if sse_connection provided)
+--- - Room and zone resource queries (empty responses)
+---
+--- @param rest_connection table The REST connection handle
+--- @param sse_connection table|nil The SSE connection handle (optional, for SSE-enabled tests)
+--- @param motion_config table Motion sensor configuration with fields:
+---   - device_id: Hue device ID
+---   - rid: Motion sensor resource ID
+---   - label: Device label/name
+---   - zigbee_rid: Zigbee connectivity resource ID
+---   - motion: Motion detected state (boolean)
+---   - temperature: Temperature in Celsius
+---   - temperature_rid: Temperature sensor resource ID
+---   - light_level: Light level value
+---   - light_level_rid: Light level sensor resource ID
+---   - power_rid: Device power resource ID
+---   - battery: Battery level (0-100)
+--- @param options table|nil Options:
+---   - services: Override default services array
+---   - reusable: Make device info reusable (default: true)
+function M.setup_motion_init_expectations(rest_connection, sse_connection, motion_config, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  -- Default services if not provided
+  local services = options.services or {
+    { rtype = "zigbee_connectivity", rid = motion_config.zigbee_rid },
+    { rtype = "motion", rid = motion_config.rid },
+    { rtype = "temperature", rid = motion_config.temperature_rid },
+    { rtype = "light_level", rid = motion_config.light_level_rid },
+    { rtype = "device_power", rid = motion_config.power_rid }
+  }
+  
+  -- 1. Device info
+  M.expect_device_info(rest_connection, motion_config.device_id, services, {
+    name = motion_config.label,
+    reusable = options.reusable ~= false
+  })
+  
+  -- 2. Zigbee connectivity
+  M.expect_zigbee_connectivity(rest_connection, motion_config.zigbee_rid)
+  
+  -- 3. Motion sensor resource
+  M.expect_motion_resource(rest_connection, motion_config.rid, motion_config.motion)
+  
+  -- 4. Temperature sensor resource
+  M.expect_temperature_resource(rest_connection, motion_config.temperature_rid, motion_config.temperature)
+  
+  -- 5. Light level sensor resource
+  M.expect_light_level_resource(rest_connection, motion_config.light_level_rid, motion_config.light_level)
+  
+  -- 6. Device power
+  M.expect_device_power(rest_connection, motion_config.power_rid, motion_config.battery)
+  
+  -- 7. SSE handshake (if SSE enabled)
+  if sse_connection then
+    M.setup_sse_expectations(sse_connection, rest_connection)
+  end
+  
+  -- 8. Room resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/room", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+  
+  -- 9. Zone resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/zone", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+end
+
+--- Setup standard init-time expectations for a contact sensor device.
+---
+--- This configures expectations for:
+--- - Device info query
+--- - Zigbee connectivity query
+--- - Contact sensor resource query
+--- - Tamper sensor resource query
+--- - Device power/battery query
+--- - SSE handshake (if sse_connection provided)
+--- - Room and zone resource queries (empty responses)
+---
+--- @param rest_connection table The REST connection handle
+--- @param sse_connection table|nil The SSE connection handle (optional, for SSE-enabled tests)
+--- @param contact_config table Contact sensor configuration with fields:
+---   - device_id: Hue device ID
+---   - rid: Contact sensor resource ID
+---   - label: Device label/name
+---   - zigbee_rid: Zigbee connectivity resource ID
+---   - contact_state: Contact state ("contact" = closed, "no_contact" = open)
+---   - tamper: Tamper state ("tampered" or "not_tampered")
+---   - tamper_rid: Tamper sensor resource ID
+---   - power_rid: Device power resource ID
+---   - battery: Battery level (0-100)
+--- @param options table|nil Options:
+---   - services: Override default services array
+---   - reusable: Make device info reusable (default: true)
+function M.setup_contact_init_expectations(rest_connection, sse_connection, contact_config, options)
+  options = options or {}
+  local http = require "integration_test.connection_scenario_http"
+  
+  -- Default services if not provided
+  local services = options.services or {
+    { rtype = "zigbee_connectivity", rid = contact_config.zigbee_rid },
+    { rtype = "contact", rid = contact_config.rid },
+    { rtype = "tamper", rid = contact_config.tamper_rid },
+    { rtype = "device_power", rid = contact_config.power_rid }
+  }
+  
+  -- 1. Device info
+  M.expect_device_info(rest_connection, contact_config.device_id, services, {
+    name = contact_config.label,
+    reusable = options.reusable ~= false
+  })
+  
+  -- 2. Zigbee connectivity
+  M.expect_zigbee_connectivity(rest_connection, contact_config.zigbee_rid)
+  
+  -- 3. Contact sensor resource
+  M.expect_contact_resource(rest_connection, contact_config.rid, contact_config.contact_state)
+  
+  -- 4. Tamper sensor resource
+  M.expect_tamper_resource(rest_connection, contact_config.tamper_rid, contact_config.tamper)
+  
+  -- 5. Device power
+  M.expect_device_power(rest_connection, contact_config.power_rid, contact_config.battery)
+  
+  -- 6. SSE handshake (if SSE enabled)
+  if sse_connection then
+    M.setup_sse_expectations(sse_connection, rest_connection)
+  end
+  
+  -- 7. Room resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/room", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
+  
+  -- 8. Zone resource query (empty, reusable)
+  http.expect_request(rest_connection, "GET", "/clip/v2/resource/zone", {
+    status = 200,
+    body = { errors = {}, data = {} },
+    reusable = true
+  })
 end
 
 return M

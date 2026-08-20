@@ -1,6 +1,4 @@
 --- Test for child device lifecycle with uncached devices (stray device handling).
---- Migrated to use connection_scenario 2.0.
----
 --- Tests that uncached child devices are properly marked as "stray" rather than
 --- attempting to fetch their state via REST (which would fail/crash).
 ---
@@ -21,13 +19,14 @@ local hue_test_helpers = require "test.hue_test_helpers"
 local THROWAWAY_LIGHT_RID = "33333333-3333-3333-3333-333333333333"
 local NEW_LIGHT_RID = "44444444-4444-4444-4444-444444444444"
 
-local mock_bridge, mock_throwaway_light, get_bridge_server, base_test_init =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_light(THROWAWAY_LIGHT_RID, {
-      on = { on = true }
-    }, "white-and-color-ambiance.yml")
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_light(THROWAWAY_LIGHT_RID, {
+    on = { on = true }
+  }, "white-and-color-ambiance.yml")
+  :start()
+
+local mock_bridge, mock_throwaway_light = fixtures.bridge, fixtures.devices[1]
 
 local mock_new_light = test.mock_device.build_test_lan_device({
   label = "New Hue Light",
@@ -37,7 +36,7 @@ local mock_new_light = test.mock_device.build_test_lan_device({
 })
 
 local function test_init()
-  base_test_init()
+  fixtures.test_init()
   test.mock_device.add_test_device(mock_new_light)
   -- LightLifecycleHandlers.init unconditionally emits a levelRange event, regardless of
   -- whether the device's resource state is cached -- this has to be registered here (not in a

@@ -1,5 +1,5 @@
 --- Test for button device lifecycle (added/init/removed).
---- Migrated to use connection_scenario 2.0.
+--- Tests that lifecycle handlers complete without errors.
 ---
 --- Note: This test doesn't make HTTP requests during lifecycle operations,
 --- so no ConnectionScenario setup is needed. It primarily validates that
@@ -15,17 +15,18 @@ local BUTTON_DEVICE_ID = "aaaaaaaa-bbbb-cccc-dddd-222222222222"
 local POWER_RID = "aaaaaaaa-bbbb-cccc-dddd-333333333333"
 
 -- Single button device fixture WITHOUT SSE (lifecycle only)
-local mock_bridge, mock_button, get_bridge_server, test_init =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_button(BUTTON_RID, {
-      battery = 85,
-      device_id = BUTTON_DEVICE_ID,
-      power_rid = POWER_RID,
-    })
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_button(BUTTON_RID, {
+    battery = 85,
+    device_id = BUTTON_DEVICE_ID,
+    power_rid = POWER_RID,
+  })
+  :start()
 
-test.set_test_init_function(test_init)
+local mock_bridge, mock_button = fixtures.bridge, fixtures.devices[1]
+
+test.set_test_init_function(fixtures.test_init)
 
 test.register_coroutine_test(
   "Button device lifecycle completes successfully",

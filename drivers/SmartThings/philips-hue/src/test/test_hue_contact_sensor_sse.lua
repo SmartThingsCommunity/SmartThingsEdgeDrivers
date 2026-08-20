@@ -13,52 +13,32 @@ local CONTACT_DEVICE_ID = "gggggggg-gggg-gggg-gggg-gggggggggggg"
 local ZIGBEE_RID = "zigbee-rid-1"
 
 -- Contact sensor fixture WITH SSE enabled
-local mock_bridge, mock_sensor, get_bridge_server, base_test_init, get_sse_connection =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_contact(CONTACT_RID, {
-      battery = 90,
-      contact_state = "contact",  -- "contact" = closed
-      tamper = "not_tampered",
-      device_id = CONTACT_DEVICE_ID,
-      power_rid = POWER_RID,
-      tamper_rid = TAMPER_RID,
-    })
-    :enable_sse()
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_contact(CONTACT_RID, {
+    battery = 90,
+    contact_state = "contact",  -- "contact" = closed
+    tamper = "not_tampered",
+    device_id = CONTACT_DEVICE_ID,
+    power_rid = POWER_RID,
+    tamper_rid = TAMPER_RID,
+  })
+  :enable_sse()
+  :start()
+
+local mock_bridge, mock_sensor = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
 local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
 local rest, sse = conns.rest, conns.sse
 
+-- Setup all contact sensor init expectations using device-specific helper
+local contact_config = fixtures.configs.contact[1]
+contact_config.zigbee_rid = ZIGBEE_RID
+hue_test_helpers.setup_contact_init_expectations(rest, sse, contact_config)
+
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
-
--- 1. GET device info (reusable: may be called multiple times during refresh)
-hue_test_helpers.expect_device_info(rest, CONTACT_DEVICE_ID, {
-  { rtype = "zigbee_connectivity", rid = ZIGBEE_RID },
-  { rtype = "contact", rid = CONTACT_RID },
-  { rtype = "tamper", rid = TAMPER_RID },
-  { rtype = "device_power", rid = POWER_RID }
-}, {
-  name = "Hue Contact Sensor",
-  reusable = true
-})
-
--- 2. GET zigbee connectivity
-hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID)
-
--- 3. GET contact sensor info
-hue_test_helpers.expect_contact_resource(rest, CONTACT_RID, "contact")
-
--- 4. GET tamper info
-hue_test_helpers.expect_tamper_resource(rest, TAMPER_RID, "not_tampered")
-
--- 5. GET device power
-hue_test_helpers.expect_device_power(rest, POWER_RID, 90)
-
--- 6. SSE handshake and connectivity poll
-hue_test_helpers.setup_sse_expectations(sse, rest)
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 test.register_coroutine_test(
   "SSE connection establishes successfully for contact sensor",

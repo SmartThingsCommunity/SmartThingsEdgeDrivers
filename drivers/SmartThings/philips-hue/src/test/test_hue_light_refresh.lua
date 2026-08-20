@@ -7,22 +7,23 @@ local LIGHT_RID = "22222222-2222-2222-2222-222222222222"
 local HUE_DEVICE_ID = "device-uuid-1"
 local ZIGBEE_RID = "zigbee-conn-1"
 
-local mock_bridge, mock_light, get_bridge_server, base_test_init =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_light(LIGHT_RID, {
-      on = { on = true },
-      dimming = { brightness = 80 },
-      hue_device_id = HUE_DEVICE_ID,
-    }, "white-and-color-ambiance.yml")
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_light(LIGHT_RID, {
+    on = { on = true },
+    dimming = { brightness = 80 },
+    hue_device_id = HUE_DEVICE_ID,
+  }, "white-and-color-ambiance.yml")
+  :start()
+
+local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for REST-only testing
 local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest = conns.rest
 
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 -- Define refresh sequence expectations
 -- During refresh, the driver queries device info (to get zigbee_connectivity RID),

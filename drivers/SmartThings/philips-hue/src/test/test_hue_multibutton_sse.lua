@@ -13,69 +13,32 @@ local POWER_RID = "cccccccc-cccc-cccc-cccc-cccccccccccc"
 local ZIGBEE_RID = "zigbee-rid-1"
 
 -- 4-button remote fixture WITH SSE enabled
-local mock_bridge, mock_remote, get_bridge_server, base_test_init, get_sse_connection =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_button(BUTTON_RID_1, {
-      num_buttons = 4,
-      battery = 90,
-      device_id = BUTTON_DEVICE_ID,
-      power_rid = POWER_RID,
-      button_rids = { BUTTON_RID_1, BUTTON_RID_2, BUTTON_RID_3, BUTTON_RID_4 },
-      label = "Hue Dimmer Remote",
-    }, "4-button-remote.yml")
-    :enable_sse()
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_button(BUTTON_RID_1, {
+    num_buttons = 4,
+    battery = 90,
+    device_id = BUTTON_DEVICE_ID,
+    power_rid = POWER_RID,
+    button_rids = { BUTTON_RID_1, BUTTON_RID_2, BUTTON_RID_3, BUTTON_RID_4 },
+    label = "Hue Dimmer Remote",
+  }, "4-button-remote.yml")
+  :enable_sse()
+  :start()
+
+local mock_bridge, mock_remote = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
 local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
 local rest, sse = conns.rest, conns.sse
 
+-- Setup all button init expectations using device-specific helper
+local button_config = fixtures.configs.button[1]
+button_config.zigbee_rid = ZIGBEE_RID
+hue_test_helpers.setup_button_init_expectations(rest, sse, button_config)
+
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
-
--- 1. GET device info (reusable: may be called multiple times during refresh)
-hue_test_helpers.expect_device_info(rest, BUTTON_DEVICE_ID, {
-  { rtype = "zigbee_connectivity", rid = ZIGBEE_RID },
-  { rtype = "button", rid = BUTTON_RID_1 },
-  { rtype = "button", rid = BUTTON_RID_2 },
-  { rtype = "button", rid = BUTTON_RID_3 },
-  { rtype = "button", rid = BUTTON_RID_4 },
-  { rtype = "device_power", rid = POWER_RID },
-}, {
-  name = "Hue Dimmer Remote",
-  product_data = { product_name = "Hue Dimmer Remote" },
-  reusable = true
-})
-
--- 2. GET zigbee connectivity
-hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID)
-
--- 3-6. GET button info for all 4 buttons
-hue_test_helpers.expect_button_resource(rest, BUTTON_RID_1, { control_id = 1 })
-hue_test_helpers.expect_button_resource(rest, BUTTON_RID_2, { control_id = 2 })
-hue_test_helpers.expect_button_resource(rest, BUTTON_RID_3, { control_id = 3 })
-hue_test_helpers.expect_button_resource(rest, BUTTON_RID_4, { control_id = 4 })
-
--- 7. GET device power
-hue_test_helpers.expect_device_power(rest, POWER_RID, 90)
-
--- 8. SSE handshake and connectivity poll
-hue_test_helpers.setup_sse_expectations(sse, rest)
-
--- 9. Room resource query (reusable)
-http.expect_request(rest, "GET", "/clip/v2/resource/room", {
-  status = 200,
-  body = { errors = {}, data = {} },
-  reusable = true
-})
-
--- 10. Zone resource query (reusable)
-http.expect_request(rest, "GET", "/clip/v2/resource/zone", {
-  status = 200,
-  body = { errors = {}, data = {} },
-  reusable = true
-})
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 test.register_coroutine_test(
   "SSE event to button 1 (main component) routes correctly",

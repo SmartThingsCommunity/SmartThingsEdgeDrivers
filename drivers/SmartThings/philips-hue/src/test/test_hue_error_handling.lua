@@ -1,5 +1,5 @@
 --- Test for error handling in Hue light commands and refresh operations.
---- Migrated to use connection_scenario 2.0.
+--- Uses ConnectionScenario 2.0 for testing various error scenarios.
 ---
 --- Tests various error scenarios: 404, 500, API errors, timeouts, malformed JSON, etc.
 
@@ -14,15 +14,16 @@ local LIGHT_RID = "11111111-1111-1111-1111-111111111111"
 local LIGHT_DEVICE_ID = "22222222-2222-2222-2222-222222222222"
 
 -- Standard light fixture (no SSE for command tests)
-local mock_bridge, mock_light, get_bridge_server, base_test_init =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_light(LIGHT_RID, {
-      on = { on = true },
-      dimming = { brightness = 100 },
-      hue_device_id = LIGHT_DEVICE_ID,
-    }, "white-and-color-ambiance.yml")
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_light(LIGHT_RID, {
+    on = { on = true },
+    dimming = { brightness = 100 },
+    hue_device_id = LIGHT_DEVICE_ID,
+  }, "white-and-color-ambiance.yml")
+  :start()
+
+local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for error handling testing
 -- This test file needs both GET and PUT connections simultaneously for different test scenarios
@@ -41,7 +42,7 @@ local get_conn = scenario:connection("get", {
 })
 
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 test.register_coroutine_test(
   "Light command handles 404 error gracefully",

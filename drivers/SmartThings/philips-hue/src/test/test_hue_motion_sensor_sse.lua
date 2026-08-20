@@ -12,58 +12,34 @@ local MOTION_DEVICE_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
 local ZIGBEE_RID = "zigbee-rid-1"
 
 -- Motion sensor fixture WITH SSE enabled
-local mock_bridge, mock_sensor, get_bridge_server, base_test_init, get_sse_connection =
-  hue_test_helpers.HueDeviceBuilder.new()
-    :with_bridge()
-    :with_motion(MOTION_RID, {
-      battery = 95,
-      motion = false,
-      temperature = 20.0,
-      light_level = 30000,  -- ~1000 lux
-      device_id = MOTION_DEVICE_ID,
-      power_rid = POWER_RID,
-      temperature_rid = TEMP_RID,
-      light_level_rid = LIGHT_RID,
-    })
-    :enable_sse()
-    :start()
+local fixtures = hue_test_helpers.HueDeviceBuilder.new()
+  :with_bridge()
+  :with_motion(MOTION_RID, {
+    battery = 95,
+    motion = false,
+    temperature = 20.0,
+    light_level = 30000,  -- ~1000 lux
+    device_id = MOTION_DEVICE_ID,
+    power_rid = POWER_RID,
+    temperature_rid = TEMP_RID,
+    light_level_rid = LIGHT_RID,
+  })
+  :enable_sse()
+  :start()
+
+local mock_bridge, mock_sensor = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
 local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
 local rest, sse = conns.rest, conns.sse
 
+-- Setup all motion sensor init expectations using device-specific helper
+local motion_config = fixtures.configs.motion[1]
+motion_config.zigbee_rid = ZIGBEE_RID
+hue_test_helpers.setup_motion_init_expectations(rest, sse, motion_config)
+
 -- Setup test init with scenario activation
-hue_test_helpers.setup_scenario_test_init(base_test_init, scenario)
-
--- 1. GET device info (reusable: may be called multiple times during refresh)
-hue_test_helpers.expect_device_info(rest, MOTION_DEVICE_ID, {
-  { rtype = "zigbee_connectivity", rid = ZIGBEE_RID },
-  { rtype = "motion", rid = MOTION_RID },
-  { rtype = "temperature", rid = TEMP_RID },
-  { rtype = "light_level", rid = LIGHT_RID },
-  { rtype = "device_power", rid = POWER_RID }
-}, {
-  name = "Hue Motion Sensor",
-  reusable = true
-})
-
--- 2. GET zigbee connectivity
-hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID)
-
--- 3. GET motion sensor info
-hue_test_helpers.expect_motion_resource(rest, MOTION_RID, false)
-
--- 4. GET temperature info
-hue_test_helpers.expect_temperature_resource(rest, TEMP_RID, 20.0)
-
--- 5. GET light level info
-hue_test_helpers.expect_light_level_resource(rest, LIGHT_RID, 30000)
-
--- 6. GET device power
-hue_test_helpers.expect_device_power(rest, POWER_RID, 95)
-
--- 7. SSE handshake and connectivity poll
-hue_test_helpers.setup_sse_expectations(sse, rest)
+hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 test.register_coroutine_test(
   "SSE connection establishes successfully for motion sensor",
