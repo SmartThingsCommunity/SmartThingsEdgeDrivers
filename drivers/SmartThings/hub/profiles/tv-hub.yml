@@ -9,6 +9,14 @@ components:
     categories:
       - name: Hub
         categoryType: manufacturer
+  - id: smartthings-findNode
+    label: SmartThings Find Node
+    capabilities:
+      - id: samsungim.nearbyDetection
+        version: 1
+    categories:
+      - name: Other
+        categoryType: manufacturer
 deviceConfig:
   icons:
   - group: main
