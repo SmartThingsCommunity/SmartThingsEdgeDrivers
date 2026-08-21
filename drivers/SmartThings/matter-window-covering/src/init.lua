@@ -1,7 +1,6 @@
 -- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 --Note: Currently only support for window shades with the PositionallyAware Feature
 --Note: No support for setting device into calibration mode, it must be done manually
 local capabilities = require "st.capabilities"
@@ -9,6 +8,12 @@ local im = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+
+local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+--- If the ASSIGNED_CHILD_KEY field is populated for an endpoint, it should be
+--- used as the key in the get_child_by_parent_assigned_key() function. This allows
+--- multiple endpoints to associate with the same child device, though right now child
+local ASSIGNED_CHILD_KEY = "__assigned_child_key"
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
@@ -103,10 +108,14 @@ end
 
 --- Tries to emit the idle window shade status if no target percentages are set.
 --- @param device any a Matter device object
-local function try_emit_idle_window_shade_status(device)
+local function try_emit_idle_window_shade_status(device, ep)
   if not device:get_field(TARGET_LIFT_PERCENT.STATE) and
    not device:get_field(TARGET_TILT_PERCENT.STATE) then
-    device:emit_event(get_idle_window_shade_status(device))
+    if ep then
+      device:emit_event_for_endpoint(ep, get_idle_window_shade_status(device))
+    else
+      device:emit_event(get_idle_window_shade_status(device))
+    end
   end
 end
 
@@ -123,7 +132,7 @@ local function cache_data_with_timeout(device, data, op_fields)
   local new_timer = device.thread:call_with_delay(op_fields.TIMEOUT_DELAY_S, function()
     device:set_field(op_fields.STATE, nil)
     device:set_field(op_fields.TIMEOUT, nil)
-    try_emit_idle_window_shade_status(device)
+    try_emit_idle_window_shade_status(device, nil)
   end)
   device:set_field(op_fields.TIMEOUT, new_timer)
 end
@@ -152,6 +161,80 @@ local function component_to_endpoint(device, component_name)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
   return find_default_endpoint(device, clusters.WindowCovering.ID)
+end
+
+local function create_feature_table(lift_eps, tilt_eps)
+  local result = {}
+  local i, j = 1, 1
+  while i <= #lift_eps or j <= #tilt_eps do
+      local lift_ep, tilt_ep = lift_eps[i], tilt_eps[j]
+      if tilt_ep == nil or (lift_ep ~= nil and lift_ep < tilt_ep) then
+          result[#result + 1] = { endpoint = lift_ep, has_lift = true, has_tilt = false }
+          i = i + 1
+      elseif lift_ep == nil or tilt_ep < lift_ep then
+          result[#result + 1] = { endpoint = tilt_ep, has_lift = false, has_tilt = true }
+          j = j + 1
+      else -- lift_ep == tilt_ep
+          result[#result + 1] = { endpoint = lift_ep, has_lift = true, has_tilt = true }
+          i, j = i + 1, j + 1
+      end
+  end
+  return result
+end
+
+local function update_profile_table(device)
+  local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
+  local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
+  table.sort(lift_eps)
+  table.sort(tilt_eps)
+  local feature_table = create_feature_table(lift_eps, tilt_eps)
+  local profile_table = {}
+
+  for _, entry in pairs(feature_table) do
+    profile_table[entry.endpoint] = "window-covering"
+    if entry.has_tilt then
+      profile_table[entry.endpoint] = "window-covering-tilt"
+      if not entry.has_lift then
+        profile_table[entry.endpoint] = "window-covering-tilt-only"
+      end
+    end
+  end
+  return profile_table
+end
+
+local function find_child(parent_device, ep_id)
+  local assigned_key = parent_device:get_field(string.format("%s_%d", ASSIGNED_CHILD_KEY, ep_id)) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
+end
+
+local function create_or_update_multi_devices(driver, device, wc_cluster_eps)
+  local profile_table = update_profile_table(device)
+  local default_endpoint_id = find_default_endpoint(device)
+  table.sort(wc_cluster_eps)
+  for device_num, ep_id in ipairs(wc_cluster_eps) do
+    if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
+      local label_and_name = string.format("%s %d", device.label, device_num)
+      local child_profile = profile_table[ep_id] or "window-covering"
+      local existing_child_device = device:get_field(IS_PARENT_CHILD_DEVICE) and find_child(device, ep_id)
+      if not existing_child_device then
+        driver:try_create_device({
+          type = "EDGE_CHILD",
+          label = label_and_name,
+          profile = child_profile,
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%d", ep_id),
+          vendor_provided_label = label_and_name
+        })
+      else
+        existing_child_device:try_update_metadata({profile = child_profile})
+      end
+    end
+  end
+  -- Persist so that the find_child function is always set on each driver init.
+  device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  device:set_find_child(find_child)
+  -- Update parent device's profile
+  device:try_update_metadata({profile = profile_table[default_endpoint_id] or "window-covering"})
 end
 
 local function match_profile(device, battery_supported)
@@ -191,20 +274,25 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(attribute_list_read)
+  local wc_cluster_eps = device:get_endpoints(clusters.WindowCovering.ID)
+  if #wc_cluster_eps > 1 then
+    create_or_update_multi_devices(driver, device, wc_cluster_eps)
   else
-    match_profile(device, battery_support.NO_BATTERY)
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
+    else
+      match_profile(device, battery_support.NO_BATTERY)
+    end
   end
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
-  elseif device.matter_version.software ~= args.old_st_store.matter_version.software then
+  elseif args.old_st_store.matter_version and device.matter_version.software ~= args.old_st_store.matter_version.software then
     local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
     if #battery_feature_eps > 0 then
       local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -323,7 +411,7 @@ local function current_position_lift_percent_100ths_handler(driver, device, ib, 
 
   if is_target_value_reached(lift_percent, device:get_field(TARGET_LIFT_PERCENT.STATE)) then
     clear_cached_data(device, TARGET_LIFT_PERCENT)
-    try_emit_idle_window_shade_status(device)
+    try_emit_idle_window_shade_status(device, ib.endpoint_id)
   end
 end
 
@@ -334,7 +422,7 @@ local function current_position_tilt_percent_100ths_handler(driver, device, ib, 
 
   if is_target_value_reached(tilt_percent, device:get_field(TARGET_TILT_PERCENT.STATE)) then
     clear_cached_data(device, TARGET_TILT_PERCENT)
-    try_emit_idle_window_shade_status(device)
+    try_emit_idle_window_shade_status(device, ib.endpoint_id)
   end
 end
 
@@ -348,7 +436,7 @@ local function target_position_lift_percent_100ths_handler(driver, device, ib, r
     )
     if latest_lift_percentage and is_target_value_reached(latest_lift_percentage, target_lift_percent) then
       clear_cached_data(device, TARGET_LIFT_PERCENT)
-      try_emit_idle_window_shade_status(device)
+      try_emit_idle_window_shade_status(device, ib.endpoint_id)
     else
       cache_data_with_timeout(device, target_lift_percent, TARGET_LIFT_PERCENT)
     end
@@ -365,7 +453,7 @@ local function target_position_tilt_percent_100ths_handler(driver, device, ib, r
     )
     if latest_tilt_percent and is_target_value_reached(latest_tilt_percent, target_tilt_percent) then
       clear_cached_data(device, TARGET_TILT_PERCENT)
-      try_emit_idle_window_shade_status(device)
+      try_emit_idle_window_shade_status(device, ib.endpoint_id)
     else
       cache_data_with_timeout(device, target_tilt_percent, TARGET_TILT_PERCENT)
     end
@@ -376,12 +464,11 @@ end
 local function operational_status_handler(driver, device, ib, response)
   if not ib.data.value then return end
   local global_op_status = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
-
   local reverse = device.preferences.reverse
   local windowShade = capabilities.windowShade.windowShade
   local status_event
   if global_op_status == OP_STATUS_BITMAP.idle then
-    try_emit_idle_window_shade_status(device)
+    try_emit_idle_window_shade_status(device, ib.endpoint_id)
   elseif global_op_status == OP_STATUS_BITMAP.opening then
     status_event = reverse and windowShade.closing() or windowShade.opening()
   elseif global_op_status == OP_STATUS_BITMAP.closing then
