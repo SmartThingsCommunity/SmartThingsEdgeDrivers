@@ -1,7 +1,6 @@
 -- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 --Note: Currently only support for window shades with the PositionallyAware Feature
 --Note: No support for setting device into calibration mode, it must be done manually
 local capabilities = require "st.capabilities"
@@ -9,6 +8,13 @@ local im = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+
+local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+--- If the ASSIGNED_CHILD_KEY field is populated for an endpoint, it should be
+--- used as the key in the get_child_by_parent_assigned_key() function. This allows
+--- multiple endpoints to associate with the same child device, though right now child
+local ASSIGNED_CHILD_KEY = "__assigned_child_key"
+local PROFILE_TABLE = "__profile_table"
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
@@ -154,6 +160,90 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.WindowCovering.ID)
 end
 
+local function create_feature_table(lift_eps, tilt_eps)
+  local result = {}
+  local i, j = 1, 1
+  while i <= #lift_eps or j <= #tilt_eps do
+      local lift_ep, tilt_ep = lift_eps[i], tilt_eps[j]
+      if tilt_ep == nil or (lift_ep ~= nil and lift_ep < tilt_ep) then
+          result[#result + 1] = { endpoint = lift_ep, has_lift = true, has_tilt = false }
+          i = i + 1
+      elseif lift_ep == nil or tilt_ep < lift_ep then
+          result[#result + 1] = { endpoint = tilt_ep, has_lift = false, has_tilt = true }
+          j = j + 1
+      else -- lift_ep == tilt_ep
+          result[#result + 1] = { endpoint = lift_ep, has_lift = true, has_tilt = true }
+          i, j = i + 1, j + 1
+      end
+  end
+  return result
+end
+
+function update_profile_table(device)
+  device.log.info_with({hub_logs=true}, string.format("!!! update_profile_table !!!"))
+  local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
+  local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
+  table.sort(lift_eps)
+  table.sort(tilt_eps)
+  local feature_table = create_feature_table(lift_eps, tilt_eps)
+  local profile_table = {}
+
+  for _, entry in pairs(feature_table) do
+    device.log.info_with({hub_logs=true}, string.format("!!! endpoint: %s, has_lift: %s, has_tilt !!!", entry.endpoint, entry.has_lift, entry.has_tilt))
+    profile_table[entry.endpoint] = "window-covering"
+    if entry.has_tile then
+      profile_table[entry.endpoint] = profile_table[entry.endpoint] .. "-tilt"
+      if entry.has_lift then
+        profile_table[entry.endpoint] = profile_table[entry.endpoint] .. "-only"
+      end
+    end
+  end
+  return profile_table
+end
+
+function find_child(parent_device, ep_id)
+  parent_device.log.info_with({hub_logs=true}, string.format("!!! find_child !!!"))
+  local assigned_key = parent_device:get_field(string.format("%s_%d", "__assigned_child_key", ep_id)) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
+end
+
+function create_or_update_multi_devices(driver, device, wc_cluster_eps)
+  device.log.info_with({hub_logs=true}, string.format("!!! create_or_update_child_devices !!!"))
+  local profile_table = update_profile_table(device)
+  local default_endpoint_id = find_default_endpoint(device)
+  table.sort(wc_cluster_eps)
+  for device_num, ep_id in ipairs(wc_cluster_eps) do
+    if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
+      local label_and_name = string.format("%s %d", device.label, device_num)
+      local child_profile = profile_table[ep_id] or "window-covering"
+      local existing_child_device = device:get_field(IS_PARENT_CHILD_DEVICE) and find_child(device, ep_id)
+
+      device.log.info_with({hub_logs=true}, string.format("!!! do_create_or_update: %s !!!", child_profile))
+
+      if not existing_child_device then
+        driver:try_create_device({
+          type = "EDGE_CHILD",
+          label = label_and_name,
+          profile = child_profile,
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%d", ep_id),
+          vendor_provided_label = label_and_name
+        })
+      else
+        existing_child_device:try_update_metadata({
+          profile = child_profile,
+          optional_component_capabilities = optional_component_capabilities
+        })
+      end
+    end
+  end
+  -- Persist so that the find_child function is always set on each driver init.
+  device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  device:set_find_child(find_child)
+  -- Update parent device's profile
+  device:try_update_metadata({profile = profile_table[default_endpoint_id] or "window-covering"})
+end
+
 local function match_profile(device, battery_supported)
   local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
   local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
@@ -191,13 +281,18 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(attribute_list_read)
+  local wc_cluster_eps = device:get_endpoints(clusters.WindowCovering.ID)
+  if #wc_cluster_eps > 1 then
+    create_or_update_multi_devices(driver, device, wc_cluster_eps)
   else
-    match_profile(device, battery_support.NO_BATTERY)
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
+    else
+      match_profile(device, battery_support.NO_BATTERY)
+    end
   end
 end
 
