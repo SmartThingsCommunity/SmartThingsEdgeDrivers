@@ -14,6 +14,9 @@ local Response = require "luncheon.response"  --[[@as ChunkedResponse]]
 
 local api_version = require("version").api
 
+-- Capture Logger for comprehensive traffic logging
+local capture_logger = require "capture_logger"
+
 local RestCallStates = {
   SEND = "Send",
   RECEIVE = "Receive",
@@ -53,14 +56,35 @@ end
 ---comment
 ---@param client RestClient
 ---@param request HttpMessage
+---@param request_id string unique request identifier
 ---@return integer? bytes_sent
 ---@return string? err_msg
 ---@return integer idx
-local function send_request(client, request)
+local function send_request(client, request, request_id)
   if client.socket == nil then
     return nil, "no socket available", 0
   end
   local payload = request:serialize()
+  
+  -- CAPTURE: Log outgoing REST request
+  local full_url = string.format("%s://%s%s", 
+    client.base_url.scheme or "https",
+    client.base_url.host,
+    request.path
+  )
+  local headers = {}
+  if request.headers then
+    for header in request.headers:iter() do
+      headers[header.name] = header.value
+    end
+  end
+  capture_logger.log_rest_request(
+    request_id,
+    request.method,
+    full_url,
+    headers,
+    request.body
+  )
 
   local bytes, err, idx = nil, nil, 0
 
@@ -203,6 +227,10 @@ local function execute_request(client, request, retry_fn)
     should_retry = function() return false end
   end
 
+  -- CAPTURE: Generate unique request ID and track timing
+  local request_id = capture_logger.new_request_id()
+  local start_time = socket.gettime and socket.gettime() or os.time()
+
   -- send output
   local bytes_sent, send_err, _idx = nil, nil, 0
   -- recv output
@@ -217,7 +245,7 @@ local function execute_request(client, request, retry_fn)
     local retry = should_retry()
     if current_state == RestCallStates.SEND then
       backoff = utils.backoff_builder(60, 1, 0.1)
-      bytes_sent, send_err, _idx = send_request(client, request)
+      bytes_sent, send_err, _idx = send_request(client, request, request_id)
 
       if not send_err then
         current_state = RestCallStates.RECEIVE
@@ -231,6 +259,8 @@ local function execute_request(client, request, retry_fn)
         ret = nil
         err = send_err
         current_state = RestCallStates.COMPLETE
+        -- CAPTURE: Log send error
+        capture_logger.log_rest_error(request_id, send_err, { state = "SEND" })
       end
     elseif current_state == RestCallStates.RECEIVE then
       response, recv_err, partial = handle_response(client.socket)
@@ -239,6 +269,22 @@ local function execute_request(client, request, retry_fn)
         ret = response
         err = nil
         current_state = RestCallStates.COMPLETE
+        -- CAPTURE: Log successful response
+        local elapsed_ms = math.floor(((socket.gettime and socket.gettime() or os.time()) - start_time) * 1000)
+        local resp_headers = {}
+        if response and response.headers then
+          for header in response.headers:iter() do
+            resp_headers[header.name] = header.value
+          end
+        end
+        local resp_body = response and response:get_body()
+        capture_logger.log_rest_response(
+          request_id,
+          response and response.status or 0,
+          resp_headers,
+          resp_body,
+          elapsed_ms
+        )
       elseif retry then
         if string.lower(recv_err) == "closed" or string.lower(recv_err):match("broken pipe") then
           current_state = RestCallStates.RECONNECT
@@ -249,6 +295,8 @@ local function execute_request(client, request, retry_fn)
         ret = nil
         err = recv_err
         current_state = RestCallStates.COMPLETE
+        -- CAPTURE: Log receive error
+        capture_logger.log_rest_error(request_id, recv_err, { state = "RECEIVE", partial = partial })
       end
     elseif current_state == RestCallStates.RECONNECT then
       local success, reconn_err = reconnect(client)
@@ -258,6 +306,8 @@ local function execute_request(client, request, retry_fn)
         ret = nil
         err = reconn_err
         current_state = RestCallStates.COMPLETE
+        -- CAPTURE: Log reconnect error
+        capture_logger.log_rest_error(request_id, reconn_err, { state = "RECONNECT" })
       else
         socket.sleep(backoff())
       end
