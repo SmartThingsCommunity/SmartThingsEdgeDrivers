@@ -139,9 +139,11 @@ end
 CameraCapabilityHandlers.ptz_relative_move_factory = function(index)
   return function (driver, device, cmd)
     local endpoint_id = device:component_to_endpoint(cmd.component)
-    local pan_delta = index == camera_fields.PAN_IDX and cmd.args.delta or 0
-    local tilt_delta = index == camera_fields.TILT_IDX and cmd.args.delta or 0
-    local zoom_delta = index == camera_fields.ZOOM_IDX and cmd.args.delta or 0
+    -- Only the axis being moved should be included; the other two must be omitted (nil) rather
+    -- than sent as 0, since each delta field's conformance is tied to its own feature bit.
+    local pan_delta = index == camera_fields.PAN_IDX and cmd.args.delta or nil
+    local tilt_delta = index == camera_fields.TILT_IDX and cmd.args.delta or nil
+    local zoom_delta = index == camera_fields.ZOOM_IDX and cmd.args.delta or nil
     device:send(clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(
       device, endpoint_id, pan_delta, tilt_delta, zoom_delta
     ))

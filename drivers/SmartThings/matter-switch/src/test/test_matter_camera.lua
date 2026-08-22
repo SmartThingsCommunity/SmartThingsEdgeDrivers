@@ -167,6 +167,38 @@ local mock_device_no_per_zone_sensitivity = test.mock_device.build_test_matter_d
   }
 })
 
+local mock_device_pan_tilt_only = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = CAMERA_EP,
+      clusters = {
+        {
+          cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
+          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
+          cluster_type = "SERVER"
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+      }
+    }
+  }
+})
+
 local mock_device_no_user_defined_zone = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("camera.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
@@ -295,6 +327,31 @@ local function test_init_no_user_defined_zone()
   test.socket.matter:__expect_send({mock_device_no_user_defined_zone.id, subscribe_request_no_user_defined_zone})
   test.socket.device_lifecycle:__queue_receive({ mock_device_no_user_defined_zone.id, "doConfigure" })
   mock_device_no_user_defined_zone:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+-- mock_device_pan_tilt_only has no CameraAvStreamManagement cluster at all, so do_configure's
+-- `if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0` branch calls match_profile
+-- directly and synchronously during doConfigure, rather than waiting on an AttributeList report
+-- like the other reduced fixtures above. That means the profile/capability metadata update and the
+-- "PROVISIONED" transition both happen back-to-back off of the same doConfigure lifecycle event.
+local subscribe_request_pan_tilt_only
+
+local function test_init_pan_tilt_only()
+  test.mock_device.add_test_device(mock_device_pan_tilt_only)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "init" })
+  subscribe_request_pan_tilt_only = cluster_base.subscribe(
+    mock_device_pan_tilt_only, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster, camera_fields.CameraAVSULMFeatureMapAttr.ID
+  )
+  test.socket.matter:__expect_send({mock_device_pan_tilt_only.id, subscribe_request_pan_tilt_only})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "doConfigure" })
+  mock_device_pan_tilt_only:expect_metadata_update({
+    optional_component_capabilities = {
+      { "main", { "mechanicalPanTiltZoom" } }
+    },
+    profile = "camera"
+  })
+  mock_device_pan_tilt_only:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local additional_subscribed_attributes = {
@@ -614,6 +671,40 @@ local function update_device_profile_no_user_defined_zone()
     subscribe_request_no_user_defined_zone:merge(attr:subscribe(mock_device_no_user_defined_zone))
   end
   test.socket.matter:__expect_send({mock_device_no_user_defined_zone.id, subscribe_request_no_user_defined_zone})
+end
+
+local additional_subscribed_attributes_pan_tilt_only = {
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MaxPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.ZoomMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
+}
+
+-- Unlike the other reduced fixtures, mock_device_pan_tilt_only's profile/capability update already
+-- happened synchronously during doConfigure (see test_init_pan_tilt_only), so this only needs to
+-- simulate the platform pushing the updated profile back down via infoChanged, then confirm the PTZ
+-- capability is initialized with pan/tilt/presets only -- no zoom or zoomRange, since this device's
+-- CameraAvSettingsUserLevelManagement feature_map never claimed MECHANICAL_ZOOM support.
+local function update_device_profile_pan_tilt_only()
+  local updated_device_profile = t_utils.get_profile_definition(
+    "camera.yml", {enabled_optional_capabilities = {
+      { "main", { "mechanicalPanTiltZoom" } }
+    }}
+  )
+  test.socket.device_lifecycle:__queue_receive(mock_device_pan_tilt_only:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.capability:__expect_send(
+    mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
+      {"pan", "panRange", "tilt", "tiltRange", "presets", "maxPresets"}
+    ))
+  )
+  for _, attr in ipairs(additional_subscribed_attributes_pan_tilt_only) do
+    subscribe_request_pan_tilt_only:merge(attr:subscribe(mock_device_pan_tilt_only))
+  end
+  test.socket.matter:__expect_send({mock_device_pan_tilt_only.id, subscribe_request_pan_tilt_only})
 end
 
 -- Matter Handler UTs
@@ -1359,6 +1450,32 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "PTZ Position report with zoom omitted should be handled normally on a device with no zoom feature",
+  function()
+    update_device_profile_pan_tilt_only()
+    test.wait_for_events()
+    -- This device has no zoom feature, so its MPTZPosition report never has a zoom field;
+    -- pan/tilt should still be handled normally.
+    test.socket.matter:__queue_receive({
+      mock_device_pan_tilt_only.id,
+      clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition:build_test_report_data(
+        mock_device_pan_tilt_only, CAMERA_EP, {pan = 10, tilt = 20})
+    })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.pan(10))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.tilt(20))
+    )
+  end,
+  {
+     min_api_version = 14,
+     test_init = test_init_pan_tilt_only
+  }
+)
+
+test.register_coroutine_test(
   "PTZ Presets reports should generate appropriate events",
   function()
     update_device_profile()
@@ -2006,21 +2123,21 @@ test.register_coroutine_test(
       { capability = "mechanicalPanTiltZoom", component = "main", command = "panRelative", args = { 10 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 10, 0, 0)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 10, nil, nil)
     })
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "tiltRelative", args = { -35 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, -35, 0)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, nil, -35, nil)
     })
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "zoomRelative", args = { 80 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, 0, 80)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, nil, nil, 80)
     })
   end,
   {
