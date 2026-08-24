@@ -292,6 +292,7 @@ function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, respon
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
   local ptz_map = camera_utils.get_ptz_map(device)
   local emit_event = function(idx, value)
     if value ~= ptz_map[idx].current then
