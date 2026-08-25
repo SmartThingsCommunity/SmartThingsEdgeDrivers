@@ -41,14 +41,14 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 100000)
+        PressureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 10000)
       }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 100.0, unit = "kPa" }))
+        capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 10.0, unit = "kPa" }))
     }
   },
   {
