@@ -898,6 +898,26 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x60B3
     deviceProfileName: light-color-level
+  - id: "4999/6723"
+    deviceLabel: Govee Strip Light 2
+    vendorId: 0x1387
+    productId: 0x1A43
+    deviceProfileName: light-color-level
+  - id: "4999/6001"
+    deviceLabel: Govee Wallwash Table Lamp
+    vendorId: 0x1387
+    productId: 0x1771
+    deviceProfileName: light-color-level
+  - id: "4999/6161"
+    deviceLabel: Govee Bubble Projector Light
+    vendorId: 0x1387
+    productId: 0x1811
+    deviceProfileName: light-color-level
+  - id: "4999/10816"
+    deviceLabel: Govee TV Backlight 3 (55-65)
+    vendorId: 0x1387
+    productId: 0x2A40
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
