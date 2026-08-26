@@ -10,6 +10,8 @@ LUACOV_CONFIG = Path(os.path.abspath(__file__)).parent.joinpath("config.luacov")
 DRIVER_DIRS = Path(os.path.abspath(__file__)).parents[1].joinpath("drivers")
 DRIVERS = [driver for driver in DRIVER_DIRS.glob("*/*") if driver.is_dir()] # this gets all the children of the children of the drivers directory
 CHANGED_DRIVERS = [Path(driver).name for driver in sys.argv[1:]]
+if CHANGED_DRIVERS:
+  DRIVERS = [driver for driver in DRIVERS if driver.name in CHANGED_DRIVERS]
 
 def per_driver_task(driver_dir):
   os.chdir(driver_dir.joinpath('src'))
