@@ -809,7 +809,7 @@ matterManufacturer:
     productId: 0x6870
     deviceProfileName: light-color-level
   - id: "4999/26272"
-    deviceLabel: Govee TV Backlight 3 Pro 55-65
+    deviceLabel: Govee TV Backlight 3 PRO / 3S PRO
     vendorId: 0x1387
     productId: 0x66A0
     deviceProfileName: light-color-level
@@ -897,6 +897,55 @@ matterManufacturer:
     deviceLabel: Govee Uplighter Floor Lamp with Nebula Effect
     vendorId: 0x1387
     productId: 0x60B3
+    deviceProfileName: light-color-level
+  - id: "4999/10240"
+    deviceLabel: Govee Monitor Light Bar
+    vendorId: 0x1387
+    productId: 0x2800
+    deviceProfileName: light-color-level
+  - id: "4999/6833"
+    deviceLabel: Govee COB Strip Light 2 9.8ft/3m
+    vendorId: 0x1387
+    productId: 0x1AB1
+    deviceProfileName: light-color-level
+  - id: "4999/6834"
+    deviceLabel: Govee COB Strip Light 2 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x1AB2
+    deviceProfileName: light-color-level
+  - id: "4999/6835"
+    deviceLabel: Govee COB Strip Light 2 32.8ft/10m
+    vendorId: 0x1387
+    productId: 0x1AB3
+    deviceProfileName: light-color-level
+  - id: "4999/6818"
+    deviceLabel: Govee COB Strip Light 2 Pro 6.5ft/2m
+    vendorId: 0x1387
+    productId: 0x1AA2
+    deviceProfileName: light-color-level
+  - id: "4999/6821"
+    deviceLabel: Govee COB Strip Light 2 Pro 16.4ft/5m
+    vendorId: 0x1387
+    productId: 0x1AA5
+  - id: "4999/6723"
+    deviceLabel: Govee Strip Light 2
+    vendorId: 0x1387
+    productId: 0x1A43
+    deviceProfileName: light-color-level
+  - id: "4999/6001"
+    deviceLabel: Govee Wallwash Table Lamp
+    vendorId: 0x1387
+    productId: 0x1771
+    deviceProfileName: light-color-level
+  - id: "4999/6161"
+    deviceLabel: Govee Bubble Projector Light
+    vendorId: 0x1387
+    productId: 0x1811
+    deviceProfileName: light-color-level
+  - id: "4999/10816"
+    deviceLabel: Govee TV Backlight 3
+    vendorId: 0x1387
+    productId: 0x2A40
     deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
