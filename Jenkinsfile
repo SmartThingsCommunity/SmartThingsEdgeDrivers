@@ -4,6 +4,7 @@ def getEnvName() {
   if (branch == "origin/main") {return "ALPHA"}
   else if (branch == "origin/beta") {return "BETA"}
   else if (branch == "origin/production") {return "PROD"}
+  else if (branch == "origin/un-migrate-zigbee-locks") {return "TEST"}
 }
 
 def getChangedDrivers() {

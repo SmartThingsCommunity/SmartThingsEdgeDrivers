@@ -16,19 +16,41 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
-  if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
-    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
-    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
-    -- and should be migrated manually by the user.
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
-  end
+  -- Note: We should not auto-migrate for the time being
+  -- if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
+  --   -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
+  --   -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
+  --   -- and should be migrated manually by the user.
+  --   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+  --   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
+  -- end
   -- set initial state
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
+end
+
+local function revert_migration(driver, device)
+  local legacy_lock_utils = require "legacy-handlers.legacy_lock_utils"
+  local json = require "st.json"
+
+  local latest_users = table_utils.get_state(device, "users") or {}
+  local lock_codes = {}
+  for _, user in ipairs(latest_users) do
+    lock_codes[string.format("%s", user.userIndex)] = user.userName or ("Code " .. user.userIndex)
+  end
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_codes), { visibility = { displayed = false } }))
+  device:set_field(legacy_lock_utils.LOCK_CODES, lock_codes, { persist = true })
+
+  local max_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.maxPinCodeLen.NAME)
+  if max_code_length then
+    device:emit_event(capabilities.lockCodes.codeLength(max_code_length, { visibility = { displayed = false } }))
+  end
+
+  device:emit_event(capabilities.lockCodes.migrated(false, { visibility = { displayed = false } }))
+  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, nil, { persist = true }) -- persist the un-migrated state to the datastore
 end
 
 function LockLifecycle.init(driver, device)
@@ -38,9 +60,7 @@ function LockLifecycle.init(driver, device)
 
   local lock_pins_supported_by_profile = device:supports_capability(capabilities.lockCodes)
   if lock_pins_supported_by_profile and device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED) == true then
-    -- ensure lockCodes capability state is reflected correctly for already migrated devices
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
+    revert_migration(driver, device)
   elseif not lock_pins_supported_by_profile then
     -- generically fingerprinted profiles do not have any codes/users/credentials capabilities.
     -- We should check its PIN users if it should be re-profiled.
