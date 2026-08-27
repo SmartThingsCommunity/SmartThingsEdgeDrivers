@@ -809,7 +809,7 @@ matterManufacturer:
     productId: 0x6870
     deviceProfileName: light-color-level
   - id: "4999/26272"
-    deviceLabel: Govee TV Backlight 3 Pro
+    deviceLabel: Govee TV Backlight 3 PRO / 3S PRO
     vendorId: 0x1387
     productId: 0x66A0
     deviceProfileName: light-color-level
