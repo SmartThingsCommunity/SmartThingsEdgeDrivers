@@ -46,19 +46,19 @@ end
 
 local function build_ptz_supported_attributes(device)
   local supported_attributes = {}
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
     table.insert(supported_attributes, "pan")
     table.insert(supported_attributes, "panRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
     table.insert(supported_attributes, "tilt")
     table.insert(supported_attributes, "tiltRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
     table.insert(supported_attributes, "zoom")
     table.insert(supported_attributes, "zoomRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPRESETS) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS) then
     table.insert(supported_attributes, "presets")
     table.insert(supported_attributes, "maxPresets")
   end

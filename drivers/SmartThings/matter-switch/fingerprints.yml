@@ -809,7 +809,7 @@ matterManufacturer:
     productId: 0x6870
     deviceProfileName: light-color-level
   - id: "4999/26272"
-    deviceLabel: Govee TV Backlight 3 Pro 55-65
+    deviceLabel: Govee TV Backlight 3 PRO / 3S PRO
     vendorId: 0x1387
     productId: 0x66A0
     deviceProfileName: light-color-level
@@ -927,6 +927,25 @@ matterManufacturer:
     deviceLabel: Govee COB Strip Light 2 Pro 16.4ft/5m
     vendorId: 0x1387
     productId: 0x1AA5
+  - id: "4999/6723"
+    deviceLabel: Govee Strip Light 2
+    vendorId: 0x1387
+    productId: 0x1A43
+    deviceProfileName: light-color-level
+  - id: "4999/6001"
+    deviceLabel: Govee Wallwash Table Lamp
+    vendorId: 0x1387
+    productId: 0x1771
+    deviceProfileName: light-color-level
+  - id: "4999/6161"
+    deviceLabel: Govee Bubble Projector Light
+    vendorId: 0x1387
+    productId: 0x1811
+    deviceProfileName: light-color-level
+  - id: "4999/10816"
+    deviceLabel: Govee TV Backlight 3
+    vendorId: 0x1387
+    productId: 0x2A40
     deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
@@ -2149,6 +2168,16 @@ matterManufacturer:
     deviceLabel: OSRAM PLANON SLIM
     vendorId: 0x1189
     productId: 0x1001
+    deviceProfileName: light-color-level
+  - id: "4489/4573"
+    deviceLabel: OSRAM IRIS
+    vendorId: 0x1189
+    productId: 0x11DD
+    deviceProfileName: light-color-level
+  - id: "4489/4572"
+    deviceLabel: OSRAM GISELA
+    vendorId: 0x1189
+    productId: 0x11DC
     deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"

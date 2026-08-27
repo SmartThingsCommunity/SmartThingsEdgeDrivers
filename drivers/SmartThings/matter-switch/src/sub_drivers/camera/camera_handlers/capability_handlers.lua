@@ -139,9 +139,11 @@ end
 CameraCapabilityHandlers.ptz_relative_move_factory = function(index)
   return function (driver, device, cmd)
     local endpoint_id = device:component_to_endpoint(cmd.component)
-    local pan_delta = index == camera_fields.PAN_IDX and cmd.args.delta or 0
-    local tilt_delta = index == camera_fields.TILT_IDX and cmd.args.delta or 0
-    local zoom_delta = index == camera_fields.ZOOM_IDX and cmd.args.delta or 0
+    -- Only the axis being moved should be included; the other two must be omitted (nil) rather
+    -- than sent as 0, since each delta field's conformance is tied to its own feature bit.
+    local pan_delta = index == camera_fields.PAN_IDX and cmd.args.delta or nil
+    local tilt_delta = index == camera_fields.TILT_IDX and cmd.args.delta or nil
+    local zoom_delta = index == camera_fields.ZOOM_IDX and cmd.args.delta or nil
     device:send(clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(
       device, endpoint_id, pan_delta, tilt_delta, zoom_delta
     ))
@@ -151,23 +153,23 @@ end
 CameraCapabilityHandlers.ptz_set_position_factory = function(command)
   return function (driver, device, cmd)
     local ptz_map = camera_utils.get_ptz_map(device)
+    -- MPTZSetPosition coordinates are optional;
+    -- a single-axis command should only set (and clamp) the axis it targets.
+    local pan, tilt, zoom
     if command == capabilities.mechanicalPanTiltZoom.commands.setPanTiltZoom then
-      ptz_map[camera_fields.PAN_IDX].current = cmd.args.pan
-      ptz_map[camera_fields.TILT_IDX].current = cmd.args.tilt
-      ptz_map[camera_fields.ZOOM_IDX].current = cmd.args.zoom
+      pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
+      tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
+      zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setPan then
-      ptz_map[camera_fields.PAN_IDX].current = cmd.args.pan
+      pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setTilt then
-      ptz_map[camera_fields.TILT_IDX].current = cmd.args.tilt
+      tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
     else
-      ptz_map[camera_fields.ZOOM_IDX].current = cmd.args.zoom
-    end
-    for _, v in pairs(ptz_map) do
-      v.current = utils.clamp_value(v.current, v.range.minimum, v.range.maximum)
+      zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
     end
     local endpoint_id = device:component_to_endpoint(cmd.component)
-    device:send(clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(device, endpoint_id,
-      ptz_map[camera_fields.PAN_IDX].current, ptz_map[camera_fields.TILT_IDX].current, ptz_map[camera_fields.ZOOM_IDX].current
+    device:send(clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(
+      device, endpoint_id, pan, tilt, zoom
     ))
   end
 end
