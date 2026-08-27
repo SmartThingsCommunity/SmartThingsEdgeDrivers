@@ -46,7 +46,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -73,7 +73,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -102,7 +102,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -131,7 +131,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -159,7 +159,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
@@ -185,7 +185,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -205,7 +205,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -250,7 +250,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -344,7 +344,7 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 

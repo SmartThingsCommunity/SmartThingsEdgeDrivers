@@ -97,13 +97,10 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
 
 local function configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 3)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 4)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 5)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.button.pushed({state_change = false})))
 end
 
 local function test_init()
@@ -130,7 +127,6 @@ local function test_init()
   end
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
@@ -164,7 +160,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -189,7 +185,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -217,7 +213,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -236,7 +232,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -261,7 +257,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -286,7 +282,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -327,7 +323,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.double({state_change = true})))
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
@@ -356,7 +352,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -385,7 +381,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -404,7 +400,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -423,7 +419,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
@@ -448,7 +444,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -471,7 +467,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -494,7 +490,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

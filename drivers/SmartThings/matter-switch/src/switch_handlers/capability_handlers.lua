@@ -107,6 +107,9 @@ end
 -- [[ COLOR TEMPERATURE CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local temp_in_kelvin = cmd.args.temperature
   -- note: the field containing the color temp bounds will be associated with a parent device
@@ -121,7 +124,7 @@ function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
     temp_in_mired = switch_utils.get_field_for_endpoint(field_device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id)
   end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
-  device:set_field(fields.MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
+  device:set_field(fields.LATEST_REQUESTED_KELVIN, cmd.args.temperature)
   device:send(req)
 end
 
@@ -230,6 +233,23 @@ function CapabilityHandlers.handle_reset_energy_meter(driver, device, cmd)
       device:set_field(fields.ENERGY_METER_OFFSET, current_offset + energy_meter_latest_state, {persist=true})
     end
   end
+end
+
+
+-- [[ OPERATIONAL STATE CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_operational_state_resume(driver, device, cmd)
+  local endpoint_id = device:get_endpoints(clusters.OperationalState.ID)[1]
+  device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
+function CapabilityHandlers.handle_operational_state_pause(driver, device, cmd)
+  local endpoint_id = device:get_endpoints(clusters.OperationalState.ID)[1]
+  device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
 
 return CapabilityHandlers

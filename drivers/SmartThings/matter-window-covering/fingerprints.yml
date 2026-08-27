@@ -261,3 +261,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0202 # Window Covering
     deviceProfileName: window-covering
+  - id: "closure"
+    deviceLabel: Matter Closure
+    deviceTypes:
+      - id: 0x0230 # Closure
+    deviceProfileName: covering

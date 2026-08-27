@@ -15,6 +15,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2005
     deviceProfileName: presence-illuminance-temperature-humidity-battery
+  - id: "4447/8201"
+    deviceLabel: Spatial Multi-Sensor FP400
+    vendorId: 0x115F
+    productId: 0x2009
+    deviceProfileName: aqara-fp400
   #Bosch
   - id: 4617/12309
     deviceLabel: "Door/window contact II [M]"
@@ -350,3 +355,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0306 # Flow Sensor
     deviceProfileName: flow-battery
+  - id: "matter/soil/sensor"
+    deviceLabel: Matter Soil Sensor
+    deviceTypes:
+      - id: 0x0045 # Soil Sensor
+    deviceProfileName: soil-sensor-battery

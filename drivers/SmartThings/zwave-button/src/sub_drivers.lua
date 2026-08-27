@@ -4,6 +4,5 @@
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
    lazy_load_if_possible("zwave-multi-button"),
-   lazy_load_if_possible("apiv6_bugfix"),
 }
 return sub_drivers

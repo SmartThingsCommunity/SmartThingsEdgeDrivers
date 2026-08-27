@@ -292,6 +292,7 @@ function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, respon
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
   local ptz_map = camera_utils.get_ptz_map(device)
   local emit_event = function(idx, value)
     if value ~= ptz_map[idx].current then
@@ -300,13 +301,13 @@ function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, respon
       ))
     end
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+  if ib.data.elements.pan and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
     emit_event(camera_fields.PAN_IDX, ib.data.elements.pan.value)
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+  if ib.data.elements.tilt and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
     emit_event(camera_fields.TILT_IDX, ib.data.elements.tilt.value)
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+  if ib.data.elements.zoom and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
     emit_event(camera_fields.ZOOM_IDX, ib.data.elements.zoom.value)
   end
 end
@@ -317,13 +318,13 @@ function CameraAttributeHandlers.ptz_presets_handler(driver, device, ib, respons
   for _, v in ipairs(ib.data.elements) do
     local preset = v.elements
     local pan, tilt, zoom = 0, 0, 1
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
       pan = preset.settings.elements.pan.value
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
       tilt = preset.settings.elements.tilt.value
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
       zoom = preset.settings.elements.zoom.value
     end
     table.insert(presets, { id = preset.preset_id.value, label = preset.name.value, pan = pan, tilt = tilt, zoom = zoom })
@@ -417,7 +418,8 @@ function CameraAttributeHandlers.triggers_handler(driver, device, ib, response)
       augmentationDuration = trigger.augmentation_duration.value,
       maxDuration = trigger.max_duration.value,
       blindDuration = trigger.blind_duration.value,
-      sensitivity = camera_utils.feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and trigger.sensitivity.value
+      sensitivity = camera_utils.feature_supported(device, clusters.ZoneManagement.ID,
+        clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and trigger.sensitivity.value or nil
     })
   end
   device:emit_event_for_endpoint(ib, capabilities.zoneManagement.triggers(triggers))

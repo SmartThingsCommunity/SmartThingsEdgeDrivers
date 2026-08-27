@@ -15,11 +15,17 @@ if version.api < 11 then
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local DeviceConfiguration = {}
 local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
+local ValveDeviceConfiguration = {}
 
 function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
@@ -30,9 +36,10 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
-      local child_profile, _ = assign_profile_fn(device, ep_id, true)
+      local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
+        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_profile))
         driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
@@ -43,7 +50,8 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
         })
       else
         existing_child_device:try_update_metadata({
-          profile = child_profile
+          profile = child_profile,
+          optional_component_capabilities = optional_component_capabilities
         })
       end
     end
@@ -74,7 +82,6 @@ function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_
   return "fan-modular", optional_supported_component_capabilities
 end
 
-
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_onoff_ep_id, is_child_device)
   local ep_info = switch_utils.get_endpoint_info(device, server_onoff_ep_id)
 
@@ -86,7 +93,9 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
-  if static_electrical_tags ~= nil then
+  if type(static_electrical_tags) == "string" then
+    -- if no associated profile is found for the device type and static electrical tags are available, use "plug-binary" as a fallback
+    generic_profile = generic_profile or "plug-binary"
     -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end
@@ -155,7 +164,6 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-
 function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
@@ -183,15 +191,61 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
       if supportedButtonValues_event then
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     else
       device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
   end
 end
 
+function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_id, is_child_device)
+  local main_component_capabilities = {}
+  local profile_name = "irrigation-system"
+
+  local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  table.sort(valve_ep_ids)
+  local supports_level = switch_utils.find_cluster_on_ep(
+    switch_utils.get_endpoint_info(device, is_child_device and irrigation_system_ep_id or valve_ep_ids[1]),
+    clusters.ValveConfigurationAndControl.ID,
+    {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}
+  )
+  if supports_level then
+    table.insert(main_component_capabilities, capabilities.level.ID)
+  end
+
+  if is_child_device then
+    return profile_name, {{"main", main_component_capabilities}}
+  end
+
+  local irrigation_system_ep_info = switch_utils.get_endpoint_info(device, irrigation_system_ep_id)
+  if switch_utils.find_cluster_on_ep(irrigation_system_ep_info, clusters.FlowMeasurement.ID) then
+    table.insert(main_component_capabilities, capabilities.flowMeasurement.ID)
+  end
+  if switch_utils.find_cluster_on_ep(irrigation_system_ep_info, clusters.OperationalState.ID) then
+    table.insert(main_component_capabilities, capabilities.operationalState.ID)
+  end
+
+  return profile_name, {{"main", main_component_capabilities}}
+end
+
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
+
+function DeviceConfiguration.match_child_profile(driver, device)
+  local parent_device = device:get_parent_device()
+  local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(
+    parent_device,
+    fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM
+  )
+  if #irrigation_system_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(
+      driver,
+      parent_device,
+      {device:get_endpoint()},
+      nil,
+      ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep
+    )
+  end
+end
 
 local function profiling_data_still_required(device)
   for _, field in pairs(fields.profiling_data) do
@@ -218,7 +272,7 @@ function DeviceConfiguration.match_profile(driver, device)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
     if generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = "light-level-motion"
+      updated_profile = switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion"
     elseif switch_utils.check_switch_category_vendor_overrides(device) then
       -- check whether the overwrite should be over "plug" or "light" based on the current profile
       local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"
@@ -230,7 +284,12 @@ function DeviceConfiguration.match_profile(driver, device)
     end
   end
 
-  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE) > 0 then
+  local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM)
+  local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  if #irrigation_system_ep_ids > 0 then
+    updated_profile, optional_component_capabilities = ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_ids[1], false)
+    ChildConfiguration.create_or_update_child_devices(driver, device, valve_ep_ids, default_endpoint_id, ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep)
+  elseif #valve_ep_ids > 0 then
     updated_profile = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
@@ -255,7 +314,9 @@ function DeviceConfiguration.match_profile(driver, device)
 end
 
 return {
+  ButtonCfg = ButtonDeviceConfiguration,
+  ChildCfg = ChildConfiguration,
   DeviceCfg = DeviceConfiguration,
   SwitchCfg = SwitchDeviceConfiguration,
-  ButtonCfg = ButtonDeviceConfiguration
+  ValveCfg = ValveDeviceConfiguration
 }

@@ -50,7 +50,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_onoff_switch_as_server) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -83,7 +83,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_onoff_switch_as_client) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -122,7 +122,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_dimmer_switch_as_server) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -151,7 +151,6 @@ test.register_coroutine_test(
     local mock_device = mock_device_plug_with_switch_profile_vendor_override
     local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device)
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -160,7 +159,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_plug_with_switch_profile_vendor_override) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -197,7 +196,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_color_dimmer) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -228,7 +227,6 @@ test.register_coroutine_test(
     local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_mounted_on_off_control)
 
     test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "added" })
-    test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "init" })
     test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
@@ -243,7 +241,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_mounted_on_off_control) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -284,7 +282,6 @@ test.register_coroutine_test(
       end
     end
     test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "added" })
-    test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "init" })
     test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
@@ -299,7 +296,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

@@ -1,8 +1,9 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local log = require "log"
 local version = require "version"
-local utils = require "st.utils"
+local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 
@@ -149,30 +150,64 @@ AirQualitySensorFields.level_strings = {
   [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL] = "hazardous",
 }
 
-AirQualitySensorFields.conversion_tables = {
+AirQualitySensorFields.MGM3_PPM_CONVERSION_FACTOR = 24.45
+
+-- measured in g/mol
+AirQualitySensorFields.molecular_weights = {
+  [capabilities.carbonDioxideMeasurement.NAME] = 44.010,
+  [capabilities.nitrogenDioxideMeasurement.NAME] = 28.014,
+  [capabilities.ozoneMeasurement.NAME] = 48.0,
+  [capabilities.formaldehydeMeasurement.NAME] = 30.031,
+  [capabilities.veryFineDustSensor.NAME] = "N/A",
+  [capabilities.fineDustSensor.NAME] = "N/A",
+  [capabilities.dustSensor.NAME] = "N/A",
+  [capabilities.radonMeasurement.NAME] = 222.018,
+  [capabilities.tvocMeasurement.NAME] = "N/A",
+}
+
+local function is_valid_molecular_weight(molecular_weight)
+  if type(molecular_weight) ~= "number" or molecular_weight <= 0 then
+    log.warn_with({hub_logs = true}, string.format("unit conversion molecular weight (%s) is not a valid number", molecular_weight))
+    return false
+  end
+  return true
+end
+
+AirQualitySensorFields.unit_conversion = {
   [units.PPM] = {
-    [units.PPM] = function(value) return utils.round(value) end,
-    [units.PPB] = function(value) return utils.round(value * (10^3)) end
-  },
+    [units.PPM] = function(value) return st_utils.round(value) end,
+    [units.PPB] = function(value) return st_utils.round(value * (10^3)) end,
+    [units.UGM3] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * molecular_weight * 10^3) / AirQualitySensorFields.MGM3_PPM_CONVERSION_FACTOR) end
+    end,
+    [units.MGM3] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * molecular_weight) / AirQualitySensorFields.MGM3_PPM_CONVERSION_FACTOR) end
+    end,},
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
-    [units.PPB] = function(value) return utils.round(value) end
+    [units.PPM] = function(value) return st_utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return st_utils.round(value) end,
   },
   [units.PPT] = {
-    [units.PPM] = function(value) return utils.round(value/(10^6)) end
+    [units.PPM] = function(value) return st_utils.round(value/(10^6)) end
   },
   [units.MGM3] = {
-    [units.UGM3] = function(value) return utils.round(value * (10^3)) end
+    [units.UGM3] = function(value) return st_utils.round(value * (10^3)) end,
+    [units.PPM] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * AirQualitySensorFields.MGM3_PPM_CONVERSION_FACTOR) / molecular_weight) end
+    end,
   },
   [units.UGM3] = {
-    [units.UGM3] = function(value) return utils.round(value) end
+    [units.UGM3] = function(value) return st_utils.round(value) end,
+    [units.PPM] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * AirQualitySensorFields.MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end
+    end,
   },
   [units.NGM3] = {
-    [units.UGM3] = function(value) return utils.round(value/(10^3)) end
+    [units.UGM3] = function(value) return st_utils.round(value/(10^3)) end
   },
   [units.BQM3] = {
-    [units.PCIL] = function(value) return utils.round(value/37) end
-  }
+    [units.PCIL] = function(value) return st_utils.round(value/37) end
+  },
 }
 
 return AirQualitySensorFields

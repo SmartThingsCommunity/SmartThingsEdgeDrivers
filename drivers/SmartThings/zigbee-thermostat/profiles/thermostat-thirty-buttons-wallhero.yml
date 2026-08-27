@@ -1,0 +1,249 @@
+name: thermostat-thirty-buttons-wallhero
+components:
+  - id: main
+    label: 空调(AC)
+    capabilities:
+      - id: switch
+        version: 1
+      - id: temperatureMeasurement
+        version: 1
+      - id: temperatureSetpoint
+        version: 1
+      - id: thermostatMode
+        version: 1
+      - id: fanMode
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: fan
+    label: 新风(Fresh Air)
+    capabilities:
+      - id: switch
+        version: 1
+      - id: fanMode
+        version: 1
+    categories:
+      - name: Fan
+  - id: heat
+    label: 地暖(Floor Heating)
+    capabilities:
+      - id: switch
+        version: 1
+      - id: thermostatHeatingSetpoint
+        version: 1
+    categories:
+      - name: Thermostat
+  - id: button1
+    label: 回家(Home)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button2
+    label: 离家(Leave Home)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button3
+    label: 晨起(Morning)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button4
+    label: 睡眠(Sleep)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button5
+    label: 阅读(Reading)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button6
+    label: 观影(Movie)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button7
+    label: 全开(All On)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button8
+    label: 全关(All Off)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button9
+    label: 空调温度调高(AC Temp Up)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button10
+    label: 空调温度降低(AC Temp Down)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button11
+    label: 开窗帘(Open Curtain)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button12
+    label: 关窗帘(Close Curtain)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button13
+    label: 空调开(AC On)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button14
+    label: 空调关(AC Off)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button15
+    label: 无风开(No Wind On)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button16
+    label: 无风关(No Wind Off)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button17
+    label: 制冷(Cooling)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button18
+    label: 制热(Heating)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button19
+    label: 新风开(Fresh Air On)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button20
+    label: 新风关(Fresh Air Off)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button21
+    label: 开电视(Turn On TV)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button22
+    label: 关电视(Turn Off TV)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button23
+    label: 开音乐(Play Music)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button24
+    label: 关音乐(Stop Music)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button25
+    label: 开纱帘(Open Screen Curtain)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button26
+    label: 关纱帘(Close Screen Curtain)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button27
+    label: 洗衣服(Wash Clothes)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button28
+    label: 衣服护理(Clothes Care)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button29
+    label: 用餐(Dining)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button30
+    label: 开大门(Open Main Door)
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController

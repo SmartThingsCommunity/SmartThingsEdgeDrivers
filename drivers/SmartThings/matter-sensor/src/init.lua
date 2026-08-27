@@ -37,6 +37,12 @@ if version.api < 11 then
   clusters.BooleanStateConfiguration = require "embedded_clusters.BooleanStateConfiguration"
 end
 
+-- Include driver-side definitions when lua libs api version is < 21
+-- TODO: change this to < 20 once the lua libs have been updated for hub-core 61
+if version.api < 21 then
+  clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+end
+
 local SensorLifecycleHandlers = {}
 
 function SensorLifecycleHandlers.do_configure(driver, device)
@@ -117,6 +123,10 @@ local matter_driver_template = {
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
       },
+      [clusters.SoilMeasurement.ID] = {
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue.ID] = attribute_handlers.soil_moisture_measured_value_handler,
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits.ID] = attribute_handlers.soil_moisture_measurement_limits_handler
+      },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
         [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
@@ -164,7 +174,9 @@ local matter_driver_template = {
       clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits
     },
     [capabilities.temperatureAlarm.ID] = {
       clusters.BooleanState.attributes.StateValue,
@@ -242,9 +254,6 @@ local matter_driver_template = {
     [capabilities.radonMeasurement.ID] = {
       clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
       clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
-    },
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.tvocHealthConcern.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
