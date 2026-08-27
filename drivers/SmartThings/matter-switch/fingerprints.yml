@@ -1688,6 +1688,11 @@ matterManufacturer:
     vendorId: 0x143D
     productId: 0x1001
     deviceProfileName: plug-binary
+  - id: "5181/4098"
+    deviceLabel: Onvis Outlet T20
+    vendorId: 0x143D
+    productId: 0x1002
+    deviceProfileName: plug-power-energy-powerConsumption
 #Osram
   - id: "4489/2564"
     deviceLabel: OSRAM MATTER PLUG UK
