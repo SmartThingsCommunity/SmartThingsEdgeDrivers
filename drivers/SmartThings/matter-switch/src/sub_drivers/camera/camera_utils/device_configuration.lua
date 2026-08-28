@@ -108,16 +108,32 @@ local function build_video_stream_settings_supported_features(device)
   return supported_features
 end
 
+local function camera_privacy_feature_supported(device)
+  return camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.PRIVACY)
+end
+
+-- SoftRecordingPrivacyModeEnabled/SoftLivestreamPrivacyModeEnabled are conditionally mandatory on the PRIV
+-- feature, while HardPrivacyModeOn has independent optional conformance.
+-- A device can support either, both, or neither, so each is built independently.
 local function build_camera_privacy_supported_attributes(device)
-  local supported_attributes = { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+  local supported_attributes = {}
+  if camera_privacy_feature_supported(device) then
+    table.insert(supported_attributes, "softRecordingPrivacyMode")
+    table.insert(supported_attributes, "softLivestreamPrivacyMode")
+  end
   if get_hard_privacy_mode_presence(device) then
     table.insert(supported_attributes, "hardPrivacyMode")
   end
   return supported_attributes
 end
 
-local function build_camera_privacy_supported_commands()
-  return { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
+local function build_camera_privacy_supported_commands(device)
+  local supported_commands = {}
+  if camera_privacy_feature_supported(device) then
+    table.insert(supported_commands, "setSoftRecordingPrivacyMode")
+    table.insert(supported_commands, "setSoftLivestreamPrivacyMode")
+  end
+  return supported_commands
 end
 
 local function capabilities_needing_reinit(device)
@@ -168,7 +184,7 @@ local function capabilities_needing_reinit(device)
   end
 
   if should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes, build_camera_privacy_supported_attributes(device)) or
-    should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands, build_camera_privacy_supported_commands()) then
+    should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands, build_camera_privacy_supported_commands(device)) then
     capabilities_to_reinit.camera_privacy_mode = true
   end
 
@@ -206,6 +222,7 @@ end
 
 function CameraDeviceConfiguration.match_profile(device)
   local status_light_enabled_present, status_light_brightness_present = get_status_light_presence(device)
+  local hard_privacy_mode_present = get_hard_privacy_mode_presence(device)
   local profile_update_requested = false
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
@@ -246,7 +263,7 @@ function CameraDeviceConfiguration.match_profile(device)
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SNAPSHOT) then
           table.insert(main_component_capabilities, capabilities.imageCapture.ID)
         end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.PRIVACY) then
+        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.PRIVACY) or hard_privacy_mode_present then
           table.insert(main_component_capabilities, capabilities.cameraPrivacyMode.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SPEAKER) then
@@ -374,7 +391,7 @@ local function init_camera_privacy_mode(device)
   if device:supports_capability(capabilities.cameraPrivacyMode) then
     local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
     device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedAttributes(build_camera_privacy_supported_attributes(device)))
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedCommands(build_camera_privacy_supported_commands()))
+    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedCommands(build_camera_privacy_supported_commands(device)))
   end
 end
 

@@ -18,8 +18,6 @@ CameraAttributeHandlers.enabled_state_factory = function(attribute)
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipHorizontal")
     elseif attribute == capabilities.imageControl.imageFlipVertical then
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipVertical")
-    elseif attribute == capabilities.cameraPrivacyMode.hardPrivacyMode then
-      camera_utils.update_supported_attributes(device, ib, capabilities.cameraPrivacyMode, "hardPrivacyMode")
     end
   end
 end

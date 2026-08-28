@@ -914,6 +914,132 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Camera privacy mode should be added to profile when HardPrivacyModeOn is present even without the PRIV feature",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local updated_metadata = nil
+    local fake_device = {
+      profile = { components = {} },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          },
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO, -- no PRIVACY feature
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      get_field = function(_, field)
+        return field == camera_fields.HARD_PRIVACY_MODE_PRESENT
+      end,
+      get_endpoints = function() return {} end,
+      try_update_metadata = function(_, metadata) updated_metadata = metadata end,
+    }
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(updated_metadata ~= nil, "profile update should be requested when HardPrivacyModeOn is present")
+    local main_capabilities
+    for _, component in ipairs(updated_metadata.optional_component_capabilities) do
+      if component[1] == "main" then
+        main_capabilities = component[2]
+      end
+    end
+    local found = false
+    for _, cap_id in ipairs(main_capabilities or {}) do
+      if cap_id == capabilities.cameraPrivacyMode.ID then
+        found = true
+      end
+    end
+    assert(found, "cameraPrivacyMode should be added to the profile based on HardPrivacyModeOn presence alone")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode supportedAttributes/supportedCommands should only expose hardPrivacyMode when PRIV feature is absent",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local emitted = {}
+    local fake_device = {
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO, -- no PRIVACY feature
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      supports_capability = function(_, capability)
+        return capability == capabilities.cameraPrivacyMode
+      end,
+      get_field = function(_, field)
+        return field == camera_fields.HARD_PRIVACY_MODE_PRESENT
+      end,
+      get_endpoints = function(self, cluster_id, opts)
+        opts = opts or {}
+        local eps = {}
+        for _, ep in ipairs(self.endpoints) do
+          for _, clus in ipairs(ep.clusters) do
+            if clus.cluster_id == cluster_id and
+              (opts.feature_bitmap == nil or (clus.feature_map & opts.feature_bitmap) == opts.feature_bitmap) then
+              table.insert(eps, ep.endpoint_id)
+            end
+          end
+        end
+        return eps
+      end,
+      emit_event_for_endpoint = function(_, _, capability_event)
+        table.insert(emitted, capability_event)
+      end,
+    }
+
+    camera_cfg.initialize_camera_capabilities(fake_device)
+
+    local function list_equals(a, b)
+      if #a ~= #b then return false end
+      for i, v in ipairs(a) do
+        if v ~= b[i] then return false end
+      end
+      return true
+    end
+
+    local supported_attributes_event, supported_commands_event
+    for _, event in ipairs(emitted) do
+      if event.attribute == capabilities.cameraPrivacyMode.supportedAttributes then
+        supported_attributes_event = event
+      elseif event.attribute == capabilities.cameraPrivacyMode.supportedCommands then
+        supported_commands_event = event
+      end
+    end
+
+    assert(supported_attributes_event ~= nil, "supportedAttributes should be emitted")
+    assert(list_equals(supported_attributes_event.value.value, {"hardPrivacyMode"}),
+      "supportedAttributes should contain only hardPrivacyMode when PRIV feature is absent")
+    assert(supported_commands_event ~= nil, "supportedCommands should be emitted")
+    assert(list_equals(supported_commands_event.value.value, {}),
+      "supportedCommands should be empty when PRIV feature is absent, since HardPrivacyModeOn is read-only")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Reports mapping to EnabledState capability data type should generate appropriate events",
   function()
     update_device_profile()
@@ -943,10 +1069,6 @@ test.register_coroutine_test(
       elseif v.capability == capabilities.imageControl.imageFlipVertical then
         test.socket.capability:__expect_send(
           mock_device:generate_test_message("main", capabilities.imageControl.supportedAttributes({"imageFlipHorizontal", "imageFlipVertical"}))
-        )
-      elseif v.capability == capabilities.cameraPrivacyMode.hardPrivacyMode then
-        test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes({"softRecordingPrivacyMode", "softLivestreamPrivacyMode", "hardPrivacyMode"}))
         )
       end
       test.socket.matter:__queue_receive({
