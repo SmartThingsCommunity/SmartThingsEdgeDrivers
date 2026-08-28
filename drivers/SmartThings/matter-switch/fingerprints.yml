@@ -927,6 +927,7 @@ matterManufacturer:
     deviceLabel: Govee COB Strip Light 2 Pro 16.4ft/5m
     vendorId: 0x1387
     productId: 0x1AA5
+    deviceProfileName: light-color-level
   - id: "4999/6723"
     deviceLabel: Govee Strip Light 2
     vendorId: 0x1387
