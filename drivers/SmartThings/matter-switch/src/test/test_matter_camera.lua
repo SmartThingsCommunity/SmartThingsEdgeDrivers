@@ -800,6 +800,7 @@ test.register_coroutine_test(
       subscribe = function() subscribe_called = true end,
       supports_capability = function() return false end,
       get_endpoints = function() return { DOORBELL_EP } end,
+      get_field = function() return nil end,
     }
 
     local original_match_profile = camera_cfg.match_profile
@@ -893,6 +894,9 @@ test.register_coroutine_test(
       end,
       get_endpoints = function()
         return { CAMERA_EP }
+      end,
+      get_field = function()
+        return nil
       end,
       emit_event_for_endpoint = function()
         init_event_count = init_event_count + 1
@@ -3426,6 +3430,35 @@ test.register_coroutine_test(
     }
     mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode supportedAttributes should include hardPrivacyMode when reported in AttributeList",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn.ID)
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
+        {"softRecordingPrivacyMode", "softLivestreamPrivacyMode", "hardPrivacyMode"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
+        {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
+      ))
+    )
   end,
   {
      min_api_version = 14

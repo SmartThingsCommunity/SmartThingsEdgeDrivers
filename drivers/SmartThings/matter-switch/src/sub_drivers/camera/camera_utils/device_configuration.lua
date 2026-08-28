@@ -33,6 +33,14 @@ local function set_status_light_presence(device, status_light_enabled_present, s
   device:set_field(camera_fields.STATUS_LIGHT_BRIGHTNESS_PRESENT, status_light_brightness_present == true, { persist = true })
 end
 
+local function get_hard_privacy_mode_presence(device)
+  return device:get_field(camera_fields.HARD_PRIVACY_MODE_PRESENT)
+end
+
+local function set_hard_privacy_mode_presence(device, hard_privacy_mode_present)
+  device:set_field(camera_fields.HARD_PRIVACY_MODE_PRESENT, hard_privacy_mode_present == true, { persist = true })
+end
+
 local function build_webrtc_supported_features()
   return {
     bundle = true,
@@ -100,8 +108,12 @@ local function build_video_stream_settings_supported_features(device)
   return supported_features
 end
 
-local function build_camera_privacy_supported_attributes()
-  return { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+local function build_camera_privacy_supported_attributes(device)
+  local supported_attributes = { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+  if get_hard_privacy_mode_presence(device) then
+    table.insert(supported_attributes, "hardPrivacyMode")
+  end
+  return supported_attributes
 end
 
 local function build_camera_privacy_supported_commands()
@@ -155,7 +167,7 @@ local function capabilities_needing_reinit(device)
     capabilities_to_reinit.video_stream_settings = true
   end
 
-  if should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes, build_camera_privacy_supported_attributes()) or
+  if should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes, build_camera_privacy_supported_attributes(device)) or
     should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands, build_camera_privacy_supported_commands()) then
     capabilities_to_reinit.camera_privacy_mode = true
   end
@@ -361,7 +373,7 @@ end
 local function init_camera_privacy_mode(device)
   if device:supports_capability(capabilities.cameraPrivacyMode) then
     local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedAttributes(build_camera_privacy_supported_attributes()))
+    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedAttributes(build_camera_privacy_supported_attributes(device)))
     device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedCommands(build_camera_privacy_supported_commands()))
   end
 end
@@ -440,6 +452,10 @@ end
 
 function CameraDeviceConfiguration.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
   set_status_light_presence(device, status_light_enabled_present, status_light_brightness_present)
+end
+
+function CameraDeviceConfiguration.update_hard_privacy_mode_attribute_presence(device, hard_privacy_mode_present)
+  set_hard_privacy_mode_presence(device, hard_privacy_mode_present)
 end
 
 function CameraDeviceConfiguration.reinitialize_changed_camera_capabilities_and_subscriptions(device, old_profile, new_profile)
