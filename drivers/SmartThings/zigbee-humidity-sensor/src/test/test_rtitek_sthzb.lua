@@ -274,14 +274,17 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "STHZB normalizes humidity alarm preference and clamps paired limits",
+  "STHZB validates alarm limits against saved preferences instead of stale device values",
   function()
-    mock_device:set_field("rtitek_temperature_alarm_lower", 2000, { persist = true })
+    -- The device has a stale lower limit of 17.2 C, while the App setting is 20 C.
+    mock_device:set_field("rtitek_temperature_alarm_lower", 1720, { persist = true })
     mock_device:set_field("rtitek_humidity_alarm_lower", 3000, { persist = true })
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
       preferences = {
-        temperatureAlarmUpper = 20,
+        temperatureAlarmUpper = 19,
+        temperatureAlarmLower = 20,
         humidityAlarmUpper = 21.22,
+        humidityAlarmLower = 30,
       },
     }))
     test.socket.zigbee:__set_channel_ordering("relaxed")

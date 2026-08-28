@@ -74,6 +74,7 @@ local PREFERENCE_FIELDS = {
     data_type = data_types.Int16,
     field = "rtitek_temperature_alarm_upper",
     paired_field = "rtitek_temperature_alarm_lower",
+    paired_preference = "temperatureAlarmLower",
     minimum = -30,
     maximum = 60,
     scale = 100,
@@ -86,6 +87,7 @@ local PREFERENCE_FIELDS = {
     data_type = data_types.Int16,
     field = "rtitek_temperature_alarm_lower",
     paired_field = "rtitek_temperature_alarm_upper",
+    paired_preference = "temperatureAlarmUpper",
     minimum = -30,
     maximum = 60,
     scale = 100,
@@ -98,6 +100,7 @@ local PREFERENCE_FIELDS = {
     data_type = data_types.Uint16,
     field = "rtitek_humidity_alarm_upper",
     paired_field = "rtitek_humidity_alarm_lower",
+    paired_preference = "humidityAlarmLower",
     minimum = 0,
     maximum = 100,
     scale = 100,
@@ -110,6 +113,7 @@ local PREFERENCE_FIELDS = {
     data_type = data_types.Uint16,
     field = "rtitek_humidity_alarm_lower",
     paired_field = "rtitek_humidity_alarm_upper",
+    paired_preference = "humidityAlarmUpper",
     minimum = 0,
     maximum = 100,
     scale = 100,
@@ -151,6 +155,21 @@ local function clamp_paired_limit(raw, paired_raw, is_upper, gap)
     return paired_raw - gap
   end
   return raw
+end
+
+local function raw_preference_value(preferences, name)
+  local setting = PREFERENCE_FIELDS[name]
+  local value = preferences and preferences[name]
+  if setting == nil or type(value) ~= "number" then
+    return nil
+  end
+  return raw_value(value, setting)
+end
+
+local function clamp_raw_to_setting(raw, setting)
+  local minimum = raw_value(setting.minimum, setting)
+  local maximum = raw_value(setting.maximum, setting)
+  return math.max(minimum, math.min(maximum, raw))
 end
 
 local function send_private_read(device, attr_id)
@@ -307,19 +326,18 @@ local function humidity_alarm_status_handler(driver, device, value, zb_rx)
   log_link_metrics(device, zb_rx)
 end
 
-local function write_preference(device, name, value)
+local function write_preference(device, name, value, preferences)
   local setting = PREFERENCE_FIELDS[name]
   if setting == nil or type(value) ~= "number" then
     return
   end
 
   local raw = raw_value(value, setting)
-  raw = clamp_paired_limit(
-    raw,
-    setting.paired_field and device:get_field(setting.paired_field),
-    setting.is_upper,
-    setting.gap
-  )
+  local paired_raw = raw_preference_value(preferences, setting.paired_preference)
+  if paired_raw == nil and setting.paired_field ~= nil then
+    paired_raw = device:get_field(setting.paired_field)
+  end
+  raw = clamp_raw_to_setting(clamp_paired_limit(raw, paired_raw, setting.is_upper, setting.gap), setting)
   if raw ~= raw_value(value, setting) then
     device.log.warn_with({ hub_logs = true }, string.format(
       "Rti-Tek STHZB clamped %s from %s to %.1f",
@@ -346,7 +364,7 @@ local function info_changed(driver, device, event, args)
 
   for name, _ in pairs(PREFERENCE_FIELDS) do
     if old_preferences[name] ~= new_preferences[name] then
-      write_preference(device, name, new_preferences[name])
+      write_preference(device, name, new_preferences[name], new_preferences)
     end
   end
 end
