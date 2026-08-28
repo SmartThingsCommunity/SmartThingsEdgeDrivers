@@ -62,8 +62,9 @@ precision before sending a write. It validates paired alarm limits using the
 latest cached value. If a proposed upper limit is less than or equal to the
 lower limit, it is clamped to one device step above the lower limit; conversely,
 a proposed lower limit is clamped to one device step below the upper limit.
-The saved preference is synchronized with that effective value so the app does
-not retain an invalid value.
+The effective raw value is cached and read back from the device. Edge drivers
+cannot overwrite the app-owned preference value, so the Settings input may
+continue to display the submitted value after a paired-limit clamp.
 
 Temperature settings use `0.1 C` increments. Humidity alarm settings use
 whole-percent increments because the device accepts that precision. Unit
