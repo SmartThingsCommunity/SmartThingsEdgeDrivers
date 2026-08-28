@@ -7,6 +7,7 @@ st_utils.stringify_table = st_utils.stringify_table
 local Consts = require "consts"
 local Fields = require "fields"
 local HueColorUtils = require "utils.cie_utils"
+local attribute_emitters = require "handlers.attribute_emitters"
 
 local utils = require "utils"
 
@@ -154,6 +155,7 @@ local function do_color_temp_action(driver, device, args)
   local min = device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
   local clamped_kelvin = st_utils.clamp_value(kelvin, min, Consts.MAX_TEMP_KELVIN)
   local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
+  attribute_emitters.emit_color_temp_when_mirek_unchanged(device, clamped_kelvin, mirek)
 
   local resp, err = hue_api:set_light_color_temp(light_id, mirek)
   log_command_response_errors(resp, err, "color temp action")

@@ -21,6 +21,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local utils = {}
 
 function utils.tbl_contains(array, value)
@@ -545,16 +550,14 @@ function utils.subscribe(device)
       devices_seen[checked_device.id] = true -- only loop through any device once
     end
   end
-  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
-  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
-  -- attributes and not events.
-  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
 
   -- If the type of battery support has not yet been determined, add the PowerSource AttributeList to the list of
   -- subscribed attributes in order to determine which if any battery capability should be used.
   if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
     subscribe_request:with_info_block(ib)
+    attributes_seen[clusters.PowerSource.ID] = attributes_seen[clusters.PowerSource.ID] or {}
+    attributes_seen[clusters.PowerSource.ID][clusters.PowerSource.attributes.AttributeList.ID] = ib
   end
 
   -- If the power topology of the device has not yet been determined, add the AvailableEndpoints (for SET topology)
@@ -566,11 +569,20 @@ function utils.subscribe(device)
     if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
       local ib = im.InteractionInfoBlock(nil, clusters.PowerTopology.ID, clusters.PowerTopology.attributes.AvailableEndpoints.ID)
       subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.PowerTopology.ID] = attributes_seen[clusters.PowerTopology.ID] or {}
+      attributes_seen[clusters.PowerTopology.ID][clusters.PowerTopology.attributes.AvailableEndpoints.ID] = ib
     elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
       local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID)
       subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.Descriptor.ID] = attributes_seen[clusters.Descriptor.ID] or {}
+      attributes_seen[clusters.Descriptor.ID][clusters.Descriptor.attributes.PartsList.ID] = ib
     end
   end
+
+  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
+  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
+  -- attributes and not events.
+  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
 
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)

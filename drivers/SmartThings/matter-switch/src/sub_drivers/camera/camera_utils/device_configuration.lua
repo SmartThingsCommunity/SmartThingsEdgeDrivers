@@ -46,19 +46,19 @@ end
 
 local function build_ptz_supported_attributes(device)
   local supported_attributes = {}
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
     table.insert(supported_attributes, "pan")
     table.insert(supported_attributes, "panRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
     table.insert(supported_attributes, "tilt")
     table.insert(supported_attributes, "tiltRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
     table.insert(supported_attributes, "zoom")
     table.insert(supported_attributes, "zoomRange")
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPRESETS) then
+  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS) then
     table.insert(supported_attributes, "presets")
     table.insert(supported_attributes, "maxPresets")
   end
@@ -259,8 +259,9 @@ function CameraDeviceConfiguration.match_profile(device)
           clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
           table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
         end
-      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
-        table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
+      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) and
+        clusters.ZoneManagement.are_features_supported(clusters.ZoneManagement.types.Feature.USER_DEFINED, ep_cluster.feature_map) then
+          table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
       elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
       elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) then

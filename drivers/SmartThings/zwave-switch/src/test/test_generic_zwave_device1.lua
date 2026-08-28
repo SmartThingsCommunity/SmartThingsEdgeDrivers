@@ -45,7 +45,7 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed",
-      min_api_version = 17
+      min_api_version = 14
     }
 )
 
@@ -71,7 +71,7 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed",
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -114,7 +114,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -144,7 +144,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -187,7 +187,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -216,7 +216,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -245,7 +245,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -275,7 +275,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

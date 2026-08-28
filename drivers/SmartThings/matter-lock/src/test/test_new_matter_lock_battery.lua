@@ -427,7 +427,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -458,7 +458,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-batteryLevel" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -490,7 +490,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-battery" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -521,7 +521,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -553,7 +553,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -586,7 +586,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -617,7 +617,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -649,7 +649,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -682,7 +682,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -713,7 +713,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -745,7 +745,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -778,7 +778,71 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
-    min_api_version = 17
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Handle received BatPercentRemaining from device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery.id,
+        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
+          mock_device_battery, 1, 150
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
+    )
+  end,
+  {
+    test_init = test_init_battery,
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Handle received BatChargeLevel from device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.OK
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.normal())
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.WARNING
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+    )
+  end,
+  {
+    test_init = test_init_battery_level,
+    min_api_version = 14
   }
 )
 

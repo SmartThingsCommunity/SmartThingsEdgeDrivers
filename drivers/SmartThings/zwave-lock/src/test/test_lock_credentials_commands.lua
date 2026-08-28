@@ -175,7 +175,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -200,7 +203,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -229,7 +235,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -253,7 +262,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -275,7 +287,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -297,7 +312,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -321,7 +339,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -341,7 +362,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -363,7 +387,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -385,7 +412,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -423,7 +453,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -445,7 +478,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -474,7 +510,10 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.run_registered_tests()

@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
 local aqara_child2_ep = 2
@@ -258,7 +263,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
@@ -338,7 +343,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
