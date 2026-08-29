@@ -60,6 +60,14 @@ local function endpoint_for(device, cluster)
   return device:get_endpoint(cluster) or 1
 end
 
+local function command_argument(command, name)
+  if command.args ~= nil and command.args[name] ~= nil then
+    return command.args[name]
+  end
+
+  return command.named_args and command.named_args[name]
+end
+
 local function send_bluetooth_pairing_start(device)
   local zcl_header = zcl_messages.ZclHeader({
     cmd = data_types.ZCLCommandId(BUTTON_COMMAND),
@@ -156,7 +164,7 @@ local function work_mode_handler(_, device, value)
 end
 
 local function set_heating_setpoint(_, device, command)
-  local setpoint = command.args.setpoint
+  local setpoint = command_argument(command, "setpoint")
   if setpoint >= 40 then
     setpoint = utils.f_to_c(setpoint)
   end
@@ -175,13 +183,14 @@ local function set_mode(_, device, command)
     [ThermostatMode.thermostatMode.heat.NAME] = Thermostat.attributes.SystemMode.HEAT,
     [ThermostatMode.thermostatMode.auto.NAME] = Thermostat.attributes.SystemMode.AUTO,
   }
-  local system_mode = mode_to_system_mode[command.args.mode]
+  local mode = command_argument(command, "mode")
+  local system_mode = mode_to_system_mode[mode]
   if system_mode == nil then
     return
   end
 
   device:send(Thermostat.attributes.SystemMode:write(device, system_mode))
-  emit_mode(device, command.args.mode)
+  emit_mode(device, mode)
   device.thread:call_with_delay(1, function()
     device:send(Thermostat.attributes.SystemMode:read(device))
   end)
