@@ -59,7 +59,6 @@ function Api:do_get(url)
   log.debug('do_get '..url)
   local response,err,partial = client:get(url, ADDITIONAL_HEADERS, retry_fn(3))
   client:shutdown()
-  client = nil
   return process_rest_response(response,err,partial)
 end
 
@@ -82,7 +81,6 @@ function Api:do_post(url, content)
     end
   end
   client:shutdown()
-  client = nil
   return process_rest_response(response,err,partial)
 end
 
