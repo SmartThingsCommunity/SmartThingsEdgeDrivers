@@ -1,0 +1,133 @@
+name: rtitek-sthzb
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: temperatureAlarm
+    version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - freeze
+            - heat
+            - cleared
+  - id: refresh
+    version: 1
+  categories:
+  - name: TempHumiditySensor
+preferences:
+  - title: "Display temperature unit"
+    name: temperatureUnit
+    description: "Temperature unit used by the device display"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Celsius"
+        "1": "Fahrenheit"
+      default: "0"
+  - title: "Temperature calibration (C)"
+    name: temperatureCalibration
+    description: "Device measurement adjustment"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -10.0
+      maximum: 10.0
+      default: 0.0
+  - title: "Humidity calibration (%)"
+    name: humidityCalibration
+    description: "Device measurement adjustment"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -10.0
+      maximum: 10.0
+      default: 0.0
+  - title: "Temperature alarm upper limit (C)"
+    name: temperatureAlarmUpper
+    description: "Upper temperature alarm threshold"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -30.0
+      maximum: 60.0
+      default: 26.0
+  - title: "Temperature alarm lower limit (C)"
+    name: temperatureAlarmLower
+    description: "Lower temperature alarm threshold"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -30.0
+      maximum: 60.0
+      default: 20.0
+  - title: "Humidity alarm upper limit (%)"
+    name: humidityAlarmUpper
+    description: "Upper humidity alarm threshold"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 60
+  - title: "Humidity alarm lower limit (%)"
+    name: humidityAlarmLower
+    description: "Lower humidity alarm threshold"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 30
+deviceConfig:
+  dashboard:
+    states:
+      - component: main
+        capability: temperatureMeasurement
+        version: 1
+        group: main
+        composite: true
+      - component: main
+        capability: relativeHumidityMeasurement
+        version: 1
+        group: main
+        values:
+          - label: "  {{humidity.value}} {{humidity.unit}}"
+        composite: true
+    actions: []
+    basicPlus: []
+  detailView:
+    - component: main
+      capability: temperatureMeasurement
+      version: 1
+    - component: main
+      capability: relativeHumidityMeasurement
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: main
+      capability: temperatureAlarm
+      version: 1
+    - component: main
+      capability: refresh
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: temperatureMeasurement
+        version: 1
+      - component: main
+        capability: relativeHumidityMeasurement
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+    actions: []
