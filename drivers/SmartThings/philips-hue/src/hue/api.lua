@@ -119,7 +119,11 @@ local function process_rest_response(response, err, partial, err_callback)
       )
     end
 
-    return table.unpack(json_result, 1, json_result.n)
+    -- json.decode (dkjson) returns (value, next_position, error_message) -- only the first of
+    -- those is the decoded value this function documents returning; propagating all of them
+    -- here means the *parse position* gets misinterpreted as this function's `err` return by
+    -- every caller, on every successful decode.
+    return json_result[1]
   else
     return nil, "no response or error received"
   end
