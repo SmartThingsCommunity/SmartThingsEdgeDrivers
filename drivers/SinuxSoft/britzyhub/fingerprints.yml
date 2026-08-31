@@ -1,3 +1,15 @@
+matterManufacturer:
+  - id: "4673/32846"
+    deviceLabel: AIHomeKit
+    vendorId: 0x1241
+    productId: 0x804E
+    deviceProfileName: matter-bridge
+  - id: "5174/32780"
+    deviceLabel: BritzyHub
+    vendorId: 0x1436
+    productId: 0x800C
+    deviceProfileName: matter-bridge
+
 matterGeneric:
   - id: "elevator"
     deviceLabel: Elevator
