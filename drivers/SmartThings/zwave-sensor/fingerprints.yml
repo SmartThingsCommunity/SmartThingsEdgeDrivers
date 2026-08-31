@@ -560,6 +560,60 @@ zwaveManufacturer:
     productType: 0x0100
     productId: 0x0082
     deviceProfileName: shelly-wave-motion
+  - id: "aeotec/contact/8/eu"
+    deviceLabel: Aeotec Door Window Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x0037
+    deviceProfileName: aeotec-door-window-sensor-8
+  - id: "aeotec/contact/8/us"
+    deviceLabel: Aeotec Door Window Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0102
+    productId: 0x0037
+    deviceProfileName: aeotec-door-window-sensor-8
+  - id: "aeotec/contact/8/au"
+    deviceLabel: Aeotec Door Window Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0202
+    productId: 0x0037
+    deviceProfileName: aeotec-door-window-sensor-8
+  - id: aeotec/aerq/8/eu
+    deviceLabel: Aeotec aerQ 8
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x0039
+    deviceProfileName: aeotec-aerq-8
+  - id: aeotec/aerq/8/us
+    deviceLabel: Aeotec aerQ 8
+    manufacturerId: 0x0371
+    productType: 0x0102
+    productId: 0x0039
+    deviceProfileName: aeotec-aerq-8
+  - id: aeotec/aerq/8/au
+    deviceLabel: Aeotec aerQ 8
+    manufacturerId: 0x0371
+    productType: 0x0202
+    productId: 0x0039
+    deviceProfileName: aeotec-aerq-8
+  - id: "aeotec/water/8/eu"
+    deviceLabel: Aeotec Water Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x0038
+    deviceProfileName: aeotec-water-sensor-8
+  - id: "aeotec/water/8/us"
+    deviceLabel: Aeotec Water Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0102
+    productId: 0x0038
+    deviceProfileName: aeotec-water-sensor-8
+  - id: "aeotec/water/8/au"
+    deviceLabel: Aeotec Water Sensor 8
+    manufacturerId: 0x0371
+    productType: 0x0202
+    productId: 0x0038
+    deviceProfileName: aeotec-water-sensor-8
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor
