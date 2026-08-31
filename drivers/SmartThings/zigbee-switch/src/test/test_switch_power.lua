@@ -367,6 +367,48 @@ test.register_message_test(
         "main",
         capabilities.powerMeter.power({ value = 6.0, unit = "W" })
       )
+    }
+  },
+  {
+    min_api_version = 14,
+    max_api_version = 14
+  }
+)
+
+test.register_message_test(
+  "Climax ActivePower should apply multiplier and divisor with native registration",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerMultiplier:build_test_attr_report(mock_climax_device, 3)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerDivisor:build_test_attr_report(mock_climax_device, 10)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_climax_device, 20)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_climax_device:generate_test_message(
+        "main",
+        capabilities.powerMeter.power({ value = 6.0, unit = "W" })
+      )
     },
     {
       channel = "devices",
@@ -382,7 +424,7 @@ test.register_message_test(
     }
   },
   {
-    min_api_version = 14
+    min_api_version = 15
   }
 )
 
