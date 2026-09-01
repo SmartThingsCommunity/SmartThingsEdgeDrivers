@@ -495,8 +495,8 @@ local function button_supported_values (matter_device)
 end
 
 local function initiate_info_changed(device, profile)
-  test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
   test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+  test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
   test.mock_time.advance_time(2)
 end
 
