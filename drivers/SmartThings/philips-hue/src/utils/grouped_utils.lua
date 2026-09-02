@@ -14,6 +14,12 @@ local grouped_utils = {}
 
 grouped_utils.GROUP_TYPES = {room = true, zone = true}
 
+-- Lets tests (and, in principle, a future driver preference) suppress group scanning entirely,
+-- without needing to mock rooms/zones REST responses or race the scan's own 45-second debounce
+-- timing against whatever else a test is asserting on the same connection. Defaults to true;
+-- production code never touches this.
+grouped_utils.scanning_enabled = true
+
 --- Build up mapping of hue device id to SmartThings device record
 ---@param bridge_device HueBridgeDevice
 ---@return table
@@ -138,13 +144,16 @@ function grouped_utils.scan_groups(driver, bridge_device, api, hue_id_to_device)
   local rooms, zones
   -- These are the hue light/other service ids rather than the hue device ids
   local light_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
-  while not (rooms and zones) do
+  local backoff = utils.backoff_builder(30, 1, 0.5)
+  while true do
     if not rooms then
       rooms = handle_group_scan_response("rooms", driver, hue_id_to_device, light_id_to_device, api:get_rooms())
     end
     if not zones then
       zones = handle_group_scan_response("zones", driver, hue_id_to_device, light_id_to_device, api:get_zones())
     end
+    if rooms and zones then break end
+    cosock.socket.sleep(backoff())
   end
   -- Combine rooms and zones.
   for _, zone in ipairs(zones) do
@@ -283,6 +292,9 @@ end
 
 
 function grouped_utils.queue_group_scan(driver, bridge_device)
+  if not grouped_utils.scanning_enabled then
+    return
+  end
   local queue = bridge_device:get_field(Fields.GROUPS_SCAN_QUEUE)
   if queue == nil then
     local tx, rx = cosock.channel.new()
