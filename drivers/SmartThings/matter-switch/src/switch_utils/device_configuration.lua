@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local DeviceConfiguration = {}
 local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
@@ -34,6 +39,7 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
       local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
+        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_profile))
         driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
@@ -87,7 +93,9 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
-  if static_electrical_tags ~= nil then
+  if type(static_electrical_tags) == "string" then
+    -- if no associated profile is found for the device type and static electrical tags are available, use "plug-binary" as a fallback
+    generic_profile = generic_profile or "plug-binary"
     -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end

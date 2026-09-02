@@ -258,11 +258,11 @@ local function huePercentToValue(value)
   else return utils.round(value / 100 * 255) end
 end
 
-local function getNotificationValue(device, value)
+local function getNotificationValue(device, parent, value)
   local notificationValue = 0
   local level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) or 100
   local color = utils.round(device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) or 100)
-  local effect = device:get_parent_device().preferences.notificationType or 1
+  local effect = (parent and parent.preferences.notificationType) or 1
   notificationValue = notificationValue + (effect*16777216)
   notificationValue = notificationValue + (huePercentToValue(value or color)*65536)
   notificationValue = notificationValue + (level*256)
@@ -276,13 +276,16 @@ local function on_handler(driver, device, command)
     else
       device:emit_event(capabilities.switch.switch("on"))
       local dev = device:get_parent_device()
+      if dev == nil then
+        return
+      end
       local send_configuration = function()
         dev:send(cluster_base.build_manufacturer_specific_command(
               dev,
               PRIVATE_CLUSTER_ID,
               PRIVATE_CMD_NOTIF_ID,
               MFG_CODE,
-              utils.serialize_int(getNotificationValue(device),4,false,false)))
+              utils.serialize_int(getNotificationValue(device, dev),4,false,false)))
       end
       device.thread:call_with_delay(1,send_configuration)
     end
@@ -294,6 +297,9 @@ local function on_handler(driver, device, command)
     else
       device:emit_event(capabilities.switch.switch("off"))
       local dev = device:get_parent_device()
+      if dev == nil then
+        return
+      end
       local send_configuration = function()
         dev:send(cluster_base.build_manufacturer_specific_command(
               dev,
@@ -313,13 +319,16 @@ local function switch_level_handler(driver, device, command)
       device:emit_event(capabilities.switchLevel.level(command.args.level))
       device:emit_event(capabilities.switch.switch(command.args.level ~= 0 and "on" or "off"))
       local dev = device:get_parent_device()
+      if dev == nil then
+        return
+      end
       local send_configuration = function()
         dev:send(cluster_base.build_manufacturer_specific_command(
               dev,
               PRIVATE_CLUSTER_ID,
               PRIVATE_CMD_NOTIF_ID,
               MFG_CODE,
-              utils.serialize_int(getNotificationValue(device),4,false,false)))
+              utils.serialize_int(getNotificationValue(device, dev),4,false,false)))
       end
       device.thread:call_with_delay(1,send_configuration)
     end
@@ -330,13 +339,16 @@ local function set_color_temperature(driver, device, command)
     device:emit_event(capabilities.colorTemperature.colorTemperature(command.args.temperature))
     device:emit_event(capabilities.switch.switch("on"))
     local dev = device:get_parent_device()
+    if dev == nil then
+      return
+    end
     local send_configuration = function()
       dev:send(cluster_base.build_manufacturer_specific_command(
             dev,
             PRIVATE_CLUSTER_ID,
             PRIVATE_CMD_NOTIF_ID,
             MFG_CODE,
-            utils.serialize_int(getNotificationValue(device, 100),4,false,false)))
+            utils.serialize_int(getNotificationValue(device, dev, 100),4,false,false)))
     end
     device.thread:call_with_delay(1,send_configuration)
   end
@@ -346,13 +358,16 @@ local function set_color_temperature(driver, device, command)
     device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
     device:emit_event(capabilities.switch.switch("on"))
     local dev = device:get_parent_device()
+    if dev == nil then
+      return
+    end
     local send_configuration = function()
       dev:send(cluster_base.build_manufacturer_specific_command(
             dev,
             PRIVATE_CLUSTER_ID,
             PRIVATE_CMD_NOTIF_ID,
             MFG_CODE,
-            utils.serialize_int(getNotificationValue(device),4,false,false)))
+            utils.serialize_int(getNotificationValue(device, dev),4,false,false)))
     end
     device.thread:call_with_delay(1,send_configuration)
   end

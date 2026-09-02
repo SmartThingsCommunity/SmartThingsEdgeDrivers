@@ -96,7 +96,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -133,7 +133,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -184,7 +184,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -204,7 +204,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -224,7 +224,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -244,7 +244,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -264,7 +264,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -284,7 +284,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -304,7 +304,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -375,7 +375,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -456,7 +456,7 @@ function()
   test.wait_for_events()
 end,
 {
-   min_api_version = 17
+   min_api_version = 14
 }
 )
 
@@ -473,7 +473,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -493,7 +493,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -512,7 +512,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -533,7 +533,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -557,7 +557,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -579,7 +579,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -601,7 +601,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -623,7 +623,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -649,7 +649,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -748,7 +748,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -975,7 +975,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1044,7 +1044,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1071,7 +1071,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1115,7 +1115,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1164,7 +1164,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1191,7 +1191,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1257,7 +1257,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1284,7 +1284,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1350,7 +1350,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1377,7 +1377,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1442,7 +1442,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1471,7 +1471,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1527,7 +1527,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1590,7 +1590,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1646,7 +1646,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1794,7 +1794,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1823,7 +1823,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1877,7 +1877,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1906,7 +1906,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -1978,7 +1978,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2007,7 +2007,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2078,7 +2078,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2107,7 +2107,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2157,7 +2157,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2189,7 +2189,188 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
+  }
+)
+
+local LOCAL_START_TIME = "2025-01-15T09:00:00"
+local LOCAL_END_TIME = "2025-01-15T17:00:00"
+
+test.register_coroutine_test(
+  "Handle Add Year Day Schedule command received from SmartThings.",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "setYearDaySchedule",
+          args = {1, 1, {localStartTime=LOCAL_START_TIME, localEndTime=LOCAL_END_TIME}}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule(
+          mock_device, 1, -- endpoint
+          1, -- Schedule Index
+          1, -- User Index
+          lock_utils.iso8601_to_epoch(LOCAL_START_TIME), -- Start Time (epoch)
+          lock_utils.iso8601_to_epoch(LOCAL_END_TIME) -- End Time (epoch)
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule:build_test_command_response(
+          mock_device, 1
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules(
+          {{
+            userIndex=1,
+            schedules={{
+              scheduleIndex = 1,
+              localStartTime = LOCAL_START_TIME,
+              localEndTime = LOCAL_END_TIME
+            }},
+          }},
+          {visibility={displayed=false}}
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="setYearDaySchedule", userIndex=1, scheduleIndex=1, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Add Year Day Schedule command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "setYearDaySchedule",
+          args = {1, 1, {localStartTime=LOCAL_START_TIME, localEndTime=LOCAL_END_TIME}}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="setYearDaySchedule", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Clear Year Day Schedule command received from SmartThings.",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "clearYearDaySchedules",
+          args = {
+            1, -- user index
+            1, -- schedule index
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule(
+          mock_device, 1, -- endpoint
+          1, -- year_day_index
+          1, -- user_index
+          0, -- local_start_time
+          lock_utils.MAX_EPOCH_S -- local_end_time
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule:build_test_command_response(
+          mock_device, 1
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="clearYearDaySchedules", userIndex=1, scheduleIndex=1, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Clear Year Day Schedule command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "clearYearDaySchedules",
+          args = {
+            1, -- user index
+            1, -- schedule index
+          }
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="clearYearDaySchedules", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 14
   }
 )
 
@@ -2501,7 +2682,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -2609,7 +2790,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

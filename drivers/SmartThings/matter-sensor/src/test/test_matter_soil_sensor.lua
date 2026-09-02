@@ -80,7 +80,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
@@ -105,7 +108,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Temperature reports should generate correct messages",
@@ -120,7 +126,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Min and max temperature attributes set capability constraint",
@@ -144,7 +153,10 @@ test.register_coroutine_test(
       )
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "Soil moisture is reported raw when no limits are set",
@@ -159,7 +171,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 55 }))
     )
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 local function build_soil_moisture_limits(min_value, max_value)
   if version.api < 21 then
@@ -194,7 +209,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 25 }))
     )
   end
-)
+,
+    {
+      min_api_version = 17
+    })
 
 test.register_coroutine_test(
   "Soil moisture scaling rounds correctly",
@@ -224,6 +242,9 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 90 }))
     )
   end
-)
+,
+    {
+      min_api_version = 17
+    })
 
 test.run_registered_tests()

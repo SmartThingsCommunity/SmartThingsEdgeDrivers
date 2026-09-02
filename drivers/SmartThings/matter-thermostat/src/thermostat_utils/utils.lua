@@ -180,18 +180,15 @@ function ThermostatUtils.get_device_type(device)
   return main_device_type
 end
 
-function ThermostatUtils.unit_conversion(value, from_unit, to_unit, capability_name)
-  local conversion_function = fields.conversion_tables[from_unit] and fields.conversion_tables[from_unit][to_unit] or nil
+function ThermostatUtils.convert_value_to_unit(value, from_unit, to_unit, capability_name)
+  local conversion_function = fields.unit_conversion[from_unit] and fields.unit_conversion[from_unit][to_unit]
   if not conversion_function then
     log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", fields.unit_strings[from_unit], fields.unit_strings[to_unit]))
     return
-  end
-
-  if not value then
-    log.info_with( {hub_logs = true} , "unit conversion value is nil")
+  elseif type(value) ~= "number" then
+    log.info_with( {hub_logs = true} , string.format("unit conversion value (%s) is not a number", value))
     return
   end
-
   return conversion_function(value, fields.molecular_weights[capability_name])
 end
 

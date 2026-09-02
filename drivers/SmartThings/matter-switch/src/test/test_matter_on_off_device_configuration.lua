@@ -50,7 +50,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_onoff_switch_as_server) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -83,7 +83,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_onoff_switch_as_client) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -122,7 +122,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_dimmer_switch_as_server) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -159,7 +159,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_plug_with_switch_profile_vendor_override) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -196,7 +196,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_color_dimmer) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -241,7 +241,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_mounted_on_off_control) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -296,7 +296,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control) end,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
