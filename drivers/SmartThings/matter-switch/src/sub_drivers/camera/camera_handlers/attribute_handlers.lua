@@ -18,8 +18,6 @@ CameraAttributeHandlers.enabled_state_factory = function(attribute)
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipHorizontal")
     elseif attribute == capabilities.imageControl.imageFlipVertical then
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipVertical")
-    elseif attribute == capabilities.cameraPrivacyMode.hardPrivacyMode then
-      camera_utils.update_supported_attributes(device, ib, capabilities.cameraPrivacyMode, "hardPrivacyMode")
     end
   end
 end
@@ -450,7 +448,7 @@ end
 
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
   if not ib.data.elements then return end
-  local status_light_enabled_present, status_light_brightness_present = false, false
+  local status_light_enabled_present, status_light_brightness_present, hard_privacy_mode_present = false, false, false
   local attribute_ids = {}
   for _, attr in ipairs(ib.data.elements) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
@@ -459,6 +457,8 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+    elseif attr.value == clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn.ID then
+      hard_privacy_mode_present = true
     end
   end
   local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
@@ -469,6 +469,7 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
   }
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
   camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
+  camera_cfg.update_hard_privacy_mode_attribute_presence(device, hard_privacy_mode_present)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
