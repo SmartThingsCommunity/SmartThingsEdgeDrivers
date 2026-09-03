@@ -1,8 +1,5 @@
---[[
-Description: SNZB-02M pressure/humidity/temperature sensor driver
-Version: 1.0
-Author: GitHub Copilot
---]]
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -11,10 +8,6 @@ local log = require "log"
 local function convert_pressure_value(raw_value)
   if raw_value == nil then
     return nil
-  end
-
-  if raw_value > 2000 then
-    return raw_value / 1000.0
   end
 
   return raw_value / 10.0
