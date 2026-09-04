@@ -9,6 +9,6 @@ local sub_drivers = {
    lazy_load_if_possible("centralite-sensor"),
    lazy_load_if_possible("heiman-sensor"),
    lazy_load_if_possible("frient-sensor"),
-   lazy_load_if_possible("sonoff.SNZB-02M"),
+   lazy_load_if_possible("sonoff.SNZB-02M")
 }
 return sub_drivers
