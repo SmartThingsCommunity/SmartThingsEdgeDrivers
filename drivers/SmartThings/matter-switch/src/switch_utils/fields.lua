@@ -125,6 +125,7 @@ SwitchFields.vendor_overrides = {
     [0x0006] = { needs_hager_subdriver = true }, -- Hager HBnet 2g switch
     [0x0007] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 1.1M
     [0x000A] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 2.2M
+    [0x000C] = { needs_hager_subdriver = true, is_standalone = true }, -- Hager Rotary
   },
   [0x130A] = { -- EVE_MANUFACTURER_ID
     [0x0050] = { needs_eve_energy_subdriver = true }, -- Eve Energy EU
