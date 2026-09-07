@@ -994,6 +994,11 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x000A
     deviceProfileName: matter-bridge
+  - id: "4741/12"
+    deviceLabel: Hager Rotary Dimmer
+    vendorId: 0x1285
+    productId: 0x000C
+    deviceProfileName: light-level
 # HAOJAI
   - id: "5530/4113"
     deviceLabel: HAOJAI Smart Switch 3-key
