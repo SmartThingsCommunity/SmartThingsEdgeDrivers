@@ -7,6 +7,7 @@ local version = require "version"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
+local update_metadata_request = require "switch_utils.update_metadata_request"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -36,23 +37,20 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
-      local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
+      local child_metadata = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
-        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_profile))
+        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_metadata.profile))
         driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
-          profile = child_profile,
+          profile = child_metadata.profile,
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%d", ep_id),
           vendor_provided_label = label_and_name
         })
       else
-        existing_child_device:try_update_metadata({
-          profile = child_profile,
-          optional_component_capabilities = optional_component_capabilities
-        })
+        existing_child_device:try_update_metadata(child_metadata:format_request())
       end
     end
   end
@@ -64,8 +62,7 @@ end
 
 function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_id)
   local ep_info = switch_utils.get_endpoint_info(device, server_fan_ep_id)
-  local fan_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.FanControl.ID)
-  local optional_supported_component_capabilities = {}
+  local fan_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.FanControl.ID) or {}
   local main_component_capabilities = {}
 
   if clusters.FanControl.are_features_supported(clusters.FanControl.types.Feature.MULTI_SPEED, fan_cluster_info.feature_map) then
@@ -78,8 +75,9 @@ function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_
     table.insert(main_component_capabilities, capabilities.fanMode.ID)
   end
 
-  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-  return "fan-modular", optional_supported_component_capabilities
+  return update_metadata_request.init()
+    :add_profile("fan-modular")
+    :add_capabilities_to_component("main", main_component_capabilities)
 end
 
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_onoff_ep_id, is_child_device)
@@ -104,8 +102,8 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
     generic_profile = switch_utils.get_product_override_field(device, "target_profile") or generic_profile
   end
 
-  -- if no supported device type is found, return switch-binary as a generic "OnOff EP" profile
-  return generic_profile or "switch-binary"
+  -- if no supported device type is found, use switch-binary as a generic "OnOff EP" profile
+  return update_metadata_request.init():add_profile(generic_profile or "switch-binary")
 end
 
 -- Per the spec, these attributes are "meant to be changed only during commissioning."
@@ -123,31 +121,95 @@ function SwitchDeviceConfiguration.set_device_control_options(device)
   end
 end
 
-function ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, num_button_eps)
-  local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
-  if switch_utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
-    profile_name = "light-level-" .. profile_name
+--- Assigns a profile for the Generic Switch (button) endpoints of a device, and maps
+--- those endpoints to the components of that profile.
+---
+--- Button endpoints are generally handled by the modular "button-modular" profile, which
+--- enables a button capability on the "main" component and on as many "buttonN" components
+--- as the device has additional button endpoints. Devices whose presentation cannot be
+--- expressed by the modular profile (combination dimmable light/button devices, and devices
+--- with vendor specific preferences or presentation) remain statically profiled.
+---
+--- @param device any a Matter device object
+--- @param default_endpoint_id number the endpoint mapped to the "main" component
+--- @param button_ep_ids table the button endpoint ids to profile, from supported_button_eps
+--- @return table|nil update_metadata_request nil if no profile is available for these button endpoints
+function ButtonDeviceConfiguration.assign_profile_for_button_eps(device, default_endpoint_id, button_ep_ids)
+  local static_profile
+  if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
+    static_profile = "3-button-battery-temperature-humidity"
+  elseif switch_utils.get_product_override_field(device, "is_ikea_dual_button") then
+    static_profile = "ikea-2-button-battery"
+  elseif switch_utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
+    if not switch_utils.tbl_contains(fields.STATIC_BUTTON_SWITCH_PROFILE_SUPPORTED, #button_ep_ids) then
+      device.log.warn_with({hub_logs=true}, string.format(
+        "No light/button profile available for a device with %d button endpoints", #button_ep_ids))
+      return nil
+    end
+    -- remove the "1-" in a device with 1 button ep, e.g. "light-level-1-button" -> "light-level-button"
+    static_profile = "light-level-" .. string.gsub(#button_ep_ids .. "-button", "^1%-", "")
   end
-  local motion_eps = device:get_endpoints(clusters.OccupancySensing.ID)
-  if #motion_eps > 0 and (num_button_eps == 3 or num_button_eps == 6) then -- only these two devices are handled
-    profile_name = profile_name .. "-motion"
+
+  if static_profile then
+    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_ep_ids)
+    return update_metadata_request.init():add_profile(static_profile)
   end
+
+  local component_map = ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_ep_ids, true)
+  local updated_metadata = update_metadata_request.init():add_profile("button-modular")
+  local main_component_capabilities = {}
+
   local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
   if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
-    profile_name = profile_name .. "-battery"
+    table.insert(main_component_capabilities, capabilities.battery.ID)
   elseif battery_support == fields.battery_support.BATTERY_LEVEL then
-    profile_name = profile_name .. "-batteryLevel"
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
   end
-  if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
-    profile_name = "3-button-battery-temperature-humidity"
+  if #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+    table.insert(main_component_capabilities, capabilities.motionSensor.ID)
   end
-  if switch_utils.get_product_override_field(device, "is_ikea_dual_button") then
-    profile_name = "ikea-2-button-battery"
+  updated_metadata:add_capabilities_to_component("main", main_component_capabilities)
+
+  -- iterate by component number rather than over the map itself to keep a stable ordering
+  for component_num = 1, #button_ep_ids do
+    if component_map["button" .. component_num] then
+      updated_metadata:add_capabilities_to_component("button" .. component_num, {capabilities.button.ID})
+    end
   end
-  return profile_name
+
+  return updated_metadata
 end
 
-function ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_eps)
+--- Returns the button endpoints of a device that the modular button profile has components for,
+--- sorted by endpoint id. A device reporting more button endpoints than there are components to
+--- hold them is profiled with as many of them as will fit, rather than losing button support entirely.
+---
+--- @param device any a Matter device object
+--- @param button_ep_ids table the endpoint ids of every momentary switch endpoint
+--- @return table the endpoint ids that can be mapped to a component
+function ButtonDeviceConfiguration.supported_button_eps(device, button_ep_ids)
+  table.sort(button_ep_ids)
+  if #button_ep_ids <= fields.MAX_BUTTON_EPS then
+    return button_ep_ids
+  end
+
+  device.log.warn_with({hub_logs=true}, string.format(
+    "Device reports %d button endpoints, only the first %d will be supported", #button_ep_ids, fields.MAX_BUTTON_EPS))
+  local supported_button_ep_ids = {}
+  for component_num = 1, fields.MAX_BUTTON_EPS do
+    table.insert(supported_button_ep_ids, button_ep_ids[component_num])
+  end
+  return supported_button_ep_ids
+end
+
+--- Creates the component mapping for the button endpoints of a device. The endpoint matching
+--- default_endpoint_id maps to "main", and every other button endpoint maps to a "buttonN"
+--- component, where N is the position of that endpoint in the sorted list of button endpoints.
+---
+--- @param always_index_components boolean|nil when falsey, a lone button endpoint that is not the
+--- default endpoint maps to the unindexed "button" component of the static light-level-button profile.
+--- @return table component_map the map that was set on the device
+function ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_eps, always_index_components)
   -- create component mapping on the main profile button endpoints
   table.sort(button_eps)
   local component_map = {}
@@ -155,13 +217,14 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   for component_num, ep in ipairs(button_eps) do
     if ep ~= default_endpoint_id then
       local button_component = "button"
-      if #button_eps > 1 then
+      if always_index_components or #button_eps > 1 then
         button_component = button_component .. component_num
       end
       component_map[button_component] = ep
     end
   end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+  return component_map
 end
 
 function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
@@ -198,8 +261,8 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
 end
 
 function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_id, is_child_device)
+  local updated_metadata = update_metadata_request.init():add_profile("irrigation-system")
   local main_component_capabilities = {}
-  local profile_name = "irrigation-system"
 
   local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
   table.sort(valve_ep_ids)
@@ -213,7 +276,7 @@ function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device
   end
 
   if is_child_device then
-    return profile_name, {{"main", main_component_capabilities}}
+    return updated_metadata:add_capabilities_to_component("main", main_component_capabilities)
   end
 
   local irrigation_system_ep_info = switch_utils.get_endpoint_info(device, irrigation_system_ep_id)
@@ -224,7 +287,7 @@ function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device
     table.insert(main_component_capabilities, capabilities.operationalState.ID)
   end
 
-  return profile_name, {{"main", main_component_capabilities}}
+  return updated_metadata:add_capabilities_to_component("main", main_component_capabilities)
 end
 
 
@@ -260,8 +323,7 @@ function DeviceConfiguration.match_profile(driver, device)
   if profiling_data_still_required(device) then return end
 
   local default_endpoint_id = switch_utils.find_default_endpoint(device)
-  local optional_component_capabilities
-  local updated_profile
+  local updated_metadata = update_metadata_request.init()
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
@@ -269,14 +331,15 @@ function DeviceConfiguration.match_profile(driver, device)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
-    updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
-    local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
+    updated_metadata = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
+    local onoff_profile = updated_metadata.profile
+    local generic_profile = function(s) return string.find(onoff_profile or "", s, 1, true) end
     if generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion"
+      updated_metadata:add_profile(switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion")
     elseif switch_utils.check_switch_category_vendor_overrides(device) then
       -- check whether the overwrite should be over "plug" or "light" based on the current profile
-      local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"
-      updated_profile = string.gsub(updated_profile, overwrite_category, "switch")
+      local overwrite_category = string.find(onoff_profile, "plug") and "plug" or "light"
+      updated_metadata:add_profile(string.gsub(onoff_profile, overwrite_category, "switch"))
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
@@ -287,30 +350,34 @@ function DeviceConfiguration.match_profile(driver, device)
   local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM)
   local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
   if #irrigation_system_ep_ids > 0 then
-    updated_profile, optional_component_capabilities = ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_ids[1], false)
+    updated_metadata = ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_ids[1], false)
     ChildConfiguration.create_or_update_child_devices(driver, device, valve_ep_ids, default_endpoint_id, ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep)
   elseif #valve_ep_ids > 0 then
-    updated_profile = "water-valve"
+    local valve_profile = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      updated_profile = updated_profile .. "-level"
+      valve_profile = valve_profile .. "-level"
     end
+    updated_metadata = update_metadata_request.init():add_profile(valve_profile)
   end
 
   if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN) > 0 then
-    updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
+    updated_metadata = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
   end
 
   -- initialize the main device card with buttons if applicable
   local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momentary_switch_ep_ids) then
-    updated_profile = ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momentary_switch_ep_ids)
-    -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
-    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
-    ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
+  if #momentary_switch_ep_ids > 0 then
+    -- All supported button endpoints will be added as additional components in the profile containing the default_endpoint_id.
+    local button_ep_ids = ButtonDeviceConfiguration.supported_button_eps(device, momentary_switch_ep_ids)
+    local button_metadata = ButtonDeviceConfiguration.assign_profile_for_button_eps(device, default_endpoint_id, button_ep_ids)
+    if button_metadata then
+      updated_metadata = button_metadata
+      ButtonDeviceConfiguration.configure_buttons(device, button_ep_ids)
+    end
   end
 
-  device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
+  device:try_update_metadata(updated_metadata:format_request())
 end
 
 return {

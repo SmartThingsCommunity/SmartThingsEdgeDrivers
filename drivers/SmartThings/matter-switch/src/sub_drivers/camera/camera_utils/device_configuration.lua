@@ -10,6 +10,7 @@ local st_utils = require "st.utils"
 local device_cfg = require "switch_utils.device_configuration"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
+local update_metadata_request = require "switch_utils.update_metadata_request"
 
 local CameraDeviceConfiguration = {}
 
@@ -196,7 +197,7 @@ function CameraDeviceConfiguration.create_child_devices(driver, device)
   local parent_child_device = false
   for _, ep in ipairs(device.endpoints or {}) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep.endpoint_id) then
-      local child_profile = device_cfg.SwitchCfg.assign_profile_for_onoff_ep(device, ep.endpoint_id)
+      local child_profile = device_cfg.SwitchCfg.assign_profile_for_onoff_ep(device, ep.endpoint_id).profile
       if child_profile then
         num_floodlight_eps = num_floodlight_eps + 1
         local name = string.format("%s %d", "Floodlight", num_floodlight_eps)
@@ -224,7 +225,7 @@ function CameraDeviceConfiguration.match_profile(device)
   local status_light_enabled_present, status_light_brightness_present = get_status_light_presence(device)
   local hard_privacy_mode_present = get_hard_privacy_mode_presence(device)
   local profile_update_requested = false
-  local optional_supported_component_capabilities = {}
+  local updated_metadata = update_metadata_request.init():add_profile("camera")
   local main_component_capabilities = {}
   local status_led_component_capabilities = {}
   local speaker_component_capabilities = {}
@@ -313,23 +314,23 @@ function CameraDeviceConfiguration.match_profile(device)
     table.insert(status_led_component_capabilities, capabilities.mode.ID)
   end
 
-  table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.main, main_component_capabilities})
+  updated_metadata:add_capabilities_to_component(camera_fields.profile_components.main, main_component_capabilities)
   if #status_led_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
+    updated_metadata:add_capabilities_to_component(camera_fields.profile_components.statusLed, status_led_component_capabilities)
   end
   if #speaker_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
+    updated_metadata:add_capabilities_to_component(camera_fields.profile_components.speaker, speaker_component_capabilities)
   end
   if #microphone_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
+    updated_metadata:add_capabilities_to_component(camera_fields.profile_components.microphone, microphone_component_capabilities)
   end
   if #doorbell_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
+    updated_metadata:add_capabilities_to_component(camera_fields.profile_components.doorbell, doorbell_component_capabilities)
   end
 
-  if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
+  if camera_utils.optional_capabilities_list_changed(updated_metadata:formatted_enabled_components(), device.profile.components) then
     profile_update_requested = true
-    device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
+    device:try_update_metadata(updated_metadata:format_request())
     if #doorbell_endpoints > 0 then
       CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
       button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))

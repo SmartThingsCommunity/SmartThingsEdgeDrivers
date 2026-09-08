@@ -10,9 +10,27 @@ local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 local uint32 = require "st.matter.data_types.Uint32"
 
+--- the modular button profile enables a button capability on "main" and on one "buttonN"
+--- component per additional button endpoint. The 5 button endpoints of these mock devices
+--- map to main, button2, button3, button4 and button5.
+local function modular_button_metadata(main_capabilities)
+  local optional_component_capabilities = {{"main", main_capabilities}}
+  for component_num = 2, 5 do
+    table.insert(optional_component_capabilities, {"button" .. component_num, {"button"}})
+  end
+  return { profile = "button-modular", optional_component_capabilities = optional_component_capabilities }
+end
+
+local function modular_button_profile(main_capabilities)
+  return t_utils.get_profile_definition(
+    "button-modular.yml",
+    { enabled_optional_capabilities = modular_button_metadata(main_capabilities).optional_component_capabilities }
+  )
+end
+
 local mock_device = test.mock_device.build_test_matter_device(
   {
-    profile = t_utils.get_profile_definition("5-button.yml"),
+    profile = modular_button_profile({}),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     matter_version = {hardware = 1, software = 1},
     endpoints = {
@@ -95,7 +113,7 @@ local mock_device = test.mock_device.build_test_matter_device(
 
 local mock_device_battery = test.mock_device.build_test_matter_device(
   {
-    profile = t_utils.get_profile_definition("5-button-battery.yml"),
+    profile = modular_button_profile({"battery"}),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     matter_version = {hardware = 1, software = 1},
     endpoints = {
@@ -190,7 +208,7 @@ local function update_profile()
     mock_device_battery, 10, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
   )})
   expect_configure_buttons(mock_device_battery)
-  mock_device_battery:expect_metadata_update({ profile = "5-button-battery" })
+  mock_device_battery:expect_metadata_update(modular_button_metadata({"battery"}))
 end
 
 -- All messages queued and expectations set are done before the driver is actually run
@@ -219,7 +237,7 @@ local function test_init()
   --doConfigure sets the provisioning state to provisioned
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   expect_configure_buttons(mock_device)
-  mock_device:expect_metadata_update({ profile = "5-button" })
+  mock_device:expect_metadata_update(modular_button_metadata({}))
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -969,7 +987,7 @@ test.register_coroutine_test(
       }
     )
     expect_configure_buttons(mock_device)
-    mock_device:expect_metadata_update({ profile = "5-button-batteryLevel" })
+    mock_device:expect_metadata_update(modular_button_metadata({"batteryLevel"}))
   end,
   {
      min_api_version = 15
@@ -990,7 +1008,7 @@ test.register_coroutine_test(
       }
     )
     expect_configure_buttons(mock_device)
-    mock_device:expect_metadata_update({ profile = "5-button-battery" })
+    mock_device:expect_metadata_update(modular_button_metadata({"battery"}))
   end,
   {
      min_api_version = 15

@@ -24,8 +24,17 @@ local aqara_parent_ep = 4
 local aqara_child1_ep = 1
 local aqara_child2_ep = 2
 
+local expected_optional_component_capabilities = {
+  {"main", {}},
+  {"button2", {"button"}},
+  {"button3", {"button"}},
+  {"button4", {"button"}},
+}
+
 local aqara_mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("4-button.yml"),
+  profile = t_utils.get_profile_definition(
+    "button-modular.yml", { enabled_optional_capabilities = expected_optional_component_capabilities }
+  ),
   manufacturer_info = {vendor_id = 0x115F, product_id = 0x1009, product_name = "Aqara Light Switch H2"},
   matter_version = {hardware = 1, software = 1},
   label = "Aqara Light Switch",
@@ -182,7 +191,10 @@ local function test_init()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
   configure_buttons()
-  aqara_mock_device:expect_metadata_update({ profile = "4-button" })
+  aqara_mock_device:expect_metadata_update({
+    profile = "button-modular",
+    optional_component_capabilities = expected_optional_component_capabilities
+  })
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(aqara_mock_children) do
@@ -206,7 +218,7 @@ local function test_init()
   })
 
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
-  device_info_copy.profile.id = "4-button"
+  device_info_copy.profile.id = "button-modular"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
   configure_buttons()

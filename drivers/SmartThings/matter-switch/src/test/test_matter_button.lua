@@ -99,7 +99,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     expect_configure_button(mock_device)
-    mock_device:expect_metadata_update({ profile = "button" })
+    mock_device:expect_metadata_update({ profile = "button-modular", optional_component_capabilities = {{"main", {}}} })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
     assert(switch_utils.deep_equals(st_utils.deep_copy(mock_device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP)), expected_component_to_endpoint_map), "Component to endpoint map should be set in doConfigure")
@@ -532,7 +532,7 @@ test.register_coroutine_test(
       mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
     )})
     expect_configure_button(mock_device_battery)
-    mock_device_battery:expect_metadata_update({ profile = "button-battery" })
+    mock_device_battery:expect_metadata_update({ profile = "button-modular", optional_component_capabilities = {{"main", {"battery"}}} })
   end,
   {
     test_init = test_init_profile_change_with_battery,
@@ -547,7 +547,7 @@ test.register_coroutine_test(
       mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatChargeLevel.ID)}
     )})
     expect_configure_button(mock_device_battery)
-    mock_device_battery:expect_metadata_update({ profile = "button-batteryLevel" })
+    mock_device_battery:expect_metadata_update({ profile = "button-modular", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end,
   {
     test_init = test_init_profile_change_with_battery,
@@ -565,7 +565,7 @@ test.register_coroutine_test(
       }
     )
     expect_configure_button(mock_device_battery)
-    mock_device_battery:expect_metadata_update({ profile = "button" })
+    mock_device_battery:expect_metadata_update({ profile = "button-modular", optional_component_capabilities = {{"main", {}}} })
     test.wait_for_events()
     assert(mock_device_battery:get_field(fields.profiling_data.BATTERY_SUPPORT) == fields.battery_support.NO_BATTERY, "Device should be marked as not supporting battery")
   end,

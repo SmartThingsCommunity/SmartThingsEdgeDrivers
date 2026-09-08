@@ -7,6 +7,7 @@ local cluster_base = require "st.matter.cluster_base"
 local device_lib = require "st.device"
 local buttonCfg = require "switch_utils.device_configuration".ButtonCfg
 local create_child = require "switch_utils.device_configuration".ChildCfg.create_or_update_child_devices
+local update_metadata_request = require "switch_utils.update_metadata_request"
 local switch_utils = require "switch_utils.utils"
 local fields = require "switch_utils.fields"
 local version = require "version"
@@ -94,7 +95,7 @@ end
 local function assign_profile_for_endpoint(device_type_id)
   local profile = fields.device_type_profile_map[device_type_id] or "switch-binary"
   return function(device, ep_id, is_child_device)
-    return profile, nil
+    return update_metadata_request.init():add_profile(profile)
   end
 end
 
