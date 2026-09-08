@@ -384,12 +384,17 @@ test.register_coroutine_test(
       parent_assigned_child_key = string.format("%d", 7)
     })
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-    unsup_mock_device:expect_metadata_update({ profile = "2-button" })
+    unsup_mock_device:expect_metadata_update({
+      profile = "button-modular",
+      optional_component_capabilities = {{"main", {}}, {"button2", {"button"}}}
+    })
     unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
     test.wait_for_events()
 
-    local updated_device_profile = t_utils.get_profile_definition("2-button.yml")
+    local updated_device_profile = t_utils.get_profile_definition(
+      "button-modular.yml", { enabled_optional_capabilities = {{"main", {}}, {"button2", {"button"}}} }
+    )
     test.socket.device_lifecycle:__queue_receive(unsup_mock_device:generate_info_changed({ profile = updated_device_profile }))
 
     local CLUSTER_SUBSCRIBE_LIST = {

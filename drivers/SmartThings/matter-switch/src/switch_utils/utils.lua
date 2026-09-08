@@ -150,6 +150,7 @@ end
 
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
+--- @return number endpoint_id the default endpoint id
 function utils.find_default_endpoint(device)
   -- Buttons should not be set on the main component for the Aqara Climate Sensor W100,
   if utils.get_product_override_field(device, "is_climate_sensor_w100") then
@@ -163,7 +164,7 @@ function utils.find_default_endpoint(device)
         return ep
       end
     end
-    return nil
+    return device.MATTER_DEFAULT_ENDPOINT -- note: this shouldn't ever occur
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found

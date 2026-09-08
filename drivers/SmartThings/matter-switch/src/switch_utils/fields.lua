@@ -208,8 +208,13 @@ SwitchFields.START_BUTTON_PRESS = "__start_button_press"
 SwitchFields.TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 SwitchFields.HELD_THRESHOLD = 1
 
--- this is the number of buttons for which we have a static profile already made
-SwitchFields.STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
+-- the maximum number of button (Generic Switch) endpoints representable by the modular button profile.
+-- one endpoint may be mapped to the "main" component, the rest map to the "buttonN" components.
+SwitchFields.MAX_BUTTON_EPS = 30
+
+-- combination dimmable light/button devices are still profiled statically. This is the
+-- number of button endpoints for which we have a "light-level-N-button" profile already made.
+SwitchFields.STATIC_BUTTON_SWITCH_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because

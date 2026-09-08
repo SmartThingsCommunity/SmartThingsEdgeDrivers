@@ -1,0 +1,47 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+local UpdateMetadataRequest = {}
+UpdateMetadataRequest.__index = UpdateMetadataRequest
+
+function UpdateMetadataRequest.init()
+  local update_metadata_request = setmetatable({}, UpdateMetadataRequest)
+  update_metadata_request.profile = nil
+  update_metadata_request.enabled_components = {}
+  return update_metadata_request
+end
+
+function UpdateMetadataRequest:add_capabilities_to_component(component_id, capability_ids)
+  if not self.enabled_components[component_id] then
+    self.enabled_components[component_id] = {}
+  end
+  for _, capability_id in ipairs(capability_ids) do
+    table.insert(self.enabled_components[component_id], capability_id)
+  end
+  return self
+end
+
+function UpdateMetadataRequest:add_profile(profile)
+  self.profile = profile
+  return self
+end
+
+function UpdateMetadataRequest:formatted_enabled_components()
+  local formatted_enabled_components = {}
+  for component_id, capability_ids in pairs(self.enabled_components) do
+    table.insert(formatted_enabled_components, { component_id, capability_ids })
+  end
+  return formatted_enabled_components
+end
+
+function UpdateMetadataRequest:format_request()
+  local formatted_request = {
+    profile = self.profile,
+    -- Since try_update_metadata counts an empty list as a populated field, sending one
+    -- here would attach a meaningless instruction to every static profile update.
+    optional_component_capabilities = next(self.enabled_components) and self:formatted_enabled_components() or nil
+  }
+  return formatted_request
+end
+
+return UpdateMetadataRequest
