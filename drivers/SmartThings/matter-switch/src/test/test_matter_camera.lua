@@ -2353,6 +2353,24 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Set PTZ command with a zoom-omitting setPanTiltZoom should not clamp the missing axis",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "mechanicalPanTiltZoom", component = "main", command = "setPanTiltZoom", args = { 0, 0 } },
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 0, 0, nil)
+    })
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Preset commands should send the appropriate commands",
   function()
     update_device_profile()
