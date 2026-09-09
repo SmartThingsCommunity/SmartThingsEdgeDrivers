@@ -325,17 +325,17 @@ end
 --- SET feature, all AvailableEndpoints responses must be handled before profiling.
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
   if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
-    device.log.warn("Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
+    device.log.warn_with({hub_logs=true},"Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
     return
   end
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   if set_topology_eps == nil then
-    device.log.warn("Received an AvailableEndpoints response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with SET feature. Ignoring this response.")
+    device.log.warn_with({hub_logs=true},"Received an AvailableEndpoints response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with SET feature. Ignoring this response.")
     return
   end
 
   device.log.debug_with({hub_logs=true}, string.format("Handling AvailableEndpoints response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements or {})))
-  for i, set_ep_info in pairs(set_topology_eps or {}) do
+  for i, set_ep_info in ipairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
@@ -349,7 +349,8 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
       break
     end
   end
-  if #set_topology_eps == 0 then -- in other words, all AvailableEndpoints attribute responses have been handled
+  if switch_utils.is_field_empty(device, fields.ELECTRICAL_SENSOR_EPS) then
+    device.log.info_with({hub_logs=true}, "All AvailableEndpoints attribute responses for SET Electrical Sensor endpoints have been handled, attempting to match profile")
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
     device_cfg.match_profile(driver, device)
   end
@@ -360,17 +361,17 @@ end
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
-    device.log.warn("Received a PartsList response after power topology has already been determined. Ignoring this response.")
+    device.log.warn_with({hub_logs=true}, "Received a PartsList response after power topology has already been determined. Ignoring this response.")
     return
   end
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   if tree_topology_eps == nil then
-    device.log.warn("Received a PartsList response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with TREE feature. Ignoring this response.")
+    device.log.warn_with({hub_logs=true}, "Received a PartsList response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with TREE feature. Ignoring this response.")
     return
   end
 
-  device.log.debug_with({hub_logs=true}, string.format("Handling PartsList response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements or {})))
-  for i, tree_ep_info in pairs(tree_topology_eps or {}) do
+  device.log.info_with({hub_logs=true}, string.format("Handling PartsList response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements or {})))
+  for i, tree_ep_info in ipairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
@@ -384,7 +385,8 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
       break
     end
   end
-  if #tree_topology_eps == 0 then -- in other words, all PartsList attribute responses for TREE Electrical Sensor EPs have been handled
+  if switch_utils.is_field_empty(device, fields.ELECTRICAL_SENSOR_EPS) then
+    device.log.info_with({hub_logs=true}, "All PartsList attribute responses for TREE Electrical Sensor endpoints have been handled, attempting to match profile")
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
     device_cfg.match_profile(driver, device)
   end
