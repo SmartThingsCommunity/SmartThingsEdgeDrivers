@@ -89,6 +89,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1060
     deviceProfileName: temperature-humidity-battery
+  - id: "4619/4130"
+    deviceLabel: Smart Water Leakage Sensor
+    vendorId: 0x120B
+    productId: 0x1022
+    deviceProfileName: leak-battery
   # Ikea
   - id: "4476/32773"
     deviceLabel: TIMMERFLOTTE Temperature/Humidity Sensor
