@@ -17,6 +17,7 @@ end
 local MATTER_DEVICE_ID = "MATTER_DEVICE_ID"
 local PARENT_ID = "PARENT_ID"
 local BUTTON_EPS = "__button_eps"
+local MAIN_WC_EP = "__main_wc_ep"
 
 local function create_parent_device(product_id)
   return test.mock_device.build_test_matter_device({
@@ -434,6 +435,80 @@ local function create_hager_pir_device(profile_name, parent)
   })
 end
 
+-- Create Hager 1G device with ONLY a WindowCovering endpoint (12) - no button or occupancy endpoints
+local function create_hager_1g_window_covering(profile_name, parent)
+  return test.mock_device.build_test_matter_device({
+    label = "Hager G2 1G Window Covering",
+    profile = t_utils.get_profile_definition(profile_name .. ".yml"),
+    type = "MATTER",
+    manufacturer_info = {
+      vendor_id = 0x1285,
+      product_id = 0x0005,
+    },
+    parent_device_id = parent.id,
+    endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = { { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" } },
+        device_types = { { device_type_id = 0x0016, device_type_revision = 1 } }
+      },
+      {
+        endpoint_id = 12,
+        clusters = {
+          {
+            cluster_id = clusters.WindowCovering.ID,
+            cluster_type = "SERVER",
+            cluster_revision = 1,
+            feature_map = clusters.WindowCovering.types.Feature.LIFT |
+              clusters.WindowCovering.types.Feature.POSITION_AWARE_LIFT |
+              clusters.WindowCovering.types.Feature.ABSOLUTE_POSITION,
+            attributes = {
+              [clusters.WindowCovering.attributes.OperationalStatus.ID] = 0x00,
+              [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = 0x0000,
+            }
+          }
+        },
+        device_types = { { device_type_id = 0x0202, device_type_revision = 1 } }
+      },
+    }
+  })
+end
+
+-- Create Hager 1G Relay device with endpoint 3 (OnOff cluster)
+local function create_hager_1g_relay(profile_name, parent)
+  return test.mock_device.build_test_matter_device({
+    label = "Hager G2 1G Relay",
+    profile = t_utils.get_profile_definition(profile_name .. ".yml"),
+    type = "MATTER",
+    manufacturer_info = {
+      vendor_id = 0x1285,
+      product_id = 0x0005,
+    },
+    parent_device_id = parent.id,
+    endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = { { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" } },
+        device_types = { { device_type_id = 0x0016, device_type_revision = 1 } }
+      },
+      {
+        endpoint_id = 3,
+        clusters = {
+          {
+            cluster_id = clusters.OnOff.ID,
+            cluster_type = "SERVER",
+            cluster_revision = 1,
+            attributes = {
+              [clusters.OnOff.attributes.OnOff.ID] = false
+            }
+          }
+        },
+        device_types = { { device_type_id = 0x0100, device_type_revision = 1 } }
+      },
+    }
+  })
+end
+
 local function add_parent_device(parent)
   test.mock_device.add_test_device(parent)
   test.socket.device_lifecycle:__queue_receive({ parent.id, "added" })
@@ -495,8 +570,8 @@ local function button_supported_values (matter_device)
 end
 
 local function initiate_info_changed(device, profile)
-  test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
   test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+  test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
   test.mock_time.advance_time(2)
 end
 
@@ -510,6 +585,50 @@ local function configure_parent(device)
   })
   test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
   test.mock_time.advance_time(3)
+end
+
+-- Create window covering child device on EP12 via PartsList and DeviceTypeList reports
+local function announce_window_covering_child(host)
+  test.socket.matter:__queue_receive({
+    host.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(host, 2, data_types.Array({
+      data_types.Uint16(8),
+      data_types.Uint16(9),
+      data_types.Uint16(12),
+    }))
+  })
+  for _, ep in ipairs({ 8, 9, 12 }) do
+    test.socket.matter:__expect_send({
+      host.id,
+      clusters.Descriptor.attributes.DeviceTypeList:subscribe(host, ep)
+    })
+  end
+
+  test.socket.matter:__queue_receive({
+    host.id,
+    clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(host, 12, data_types.Array {
+      {
+        device_type = data_types.Uint32(514),
+        revision = data_types.Uint16(1)
+      }
+    })
+  })
+  host:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Hager G2 4x Button 1",
+    profile = "window-covering",
+    parent_device_id = host.id,
+    parent_assigned_child_key = "12"
+  })
+
+  local child_wc = test.mock_device.build_test_child_device({
+    profile = t_utils.get_profile_definition("window-covering.yml"),
+    device_network_id = string.format("%s:12", host.id),
+    parent_device_id = host.id,
+    parent_assigned_child_key = "12"
+  })
+  test.mock_device.add_test_device(child_wc)
+  return child_wc
 end
 
 local parent = create_parent_device(0x0006)  -- 2G button product
@@ -593,9 +712,9 @@ test.register_coroutine_test("Test: 4-Button Device Detection - Profile Changes 
   })
 
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press, and Held Events on 4-Button Device", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -800,9 +919,9 @@ test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press
   })
   test.socket.capability:__expect_send(matter_device:generate_test_message("button4", capabilities.button.button.held({ state_change = true })))
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 15) and OnOff (Type 256) Device Types with Child Creation", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -896,9 +1015,9 @@ test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 1
     clusters.OnOff.attributes.OnOff:subscribe(parent, nil)
   })
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: 2G Relay - Profile Changes Between light-binary and 2-button Based On Endpoint Availability", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1141,9 +1260,9 @@ test.register_coroutine_test("Test: 2G Relay - Profile Changes Between light-bin
     parent_assigned_child_key = "4"
   })
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: Dimmer Device - Child Creation for Dimmable Endpoint with Button Support", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1240,9 +1359,9 @@ test.register_coroutine_test("Test: Dimmer Device - Child Creation for Dimmable 
   })
 
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: 1G Dimmer - Initialization and Profile Update to light-level", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1252,9 +1371,9 @@ test.register_coroutine_test("Test: 1G Dimmer - Initialization and Profile Updat
   test.wait_for_events()
   configure_parent(parent)
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: 1G Dimmer - Host Commands and Level Control Capabilities", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1327,9 +1446,9 @@ test.register_coroutine_test("Test: 1G Dimmer - Host Commands and Level Control 
     clusters.LevelControl.server.commands.MoveToLevelWithOnOff(dimmer, 4, 51, nil, 0, 0)
   })
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: PIR Device - Initialization with Motion and Illuminance Capabilities", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1340,9 +1459,9 @@ test.register_coroutine_test("Test: PIR Device - Initialization with Motion and 
   configure_parent(parent_pir)
 
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: PIR Device - Complete Functionality with Motion, Illuminance, and Dimmer Support", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1497,9 +1616,9 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
   test.socket.capability:__expect_send(child_dimmer:generate_test_message("main", capabilities.switchLevel.level(50)))
   parent_pir.expect_native_attr_handler_registration(parent_pir, "switchLevel", "level")
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile with Window Covering Child Device", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1638,9 +1757,9 @@ test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile
   test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
 
 end,
-    {
-      min_api_version = 15
-    })
+  {
+    min_api_version = 15
+  })
 
 test.register_coroutine_test("Test: Window Covering - Preference Changes for Reverse Polarity and Preset Position", function()
   test.socket.matter:__set_channel_ordering("relaxed")
@@ -1806,8 +1925,179 @@ test.register_coroutine_test("Test: Window Covering - Preference Changes for Rev
     cluster_base.subscribe(parent, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil)
   })
 end,
-    {
-      min_api_version = 15
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: 1G Window Covering - window-covering Profile and No Duplicate Child Device", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  add_parent_device(parent_1g)
+  local wc_1g = create_hager_1g_window_covering("window-covering", parent_1g)
+  add_matter_device(wc_1g, parent_1g, "window-covering")
+  test.wait_for_events()
+  configure_parent(parent_1g)
+  test.wait_for_events()
+
+  local main_wc_ep = wc_1g:get_field(MAIN_WC_EP)
+  assert(main_wc_ep == 12, "MAIN_WC_EP is set to 12")
+
+  -- EP12 reported again → no second child created, MAIN_WC_EP already set
+  test.socket.matter:__queue_receive({
+    parent_1g.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(parent_1g, 2, data_types.Array({
+      data_types.Uint16(12),
+    }))
+  })
+  test.socket.matter:__expect_send({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(parent_1g, 12)
+  })
+  test.wait_for_events()
+
+  test.socket.matter:__queue_receive({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(parent_1g, 12, data_types.Array {
+      {
+        device_type = data_types.Uint32(514),
+        revision = data_types.Uint16(1)
+      }
     })
+  })
+  test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: 1G Relay - Profile Changes Between light-binary and 2-button Based On EP3 Availability", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  add_parent_device(parent_1g)
+  local relay_1g = create_hager_1g_relay("light-binary", parent_1g)
+  add_switch_matter_device(relay_1g, parent_1g)
+  test.wait_for_events()
+  configure_parent(parent_1g)
+  test.wait_for_events()
+
+  -- Scenario 1: EP3 present → light-binary profile
+  test.socket.matter:__queue_receive({
+    parent_1g.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(parent_1g, 2, data_types.Array({
+      data_types.Uint16(3),
+    }))
+  })
+  test.socket.matter:__expect_send({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(parent_1g, 3)
+  })
+  relay_1g:expect_metadata_update({ profile = "light-binary" })
+  test.wait_for_events()
+
+  -- EP3 is device type 256 (OnOff) - no child device created for 1G
+  test.socket.matter:__queue_receive({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(parent_1g, 3, data_types.Array {
+      {
+        device_type = data_types.Uint32(256),
+        revision = data_types.Uint16(1)
+      }
+    })
+  })
+  test.wait_for_events()
+
+  -- Scenario 2: EP3 removed, buttons 8 & 9 present → 2-button profile
+  test.socket.matter:__queue_receive({
+    parent_1g.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(parent_1g, 2, data_types.Array({
+      data_types.Uint16(8),
+      data_types.Uint16(9),
+    }))
+  })
+  test.socket.matter:__expect_send({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(parent_1g, 8)
+  })
+  test.socket.matter:__expect_send({
+    parent_1g.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(parent_1g, 9)
+  })
+  relay_1g:expect_metadata_update({ profile = "2-button" })
+  test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: Window Covering - Position Attribute Reports With Reverse Polarity", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  add_parent_device(parent)
+  local window_covering_device = create_matter_device_with_window("2-button", parent)
+  add_matter_device(window_covering_device, parent, "2-button")
+  test.wait_for_events()
+  configure_parent(parent)
+  test.wait_for_events()
+
+  local child_wc = announce_window_covering_child(parent)
+  test.wait_for_events()
+
+  -- Attribute reports are addressed to the host, so reverse is set on the host
+  test.socket.device_lifecycle():__queue_receive(
+    parent:generate_info_changed({ preferences = { reverse = "true" } })
+  )
+  test.wait_for_events()
+
+  -- Verify 50% position via attribute report - direction independent
+  test.socket.matter:__queue_receive({
+    parent.id,
+    clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(parent, 12, 5000)
+  })
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50)))
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
+  test.wait_for_events()
+
+  -- Verify 100% position via attribute report - with reverse true, this should report closed
+  test.socket.matter:__queue_receive({
+    parent.id,
+    clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(parent, 12, 0)
+  })
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
+  test.wait_for_events()
+
+  -- Verify 0% position via attribute report - with reverse true, this should report open
+  test.socket.matter:__queue_receive({
+    parent.id,
+    clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(parent, 12, 10000)
+  })
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.open()))
+  test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: Window Covering - Unrecognised OperationalStatus Reports Unknown State", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  add_parent_device(parent)
+  local window_covering_device = create_matter_device_with_window("2-button", parent)
+  add_matter_device(window_covering_device, parent, "2-button")
+  test.wait_for_events()
+  configure_parent(parent)
+  test.wait_for_events()
+
+  local child_wc = announce_window_covering_child(parent)
+  test.wait_for_events()
+
+  -- OperationalStatus 0x03 is neither opening (1) nor closing (2)
+  test.socket.matter:__queue_receive({
+    parent.id,
+    clusters.WindowCovering.attributes.OperationalStatus:build_test_report_data(parent, 12, 0x03)
+  })
+  test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.unknown()))
+  test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
 
 test.run_registered_tests()
