@@ -2,7 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local function can_handle(opts, driver, device, ...)
-  if device:get_model() == "SNZB-02M" then
+  if device:get_manufacturer() == "SONOFF" and device:get_model() == "SNZB-02M" then
     return true, require("sonoff.SNZB-02M")
   end
 

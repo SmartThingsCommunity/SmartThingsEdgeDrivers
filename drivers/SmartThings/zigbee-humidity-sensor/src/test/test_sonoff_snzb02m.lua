@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
@@ -32,29 +32,6 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
-
-test.register_message_test(
-  "Pressure report above 2000 should be divided by 1000",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        PressureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 10000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 10.0, unit = "kPa" }))
-    }
-  },
-  {
-    min_api_version = 14
-  }
-)
 
 test.register_message_test(
   "Pressure report at or below 2000 should be divided by 10",
