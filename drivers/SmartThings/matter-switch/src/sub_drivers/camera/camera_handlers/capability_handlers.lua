@@ -157,9 +157,15 @@ CameraCapabilityHandlers.ptz_set_position_factory = function(command)
     -- a single-axis command should only set (and clamp) the axis it targets.
     local pan, tilt, zoom
     if command == capabilities.mechanicalPanTiltZoom.commands.setPanTiltZoom then
-      pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
-      tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
-      zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
+      if cmd.args.pan ~= nil then
+        pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
+      end
+      if cmd.args.tilt ~= nil then
+        tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
+      end
+      if cmd.args.zoom ~= nil then
+        zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
+      end
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setPan then
       pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setTilt then
