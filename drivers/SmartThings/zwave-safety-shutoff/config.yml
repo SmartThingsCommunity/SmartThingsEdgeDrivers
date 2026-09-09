@@ -1,0 +1,6 @@
+name: 'Z-Wave Appliance Safety'
+packageKey: 'zwave-appliance-safety'
+permissions:
+  zwave: {}
+description: "SmartThings driver for Z-Wave appliance safety devices."
+vendorSupportInformation: "https://support.smartthings.com"
