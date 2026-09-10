@@ -71,18 +71,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         local scanned = false
-        local connectivity_status, rest_err
-
+        local backoff = utils.backoff_builder(30, 1, 0.5)
         while true do
-          if scanned then break end
-          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          local connectivity_status, rest_err = bridge_api:get_connectivity_status()
           if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
               bridge_device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
-            goto continue
-          end
-
-          if connectivity_status.errors and #connectivity_status.errors > 0 then
+          elseif connectivity_status.errors and #connectivity_status.errors > 0 then
             log.error(
               string.format(
                 "Hue Bridge %s replied with the following error message(s) " ..
@@ -93,10 +88,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             for idx, err in ipairs(connectivity_status.errors) do
               log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
             end
-            goto continue
-          end
-
-          if connectivity_status.data and #connectivity_status.data > 0 then
+          elseif connectivity_status.data and #connectivity_status.data > 0 then
             scanned = true
             for _, status in ipairs(connectivity_status.data) do
               local hue_device_id = (status.owner and status.owner.rid) or ""
@@ -125,7 +117,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           end
 
-          ::continue::
+          if scanned then break end
+          cosock.socket.sleep(backoff())
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
@@ -146,8 +139,12 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
+        -- json.decode (dkjson) returns `value, position, err` -- `position` (the index it
+        -- stopped scanning at) is a non-nil number even on a fully successful decode, so it
+        -- has to be captured and discarded here rather than accidentally landing in `err`,
+        -- which would otherwise make every SSE message look like a JSON parse error.
         ---@type HueSseEvent[], string?
-        local events, err = table.unpack(json_result, 1, json_result.n)
+        local events, _, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
           log.error_with(
