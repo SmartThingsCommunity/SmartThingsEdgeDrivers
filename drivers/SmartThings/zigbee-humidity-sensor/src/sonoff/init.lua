@@ -31,7 +31,7 @@ local function refresh_handler(driver, device, command)
   device:send(clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
-local can_handle = require "sonoff.SNZB-02M.can_handle"
+local can_handle = require "sonoff.can_handle"
 
 return {
   NAME = "Sonoff SNZB-02M Sensor",
