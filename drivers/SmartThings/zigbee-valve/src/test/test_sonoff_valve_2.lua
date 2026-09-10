@@ -11,7 +11,7 @@ local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
--- 父设备（端点1）：valve + battery + powerSource + firmwareUpdate + refresh
+-- Parent device (endpoint 1): valve + battery + powerSource + firmwareUpdate + refresh
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("sonoff-irrigation-2.yml"),
     zigbee_endpoints = {
@@ -31,7 +31,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
--- 子设备（端点2）：只有 valve + refresh，无电池/电源
+-- Child device (endpoint 2): valve + refresh only; no battery or power source
 local mock_child = test.mock_device.build_test_child_device({
   profile = t_utils.get_profile_definition("valve.yml"),
   device_network_id = string.format("%04X:%02X", mock_device:get_short_address(), 2),
@@ -49,7 +49,7 @@ end
 test.set_test_init_function(test_init)
 
 -- ============================================================================
--- 父设备（端点1）测试：OnOff 属性上报 → valve 事件
+-- Parent device (endpoint 1) tests: OnOff attribute reports -> valve events
 -- ============================================================================
 
 test.register_message_test(
@@ -87,7 +87,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- 子设备（端点2）测试：OnOff 属性上报 → 子设备 valve 事件
+-- Child device (endpoint 2) tests: OnOff attribute reports -> child valve events
 -- ============================================================================
 
 test.register_message_test(
@@ -125,7 +125,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- 父设备电池/电源测试
+-- Parent device battery and power source tests
 -- ============================================================================
 
 -- Battery percentage
@@ -164,7 +164,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- 父设备（端点1）valve 命令测试
+-- Parent device (endpoint 1) valve command tests
 -- ============================================================================
 
 test.register_message_test(
@@ -210,7 +210,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- 子设备（端点2）valve 命令测试
+-- Child device (endpoint 2) valve command tests
 -- ============================================================================
 
 test.register_message_test(
@@ -256,7 +256,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- doConfigure 生命周期测试
+-- doConfigure lifecycle tests
 -- ============================================================================
 
 test.register_coroutine_test(
@@ -306,7 +306,7 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- Refresh 测试
+-- Refresh tests
 -- ============================================================================
 
 test.register_message_test(
@@ -342,7 +342,7 @@ test.register_message_test(
 )
 
 -- ============================================================================
--- Device added 生命周期测试（验证子设备创建 + refresh）
+-- Device added lifecycle tests: child-device creation and refresh
 -- ============================================================================
 
 test.register_coroutine_test(
@@ -351,7 +351,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-      -- 验证子设备创建
+      -- Verify child-device creation
       mock_device:expect_device_create({
         type = "EDGE_CHILD",
         label = string.format("%s 2", mock_device.label),
@@ -360,7 +360,7 @@ test.register_coroutine_test(
         parent_assigned_child_key = "02"
       })
 
-      -- 验证 refresh 读取父设备属性
+      -- Verify that refresh reads parent-device attributes
       test.socket.zigbee:__expect_send({
         mock_device.id,
         Basic.attributes.PowerSource:read(mock_device)
