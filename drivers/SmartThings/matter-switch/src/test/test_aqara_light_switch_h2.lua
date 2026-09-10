@@ -4,8 +4,6 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
 local version = require "version"
 
@@ -205,19 +203,16 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
 
-  local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
-  device_info_copy.profile.id = "4-button"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
-  configure_buttons()
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive(aqara_mock_device:generate_info_changed({profile = t_utils.get_profile_definition("4-button.yml")}))
 end
+
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Button/Switch device : button/switch capability should send the appropriate commands",
     function()
+      test.wait_for_events()
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,

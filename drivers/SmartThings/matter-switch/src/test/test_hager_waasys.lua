@@ -494,10 +494,13 @@ local function button_supported_values (matter_device)
   test.socket.capability:__expect_send(matter_device:generate_test_message("button4", capabilities.button.supportedButtonValues({ "pushed", "double", "held" })))
 end
 
-local function initiate_info_changed(device, profile)
+local function initiate_info_changed(device, profile, parent)
   test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
   test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
   test.mock_time.advance_time(2)
+  if parent ~= nil then
+    test.socket.device_lifecycle:__queue_receive(parent:generate_info_changed({}))
+  end
 end
 
 local function configure_parent(device)
@@ -1432,7 +1435,7 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
   })
 
   test.mock_device.add_test_device(child_dimmer)
-  initiate_info_changed(child_dimmer, "light-level")
+  initiate_info_changed(child_dimmer, "light-level", parent_pir)
   test.socket.matter:__expect_send({
     parent_pir.id,
     cluster_base.subscribe(parent_pir, nil, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil)
@@ -1558,7 +1561,7 @@ test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile
   })
 
   test.mock_device.add_test_device(child_wc)
-  initiate_info_changed(child_wc, "window-covering")
+  initiate_info_changed(child_wc, "window-covering", parent)
 
   test.socket.matter:__expect_send({
     parent.id,
@@ -1725,6 +1728,7 @@ test.register_coroutine_test("Test: Window Covering - Preference Changes for Rev
 
   test.socket.device_lifecycle():__queue_receive(child_wc:generate_info_changed({ preferences = { reverse = "false" } }))
   test.socket.device_lifecycle():__queue_receive(child_wc:generate_info_changed({ preferences = { reverse = "true" } }))
+  test.socket.device_lifecycle():__queue_receive(parent:generate_info_changed({ }))
   test.wait_for_events()
   local reverse_preference_set = child_wc.preferences.reverse
   assert(reverse_preference_set == "true", "reverse_preference_set is True")
