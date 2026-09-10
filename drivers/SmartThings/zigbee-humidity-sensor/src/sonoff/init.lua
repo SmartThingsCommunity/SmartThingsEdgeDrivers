@@ -5,6 +5,17 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local log = require "log"
 
+local PressureMeasurement = clusters.PressureMeasurement
+
+local PRESSURE_CONFIGURATION = {
+  cluster = PressureMeasurement.ID,
+  attribute = PressureMeasurement.attributes.MeasuredValue.ID,
+  minimum_interval = 5,
+  maximum_interval = 3600,
+  data_type = PressureMeasurement.attributes.MeasuredValue.base_type,
+  reportable_change = 50
+}
+
 local function convert_pressure_value(raw_value)
   if raw_value == nil then
     return nil
@@ -24,10 +35,14 @@ local function pressure_report_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = pressure_value, unit = "kPa"}))
 end
 
+local function device_init(driver, device)
+  device:add_configured_attribute(PRESSURE_CONFIGURATION)
+end
+
 local function refresh_handler(driver, device, command)
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.RelativeHumidity.attributes.MeasuredValue:read(device))
-  device:send(clusters.PressureMeasurement.attributes.MeasuredValue:read(device))
+  device:send(PressureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
@@ -35,10 +50,13 @@ local can_handle = require "sonoff.can_handle"
 
 return {
   NAME = "Sonoff SNZB-02M Sensor",
+  lifecycle_handlers = {
+    init = device_init
+  },
   zigbee_handlers = {
     attr = {
-      [clusters.PressureMeasurement.ID] = {
-        [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_report_handler
+      [PressureMeasurement.ID] = {
+        [PressureMeasurement.attributes.MeasuredValue.ID] = pressure_report_handler
       }
     }
   },
