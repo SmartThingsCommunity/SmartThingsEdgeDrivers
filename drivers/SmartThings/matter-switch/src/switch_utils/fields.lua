@@ -126,6 +126,15 @@ SwitchFields.vendor_overrides = {
     [0x0007] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 1.1M
     [0x000A] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 2.2M
   },
+  [0x130A] = { -- EVE_MANUFACTURER_ID
+    [0x0050] = { needs_eve_energy_subdriver = true }, -- Eve Energy EU
+    [0x0053] = { needs_eve_energy_subdriver = true }, -- Eve Energy US
+    [0x0054] = { needs_eve_energy_subdriver = true }, -- Eve Energy UK
+    [0x005E] = { needs_eve_energy_subdriver = true }, -- Eve Energy AU
+    [0x0069] = { needs_eve_energy_subdriver = true }, -- Eve Energy Outlet US
+    [0x006A] = { needs_eve_energy_subdriver = true }, -- Eve Energy CH
+    [0x006B] = { needs_eve_energy_subdriver = true }, -- Eve Energy Outlet EU
+  },
   [0x1321] = { -- SONOFF_MANUFACTURER_ID
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
     [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },

@@ -248,7 +248,7 @@ zigbeeManufacturer:
     deviceLabel: ITM Switch
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-005
-    deviceProfileName: SLED-three-buttons  
+    deviceProfileName: SLED-three-buttons
   - id: "Linxura Smart Controller"
     deviceLabel: Linxura Smart Controller
     manufacturer: Linxura
