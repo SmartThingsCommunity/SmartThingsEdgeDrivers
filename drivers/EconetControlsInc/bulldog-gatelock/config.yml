@@ -1,0 +1,6 @@
+name: "Econet GateLock Matter"
+packageKey: "econet-gatelock-matter"
+description: "SmartThings Edge driver for the Econet Bulldog GateLock (Matter). Exposes lock control, door open/close contact sensor, tamper alert, and battery."
+permissions:
+  matter: {}
+lifecycle: {}
