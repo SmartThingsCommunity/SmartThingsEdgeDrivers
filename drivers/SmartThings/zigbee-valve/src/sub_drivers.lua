@@ -5,5 +5,6 @@ local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
    lazy_load_if_possible("sinope"),
    lazy_load_if_possible("ezex"),
+   lazy_load_if_possible("sonoff"),
 }
 return sub_drivers

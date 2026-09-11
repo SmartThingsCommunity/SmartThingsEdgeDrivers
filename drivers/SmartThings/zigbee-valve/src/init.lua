@@ -1,6 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
-
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
@@ -8,6 +18,7 @@ local defaults = require "st.zigbee.defaults"
 --ZCL
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Basic               = zcl_clusters.Basic
+local PowerConfiguration  = zcl_clusters.PowerConfiguration
 --Capability
 local capabilities = require "st.capabilities"
 local battery = capabilities.battery
@@ -27,6 +38,17 @@ local zigbee_valve_driver_template = {
     refresh
   },
   cluster_configurations = {
+    [battery.ID] = {
+      {
+        cluster = PowerConfiguration.ID,
+        attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+        minimum_interval = 300,
+        maximum_interval = 900,
+        data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+        reportable_change = 2,
+        configurable = true
+      }
+    },
     [powerSource.ID] = {
       {
         cluster = Basic.ID,
