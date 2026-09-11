@@ -1,7 +1,6 @@
 -- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 
@@ -20,6 +19,7 @@ local function device_added(self, device)
 end
 
 local zigbee_valve_driver_template = {
+  health_check = false,
   supported_capabilities = {
     valve,
     battery,
