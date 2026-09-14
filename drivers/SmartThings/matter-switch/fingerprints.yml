@@ -4285,6 +4285,12 @@ matterManufacturer:
     vendorId: 0x164B
     productId: 0x0001
     deviceProfileName: light-color-level
+#Utilitech
+  - id: "5732/2"
+    deviceLabel: Lowes - Utilitech A19 Smart Bulb
+    vendorId: 0x1664
+    productId: 0x0002
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
