@@ -139,6 +139,12 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-403STC1
     deviceProfileName: thermostat-thirty-buttons-wallhero
+# NodOn
+  - id: "NodOn/IRB-4-1-00"
+    deviceLabel: Zigbee AC Infrared Controller
+    manufacturer: NodOn
+    model: IRB-4-1-00
+    deviceProfileName: base-thermostat
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat
