@@ -958,6 +958,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x2A40
     deviceProfileName: light-color-level
+  - id: "4999/25168"
+    deviceLabel: Govee Christmas 2-in-1 String Lights
+    vendorId: 0x1387
+    productId: 0x6250
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
