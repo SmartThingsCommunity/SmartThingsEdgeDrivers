@@ -4296,6 +4296,11 @@ matterManufacturer:
     vendorId: 0x1664
     productId: 0x0002
     deviceProfileName: light-color-level
+  - id: "5732/1536"
+    deviceLabel: Utilitech 17 Smart Flush Mount - Full Color
+    vendorId: 0x1664
+    productId: 0x0600
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
