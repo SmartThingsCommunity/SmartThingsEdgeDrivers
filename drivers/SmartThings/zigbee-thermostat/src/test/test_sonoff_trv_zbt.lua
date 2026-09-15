@@ -42,7 +42,7 @@ test.set_test_init_function(function()
   )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({
-      value = { minimum = 5, maximum = 30 },
+      value = { minimum = 5, maximum = 30, step = 0.5 },
       unit = "C",
     }, { visibility = { displayed = false } }))
   )
@@ -194,6 +194,25 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 20.0, unit = "C" }))
+    )
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "thermostatHeatingSetpoint",
+        component = "main",
+        command = "setHeatingSetpoint",
+        args = {},
+        named_args = { setpoint = 64 },
+      },
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1750),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 17.5, unit = "C" }))
     )
     test.wait_for_events()
   end,
