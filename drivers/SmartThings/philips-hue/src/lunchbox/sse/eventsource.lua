@@ -15,6 +15,9 @@ local util = require "lunchbox.util"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"
 
+-- Capture Logger for comprehensive SSE traffic logging
+local capture_logger = require "capture_logger"
+
 --- A pure Lua implementation of the EventSource interface.
 --- The EventSource interface represents the client end of an HTTP(S)
 --- connection that receives an event stream following the Server-Sent events
@@ -38,6 +41,7 @@ local Response = require "luncheon.response"
 --- @field package _extra_headers table<string,string> a table of string:string key-value pairs that will be inserted in to the initial requests's headers.
 --- @field package _parse_buffers table<string,string> inner state, keeps track of the various event stream buffers in between dispatches.
 --- @field package _listeners table<EventSource.EventTypes,fun(event: table?)[]> event listeners attached using the add_event_listener API instead of the inline callbacks.
+--- @field package _connection_id string Unique connection identifier for capture logging
 local EventSource = {}
 EventSource.__index = EventSource
 
@@ -129,6 +133,15 @@ local function dispatch_event(source)
       data_buffer == "\r\n"
   if data_buffer ~= nil and not is_blank_line then
     local event = util.read_only(make_event(source))
+    
+    -- CAPTURE: Log incoming SSE event
+    local event_id = capture_logger.new_event_id()
+    capture_logger.log_sse_event(
+      source._connection_id,
+      event_id,
+      event.type,
+      event.data
+    )
 
     if type(source.onmessage) == "function" then
       source.onmessage(event)
@@ -249,6 +262,24 @@ end
 --- @return string? err error message if there was a failure
 --- @return table? http_err if the error was an HTTP error, returned here
 local function connecting_action(source)
+  -- CAPTURE: Log connection attempt (only on initial connect, not on every call)
+  if not source._sock and not source._connect_logged then
+    local full_url = string.format("%s://%s:%s%s",
+      source.url.scheme or "https",
+      source.url.host,
+      source.url.port or 443,
+      source.url.path or "/"
+    )
+    local headers = {}
+    if source._extra_headers then
+      for k, v in pairs(source._extra_headers) do
+        headers[k] = v
+      end
+    end
+    capture_logger.log_sse_connect(source._connection_id, full_url, headers)
+    source._connect_logged = true
+  end
+  
   if not source._sock then
     if type(source._sock_builder) == "function" then
       source._sock = source._sock_builder()
@@ -326,6 +357,9 @@ local function connecting_action(source)
   end
 
   source.ready_state = EventSource.ReadyStates.OPEN
+  
+  -- CAPTURE: Log successful SSE connection
+  capture_logger.log_sse_open(source._connection_id, response.status)
 
   if type(source.onopen) == "function" then
     source.onopen()
@@ -410,6 +444,16 @@ local function closed_action(source)
   end
 
   if source._reconnect then
+    -- CAPTURE: Log reconnection attempt
+    if not source._reconnect_count then
+      source._reconnect_count = 0
+      -- Log the initial close
+      capture_logger.log_sse_close(source._connection_id, "Connection closed, will reconnect")
+    end
+    source._reconnect_count = source._reconnect_count + 1
+    capture_logger.log_sse_reconnect(source._connection_id, source._reconnect_count)
+    source._connect_logged = false  -- Reset so next connect logs
+    
     if type(source.onerror) == "function" then
       source.onerror()
     end
@@ -480,6 +524,10 @@ function EventSource.new(url, extra_headers, sock_builder)
       [EventSource.EventTypes.ON_MESSAGE] = {},
       [EventSource.EventTypes.ON_ERROR] = {}
     },
+    -- CAPTURE: Generate unique connection ID for tracking
+    _connection_id = capture_logger.new_request_id(),
+    _connect_logged = false,
+    _reconnect_count = 0,
   }, EventSource)
 
   cosock.spawn(function()
@@ -507,6 +555,9 @@ end
 
 --- Close the event source, signalling that a reconnect is not desired
 function EventSource:close()
+  -- CAPTURE: Log explicit close
+  capture_logger.log_sse_close(self._connection_id, "Explicitly closed by driver")
+  
   self._reconnect = false
   if self._sock ~= nil then
     self._sock:close()
