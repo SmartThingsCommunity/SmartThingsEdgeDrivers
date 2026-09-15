@@ -231,6 +231,16 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x103E
     deviceProfileName: fan-modular
+  - id: "5014/4576"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E0
+    deviceProfileName: light-color-level
+  - id: "5014/4574"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11DE
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -2380,11 +2390,6 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x21B3
     deviceProfileName: light-color-level-2200K-6500K
-  - id: "4107/8627"
-    deviceLabel: WiZ Downlight
-    vendorId: 0x100b
-    productId: 0x21B3
-    deviceProfileName: light-color-level-2200K-6500K
   - id: "4107/8796"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
@@ -4274,6 +4279,12 @@ matterManufacturer:
     deviceLabel: Floor Lamp
     vendorId: 0x164B
     productId: 0x0001
+    deviceProfileName: light-color-level
+#Utilitech
+  - id: "5732/2"
+    deviceLabel: Lowes - Utilitech A19 Smart Bulb
+    vendorId: 0x1664
+    productId: 0x0002
     deviceProfileName: light-color-level
 
 

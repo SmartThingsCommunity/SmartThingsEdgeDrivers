@@ -41,4 +41,4 @@ zwaveGeneric:
     commandClasses:
       supported:
         - 0x98
-    deviceProfileName: base-garage-door    
+    deviceProfileName: base-garage-door
