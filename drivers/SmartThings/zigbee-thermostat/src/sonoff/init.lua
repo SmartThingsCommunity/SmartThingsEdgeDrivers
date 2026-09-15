@@ -33,6 +33,7 @@ local WORK_MODE_TEMP_MANUAL = 0x05
 
 local MIN_SETPOINT = 5
 local MAX_SETPOINT = 30
+local SETPOINT_STEP = 0.5
 local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.off.NAME,
   ThermostatMode.thermostatMode.heat.NAME,
@@ -41,7 +42,7 @@ local SUPPORTED_MODES = {
 
 local function emit_setpoint_range(device)
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpointRange({
-    value = { minimum = MIN_SETPOINT, maximum = MAX_SETPOINT },
+    value = { minimum = MIN_SETPOINT, maximum = MAX_SETPOINT, step = SETPOINT_STEP },
     unit = "C",
   }, { visibility = { displayed = false } }))
 end
@@ -170,6 +171,8 @@ local function set_heating_setpoint(_, device, command)
   end
 
   setpoint = utils.clamp_value(setpoint, MIN_SETPOINT, MAX_SETPOINT)
+  -- The TRV-ZBT persists heating setpoints in 0.5 C increments.
+  setpoint = math.floor((setpoint / SETPOINT_STEP) + 0.000001) * SETPOINT_STEP
   device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(setpoint * 100)))
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = setpoint, unit = "C" }))
   device.thread:call_with_delay(1, function()
