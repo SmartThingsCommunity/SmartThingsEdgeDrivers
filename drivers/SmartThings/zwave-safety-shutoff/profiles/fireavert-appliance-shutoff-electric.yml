@@ -25,6 +25,15 @@ deviceConfig:
   detailView:
     - component: main
       capability: soundDetection
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
       version: 1
       values:
       - key: soundDetected.value
