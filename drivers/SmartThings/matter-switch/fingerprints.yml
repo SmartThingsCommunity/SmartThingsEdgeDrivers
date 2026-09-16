@@ -4239,7 +4239,7 @@ matterManufacturer:
     productId: 0x07E7
     deviceProfileName: matter-bridge
   - id: "5015/2040"
-    deviceLabel: SwitchBot RGBIC Wire Neon Rope Light
+    deviceLabel: SwitchBot Color Lighting
     vendorId: 0x1397
     productId: 0x07F8
     deviceProfileName: light-color-level
