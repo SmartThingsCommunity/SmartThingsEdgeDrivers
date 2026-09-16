@@ -11,8 +11,8 @@ local utils = require "st.utils"
 local BATTERY_POLL_INTERVAL = 7200
 
 --- OnOff Property Reporting Handler → Valve Capability Point Event
---- It must be handled explicitly because the child driver defines capability_handlers.
---- The default OnOff→valve mapping from the parent driver will be skipped (only OnOff→switch remains)
+--- SONOFF reports valve state through the OnOff cluster, so keep an explicit mapping
+--- from OnOff reports to valve events while using the parent driver's default commands.
 --- @param driver table Driver instance
 --- @param device table Device instance
 --- @param value table Zigbee attribute value
@@ -49,34 +49,10 @@ local function device_init(driver, device)
   )
 end
 
---- valve.open ability handler
---- @param driver table driver instance
---- @param device table device instance
---- @param command table ability command
-local function valve_open_handler(driver, device, command)
-  device:send(OnOff.server.commands.On(device))
-  device:send(OnOff.attributes.OnOff:read(device))
-end
-
---- valve.close capability handler
---- @param driver table driver instance
---- @param device table device instance
---- @param command table capability command
-local function valve_close_handler(driver, device, command)
-  device:send(OnOff.server.commands.Off(device))
-  device:send(OnOff.attributes.OnOff:read(device))
-end
-
 local sonoff_valve_handler = {
   NAME = "SONOFF Water Valve Handler",
   lifecycle_handlers = {
     init = device_init
-  },
-  capability_handlers = {
-    [capabilities.valve.ID] = {
-      [capabilities.valve.commands.open.NAME] = valve_open_handler,
-      [capabilities.valve.commands.close.NAME] = valve_close_handler,
-    }
   },
   zigbee_handlers = {
     attr = {
