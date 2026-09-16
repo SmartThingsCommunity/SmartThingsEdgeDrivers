@@ -43,14 +43,22 @@ local initial_events_map = {
   [capabilities.applianceUtilization.ID] = capabilities.applianceUtilization.status.notInUse(),
 }
 
+local function device_emit_event(self, device, id, event)
+  if id == capabilities.applianceUtilization.ID then
+    device:emit_component_event(device.profile.components.appliancePower, event)
+  else
+    device:emit_event(event)
+  end
+end
+
 local function added_handler(self, device)
   for id, event in pairs(initial_events_map) do
     if device:supports_capability_by_id(id) then
-      device:emit_event(event)
+      device_emit_event(self, device, id, event)
       -- Also emit event specifying the supported soundDetected types and setup functions
       if id == capabilities.soundDetection.ID then
-          device:emit_event(capabilities.soundDetection.supportedSoundTypes({"noSound", "fireAlarm"}, {visibility = { displayed = false }}))
-          device:emit_event(capabilities.soundDetection.soundDetectionState("enabled", {visibilty = {displayed = false}}))
+          device:emit_event(capabilities.soundDetection.supportedSoundTypes({"noSound", "fireAlarm"}, { visibility = { displayed = false }}))
+          device:emit_event(capabilities.soundDetection.soundDetectionState("enabled", { visibilty = { displayed = false }}))
       end
     end
   end
@@ -106,7 +114,7 @@ local function switch_report_handler(driver, device, cmd)
     --- Also turn off power meter UI element, appliance is obviously not drawing power if
     --- the switch is off
     if (device:supports_capability(capabilities.applianceUtilization)) then
-      device:emit_event(capabilities.applianceUtilization.status.notInUse())
+      device:emit_component_event(device.profile.components.appliancePower, capabilities.applianceUtilization.status.notInUse())
     end
   else
     if useValve then
@@ -126,6 +134,7 @@ end
 local function notification_report_handler(self, device, cmd)
   local event = nil
   local status = nil
+  local id = nil
   local set_status = device:get_field("notification_set_status")
   if cmd.args.notification_type == Notification.notification_type.SMOKE then
     -- First, ensure that control is still valid
@@ -151,16 +160,17 @@ local function notification_report_handler(self, device, cmd)
       event = capabilities.applianceUtilization.status.inUse()
     elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
       event = capabilities.applianceUtilization.status.notInUse()
-    end
+    end 
+    id = capabilities.applianceUtilization.ID
   end
   -- While the device supports other notifications, they are out of scope for WWST certification.
   if status ~= nil then 
     print("Notification status %s set", status)
-    device:emit_event(status) 
+    device_emit_event(self, device, id, status) 
   end
   if event ~= nil then 
     print("Notification event: %s", event)
-    device:emit_event(event) 
+    device_emit_event(self, device, id, event) 
   end
 end
 

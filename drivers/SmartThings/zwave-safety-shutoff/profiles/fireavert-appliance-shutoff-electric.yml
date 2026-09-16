@@ -1,19 +1,17 @@
 name: fireavert-appliance-shutoff-electric
 components:
 - id: main
-  label: "Appliance Information"
+  label: "FireAvert Information"
   capabilities:
   - id: refresh
     version: 1
   - id: soundDetection
     version: 1
-    config:
-      values:
-        - key: soundDetected.value
-          enabledValues:
-            - fireAlarm
   - id: switch
     version: 1
+- id: appliancePower
+  label: "Appliance Power"
+  capabilities:
   - id: applianceUtilization
     version: 1
   categories:
@@ -28,33 +26,51 @@ deviceConfig:
     - component: main
       capability: soundDetection
       version: 1
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+          - noSound
+          - fireAlarm
     - component: main
       capability: switch
       version: 1
-    - component: main
+    - component: appliancePower
       capability: applianceUtilization
       version: 1
-      label: "Appliance Power"
       values:
       - key: status.value
         alternatives:
-          - key: inUse
-            value: "Appliance Powered On"
-            type: active
-          - key: notInUse
-            value: "Appliance Powered Off"
-            type: inactive
-# automation:
-#   conditions:
-#     - label: "Smoke Detection Status"
-#       displayType: list
-#       list:
-#         alternatives:
-#           - key: fireAlarm
-#             value: Smoke Alarm Detected
-#             type: active
-#           - key: noSound
-#             value: No Smoke Alarm Detected
-#             type: inactive
-#         value: soundDetection.value
-#         valueType: string
+        - key: inUse
+          value: "Appliance Powered On"
+          type: active
+        - key: notInUse
+          value: "Appliance Powered Off"
+          type: inactive
+  automation:  
+    conditions:
+      - component: main
+        capability: soundDetection
+        version: 1
+        values:
+          - key: soundDetected.value
+            enabledValues:
+              - fireAlarm
+      - component: main
+        capability: switch
+        version: 1
+      - component: appliancePower
+        capability: applianceUtilization
+        version: 1
+        values:
+        - key: status.value
+    actions:
+      - component: main
+        capability: switch
+        version: 1
