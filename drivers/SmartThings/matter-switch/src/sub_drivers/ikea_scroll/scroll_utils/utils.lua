@@ -4,6 +4,7 @@
 local im = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
+local switch_fields = require "switch_utils.fields"
 
 local IkeaScrollUtils = {}
 
@@ -28,11 +29,18 @@ function IkeaScrollUtils.subscribe(device)
       subscribe_request:with_info_block(ib)
     end
   end
+  local cluster_id = clusters.PowerSource.ID
+  local attr_id = clusters.PowerSource.attributes.BatPercentRemaining.ID
   local ib = im.InteractionInfoBlock(
-    scroll_fields.ENDPOINT_POWER_SOURCE, clusters.PowerSource.ID, clusters.PowerSource.attributes.BatPercentRemaining.ID
+    scroll_fields.ENDPOINT_POWER_SOURCE, cluster_id, attr_id
   )
   subscribe_request:with_info_block(ib)
   device:send(subscribe_request)
+
+  local subscribed_attrs = device:get_field(switch_fields.SUBSCRIBED_ATTRIBUTES_KEY) or {}
+  subscribed_attrs[cluster_id] = subscribed_attrs[cluster_id] or {}
+  subscribed_attrs[cluster_id][attr_id] = ib
+  device:set_field(switch_fields.SUBSCRIBED_ATTRIBUTES_KEY, subscribed_attrs)
 end
 
 return IkeaScrollUtils

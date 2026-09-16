@@ -53,7 +53,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -73,7 +73,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -93,7 +93,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -113,7 +113,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -133,7 +133,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -153,7 +153,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

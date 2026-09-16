@@ -184,7 +184,9 @@ end
 local function do_configure(driver, device) end
 
 -- override driver_switched to prevent it running in the main driver
-local function driver_switched(driver, device) end
+local function driver_switched(driver, device)
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
+end
 
 local function initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then

@@ -88,7 +88,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -111,7 +111,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -139,7 +139,7 @@ test.register_coroutine_test(
       capabilities.motionSensor.motion.inactive()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -158,7 +158,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -202,7 +202,7 @@ test.register_coroutine_test(
       capabilities.motionSensor.motion.inactive()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -219,7 +219,7 @@ test.register_coroutine_test(
       detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

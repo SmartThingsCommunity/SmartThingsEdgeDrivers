@@ -82,6 +82,11 @@ local function update_connection(driver, device, device_ip, device_info)
   local conn_info = driver.discovery_helper.get_connection_info(driver, device_dni, device_ip, device_info)
 
   local credential = device:get_field(fields.CREDENTIAL)
+  if not credential then
+    log.error("update_connection : failed to find credential, dni = " .. tostring(device_dni))
+    device:offline()
+    return
+  end
 
   conn_info:add_header(CREDENTIAL_KEY_HEADER, credential)
 

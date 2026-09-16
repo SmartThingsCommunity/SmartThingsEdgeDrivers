@@ -60,7 +60,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -79,7 +79,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -98,7 +98,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -115,7 +115,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -136,7 +136,28 @@ test.register_coroutine_test(
     }):build_test_tx(mock_device.id))
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "The driver should respond correctly to a date get",
+  function ()
+    test.socket.zwave:__queue_receive({ mock_device.id, Time:DateGet({},{
+        encap = zw.ENCAP.AUTO,
+        src_channel = 0,
+        dst_channels = {}
+      })
+    })
+    local time = os.date("*t")
+    test.socket.zwave:__expect_send(Time:DateReport({
+      year = time.year,
+      month = time.month,
+      day = time.day
+    }):build_test_tx(mock_device.id))
+  end,
+  {
+     min_api_version = 14
   }
 )
 

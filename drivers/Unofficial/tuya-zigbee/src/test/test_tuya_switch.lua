@@ -254,6 +254,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -270,6 +273,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -286,6 +292,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -302,6 +311,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -318,6 +330,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -334,6 +349,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x01', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -350,6 +368,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -366,6 +387,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -382,6 +406,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -398,6 +425,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -414,6 +444,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 

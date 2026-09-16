@@ -25,6 +25,7 @@ end
 
 function IkeaScrollLifecycleHandlers.driver_switched(driver, device)
   scroll_cfg.match_profile(driver, device)
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 function IkeaScrollLifecycleHandlers.info_changed(driver, device, event, args)

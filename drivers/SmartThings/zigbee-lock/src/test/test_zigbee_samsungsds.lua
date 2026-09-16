@@ -30,6 +30,7 @@ local SAMSUNG_SDS_MFR_CODE = 0x0003
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
       profile = t_utils.get_profile_definition("lock-without-codes.yml"),
+      provisioning_state = "TYPED",
       zigbee_endpoints = {
         [1] = {
           id = 1,
@@ -48,6 +49,20 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+local constants = require "lock_utils.constants"
+test.register_coroutine_test(
+    "Device init function handler",
+    function()
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init"})
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.wait_for_events()
+      assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true, "Device init did not set migrated field to true")
+    end,
+    {
+       min_api_version = 17
+    }
+)
 
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",

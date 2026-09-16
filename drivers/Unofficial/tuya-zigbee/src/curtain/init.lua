@@ -23,6 +23,14 @@ local packet_id = 0
 local PRESET_LEVEL = 50
 local PRESET_LEVEL_KEY = "_presetLevel"
 
+-- When the curtain is moving, LATEST_TARGET_LEVEL is used to store the latest target position value,
+-- which will be cleared after 3 seconds timeout
+local LATEST_TARGET_LEVEL = "_latestTargetLevel"
+-- Field name for the timer that clears the target position after timeout
+local TARGET_LEVEL_TIME_OUT = "_targetLevelTimeOut"
+-- Timeout for the stateless step to accumulate
+local TARGET_LEVEL_TIME_OUT_SECONDS = 15
+
 local FINGERPRINTS = {
   { mfr = "_TZE284_nladmfvf", model = "TS0601"}
 }
@@ -153,6 +161,36 @@ local function tuya_cluster_handler(driver, device, zb_rx)
   end
 end
 
+local function handle_step_shade_level(driver, device, command)
+  local step = command.args.stepSize or command.args[1] or (command.positional_args and command.positional_args.stepSize)
+
+  -- When LATEST_TARGET_LEVEL is empty, it means the curtain motor is not moving,
+  -- and capabilities.windowShadeLevel.shadeLevel is used as the reference for position offset calculation;
+  -- when LATEST_TARGET_LEVEL is not empty, it means the curtain motor is moving,
+  -- and LATEST_TARGET_LEVEL is used as the reference for position offset calculation to obtain a more accurate position calculation.
+  local latest_target_level = device:get_field(LATEST_TARGET_LEVEL)
+  local current_level = latest_target_level or
+    device:get_latest_state("main", capabilities.windowShadeLevel.ID,
+      capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+
+  local target_level = utils.clamp_value(current_level + step, 0, 100)
+  target_level = utils.round(target_level)
+  -- Cancel any previous timer and set a 15 second timeout timer to ensure target_level is cleared
+  -- This is to prevent the stateless step from accumulating indefinitely, while ensuring that a single
+  -- "scroll" action can accumulate multiple steps within a short time frame
+  if device:get_field(TARGET_LEVEL_TIME_OUT) then
+    device.thread:cancel_timer(device:get_field(TARGET_LEVEL_TIME_OUT))
+  end
+  local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
+    device:set_field(LATEST_TARGET_LEVEL, nil)
+  end)
+  device:set_field(TARGET_LEVEL_TIME_OUT, timer)
+  device:set_field(LATEST_TARGET_LEVEL, target_level)
+
+  local new_command = { args = { shadeLevel = target_level }, component = command.component }
+  window_shade_level(driver, device, new_command)
+end
+
 local tuya_curtain_driver = {
   NAME = "tuya curtain",
   lifecycle_handlers = {
@@ -169,6 +207,9 @@ local tuya_curtain_driver = {
     },
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level
+    },
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = handle_step_shade_level
     },
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset,

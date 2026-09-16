@@ -28,9 +28,9 @@ local HEATING_SETPOINT = "heatingSetpoint"
 local BAT_MIN = 3.4 -- voltage when device UI starts to die, ie, when battery fails
 local BAT_MAX = 6.0 -- 4 batteries at 1.5V (6.0V)
 
-local DEFAULT_MIN_SETPOINT = 4.0
-local DEFAULT_MAX_SETPOINT = 37.5
-
+local DEFAULT_MIN_SETPOINT = 400 -- 4.0C
+local DEFAULT_MAX_SETPOINT = 3750 -- 37.5C
+local FAHRENHEIT_THRESHOLD = 40 -- 40C
 -- In zenwithin sub driver, supported thermostat mode follow preference option because sensor always returns 'all mode possible'
 local SUPPORTED_THERMOSTAT_MODES = {
   [0x01] = { ModeAttribute.off.NAME, ModeAttribute.heat.NAME },
@@ -93,11 +93,12 @@ local update_device_setpoint = function(device)
   local current_mode = device:get_latest_state("main", ThermostatMode.ID, ModeAttribute.NAME)
   if (current_mode == ModeAttribute.heat.NAME or current_mode == ModeAttribute.emergency_heat.NAME) and
       cooling_setpoint ~= nil then
-    cooling_setpoint = device:get_latest_state("main", ThermostatCoolingSetpoint.ID, ThermostatCoolingSetpoint.coolingSetpoint.NAME)
     -- tried to set cooling setpoint while device was in heat mode
+    cooling_setpoint = device:get_latest_state("main", ThermostatCoolingSetpoint.ID, ThermostatCoolingSetpoint.coolingSetpoint.NAME)
     device:emit_event(ThermostatCoolingSetpoint.coolingSetpoint({value = cooling_setpoint, unit = "C"}))
     cooling_setpoint = nil
   elseif (current_mode == ModeAttribute.cool.NAME) and heating_setpoint ~= nil then
+    -- tried to set heating setpoint while device was in cool mode
     heating_setpoint = device:get_latest_state("main", ThermostatHeatingSetpoint.ID, ThermostatHeatingSetpoint.heatingSetpoint.NAME)
     device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({value = heating_setpoint, unit = "C"}))
     heating_setpoint = nil
@@ -108,22 +109,23 @@ local update_device_setpoint = function(device)
   end
 
   if (heating_setpoint ~= nil) then
-    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(heating_setpoint*100)))
+    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(heating_setpoint)))
   end
 
   if (cooling_setpoint ~= nil) then
-    device:send(Thermostat.attributes.OccupiedCoolingSetpoint:write(device, utils.round(cooling_setpoint*100)))
+    device:send(Thermostat.attributes.OccupiedCoolingSetpoint:write(device, utils.round(cooling_setpoint)))
   end
 end
 
 local set_cooling_setpoint = function(driver, device, command)
   local value = command.args.setpoint
-  if value >= 40 then -- we got a command in fahrenheit
+  if value >= FAHRENHEIT_THRESHOLD then -- we got a command in fahrenheit
     value = utils.f_to_c(value)
   end
-  value = utils.clamp_value(value,
-    device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
-    device:get_field(MAX_HEAT_LIMIT) or DEFAULT_MAX_SETPOINT)
+  -- Scale up to centidegrees to align with the rest of the values
+  value = utils.clamp_value(value * 100,
+    device:get_field(MIN_COOL_LIMIT) or DEFAULT_MIN_SETPOINT,
+    device:get_field(MAX_COOL_LIMIT) or DEFAULT_MAX_SETPOINT)
   device:set_field(COOLING_SETPOINT, value)
   local current_mode = device:get_latest_state("main", ThermostatMode.ID, ModeAttribute.NAME)
   if current_mode == ModeAttribute.cool.NAME or current_mode == ModeAttribute.auto.NAME then
@@ -138,10 +140,11 @@ end
 
 local set_heating_setpoint = function(driver, device, command)
   local value = command.args.setpoint
-  if value >= 40 then -- we got a command in fahrenheit
+  if value >= FAHRENHEIT_THRESHOLD then -- we got a command in fahrenheit
     value = utils.f_to_c(value)
   end
-  value = utils.clamp_value(value,
+  -- Scale up to centidegrees to align with the rest of the values
+  value = utils.clamp_value(value * 100,
     device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
     device:get_field(MAX_HEAT_LIMIT) or DEFAULT_MAX_SETPOINT)
   device:set_field(HEATING_SETPOINT, value)

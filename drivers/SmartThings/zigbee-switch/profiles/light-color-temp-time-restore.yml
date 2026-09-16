@@ -1,0 +1,74 @@
+name: light-color-temp-time-restore
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+        config:
+          values:
+            - key: "level.value"
+              range: [1, 100]
+      - id: statelessSwitchLevelStep
+        version: 1
+      - id: colorTemperature
+        version: 1
+      - id: statelessColorTemperatureStep
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Light
+preferences:
+  - title: "上电状态(power-on state/파워온 상태)"
+    name: powerOnMode
+    description: "上电状态(power-on state/파워온 상태)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "关闭(off/닫다)"
+        1: "打开(on/열다)"
+        2: "恢复记忆状态(restore/복원)"
+      default: 0
+  - title: "驱动电流(drive current/구동 전류)"
+    name: ledDriveCurrent
+    description: "驱动电流(drive current/구동 전류)/50~333mA"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 333
+      default: 270
+  - title: "亮度时间(dimmingTransitionTime/밝기 전환 시간)"
+    name: dimTransitionTime
+    description: "亮度过渡时间(dimming transition time/밝기 전환 시간)1000~10000ms"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1000
+      maximum: 10000
+      default: 1000
+  - title: "色温时间(CCTTransitionTime/색온 전환 시간)"
+    name: colorTempTransitionTime
+    description: "色温过渡时间(CCT transition time/색온 전환 시간)1000~10000ms"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1000
+      maximum: 10000
+      default: 1000
+  - title: "输出模式(output mode/출력 모드)"
+    name: outputMode
+    description: "输出模式(output mode/출력 모드)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "双路CW(dual CW/듀얼 CW)"
+        1: "双路WC(dual WC/듀얼 WC)"
+        2: "单路(single channel/단일 채널)"
+      default: 0

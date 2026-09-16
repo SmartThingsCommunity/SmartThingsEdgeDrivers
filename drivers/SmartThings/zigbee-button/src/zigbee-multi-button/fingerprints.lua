@@ -36,6 +36,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "Vimar", model = "RemoteControl_v1.0" },
   { mfr = "Linxura", model = "Smart Controller" },
   { mfr = "Linxura", model = "Aura Smart Button" },
+  { mfr = "SONOFF", model = "SNZB-01M" },
   { mfr = "zunzunbee", model = "SSWZ8T" }
 }
 

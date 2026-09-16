@@ -106,6 +106,7 @@ local driver_template = {
     added = device_added
   },
   sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities, {native_capability_attrs_enabled = true})

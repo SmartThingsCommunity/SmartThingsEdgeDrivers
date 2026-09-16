@@ -507,4 +507,52 @@ function PhilipsHueApi:set_light_color_temp_by_device_type(id, mirek, device_typ
   end
 end
 
+---@param id string
+---@param brightness_delta number absolute brightness percentage delta
+---@param action "up"|"down"
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
+function PhilipsHueApi:set_light_level_delta(id, brightness_delta, action)
+  return self:set_light_level_delta_by_device_type(id, brightness_delta, action, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_level_delta(id, brightness_delta, action)
+  return self:set_light_level_delta_by_device_type(id, brightness_delta, action, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_level_delta_by_device_type(id, brightness_delta, action, device_type)
+  if type(brightness_delta) == "number" then
+    local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
+    local payload = json.encode { dimming_delta = { action = action, brightness_delta = brightness_delta } }
+    return do_put(self, url, payload)
+  else
+    return nil,
+        string.format("Expected number for brightness delta, received %s", st_utils.stringify_table(brightness_delta, nil, false))
+  end
+end
+
+---@param id string
+---@param mirek_delta number absolute mirek delta
+---@param action "up"|"down"
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
+function PhilipsHueApi:set_light_color_temp_delta(id, mirek_delta, action)
+  return self:set_light_color_temp_delta_by_device_type(id, mirek_delta, action, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_color_temp_delta(id, mirek_delta, action)
+  return self:set_light_color_temp_delta_by_device_type(id, mirek_delta, action, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_color_temp_delta_by_device_type(id, mirek_delta, action, device_type)
+  if type(mirek_delta) == "number" then
+    local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
+    local payload = json.encode { color_temperature_delta = { action = action, mirek_delta = mirek_delta } }
+    return do_put(self, url, payload)
+  else
+    return nil,
+        string.format("Expected number for color temp mirek delta, received %s", st_utils.stringify_table(mirek_delta, nil, false))
+  end
+end
+
 return PhilipsHueApi

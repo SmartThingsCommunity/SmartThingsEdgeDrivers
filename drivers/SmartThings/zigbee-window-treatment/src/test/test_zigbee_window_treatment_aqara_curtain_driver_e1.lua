@@ -111,7 +111,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -158,7 +158,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -175,7 +175,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -190,7 +190,7 @@ test.register_coroutine_test(
       PRIVATE_CURTAIN_MANUAL_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, false) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -221,7 +221,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -250,7 +250,7 @@ test.register_coroutine_test(
     -- })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -280,7 +280,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -298,7 +298,7 @@ test.register_coroutine_test(
       PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -316,7 +316,7 @@ test.register_coroutine_test(
       PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x00) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -348,7 +348,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -368,7 +368,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -388,7 +388,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -407,7 +407,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -426,7 +426,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -445,7 +445,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

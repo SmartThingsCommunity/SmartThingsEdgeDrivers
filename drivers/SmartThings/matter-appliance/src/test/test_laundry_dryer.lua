@@ -102,7 +102,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -170,7 +170,7 @@ test.register_message_test(
     }, -- on receiving NO ERROR we don't do anything.
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -238,7 +238,7 @@ test.register_message_test(
     }, -- on receiving NO ERROR we don't do anything.
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -306,7 +306,7 @@ test.register_message_test(
     }, -- on receiving NO ERROR we don't do anything.
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -385,7 +385,7 @@ test.register_message_test(
     }, -- on receiving NO ERROR we don't do anything.
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -449,7 +449,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -489,7 +489,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -548,7 +548,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -591,7 +591,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

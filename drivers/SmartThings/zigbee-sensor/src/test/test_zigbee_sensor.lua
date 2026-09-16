@@ -121,7 +121,7 @@ test.register_coroutine_test(
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE})
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -133,7 +133,7 @@ test.register_coroutine_test(
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE})
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -144,7 +144,7 @@ test.register_coroutine_test(
       mock_device_motion_illuminance:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_ILLUMINANCE_PROFILE})
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -155,7 +155,7 @@ test.register_coroutine_test(
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE})
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -174,7 +174,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -193,7 +193,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -212,7 +212,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -231,7 +231,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -250,7 +250,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -269,7 +269,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -290,7 +290,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -311,7 +311,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -330,7 +330,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -349,7 +349,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -368,7 +368,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -387,7 +387,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -406,7 +406,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -425,7 +425,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -447,7 +447,7 @@ test.register_message_test(
      }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -466,7 +466,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -485,7 +485,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -504,7 +504,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -523,7 +523,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -542,7 +542,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -561,7 +561,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -674,7 +674,7 @@ test.register_coroutine_test(
 
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -694,7 +694,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device_motion_sensor.id, ZoneStatusAttribute:read(mock_device_motion_sensor) })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -714,7 +714,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device_motion_illuminance.id, ZoneStatusAttribute:read(mock_device_motion_illuminance) })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -734,7 +734,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device_waterleak_sensor.id, ZoneStatusAttribute:read(mock_device_waterleak_sensor) })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -808,7 +808,7 @@ test.register_coroutine_test(
       mock_device_contact_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -874,7 +874,7 @@ test.register_coroutine_test(
       mock_device_motion_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -940,7 +940,7 @@ test.register_coroutine_test(
       mock_device_motion_illuminance:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -1007,7 +1007,7 @@ test.register_coroutine_test(
       mock_device_waterleak_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 

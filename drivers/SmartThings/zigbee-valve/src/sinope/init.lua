@@ -12,7 +12,9 @@ local PowerConfiguration = clusters.PowerConfiguration
 local function device_init(driver, device)
   battery_defaults.use_battery_voltage_handling(device)
   -- according to the DTH, this attribute cannot be configured for reporting
-  device.thread:call_on_schedule(900, function() device:send(PowerConfiguration.attributes.BatteryVoltage:read()) end)
+  device.thread:call_on_schedule(900, function()
+    device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  end)
 end
 
 local function battery_voltage_handler(driver, device, command)

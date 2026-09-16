@@ -321,6 +321,7 @@ local matter_driver_template = {
     capabilities.pumpOperationMode,
     capabilities.pumpControlMode,
   },
+  shared_device_thread_enabled = true,
 }
 
 local matter_driver = MatterDriver("matter-pump", matter_driver_template)

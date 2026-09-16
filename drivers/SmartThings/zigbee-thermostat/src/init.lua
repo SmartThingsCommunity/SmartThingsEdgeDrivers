@@ -41,7 +41,9 @@ local THERMOSTAT_MODE_MAP = {
   [ThermostatSystemMode.AUTO]              = ThermostatMode.thermostatMode.auto,
   [ThermostatSystemMode.COOL]              = ThermostatMode.thermostatMode.cool,
   [ThermostatSystemMode.HEAT]              = ThermostatMode.thermostatMode.heat,
-  [ThermostatSystemMode.EMERGENCY_HEATING] = ThermostatMode.thermostatMode.emergency_heat
+  [ThermostatSystemMode.EMERGENCY_HEATING] = ThermostatMode.thermostatMode.emergency_heat,
+  [ThermostatSystemMode.DRY]               = ThermostatMode.thermostatMode.dryair,
+  [ThermostatSystemMode.FAN_ONLY]          = ThermostatMode.thermostatMode.fanonly
 }
 
 local FAN_MODE_MAP = {
@@ -354,6 +356,7 @@ local zigbee_thermostat_driver = {
   },
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_thermostat_driver, zigbee_thermostat_driver.supported_capabilities)

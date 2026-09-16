@@ -365,18 +365,26 @@ local function open_action(source)
   local recv_as_num = tonumber(recv, 16)
 
   if recv_as_num ~= nil then
-    recv, err, partial = source._sock:receive(recv_as_num)
-    if err then
-      if err == "timeout" or err == "wantread" then
-        return
-      else
-        --- real error, close the connection.
-        if source._sock ~= nil then
-          source._sock:close()
-          source._sock = nil
+    -- A chunk size of 0 signals the end of the chunked transfer. Some
+    -- versions of the underlying socket library will raise a hard error
+    -- (rather than returning a graceful nil/"closed" pair) if we ask to
+    -- receive 0 bytes, so avoid calling receive() in that case entirely.
+    if recv_as_num == 0 then
+      recv = ""
+    else
+      recv, err, partial = source._sock:receive(recv_as_num)
+      if err then
+        if err == "timeout" or err == "wantread" then
+          return
+        else
+          --- real error, close the connection.
+          if source._sock ~= nil then
+            source._sock:close()
+            source._sock = nil
+          end
+          source.ready_state = EventSource.ReadyStates.CLOSED
+          return nil, err, partial
         end
-        source.ready_state = EventSource.ReadyStates.CLOSED
-        return nil, err, partial
       end
     end
     local _, err, partial = source._sock:receive('*l') -- clear the final line

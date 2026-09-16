@@ -228,7 +228,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only" })
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -252,7 +252,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
 end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -277,7 +277,7 @@ test.register_coroutine_test(
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -294,7 +294,7 @@ test.register_coroutine_test(
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

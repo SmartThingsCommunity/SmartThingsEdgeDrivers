@@ -29,15 +29,19 @@ def per_driver_task(driver_dir):
   else:
     failure_output = None
   if driver_dir.name in CHANGED_DRIVERS:
-    with driver_dir.parent.parent.parent.joinpath("tools/coverage_output").joinpath(driver_dir.name+"_coverage.xml") as outfile:
-      subprocess.run("luacov-cobertura -o {} -c {}".format(outfile, LUACOV_CONFIG), shell=True)
+    outfile = driver_dir.parent.parent.parent.joinpath("tools/coverage_output").joinpath(driver_dir.name+"_coverage.xml")
+    subprocess.run("luacov-cobertura -o {} -c {}".format(outfile, LUACOV_CONFIG), shell=True)
   return failure_output
 
 def run_test(test_file):
+  # Propagate ST_CAPABILITY_JSON_DIR so the mock capability channel can load
+  # capability definitions from pre-fetched JSON files produced by
+  # tools/fetch_capability_definitions.py.
+  env = os.environ.copy()
   if test_file.parent.parent.parent.name in CHANGED_DRIVERS:
-    a = subprocess.run("lua -lluacov {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    a = subprocess.run("lua -lluacov {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
   else:
-    a = subprocess.run("lua {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    a = subprocess.run("lua {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
   error = a.stderr.decode()
   if error and error != "":
     print(error)
@@ -59,6 +63,12 @@ def run_test(test_file):
     else:
       successes += 1
     test_cases.append(test_case)
+  if error and error != "" and len(test_cases) == 0:
+    failure_output += "\t{} ERROR: test file failed to run\n".format(test_suite_name)
+    error_case = junit_xml.TestCase("(file error) {}".format(test_suite_name))
+    error_case.add_error_info("ERROR", error)
+    test_cases.append(error_case)
+    failures += 1
   test_suite.test_cases = test_cases
   return (test_suite, successes, failures, failure_output)
 

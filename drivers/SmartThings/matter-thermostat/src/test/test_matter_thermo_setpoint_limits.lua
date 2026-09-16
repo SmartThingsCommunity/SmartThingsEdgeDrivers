@@ -150,7 +150,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -179,7 +179,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -208,7 +208,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -237,7 +237,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -259,7 +259,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -281,7 +281,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -297,7 +297,7 @@ test.register_coroutine_test(
     assert(min_setpoint_deadband_checked == true, "min_setpoint_deadband_checked is True")
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -327,7 +327,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -357,7 +357,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -387,7 +387,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

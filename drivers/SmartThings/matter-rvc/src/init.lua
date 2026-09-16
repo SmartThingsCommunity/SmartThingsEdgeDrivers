@@ -120,6 +120,7 @@ local function driver_switched(driver, device)
   match_profile(driver, device)
   device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
   device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 local function info_changed(driver, device, event, args)

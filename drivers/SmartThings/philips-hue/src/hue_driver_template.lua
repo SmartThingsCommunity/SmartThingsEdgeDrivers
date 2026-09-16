@@ -59,6 +59,8 @@ local set_color_handler = utils.safe_wrap_handler(command_handlers.set_color_han
 local set_hue_handler = utils.safe_wrap_handler(command_handlers.set_hue_handler)
 local set_saturation_handler = utils.safe_wrap_handler(command_handlers.set_saturation_handler)
 local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_color_temp_handler)
+local step_level_handler = utils.safe_wrap_handler(command_handlers.step_level_handler)
+local step_color_temp_handler = utils.safe_wrap_handler(command_handlers.step_color_temp_handler)
 
 --- @class HueDriverDatastore
 --- @field public bridge_netinfo table<string,HueBridgeInfo>
@@ -104,6 +106,12 @@ function HueDriver.new_driver_template(dbg_config)
       },
       [capabilities.colorTemperature.ID] = {
         [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,
+      },
+      [capabilities.statelessSwitchLevelStep.ID] = {
+        [capabilities.statelessSwitchLevelStep.commands.stepLevel.NAME] = step_level_handler,
+      },
+      [capabilities.statelessColorTemperatureStep.ID] = {
+        [capabilities.statelessColorTemperatureStep.commands.stepColorTemperatureByPercent.NAME] = step_color_temp_handler,
       },
     },
 

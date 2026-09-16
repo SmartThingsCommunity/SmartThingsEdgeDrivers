@@ -77,7 +77,7 @@ function jbl_api.new_device_manager(bridge_ip, bridge_info, socket_builder)
 end
 
 function jbl_api:add_header(key, value)
-  log.info("add_header : " .. key .. ", " .. value)
+  log.info("add_header : " .. tostring(key) .. ", " .. tostring(value))
   self.headers[key] = value
 end
 

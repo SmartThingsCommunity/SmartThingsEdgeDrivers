@@ -6,6 +6,8 @@ components:
         version: 1
       - id: windowShadeLevel
         version: 1
+      - id: statelessWindowShadeLevelStep
+        version: 1
       - id: stse.initializedStateWithGuide
         version: 1
       - id: stse.shadeRotateState

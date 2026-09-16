@@ -8,7 +8,6 @@ local supported_values = require "zigbee-multi-button.supported_values"
 local button_utils = require "button_utils"
 
 
-
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do

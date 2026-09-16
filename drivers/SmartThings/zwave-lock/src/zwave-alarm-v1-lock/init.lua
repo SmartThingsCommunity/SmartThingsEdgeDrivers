@@ -1,6 +1,5 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -9,9 +8,10 @@ local cc = require "st.zwave.CommandClass"
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.defaults.lockCodes
-local lock_code_defaults = require "st.zwave.defaults.lockCodes"
-local json = require "dkjson"
+
+local consts          = require "lock_utils.constants"
+local lock_utils      = require "lock_utils.utils"
+local tables          = require "lock_utils.tables"
 
 local METHOD = {
   KEYPAD = "keypad",
@@ -19,12 +19,6 @@ local METHOD = {
   COMMAND = "command",
   AUTO = "auto"
 }
-
---- Determine whether the passed command is a V1 alarm command
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @return boolean true if the device is smoke co alarm
 
 --- Default handler for alarm command class reports, these were largely OEM-defined
 ---
@@ -35,84 +29,66 @@ local METHOD = {
 --- @param cmd st.zwave.CommandClass.Alarm.Report
 local function alarm_report_handler(driver, device, cmd)
   local alarm_type = cmd.args.alarm_type
-  local event = nil
-  local lock_codes = lock_code_defaults.get_lock_codes(device)
-  local code_id = nil
-  if (cmd.args.alarm_level ~= nil) then
-    code_id = tostring(cmd.args.alarm_level)
-  end
+  local credential_index = cmd.args.alarm_level
+  local event
   if (alarm_type == 9 or alarm_type == 17) then
     event = capabilities.lock.lock.unknown()
   elseif (alarm_type == 16 or alarm_type == 19) then
     event = capabilities.lock.lock.unlocked()
-    if (device:supports_capability(capabilities.lockCodes) and code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      event.data = {codeId = code_id, codeName = code_name, method = METHOD.KEYPAD}
+    if (credential_index ~= nil) then
+      local credential = tables.find_entry(device, "credentials", credential_index)
+      local user_id = credential and credential.userIndex or nil
+      event.data = { userIndex = user_id, method = METHOD.KEYPAD}
     end
   elseif (alarm_type == 18) then
     event = capabilities.lock.lock.locked()
-    if (device:supports_capability(capabilities.lockCodes) and code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      event.data = {codeId = code_id, codeName = code_name, method = METHOD.KEYPAD}
+    if (credential_index ~= nil) then
+      local credential = tables.find_entry(device, "credentials", credential_index)
+      local user_id = credential and credential.userIndex or nil
+      event.data = { userIndex = user_id, method = METHOD.KEYPAD}
     end
   elseif (alarm_type == 21) then
     event = capabilities.lock.lock.locked()
-    if (cmd.args.alarm_level == 2) then
-      event["data"] = {method = METHOD.MANUAL}
-    else
-      event["data"] = {method = METHOD.KEYPAD}
-    end
+    event.data = {method = (cmd.args.alarm_level == 2) and METHOD.MANUAL or METHOD.KEYPAD}
   elseif (alarm_type == 22) then
     event = capabilities.lock.lock.unlocked()
-    event["data"] = {method = METHOD.MANUAL}
+    event.data = {method = METHOD.MANUAL}
   elseif (alarm_type == 23) then
     event = capabilities.lock.lock.unknown()
-    event["data"] = {method = METHOD.COMMAND}
+    event.data = {method = METHOD.COMMAND}
   elseif (alarm_type == 24) then
     event = capabilities.lock.lock.locked()
-    event["data"] = {method = METHOD.COMMAND}
+    event.data = {method = METHOD.COMMAND}
   elseif (alarm_type == 25) then
     event = capabilities.lock.lock.unlocked()
-    event["data"] = {method = METHOD.COMMAND}
+    event.data = {method = METHOD.COMMAND}
   elseif (alarm_type == 26) then
     event = capabilities.lock.lock.unknown()
-    event["data"] = {method = METHOD.AUTO}
+    event.data = {method = METHOD.AUTO}
   elseif (alarm_type == 27) then
     event = capabilities.lock.lock.locked()
-    event["data"] = {method = METHOD.AUTO}
+    event.data = {method = METHOD.AUTO}
   elseif (alarm_type == 32) then
-    -- all user codes deleted
-    for code_id, _ in pairs(lock_codes) do
-      lock_code_defaults.code_deleted(device, code_id)
-    end
-    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
+    -- all credentials have been deleted
+    tables.delete_all_entries(device, "credentials")
+    tables.delete_all_entries(device, "users")
   elseif (alarm_type == 33) then
-    -- user code deleted
-    if (code_id ~= nil) then
-      lock_code_defaults.clear_code_state(device, code_id)
-      if (lock_codes[code_id] ~= nil) then
-        lock_code_defaults.code_deleted(device, code_id)
-        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
-      end
-    end
+    -- credential has been deleted
+    lock_utils.delete_credential_report_helper(device, credential_index)
+
   elseif (alarm_type == 13 or alarm_type == 112) then
     -- user code changed/set
-    if (code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      local change_type = lock_code_defaults.get_change_type(device, code_id)
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. change_type, { state_change = true })
-      code_changed_event["data"] = { codeName = code_name}
-      lock_code_defaults.code_set_event(device, code_id, code_name)
-      lock_code_defaults.clear_code_state(device, code_id)
-      device:emit_event(code_changed_event)
-    end
+    lock_utils.set_credential_report_helper(device, credential_index)
+
   elseif (alarm_type == 34 or alarm_type == 113) then
-    -- duplicate lock code
-    if (code_id ~= nil) then
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. lock_code_defaults.CHANGE_TYPE.FAILED, { state_change = true })
-      lock_code_defaults.clear_code_state(device, code_id)
-      device:emit_event(code_changed_event)
+    -- duplicate lock code. Log duplicate error
+    local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+    if command_in_progress then
+      lock_utils.emit_command_result(device, capabilities.lockCredentials,
+        command_in_progress, consts.COMMAND_RESULT.DUPLICATE)
+      lock_utils.clear_busy_state(device)
     end
+
   elseif (alarm_type == 130) then
     -- batteries replaced
     if (device:is_cc_supported(cc.BATTERY)) then
@@ -146,7 +122,7 @@ local zwave_lock = {
     }
   },
   NAME = "Z-Wave lock alarm V1",
-  can_handle = require("zwave-alarm-v1-lock.can_handle"),
+  can_handle = require("zwave-alarm-v1-lock.can_handle")
 }
 
 return zwave_lock

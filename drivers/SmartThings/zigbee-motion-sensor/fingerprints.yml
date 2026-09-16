@@ -209,6 +209,11 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E1M-G7H
     deviceProfileName: motion-battery
+  - id: "MultIR/MIR-IR100"
+    deviceLabel: MultiIR Motion Detector MIR-IR100
+    manufacturer: MultIR
+    model: MIR-IR100
+    deviceProfileName: motion-battery-illuminance-sensitivity-frequency-no-fw-update
 zigbeeGeneric:
   - id: kickstarter/motion/1
     deviceLabel: SmartThings Motion Sensor

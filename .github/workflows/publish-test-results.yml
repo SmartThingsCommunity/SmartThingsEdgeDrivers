@@ -22,9 +22,66 @@ jobs:
           event_file: event-file/event.json
           event_name: ${{ github.event.workflow_run.event }}
           files: "tests/*.xml"
-      - name: Publish coverage results
+
+  # 5monkeys/cobertura-action has a bug where the `files` array that builds
+  # each per-XML markdown table is declared once outside the loop over reports
+  # and is never reset. When multiple XML files are passed via a glob, every
+  # subsequent driver's table accumulates all files from earlier drivers.
+  #
+  # Fix: determine which XML files exist at runtime, then fan out into a matrix
+  # job so each driver's XML is processed by its own isolated action invocation.
+  list-coverage-files:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    steps:
+      - name: Download coverage artifact
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: run-tests.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: coverage
+          path: coverage
+      - name: Build matrix of coverage files
+        id: build-matrix
+        run: |
+          files=$(find coverage -maxdepth 1 -name '*_coverage.xml' -printf '%f\n' 2>/dev/null | sort)
+          if [ -z "$files" ]; then
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+          else
+            json=$(echo "$files" | python3 -c 'import sys,json; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+            echo "matrix=$json" >> $GITHUB_OUTPUT
+          fi
+
+  publish-coverage:
+    needs: list-coverage-files
+    if: needs.list-coverage-files.outputs.matrix != '[]' && needs.list-coverage-files.outputs.matrix != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        coverage_file: ${{ fromJson(needs.list-coverage-files.outputs.matrix) }}
+    steps:
+      - name: Download coverage artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: run-tests.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: coverage
+          path: coverage
+      - name: Download pr_number artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: run-tests.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: pr_number
+          path: pr_number
+      - run: echo "pr_number=$(cat pr_number/pr_number.txt)" >> $GITHUB_ENV
+      - name: Publish coverage for ${{ matrix.coverage_file }}
         uses: 5monkeys/cobertura-action@master
         with:
           pull_request_number: ${{ env.pr_number }}
-          path: "coverage/*.xml"
+          path: coverage/${{ matrix.coverage_file }}
           minimum_coverage: 90
+          report_name: ${{ matrix.coverage_file }}

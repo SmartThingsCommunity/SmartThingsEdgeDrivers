@@ -4,16 +4,18 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
-local button_attr = capabilities.button.button
 local version = require "version"
 
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
+
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
 end
 
 local aqara_parent_ep = 4
@@ -147,16 +149,9 @@ local cumulative_report_val_39 = {
 
 local function configure_buttons()
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 end
 
 local function test_init()
@@ -181,15 +176,12 @@ local function test_init()
 
   -- Test added -> doConfigure logic
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
   configure_buttons()
   aqara_mock_device:expect_metadata_update({ profile = "4-button" })
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  -- to test powerConsumptionReport
-  test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 
   for _, child in pairs(aqara_mock_children) do
     test.mock_device.add_test_device(child)
@@ -211,19 +203,16 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
 
-  local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
-  device_info_copy.profile.id = "4-button"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
-  configure_buttons()
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive(aqara_mock_device:generate_info_changed({profile = t_utils.get_profile_definition("4-button.yml")}))
 end
+
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Button/Switch device : button/switch capability should send the appropriate commands",
     function()
+      test.wait_for_events()
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -269,7 +258,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 
@@ -349,7 +338,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 15
     }
 )
 

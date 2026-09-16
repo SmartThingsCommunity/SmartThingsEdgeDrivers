@@ -1,0 +1,6 @@
+name: Aqara Bath Heater
+packageKey: aqara-bath-heater
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Aqara Bath Heater devices"
+vendorSupportInformation: "https://www.aqara.com/en/support/"
