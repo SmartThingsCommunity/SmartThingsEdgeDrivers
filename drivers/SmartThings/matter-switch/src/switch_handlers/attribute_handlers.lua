@@ -345,7 +345,7 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
       -- set an assigned child key in the case this will emit events on an EDGE_CHILD device
-      switch_utils.set_fields_for_electrical_sensor_endpoint(device, set_ep_info, available_endpoints_ids)
+      switch_utils.cache_electrical_data_from_endpoint(device, set_ep_info, available_endpoints_ids)
       break
     end
   end
@@ -380,7 +380,7 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
       -- set an assigned child key in the case this will emit events on an EDGE_CHILD device
-      switch_utils.set_fields_for_electrical_sensor_endpoint(device, tree_ep_info, associated_endpoints_ids)
+      switch_utils.cache_electrical_data_from_endpoint(device, tree_ep_info, associated_endpoints_ids)
       break
     end
   end
