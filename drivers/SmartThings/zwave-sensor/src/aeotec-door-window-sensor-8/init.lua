@@ -21,7 +21,7 @@ local RelativeHumidityMeasurement = capabilities.relativeHumidityMeasurement
 local DewPoint = capabilities.dewPoint
 
 local function added_handler(driver, device)
-  device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
+  device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
 
   -- Default value
   device:emit_event(MoldHealthConcern.moldHealthConcern.good())
@@ -66,7 +66,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.weather_alarm.STATE_IDLE then
       event = MoldHealthConcern.moldHealthConcern.good()
     elseif cmd.args.event == Notification.event.weather_alarm.MOISTURE_ALARM then
-      event = MoldHealthConcern.moldHealthConcern.moderate()
+      event = MoldHealthConcern.moldHealthConcern.unhealthy()
     end
   end
 

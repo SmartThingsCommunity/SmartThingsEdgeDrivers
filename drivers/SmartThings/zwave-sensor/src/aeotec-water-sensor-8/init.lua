@@ -48,7 +48,7 @@ local function set_profile(device, profile)
       device:emit_event(SoundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
       device:emit_event(SoundDetection.soundDetected.noSound())
     elseif profile.profile == "aeotec-water-sensor-8-co2" then
-      device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "moderate"}))
+      device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
       device:emit_event(CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
     elseif profile.profile == "aeotec-water-sensor-8-co" then
       device:emit_event(CarbonMonoxideDetector.carbonMonoxide.clear())
@@ -68,7 +68,7 @@ local function added_handler(driver, device)
   -- Get parameter 10 to switch device profile bsaed on the parameter value
   device:send(Configuration:Get({ parameter_number = 10 }))
 
-  device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
+  device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
   -- Default value
   device:emit_event(MoldHealthConcern.moldHealthConcern.good())
 
@@ -133,7 +133,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.weather_alarm.STATE_IDLE then
       event = MoldHealthConcern.moldHealthConcern.good()
     elseif cmd.args.event == Notification.event.weather_alarm.MOISTURE_ALARM then
-      event = MoldHealthConcern.moldHealthConcern.moderate()
+      event = MoldHealthConcern.moldHealthConcern.unhealthy()
     end
   end
 
@@ -160,7 +160,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.co2.STATE_IDLE then
       event = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good()
     elseif cmd.args.event == Notification.event.co2.CARBON_DIOXIDE_DETECTED then
-      event = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.moderate()
+      event = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.unhealthy()
     end
   end
 
