@@ -292,6 +292,14 @@ local function info_changed(_, device, _, args)
   local old_profile = args and args.old_st_store and args.old_st_store.profile
   local old_main = old_profile and old_profile.components and old_profile.components.main
   local old_switch = old_main and old_main.capabilities and old_main.capabilities.switch
+  if old_switch == nil and old_main ~= nil then
+    for _, capability in pairs(old_main.capabilities or {}) do
+      if capability.id == capabilities.switch.ID then
+        old_switch = capability
+        break
+      end
+    end
+  end
   if old_main ~= nil and old_switch == nil and device:supports_capability(capabilities.switch) then
     -- A relay report may have arrived while the previous button profile was still active.
     parent:send(OnOff.attributes.OnOff:read(parent):to_endpoint(gang))
