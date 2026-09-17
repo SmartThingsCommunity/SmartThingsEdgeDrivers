@@ -14,12 +14,20 @@ components:
 deviceConfig:
   dashboard:
     states:
-      - component: main
-        capability: soundDetection
-        version: 1
-      - component: main
-        capability: safetyValve
-        version: 1
+    - component: main
+      capability: soundDetection
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+        - fireAlarm
+      version: 1
+    - component: main
+      capability: safetyValve
+      version: 1
   detailView:
     - component: main
       capability: soundDetection
@@ -48,6 +56,7 @@ deviceConfig:
           - key: soundDetected.value
             enabledValues:
               - fireAlarm
+              - noSound
       - component: main
         capability: safetyValve
         version: 1

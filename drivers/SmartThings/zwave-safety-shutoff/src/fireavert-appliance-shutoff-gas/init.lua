@@ -13,10 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
@@ -32,14 +28,14 @@ local function can_handle_fireavert_appliance_shutoff_gas(opts, driver, device, 
             break
         end
     end
-    if true == isDevice then 
+    if true == isDevice then
         local subdriver = require("fireavert-appliance-shutoff-gas")
         return true, subdriver
     else return false end
 end
 
 --- Handle a Valve Close command from the application.
---- 
+---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param command ST close valve command

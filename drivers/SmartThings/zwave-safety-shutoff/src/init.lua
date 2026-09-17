@@ -17,10 +17,6 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.ApplicationStatus
-local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
@@ -106,9 +102,9 @@ local function switch_report_handler(driver, device, cmd)
   local isDeviceChanging = true -- Eventually trigger this if needed based on current status
   local useValve = device:supports_capability(capabilities.safetyValve)
   if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
-    if useValve then 
+    if useValve then
       device:emit_event(capabilities.safetyValve.valve.closed())
-    else 
+    else
       device:emit_event(capabilities.switch.switch.off({state_change = isDeviceChanging}))
     end
     --- Also turn off power meter UI element, appliance is obviously not drawing power if
@@ -119,9 +115,9 @@ local function switch_report_handler(driver, device, cmd)
   else
     if useValve then
       device:emit_event(capabilities.safetyValve.valve.open({state_change = isDeviceChanging}))
-    else 
+    else
       device:emit_event(capabilities.switch.switch.on({state_change = isDeviceChanging}))
-    end 
+    end
   end
 end
 
@@ -160,23 +156,23 @@ local function notification_report_handler(self, device, cmd)
       event = capabilities.applianceUtilization.status.inUse()
     elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
       event = capabilities.applianceUtilization.status.notInUse()
-    end 
+    end
     id = capabilities.applianceUtilization.ID
   end
   -- While the device supports other notifications, they are out of scope for WWST certification.
-  if status ~= nil then 
+  if status ~= nil then
     print("Notification status %s set", status)
-    device_emit_event(self, device, id, status) 
+    device_emit_event(self, device, id, status)
   end
-  if event ~= nil then 
+  if event ~= nil then
     print("Notification event: %s", event)
-    device_emit_event(self, device, id, event) 
+    device_emit_event(self, device, id, event)
   end
 end
 
 
 --- Handle a 'Disable sound detection' command from SmartThings.
---- 
+---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param command ST level capability command
@@ -196,7 +192,7 @@ local function st_sound_detection_disable_handler(driver, device, command)
 end
 
 --- Handle an 'Enable sound detection' command from SmartThings.
---- 
+---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param command ST level capability command

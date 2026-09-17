@@ -9,32 +9,29 @@ components:
     version: 1
   - id: switch
     version: 1
+  categories:
+    - name: SmokeDetector
 - id: appliancePower
   label: "Appliance Power"
   capabilities:
   - id: applianceUtilization
     version: 1
-  categories:
-    - name: SmokeDetector
 deviceConfig:
   dashboard:
     states:
-      - component: main
-        capability: soundDetection
-        version: 1
-  detailView:
     - component: main
       capability: soundDetection
       values:
       - key: soundDetected.value
         alternatives:
-        - key: noSound
-          value: "No Alarm"
-          type: inactive
         - key: fireAlarm
           value: "Fire Alarm Detected"
           type: active
-      version: 1
+        enabledValues:
+        - fireAlarm
+  detailView:
+    - component: main
+      capability: soundDetection
       values:
       - key: soundDetected.value
         alternatives:
@@ -67,18 +64,12 @@ deviceConfig:
       - component: main
         capability: soundDetection
         version: 1
-        values:
-          - key: soundDetected.value
-            enabledValues:
-              - fireAlarm
       - component: main
         capability: switch
         version: 1
       - component: appliancePower
         capability: applianceUtilization
         version: 1
-        values:
-        - key: status.value
     actions:
       - component: main
         capability: switch

@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.ApplicationStatus
 local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ version = 1 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
@@ -36,7 +34,7 @@ local function can_handle_fireavert_appliance_shutoff_e(opts, driver, device, ..
             break
         end
     end
-    if true == isDevice then 
+    if true == isDevice then
         local subdriver = require("fireavert-appliance-shutoff-electric")
         return true, subdriver
     else return false end
@@ -54,7 +52,7 @@ end
 
 
 --- Handle a Switch OFF command from the application.
---- 
+---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param command ST level capability command
@@ -70,7 +68,7 @@ end
 --- Handle a Switch ON command from the application.
 --- Switching on is not allowed in some cases, so that is handled through the ApplicationRejected
 --- handler.
---- 
+---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param command ST level capability command
