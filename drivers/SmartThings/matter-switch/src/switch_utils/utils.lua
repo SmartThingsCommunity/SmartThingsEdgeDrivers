@@ -53,8 +53,17 @@ end
 function utils.remove_field_index(device, field_name, index)
   local new_table = device:get_field(field_name)
   if type(new_table) == "table" then
-    new_table[index] = nil -- remove value associated with index from table
+    table.remove(new_table, index) -- remove value associated with index from table
     device:set_field(field_name, new_table)
+  end
+end
+
+function utils.is_field_empty(device, field_name)
+  local field = device:get_field(field_name)
+  if type(field) == "table" then
+    return next(field) == nil
+  else
+    return field == nil
   end
 end
 
