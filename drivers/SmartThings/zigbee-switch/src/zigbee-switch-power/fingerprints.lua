@@ -10,7 +10,6 @@ return {
   { mfr = "Jasco Products", model = "45853" },
   { mfr = "Jasco Products", model = "45856" },
   { mfr = "MEGAMAN", model = "SH-PSUKC44B-E" },
-  { mfr = "ClimaxTechnology", model = "PSM_00.00.00.35TC" },
   { mfr = "SALUS", model = "SX885ZB" },
   { mfr = "AduroSmart Eria", model = "AD-SmartPlug3001" },
   { mfr = "AduroSmart Eria", model = "BPU3" },
