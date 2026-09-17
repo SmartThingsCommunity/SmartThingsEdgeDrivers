@@ -76,13 +76,8 @@ function Wisers.update_wiser_ip(uuid, ip)
   end
   if (wiser.ip ~= ip) then
     log.info('wiser '..uuid..' change ip to '..(ip or ''))
+    wiser.bridge:set_field(config.FIELD.IP, ip, { persist = true})
     wiser["ip"] = ip
-    if (wiser.api ~= nil) then
-      wiser.api:shutdown()
-    end
-    if (wiser.loopapi ~= nil) then
-      wiser.loopapi:shutdown()
-    end
     wiser["api"] = api.client(uuid, ip)
     wiser["loopapi"] = api.client(uuid, ip)
   end
@@ -303,8 +298,12 @@ function Wisers.add_wiser(uuid, ip, bridge)
   local wiser = Wisers.get_wiser(uuid)
   -- first check wiser ip, if ip is same then do nothing
   -- in case the wiser's ip changed by dhcp or router restart or router changed or mannal static ip change
-  if (wiser ~= nil and wiser.ip == ip) then
-    log.trace('wiser '..uuid..' is same')
+  if (wiser ~= nil) then
+    if (wiser.ip == ip) then
+      log.trace('wiser '..uuid..' is same')
+    else
+      Wisers.update_wiser_ip(uuid, ip)
+    end
     return
   end
   -- if wiser is new then create new wiser
@@ -448,7 +447,7 @@ function Wisers.reload(uuid, add_devs, del_devs)
   end
   -- get devices
   local configret,configstr = deepsmartapi:load_config()
-  log.trace(string.format('load config (%s)', configstr))
+  log.trace(string.format('load config (%s) ret(%s)', configstr, tostring(configret)))
   if (configret and configstr ~= wiser.bridge:get_field(config.FIELD.DEVICES)) then
     local old_config = wiser.config
     wiser["config"] = Devices.load_config(wiser.wiser_index_code, configstr, old_config, add_devs, del_devs)
@@ -456,12 +455,14 @@ function Wisers.reload(uuid, add_devs, del_devs)
   end
   -- get dp info
   local dp2knxret,dp2knx_config = deepsmartapi:load_dp2knx()
+  log.trace(string.format('load dp2knx (%s) ret(%s)', dp2knx_config, tostring(dp2knxret)))
   if (dp2knxret and dp2knx_config ~= wiser.bridge:get_field(config.FIELD.DP2KNX)) then
     wiser["dp2knx"] = dp2knx.load_config(wiser.wiser_index_code, dp2knx_config)
     wiser.bridge:set_field(config.FIELD.DP2KNX, dp2knx_config, { persist = true})
   end
   -- get enum info
   local dpenumret,dpenum_config = deepsmartapi:load_dpenum()
+  log.trace(string.format('load dpenum (%s) ret(%s)', dpenum_config, tostring(dpenumret)))
   if (dpenumret and dpenum_config ~= wiser.bridge:get_field(config.FIELD.DPENUM)) then
     wiser["dpenum"] = dpenum.load_config(wiser.wiser_index_code, dpenum_config)
     wiser.bridge:set_field(config.FIELD.DPENUM, dpenum_config, { persist = true})
@@ -542,7 +543,13 @@ function Wisers.knx_response(wiser_index_code, knxes)
       end
       if (devtype ~= nil and addrtype ~= nil) then
         log.trace('dev '..dev_id..' pid '..device.productId..' convert to devtype '..devtype..' addrtype '..addrtype)
-        if (devtype == config.ENUM.AC) then
+        if (devtype == config.ENUM.SWITCH) then
+          local on_off = 'off'
+          if (value ~= 0) then
+            on_off = 'on'
+          end
+          Wisers.driver:set_switch(dev, on_off)
+        elseif (devtype == config.ENUM.AC) then
           if (addrtype == 0) then
             local on_off = 'off'
             if (value ~= 0) then
@@ -583,6 +590,40 @@ function Wisers.knx_response(wiser_index_code, knxes)
             local fan = wiser.dpenum:get_dev_val_by_pid_val(device.productId, dpid, value)
             Wisers.driver:ac_report(dev, nil,nil,fan,nil, nil,nil)
           end
+        elseif (devtype == config.ENUM.SLIDER) then
+          if (addrtype == 0) then
+            local on_off = 'off'
+            if (value ~= 0) then
+              on_off = 'on'
+            end
+            Wisers.driver:set_switch(dev, on_off)
+          elseif (addrtype == 1) then
+            Wisers.driver:set_level(dev, value*100//255)
+          end
+        elseif (devtype == config.ENUM.HUE) then
+          if (addrtype == 0) then
+            local on_off = 'off'
+            if (value ~= 0) then
+              on_off = 'on'
+            end
+            Wisers.driver:set_switch(dev, on_off)
+          elseif (addrtype == 1) then
+            Wisers.driver:set_level(dev, value*100//255)
+          elseif (addrtype == 2) then
+            Wisers.driver:set_hue(dev, value)
+          end
+        elseif (devtype == config.ENUM.CURTAIN) then
+          if (addrtype == 1 or addrtype == 2) then
+            local on_off = 'close'
+            if (value ~= 0) then
+              on_off = 'open'
+            end
+            Wisers.driver:curtain_report(dev, on_off, nil, nil)
+          elseif (addrtype == 0) then
+            Wisers.driver:curtain_report(dev, "pause", nil, nil)
+          elseif (addrtype == 3) then
+            Wisers.driver:curtain_report(dev, nil, (128+value*100)//255, nil)
+          end
         end
       else
         log.trace('pid '..device.productId..' dpid '..dpid..' convert to devtype addrtype nil')
@@ -599,15 +640,27 @@ end
 --------------
 function Wisers.get_dev_type(device)
   log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype')
-  if (device.profile.components.main.capabilities.airConditionerMode ~= nil) then
+  if (device.profile.components.main.capabilities.windowShade ~= nil) then
+    log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype curtain')
+    return config.ENUM.CURTAIN
+  elseif (device.profile.components.main.capabilities.airConditionerMode ~= nil) then
     log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype ac')
     return config.ENUM.AC
   elseif (device.profile.components.main.capabilities.thermostatMode ~= nil) then
     log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype heater')
     return config.ENUM.HEATER
-  else
+  elseif (device.profile.components.main.capabilities.airConditionerFanMode ~= nil) then
     log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype newfan')
     return config.ENUM.NEWFAN
+  elseif (device.profile.components.main.capabilities.colorTemperature ~= nil) then
+    log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype hue')
+    return config.ENUM.HUE
+  elseif (device.profile.components.main.capabilities.switchLevel~= nil) then
+    log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype slider')
+    return config.ENUM.SLIDER
+  else
+    log.trace('get device '..(device.parent_assigned_child_key or 'nil')..' devtype switch')
+    return config.ENUM.SWITCH
   end
 end
 
@@ -630,12 +683,23 @@ function Wisers.default_report(driver, device)
   end
   local devtype = wiser.dp2knx:get_pid_type(dev.productId)
   log.trace('dev '..dev.productId..' get type '..devtype)
-  if (devtype == config.ENUM.AC) then
+  if (devtype == config.ENUM.SWITCH) then
+    driver:set_switch(device, "off")
+  elseif (devtype == config.ENUM.SLIDER) then
+    driver:set_switch(device, "off")
+    driver:set_level(device, 0)
+  elseif (devtype == config.ENUM.HUE) then
+    driver:set_switch(device, "off")
+    driver:set_level(device, 0)
+    driver:set_hue(device, 0)
+  elseif (devtype == config.ENUM.AC) then
     driver:ac_report(device, "off", "auto", "auto", 25, 25, nil)
   elseif (devtype == config.ENUM.HEATER) then
     driver:ac_report(device, "off", nil, nil, 25, 25, nil)
   elseif (devtype == config.ENUM.NEWFAN) then
     driver:ac_report(device, "off", nil, "low", nil,nil, nil)
+  elseif (devtype == config.ENUM.CURTAIN) then
+    driver:curtain_report(device, "closed", 0, nil)
   end
   return true,nil
 end
@@ -778,6 +842,24 @@ function Wisers.control(device, command, addrtypes)
         deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
       end
       ret = true
+    elseif (capability == 'switchLevel') then
+      local value = command.args.level*255//100
+      for i,addr in pairs(send_list) do
+        log.info('device '..uuid..' control to addr '..addr.addr_int..' value '..value)
+        wiser.ctrlmap[addr.addr_int] = value
+        deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
+      end
+      ret = true
+    elseif (capability == 'colorTemperature') then
+      -- samsung color temperature is 1-30000
+      -- deepsmart color temperature is 0-255
+      local value = (command.args.temperature-1)*255//29999
+      for i,addr in pairs(send_list) do
+        log.info('device '..uuid..' control to addr '..addr.addr_int..' value '..value)
+        wiser.ctrlmap[addr.addr_int] = value
+        deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
+      end
+      ret = true
     elseif (capability == 'airConditionerMode') then
       local mode = wiser.dpenum:get_pid_val_by_dev_val(dev.productId, dpid, command.args.mode)
       if (mode ~= nil) then
@@ -818,6 +900,35 @@ function Wisers.control(device, command, addrtypes)
       for i,addr in pairs(send_list) do
         log.info('device '..uuid..' control to addr '..addr.addr_int..' value '..value)
         -- save control to wiser ctrlmap
+        wiser.ctrlmap[addr.addr_int] = value
+        deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
+      end
+      ret = true
+    elseif (capability == 'windowShade') then
+      if (cmd == 'pause') then
+        -- pause sends value 1 to stop addr
+        for i,addr in pairs(send_list) do
+          log.info('device '..uuid..' shade pause to addr '..addr.addr_int)
+          wiser.ctrlmap[addr.addr_int] = 1
+          deepsmartapi:control(addr.addr_int, addr.dataType, 1, 0)
+        end
+      else
+        local value = 0
+        if (cmd == 'open') then
+          value = 1
+        end
+        for i,addr in pairs(send_list) do
+          log.info('device '..uuid..' control to addr '..addr.addr_int..' value '..value)
+          wiser.ctrlmap[addr.addr_int] = value
+          deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
+        end
+      end
+      ret = true
+    elseif (capability == 'windowShadeLevel') then
+      -- SmartThings level is 0-100, deepsmart level is 0-255
+      local value = command.args.shadeLevel*255//100
+      for i,addr in pairs(send_list) do
+        log.info('device '..uuid..' control to addr '..addr.addr_int..' value '..value)
         wiser.ctrlmap[addr.addr_int] = value
         deepsmartapi:control(addr.addr_int, addr.dataType, value, 0)
       end

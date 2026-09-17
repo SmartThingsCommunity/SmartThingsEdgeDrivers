@@ -17,18 +17,30 @@ Driver(
   lifecycle_handlers = lifecycles,
   supported_capabilities = {
     caps.switch,
+    caps.switchLevel,
+    caps.colorTemperature,
     caps.refresh,
     caps.airConditionerMode,
     caps.thermostatHeatingSetpoint,
     caps.airConditionerFanMode,
     caps.thermostatMode,
-    caps.thermostatOperatingState
+    caps.thermostatOperatingState,
+    caps.windowShade,
+    caps.windowShadeLevel
   },
   capability_handlers = {
     -- Switch command handler
     [caps.switch.ID] = {
       [caps.switch.commands.on.NAME] = commands.set_switch,
       [caps.switch.commands.off.NAME] = commands.set_switch
+    },
+    -- Switch Level command handler
+    [caps.switchLevel.ID] = {
+      [caps.switchLevel.commands.setLevel.NAME] = commands.set_level
+    },
+    -- Color Control command handler
+    [caps.colorTemperature.ID] = {
+      [caps.colorTemperature.commands.setColorTemperature.NAME] = commands.set_color
     },
     -- Refresh command handler
     [caps.refresh.ID] = {
@@ -45,6 +57,16 @@ Driver(
     },
     [caps.thermostatMode.ID] = {
       [caps.thermostatMode.commands.setThermostatMode.NAME] = commands.set_thermostat_mode
+    },
+    -- Window Shade command handler
+    [caps.windowShade.ID] = {
+      [caps.windowShade.commands.open.NAME] = commands.set_shade,
+      [caps.windowShade.commands.close.NAME] = commands.set_shade,
+      [caps.windowShade.commands.pause.NAME] = commands.set_shade
+    },
+    -- Window Shade Level command handler
+    [caps.windowShadeLevel.ID] = {
+      [caps.windowShadeLevel.commands.setShadeLevel.NAME] = commands.set_shade_level
     }
   }
 }
@@ -59,6 +81,23 @@ function driver:set_switch(device, on_off)
   end
   return device:emit_event(caps.switch.switch.on())
 end
+
+-- Switch level control for external commands
+function driver:set_level(device, lvl)
+  device:online()
+  if lvl == 0 then
+    device:emit_event(caps.switch.switch.off())
+  else
+    device:emit_event(caps.switch.switch.on())
+  end
+  return device:emit_event(caps.switchLevel.level(lvl))
+end
+
+function driver:set_hue(device, hue)
+  device:online()
+  return device:emit_event(caps.colorTemperature.colorTemperature(hue*29999//255+1))
+end
+
 
 -- Switch control for external commands
 function driver:ac_report(device, onoff, mode, fan, settemp, temp, err)
@@ -113,6 +152,31 @@ function driver:heater_report(device, onoff, settemp, temp, err)
   if (temp ~= nil) then
     log.info('device '..device.parent_assigned_child_key..' report temp '..temp)
     device:emit_event(caps.temperatureMeasurement.temperature({value=temp,unit='C'}))
+  end
+  return true,nil
+end
+
+-- Curtain control from bridge
+function driver:curtain_report(device, onoff, level, err)
+  device:online()
+  if (onoff ~= nil) then
+    log.info('device '..device.parent_assigned_child_key..' report onoff '..onoff)
+    if (onoff == "close") then
+      device:emit_event(caps.windowShade.windowShade.closed())
+    elseif (onoff == "open") then
+      device:emit_event(caps.windowShade.windowShade.open())
+    else
+      device:emit_event(caps.windowShade.windowShade.paused())
+    end
+  end
+  if (level ~= nil) then
+    log.info('device '..device.parent_assigned_child_key..' report level '..level)
+    device:emit_event(caps.windowShadeLevel.shadeLevel(level))
+    if level == 0 then
+      device:emit_event(caps.windowShade.windowShade.closed())
+    elseif level == 100 then
+      device:emit_event(caps.windowShade.windowShade.open())
+    end
   end
   return true,nil
 end
