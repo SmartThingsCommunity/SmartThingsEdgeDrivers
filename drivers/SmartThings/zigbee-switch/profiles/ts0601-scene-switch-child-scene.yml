@@ -1,0 +1,19 @@
+name: ts0601-scene-switch-child-scene
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - title: Mode
+    name: switchMode
+    description: Switch mode shows a controllable relay; scene mode shows a wireless button.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        switch: Switch
+        scene: Scene
+      default: scene
