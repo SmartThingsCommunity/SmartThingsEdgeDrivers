@@ -11,6 +11,7 @@ local zcl_messages = require "st.zigbee.zcl"
 local messages = require "st.zigbee.messages"
 local zb_const = require "st.zigbee.constants"
 local read_attribute = require "st.zigbee.zcl.global_commands.read_attribute"
+local default_response = require "st.zigbee.zcl.global_commands.default_response"
 
 local OnOff = clusters.OnOff
 local SWITCH_PROFILE = "ts0601-scene-switch-child"
@@ -345,6 +346,14 @@ return {
     },
   },
   zigbee_handlers = {
+    global = {
+      [OnOff.ID] = {
+        [default_response.DefaultResponse.ID] = function()
+          -- Relay state comes from attribute reports, not command acknowledgements.
+          -- The generic handler targets the display-only parent and registers native handling.
+        end,
+      },
+    },
     attr = {
       [OnOff.ID] = {
         [OnOff.attributes.OnOff.ID] = onoff_report,

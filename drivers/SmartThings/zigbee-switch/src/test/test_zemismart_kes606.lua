@@ -10,6 +10,11 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
 local json = require "st.json"
+local messages = require "st.zigbee.messages"
+local constants = require "st.zigbee.constants"
+local zcl_messages = require "st.zigbee.zcl"
+local default_response = require "st.zigbee.zcl.global_commands.default_response"
+local Status = require "st.zigbee.generated.types.ZclStatus"
 local OnOff = clusters.OnOff
 
 local PARENT_PROFILE = "ts0601-scene-switch-4-gang.yml"
@@ -302,5 +307,67 @@ test.register_coroutine_test("Initialization creates exactly four relay children
     end
   end,
 })
+
+local function build_onoff_default_response(device, endpoint, command_id, status)
+  local body = default_response.DefaultResponse(command_id, status)
+  return messages.ZigbeeMessageRx({
+    address_header = messages.AddressHeader(device:get_short_address(), endpoint,
+      constants.HUB.ADDR, constants.HUB.ENDPOINT, constants.HA_PROFILE_ID, OnOff.ID),
+    body = zcl_messages.ZclMessageBody({
+      zcl_header = zcl_messages.ZclHeader({ cmd = data_types.ZCLCommandId(body.ID) }),
+      zcl_body = body,
+    }),
+  })
+end
+
+for _, scene in ipairs({ false, true }) do
+  local sample = scene and scene_parent or parent
+  local mode_name = scene and "scene" or "relay"
+  for ep = 1, 4 do
+    for _, on in ipairs({ true, false }) do
+      local command_id = on and OnOff.server.commands.On.ID or OnOff.server.commands.Off.ID
+      local command_name = on and "on" or "off"
+      for _, success in ipairs({ true, false }) do
+        local status = success and Status.SUCCESS or Status.FAILURE
+        local status_name = success and "success" or "failure"
+        test.register_coroutine_test("DefaultResponse " .. mode_name .. " " .. ep .. " "
+          .. command_name .. " " .. status_name .. " never claims parent state or native routing", function()
+          -- Unsupported parent events are silently discarded by the SDK. Observe only this test's
+          -- real device instance before that guard, so a generic parent handler cannot pass unnoticed.
+          local actual = rawget(sample, "wrapped_device")
+          local emit = actual.emit_component_event
+          local raw_emit = rawget(actual, "emit_component_event")
+          local raw_register = rawget(actual, "register_native_capability_attr_handler")
+          local parent_events, native_registrations = 0, 0
+          rawset(actual, "emit_component_event", function(self, ...)
+            parent_events = parent_events + 1
+            return emit(self, ...)
+          end)
+          rawset(actual, "register_native_capability_attr_handler", function()
+            native_registrations = native_registrations + 1
+          end)
+
+          test.socket.zigbee:__queue_receive({ sample.id,
+            build_onoff_default_response(sample, ep, command_id, status) })
+          test.wait_for_events()
+          -- A real report remains authoritative, even after a failed command response.
+          if not scene then
+            test.socket.capability:__expect_send(children[ep]:generate_test_message("main",
+              capabilities.switch.switch(command_name)))
+          end
+          test.socket.zigbee:__queue_receive({ sample.id,
+            OnOff.attributes.OnOff:build_test_attr_report(sample, on):from_endpoint(ep) })
+          test.wait_for_events()
+
+          rawset(actual, "emit_component_event", raw_emit)
+          rawset(actual, "register_native_capability_attr_handler", raw_register)
+          assert(parent_events == 0 and native_registrations == 0,
+            string.format("DefaultResponse leaked to generic parent handling: %d parent events, %d native registrations",
+              parent_events, native_registrations))
+        end)
+      end
+    end
+  end
+end
 
 test.run_registered_tests()
