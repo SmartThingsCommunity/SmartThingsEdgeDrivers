@@ -244,6 +244,16 @@ local function do_configure(driver, device)
   end
 end
 
+local function driver_switched(driver, device)
+  -- The root driver's capability check does not include this sub-driver's refresh/button pair.
+  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    do_configure(driver, device)
+  else
+    initialize_button(device)
+  end
+  device:try_update_metadata({ provisioning_state = "PROVISIONED" })
+end
+
 local function changed(preferences, old_preferences, name)
   return preferences[name] ~= nil and preferences[name] ~= old_preferences[name]
 end
@@ -312,6 +322,7 @@ return {
     added = initialize,
     init = initialize,
     doConfigure = do_configure,
+    driverSwitched = driver_switched,
     infoChanged = info_changed,
   },
   capability_handlers = {

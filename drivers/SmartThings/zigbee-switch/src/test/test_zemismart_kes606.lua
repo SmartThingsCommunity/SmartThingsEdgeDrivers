@@ -237,7 +237,7 @@ local function expect_reads(device, scene)
   end
 end
 
-test.register_coroutine_test("Configure binds all four endpoints without generic Tuya duplication", function()
+local function expect_configuration()
   test.socket.zigbee:__set_channel_ordering("relaxed")
   test.socket.zigbee:__expect_send({ parent.id, zb_utils.build_attribute_read(parent, 0x0000,
     { 0x0004, 0x0000, 0x0001, 0x0005, 0x0007, 0xFFFE }) })
@@ -259,8 +259,29 @@ test.register_coroutine_test("Configure binds all four endpoints without generic
   end
   expect_reads(parent, false)
   parent:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+test.register_coroutine_test("Configure binds all four endpoints without generic Tuya duplication", function()
+  expect_configuration()
   test.socket.device_lifecycle:__queue_receive({ parent.id, "doConfigure" })
 end)
+
+test.register_coroutine_test("Driver switch provisions the refresh-only parent using its own configuration", function()
+  expect_configuration()
+  test.socket.device_lifecycle:__queue_receive({ parent.id, "driverSwitched" })
+end)
+
+for ep = 1, 4 do
+  test.register_coroutine_test("Driver switch provisions relay child " .. ep, function()
+    children[ep]:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ children[ep].id, "driverSwitched" })
+  end)
+  test.register_coroutine_test("Driver switch provisions scene child " .. ep .. " without a press", function()
+    expect_button_metadata(scene_children[ep])
+    scene_children[ep]:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ scene_children[ep].id, "driverSwitched" })
+  end)
+end
 
 test.register_coroutine_test("Scene refresh reads settings without relay reads or synthetic presses", function()
   test.socket.zigbee:__set_channel_ordering("relaxed")
