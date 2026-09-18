@@ -260,6 +260,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -291,6 +294,9 @@ test.register_coroutine_test(
         CLEANING_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -319,6 +325,9 @@ test.register_coroutine_test(
         MAPPING_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -396,6 +405,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -437,6 +449,9 @@ test.register_coroutine_test(
         CLEANING_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -475,6 +490,9 @@ test.register_coroutine_test(
         CLEANING_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -484,6 +502,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -498,6 +517,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.running()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -538,6 +560,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -550,6 +575,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -564,6 +590,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.running()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -592,6 +621,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -604,6 +636,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -618,6 +651,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.paused()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -649,6 +685,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -661,6 +700,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -675,6 +715,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.seekingCharger()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -706,6 +749,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -718,6 +764,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -732,6 +779,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.charging()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -760,6 +810,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -772,6 +825,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -786,6 +840,9 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.docked()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -814,6 +871,9 @@ test.register_coroutine_test(
         IDLE_MODE.mode
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -826,6 +886,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
@@ -834,6 +895,9 @@ test.register_coroutine_test(
         clusters.OperationalState.types.OperationalStateEnum.ERROR
       )
     })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -843,6 +907,7 @@ test.register_coroutine_test(
         )
       )
     )
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.RvcOperationalState.server.attributes.OperationalError:build_test_report_data(
