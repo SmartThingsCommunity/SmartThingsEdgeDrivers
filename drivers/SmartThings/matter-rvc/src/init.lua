@@ -36,6 +36,8 @@ local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CURRENT_RUN_MODE = "__current_run_mode"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
 local SERVICE_AREA_PROFILED = "__SERVICE_AREA_PROFILED"
+local SUPPORTED_AREAS = "__supported_areas"
+local SUPPORTED_MAPS = "__supported_maps"
 
 local clus_op_enum = clusters.OperationalState.types.OperationalStateEnum
 local clus_rvc_op_enum = clusters.RvcOperationalState.types.OperationalStateEnum
@@ -63,6 +65,7 @@ local subscribed_attributes = {
     clusters.RvcOperationalState.attributes.OperationalError
   },
   [capabilities.serviceArea.ID] = {
+    clusters.ServiceArea.attributes.SupportedMaps,
     clusters.ServiceArea.attributes.SupportedAreas,
     clusters.ServiceArea.attributes.SelectedAreas
   }
@@ -453,8 +456,38 @@ local function upper_to_camelcase(name)
   return name_camelcase
 end
 
-local function rvc_service_area_supported_areas_handler(driver, device, ib, response)
+local function rvc_service_area_supported_maps_handler(driver, device, ib, response)
+  local supported_maps = {}
+  for i, map in ipairs(ib.data.elements) do
+    if version.api < 13 then
+      clusters.ServiceArea.types.MapStruct:augment_type(map)
+    end
+    local map_id = map.elements.map_id.value
+    local name = map.elements.name.value
+    supported_maps[tostring(map_id)] = name
+  end
+  -- Update Supported Maps
+  device:set_field(SUPPORTED_MAPS, supported_maps, { persist = true })
+
+  -- Update Supported Areas
+  local supported_areas_field = device:get_field(SUPPORTED_AREAS) or nil
+  if not supported_areas_field then return end
   local supported_areas = {}
+  for _, area in ipairs(supported_areas_field) do
+    local map_name = ""
+    if supported_maps[tostring(area.mapId)] ~= nil then
+      map_name = supported_maps[tostring(area.mapId)] .. ": "
+    end
+    table.insert(supported_areas, {["areaId"] = area.areaId, ["areaName"] = map_name .. area.areaName})
+  end
+  local event = capabilities.serviceArea.supportedAreas(supported_areas, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+local function rvc_service_area_supported_areas_handler(driver, device, ib, response)
+  local supported_maps = device:get_field(SUPPORTED_MAPS) or {}
+  local supported_areas = {}
+  local supported_areas_field = {}
   for i, area in ipairs(ib.data.elements) do
     if version.api < 13 then
       clusters.ServiceArea.types.AreaStruct:augment_type(area)
@@ -463,9 +496,14 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
         clusters.Global.types.LocationDescriptorStruct:augment_type(area.elements.area_info.elements.location_info)
       end
     end
+    local map_id = area.elements.map_id.value
     local area_id = area.elements.area_id.value
     local location_info = area.elements.area_info.elements.location_info.elements
     local landmark_info = area.elements.area_info.elements.landmark_info.elements
+    local map_name = ""
+    if supported_maps[tostring(map_id)] ~= nil then
+      map_name = supported_maps[tostring(map_id)] .. ": "
+    end
     local area_name = ""
     -- Set the area name based on available location information
     if location_info ~= nil then
@@ -482,10 +520,12 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
     if area_name == "" then
       area_name = upper_to_camelcase(string.gsub(clusters.Global.types.LandmarkTag.pretty_print(landmark_info.landmark_tag),"LandmarkTag: ",""))
     end
-    table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = area_name})
+    table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = map_name.. area_name})
+    table.insert(supported_areas_field, {["mapId"] = map_id, ["areaId"] = area_id, ["areaName"] = area_name})
   end
 
   -- Update Supported Areas
+  device:set_field(SUPPORTED_AREAS, supported_areas_field, { persist = true })
   local event = capabilities.serviceArea.supportedAreas(supported_areas, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
@@ -632,6 +672,7 @@ local matter_rvc_driver = {
         [clusters.RvcOperationalState.attributes.AcceptedCommandList.ID] = handle_rvc_operational_state_accepted_command_list,
       },
       [clusters.ServiceArea.ID] = {
+        [clusters.ServiceArea.attributes.SupportedMaps.ID] = rvc_service_area_supported_maps_handler,
         [clusters.ServiceArea.attributes.SupportedAreas.ID] = rvc_service_area_supported_areas_handler,
         [clusters.ServiceArea.attributes.SelectedAreas.ID] = rvc_service_area_selected_areas_handler,
       }
