@@ -7,8 +7,14 @@ local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local utils = require "st.utils"
 
--- Battery Polling Interval (seconds): SWV1C is a battery sleep device, polling every 2 hours
-local BATTERY_POLL_INTERVAL = 7200
+local battery_configuration = {
+  cluster = PowerConfiguration.ID,
+  attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+  minimum_interval = 30,
+  maximum_interval = 7200,
+  data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+  reportable_change = 1,
+}
 
 --- OnOff Property Reporting Handler → Valve Capability Point Event
 --- SONOFF reports valve state through the OnOff cluster, so keep an explicit mapping
@@ -37,16 +43,11 @@ local function battery_percentage_handler(driver, device, value)
 end
 
 --- Lifecycle initialization handler
---- Ensures battery data is available by periodically actively reading BatteryPercentageRemaining
+--- Register BatteryPercentageRemaining reporting configuration for the sleeping battery device
 --- @param driver table Driver instance
 --- @param device table Device instance
 local function device_init(driver, device)
-  device.thread:call_on_schedule(
-    BATTERY_POLL_INTERVAL,
-    function()
-      device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-    end
-  )
+  device:add_configured_attribute(battery_configuration)
 end
 
 local sonoff_valve_handler = {

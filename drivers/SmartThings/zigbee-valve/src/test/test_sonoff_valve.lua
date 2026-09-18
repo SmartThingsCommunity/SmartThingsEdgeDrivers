@@ -104,6 +104,41 @@ test.register_message_test(
     }
 )
 
+-- init lifecycle
+test.register_coroutine_test(
+    "Init lifecycle should register battery percentage reporting configuration",
+    function ()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 7200, 1)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0)
+      })
+      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end
+)
+
 -- valve.open → OnOff.On
 -- valve.open → OnOff.On + read OnOff attribute
 test.register_message_test(
