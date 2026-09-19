@@ -255,6 +255,12 @@ matterManufacturer:
     vendorId: 0x1523
     productId: 0x0A69
     deviceProfileName: window-covering-battery
+#BofuSmart
+  - id: "5412/48897"
+    deviceLabel: Blinds motor
+    vendorId: 0x1524
+    productId: 0xBF01
+    deviceProfileName: window-covering-battery
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
