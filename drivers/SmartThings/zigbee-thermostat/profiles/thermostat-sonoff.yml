@@ -1,0 +1,92 @@
+name: thermostat-sonoff
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
+  - id: thermostatMode
+    version: 1
+    config:
+      values:
+        - key: "thermostatMode.value"
+          enabledValues:
+            - off
+            - auto
+            - heat
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 30 ]
+          step: 0.5
+  - id: drumborder00833.overrideStatus
+    version: 1
+  - id: drumborder00833.overrideAction
+    version: 1
+  - id: drumborder00833.overrideModeDuration
+    version: 1
+  - id: drumborder00833.overrideModeTemperature
+    version: 1
+  - id: samplereturn62595.temperatureCompensation
+    version: 1
+  - id: drumborder00833.childLockState
+    version: 1
+  - id: drumborder00833.openWindowDetection
+    version: 1
+  - id: drumborder00833.openWindowState
+    version: 1
+  - id: drumborder00833.bluetoothPairingBroadcastRequest
+    version: 1
+  - id: drumborder00833.frostProofTemperature
+    version: 1
+  - id: drumborder00833.temperatureControlThresholdLow
+    version: 1
+  - id: drumborder00833.temperatureControlThresholdHigh
+    version: 1
+  - id: drumborder00833.overheatProtectionEnable
+    version: 1
+  - id: drumborder00833.overheatProtectionTemperature
+    version: 1
+  - id: drumborder00833.screenWorkingBrightness
+    version: 1
+  - id: drumborder00833.screenStandbyBrightness
+    version: 1
+  - id: drumborder00833.screenNightModeEnable
+    version: 1
+  - id: drumborder00833.screenNightStandbyBrightness
+    version: 1
+  - id: drumborder00833.screenNightStartMinute
+    version: 1
+  - id: drumborder00833.screenNightEndMinute
+    version: 1
+  - id: drumborder00833.radarEnable
+    version: 1
+  - id: drumborder00833.radarSensitivityLevel
+    version: 1
+  - id: drumborder00833.radarDoNotDisturbEnable
+    version: 1
+  - id: drumborder00833.radarDoNotDisturbStartMinute
+    version: 1
+  - id: drumborder00833.radarDoNotDisturbEndMinute
+    version: 1
+  - id: drumborder00833.relayHeatingContactType
+    version: 1
+  - id: drumborder00833.relayBoilerContactType
+    version: 1
+  - id: drumborder00833.ntcTemperature
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
