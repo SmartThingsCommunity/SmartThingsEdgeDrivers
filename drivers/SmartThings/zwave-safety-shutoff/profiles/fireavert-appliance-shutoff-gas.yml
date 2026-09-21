@@ -19,10 +19,14 @@ deviceConfig:
       values:
       - key: soundDetected.value
         alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
         - key: fireAlarm
           value: "Fire Alarm Detected"
           type: active
         enabledValues:
+        - noSound
         - fireAlarm
       version: 1
     - component: main
