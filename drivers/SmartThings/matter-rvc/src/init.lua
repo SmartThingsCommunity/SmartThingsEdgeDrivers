@@ -50,6 +50,8 @@ local OPERATING_STATE_MAP = {
   [clus_rvc_op_enum.DOCKED] = cap_op_enum.docked
 }
 
+local DEBOUNCE_DELAY_S = 1  -- wait for both sources(OperationalState and RvcRunMode) to settle
+
 local subscribed_attributes = {
   [capabilities.mode.ID] = {
     clusters.RvcRunMode.attributes.SupportedModes,
@@ -292,12 +294,14 @@ local function run_mode_current_mode_handler(driver, device, ib, response)
   device:set_field(CURRENT_RUN_MODE, current_run_mode, { persist = true })
 
   -- Update supported mode
-  local current_state = device:get_latest_state(
-    "main",
-    capabilities.robotCleanerOperatingState.ID,
-    capabilities.robotCleanerOperatingState.operatingState.NAME
-  )
-  update_supported_arguments(device, ib.endpoint_id, current_run_mode, current_state)
+  device.thread:call_with_delay(DEBOUNCE_DELAY_S, function()
+    local current_state = device:get_latest_state(
+      "main",
+      capabilities.robotCleanerOperatingState.ID,
+      capabilities.robotCleanerOperatingState.operatingState.NAME
+    )
+    update_supported_arguments(device, ib.endpoint_id, current_run_mode, current_state)
+  end)
 end
 
 local function clean_mode_supported_mode_handler(driver, device, ib, response)
@@ -336,13 +340,15 @@ local function rvc_operational_state_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, OPERATING_STATE_MAP[ib.data.value]())
   end
 
-  -- Supported Mode update
-  local current_run_mode = device:get_field(CURRENT_RUN_MODE)
-  if ib.data.value ~= clus_op_enum.ERROR then
-    update_supported_arguments(device, ib.endpoint_id, current_run_mode, OPERATING_STATE_MAP[ib.data.value].NAME)
-  else
-    update_supported_arguments(device, ib.endpoint_id, current_run_mode, "Error")
-  end
+  -- Update supported mode
+  device.thread:call_with_delay(DEBOUNCE_DELAY_S, function()
+    local current_run_mode = device:get_field(CURRENT_RUN_MODE)
+    if ib.data.value ~= clus_op_enum.ERROR then
+      update_supported_arguments(device, ib.endpoint_id, current_run_mode, OPERATING_STATE_MAP[ib.data.value].NAME)
+    else
+      update_supported_arguments(device, ib.endpoint_id, current_run_mode, "Error")
+    end
+  end)
 end
 
 local function rvc_operational_error_attr_handler(driver, device, ib, response)
