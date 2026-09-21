@@ -41,6 +41,15 @@ local function set_hard_privacy_mode_presence(device, hard_privacy_mode_present)
   device:set_field(camera_fields.HARD_PRIVACY_MODE_PRESENT, hard_privacy_mode_present == true, { persist = true })
 end
 
+local function volume_range_usable(device, component)
+  local raw_min_volume = device:get_field(camera_fields.RAW_MIN_VOLUME_LEVEL .. "_" .. component)
+  local raw_max_volume = device:get_field(camera_fields.RAW_MAX_VOLUME_LEVEL .. "_" .. component)
+  if raw_min_volume == nil or raw_max_volume == nil then
+    return false
+  end
+  return raw_max_volume > raw_min_volume
+end
+
 local function build_webrtc_supported_features()
   return {
     bundle = true,
@@ -258,7 +267,9 @@ function CameraDeviceConfiguration.match_profile(device)
             table.insert(main_component_capabilities, capabilities.audioRecording.ID)
           end
           table.insert(microphone_component_capabilities, capabilities.audioMute.ID)
-          table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
+          if volume_range_usable(device, camera_fields.profile_components.microphone) then
+            table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
+          end
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SNAPSHOT) then
           table.insert(main_component_capabilities, capabilities.imageCapture.ID)
@@ -268,7 +279,9 @@ function CameraDeviceConfiguration.match_profile(device)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SPEAKER) then
           table.insert(speaker_component_capabilities, capabilities.audioMute.ID)
-          table.insert(speaker_component_capabilities, capabilities.audioVolume.ID)
+          if volume_range_usable(device, camera_fields.profile_components.speaker) then
+            table.insert(speaker_component_capabilities, capabilities.audioVolume.ID)
+          end
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL) then
           table.insert(main_component_capabilities, capabilities.imageControl.ID)
