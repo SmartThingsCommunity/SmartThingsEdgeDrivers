@@ -1173,6 +1173,97 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Speaker/Microphone volume range attributes should stay subscribed even when audioVolume isn't granted yet",
+  function()
+    -- Fresh pairing: no volume range has been reported yet, so audioVolume shouldn't be granted on
+    -- the very first profile match.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      })
+    })
+    local first_pass_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
+            "webrtc", "motionSensor", "sounds" }
+        },
+        { "statusLed", { "switch", "mode" } },
+        { "speaker", { "audioMute" } },
+        { "microphone", { "audioMute" } },
+        { "doorbell", { "button" } }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(first_pass_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+    test.wait_for_events()
+
+    local first_pass_profile = t_utils.get_profile_definition(
+      "camera.yml", {enabled_optional_capabilities = first_pass_metadata.optional_component_capabilities}
+    )
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = first_pass_profile }))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.webrtc.supportedFeatures(
+        {audio="sendrecv", bundle=true, order="audio/video", supportTrickleICE=true, turnSource="player", video="recvonly"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
+        {"pan", "panRange", "tilt", "tiltRange", "zoom", "zoomRange", "presets", "maxPresets"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.supportedFeatures(
+        {"triggerAugmentation", "perZoneSensitivity"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.localMediaStorage.supportedAttributes(
+        {"localVideoRecording"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.audioRecording.audioRecording("enabled"))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
+        {"liveStreaming", "clipRecording", "perStreamViewports", "watermark", "onScreenDisplay"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
+        {"softRecordingPrivacyMode", "softLivestreamPrivacyMode"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
+        {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
+      ))
+    )
+
+    -- audioVolume isn't active yet, so its current-value attributes shouldn't be (re-)subscribed, but
+    -- the min/max discovery attributes -- now bundled with audioMute -- must still be. Without that,
+    -- the driver could never learn the range needed to decide whether audioVolume belongs at all.
+    for _, attr in ipairs(additional_subscribed_attributes) do
+      if attr ~= clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel and
+         attr ~= clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel then
+        subscribe_request:merge(attr:subscribe(mock_device))
+      end
+    end
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Camera privacy mode supportedAttributes/supportedCommands should only expose hardPrivacyMode when PRIV feature is absent",
   function()
     local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"

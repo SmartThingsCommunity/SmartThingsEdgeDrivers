@@ -212,17 +212,21 @@ function CameraUtils.subscribe(device)
       clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
       clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin
     },
+    -- SpeakerMaxLevel/MinLevel and MicrophoneMaxLevel/MinLevel are subscribed alongside audioMute
+    -- (unconditional on the AUDIO/SPEAKER feature) rather than audioVolume, since audioVolume's own
+    -- presence in the profile depends on first discovering these values -- gating their subscription
+    -- on audioVolume already being present would make that discovery impossible.
     [capabilities.audioMute.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
+      clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
+      clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel
     },
     [capabilities.audioVolume.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
-      clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
-      clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel
+      clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel
     },
     [capabilities.mode.ID] = {
       clusters.CameraAvStreamManagement.attributes.StatusLightBrightness
