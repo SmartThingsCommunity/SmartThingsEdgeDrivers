@@ -1,0 +1,80 @@
+name: fireavert-appliance-shutoff-electric
+components:
+- id: main
+  label: "FireAvert Information"
+  capabilities:
+  - id: refresh
+    version: 1
+  - id: soundDetection
+    version: 1
+  - id: switch
+    version: 1
+  categories:
+    - name: SmokeDetector
+- id: appliancePower
+  label: "Appliance Power"
+  capabilities:
+  - id: applianceUtilization
+    version: 1
+deviceConfig:
+  dashboard:
+    states:
+    - component: main
+      capability: soundDetection
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+          - noSound
+          - fireAlarm
+  detailView:
+    - component: main
+      capability: soundDetection
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+          - noSound
+          - fireAlarm
+    - component: main
+      capability: switch
+      version: 1
+    - component: appliancePower
+      capability: applianceUtilization
+      version: 1
+      values:
+      - key: status.value
+        alternatives:
+        - key: inUse
+          value: "Appliance Powered On"
+          type: active
+        - key: notInUse
+          value: "Appliance Powered Off"
+          type: inactive
+  automation:  
+    conditions:
+      - component: main
+        capability: soundDetection
+        version: 1
+      - component: main
+        capability: switch
+        version: 1
+      - component: appliancePower
+        capability: applianceUtilization
+        version: 1
+    actions:
+      - component: main
+        capability: switch
+        version: 1
