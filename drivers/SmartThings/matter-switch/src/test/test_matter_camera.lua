@@ -997,6 +997,7 @@ local function build_fake_device_with_volume_ranges(raw_levels)
     },
     get_field = function(_, field) return raw_levels[field] end,
     get_endpoints = function() return {} end,
+    supports_capability = function() return false end,
     try_update_metadata = function(self, metadata) self.updated_metadata = metadata end,
   }
 end
@@ -1064,6 +1065,66 @@ test.register_coroutine_test(
 
     assert(list_contains(speaker_capabilities, capabilities.audioVolume.ID), "audioVolume should be included on speaker when max > min")
     assert(list_contains(microphone_capabilities, capabilities.audioVolume.ID), "audioVolume should be included on microphone when max > min")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "audioVolume should be preserved on a component whose volume range isn't fully known yet",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    -- Speaker already has audioVolume from a prior match; its raw min/max aren't in raw_levels (nil),
+    -- so it should be carried over as-is rather than being dropped for lack of information.
+    local existing_components = {
+      speaker = { capabilities = { audioVolume = { id = capabilities.audioVolume.ID } } }
+    }
+    local raw_levels = {
+      [camera_fields.RAW_MIN_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.RAW_MAX_VOLUME_LEVEL .. "_microphone"] = 100, -- unusable; forces a real profile change so we can inspect it
+    }
+    local fake_device = {
+      profile = { components = existing_components },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          },
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.AUDIO |
+                clusters.CameraAvStreamManagement.types.Feature.SPEAKER,
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      get_field = function(_, field) return raw_levels[field] end,
+      get_endpoints = function() return {} end,
+      supports_capability = function(_, capability, component)
+        local comp = existing_components[component]
+        if not comp then return false end
+        for _, cap in pairs(comp.capabilities) do
+          if cap.id == capability.ID then return true end
+        end
+        return false
+      end,
+      try_update_metadata = function(self, metadata) self.updated_metadata = metadata end,
+    }
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(fake_device.updated_metadata ~= nil, "profile update should be requested")
+    local speaker_capabilities = component_capabilities(fake_device.updated_metadata, "speaker")
+    local microphone_capabilities = component_capabilities(fake_device.updated_metadata, "microphone")
+
+    assert(list_contains(speaker_capabilities, capabilities.audioVolume.ID), "audioVolume should be preserved on speaker while its range is unknown")
+    assert(list_contains(microphone_capabilities, capabilities.audioMute.ID), "audioMute should still be present on microphone")
+    assert(not list_contains(microphone_capabilities, capabilities.audioVolume.ID), "audioVolume should be excluded from microphone when min >= max")
   end,
   {
     min_api_version = 14
