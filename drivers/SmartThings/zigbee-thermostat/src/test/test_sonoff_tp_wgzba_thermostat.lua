@@ -405,7 +405,8 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", named_args = { setpoint = 22 } }
+      -- positional for API 57; named_args for newer libs with empty reconstructed arg_lists
+      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 22 }, named_args = { setpoint = 22 } }
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -419,7 +420,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", named_args = { setpoint = 4 } }
+      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 4 }, named_args = { setpoint = 4 } }
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -433,7 +434,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", named_args = { setpoint = 31 } }
+      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 31 }, named_args = { setpoint = 31 } }
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
