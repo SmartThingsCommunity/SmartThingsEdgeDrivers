@@ -4306,6 +4306,11 @@ matterManufacturer:
     vendorId: 0x1664
     productId: 0x0600
     deviceProfileName: light-color-level
+  - id: "5732/768"
+    deviceLabel: Utilitech 1x4 Smart Panel  - Full Color
+    vendorId: 0x1664
+    productId: 0x0300
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
