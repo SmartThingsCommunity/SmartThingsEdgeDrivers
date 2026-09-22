@@ -59,8 +59,15 @@ function CameraAttributeHandlers.volume_level_handler(driver, device, ib, respon
   local component = device:endpoint_to_component(ib)
   local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MAX
   local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
-  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local limited_range = max_volume - min_volume
+  if limited_range <= 0 then
+    -- Non-adjustable (min == max) range: nothing to normalize against. A report can still arrive here
+    -- while the profile update dropping audioVolume is in flight, so report a fixed value instead of
+    -- dividing by zero.
+    device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(0))
+    return
+  end
+  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local normalized_volume = utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
   device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(normalized_volume))
 end

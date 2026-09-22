@@ -1581,6 +1581,56 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "A volume level report racing a zero-width range update should not divide by zero",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    -- Narrow the range to min == max. This drops audioVolume from the profile, but the internal
+    -- MAX/MIN_VOLUME_LEVEL fields used for normalization are updated synchronously, before the
+    -- platform round-trips the narrowed profile back down.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.server.attributes.SpeakerMaxLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.server.attributes.SpeakerMinLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    local updated_expected_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
+            "webrtc", "motionSensor", "sounds" }
+        },
+        { "statusLed", { "switch", "mode" } },
+        { "speaker", { "audioMute" } }, -- audioVolume dropped: the range is now zero-width (100 == 100)
+        { "microphone", { "audioMute", "audioVolume" } },
+        { "doorbell", { "button" } }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(updated_expected_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+    test.wait_for_events()
+
+    -- A late SpeakerVolumeLevel report can still arrive before the narrowed profile comes back down.
+    -- It should report a fixed value instead of dividing by (max - min) == 0.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("speaker", capabilities.audioVolume.volume(0))
+    )
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Status Light Enabled reports should generate appropriate events",
   function()
     update_device_profile()
