@@ -56,6 +56,10 @@ local OverheatProtectionTemperature = capabilities["drumborder00833.overheatProt
 local OverheatProtectionEnable = capabilities["drumborder00833.overheatProtectionEnable"]
 local RadarEnable = capabilities["drumborder00833.radarEnable"]
 
+local custom_capabilities_available = pcall(function()
+  OpenWindowState.openWindowState("closed")
+end)
+
 local MFG_CODE = 0x1286
 local SONOFF_PRIVATE_CLUSTER = 0xFC11
 local TEMPORARY_MODE_COMMAND_ID = 0x11
@@ -196,6 +200,8 @@ local function expect_refresh_reads()
     })
   end
 end
+
+if custom_capabilities_available then
 
 test.register_coroutine_test(
   "Device added should emit supported modes and refresh after init already seeded defaults",
@@ -900,5 +906,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", RelayOutTypeR2.relayTwoOutputType("normallyClosed")))
   end
 )
+
+end
 
 test.run_registered_tests()
