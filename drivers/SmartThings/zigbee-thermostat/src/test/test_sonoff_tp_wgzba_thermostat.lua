@@ -201,7 +201,61 @@ local function expect_refresh_reads()
   end
 end
 
+-- Builds a minimal device object for can_handle tests.
+local function can_handle_device(manufacturer, model)
+  -- The can_handle modules only depend on these two accessors.
+  return {
+    get_manufacturer = function()
+      return manufacturer
+    end,
+    get_model = function()
+      return model
+    end
+  }
+end
+
+-- Disables the global lifecycle expectations for direct can_handle tests.
+local function noop_test_init()
+  -- These tests do not register a mock device with the driver socket.
+end
+
+test.register_coroutine_test(
+  "SONOFF can_handle modules should reject non-matching fingerprints",
+  function()
+    local aggregate_can_handle = require "sonoff.can_handle"
+    local tp_wgzba_can_handle = require "sonoff.tp_wgzba.can_handle"
+
+    local aggregate_rejected = aggregate_can_handle({}, nil, can_handle_device("SONOFF", "OTHER"))
+    local tp_wgzba_rejected = tp_wgzba_can_handle({}, nil, can_handle_device("OTHER", "TP-WGZBA"))
+
+    assert(not aggregate_rejected)
+    assert(not tp_wgzba_rejected)
+  end,
+  {
+    test_init = noop_test_init
+  }
+)
+
 if custom_capabilities_available then
+
+test.register_coroutine_test(
+  "SONOFF can_handle modules should match TP-WGZBA",
+  function()
+    local aggregate_can_handle = require "sonoff.can_handle"
+    local tp_wgzba_can_handle = require "sonoff.tp_wgzba.can_handle"
+
+    local aggregate_handled, aggregate_sub_driver = aggregate_can_handle({}, nil, can_handle_device("SONOFF", "TP-WGZBA"))
+    local tp_wgzba_handled, tp_wgzba_sub_driver = tp_wgzba_can_handle({}, nil, can_handle_device("SONOFF", "TP-WGZBA"))
+
+    assert(aggregate_handled)
+    assert(aggregate_sub_driver.NAME == "SONOFF Thermostat Handler")
+    assert(tp_wgzba_handled)
+    assert(tp_wgzba_sub_driver.NAME == "SONOFF TP-WGZBA Handler")
+  end,
+  {
+    test_init = noop_test_init
+  }
+)
 
 test.register_coroutine_test(
   "Device added should emit supported modes and refresh after init already seeded defaults",
