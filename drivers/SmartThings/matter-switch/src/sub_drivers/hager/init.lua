@@ -189,10 +189,10 @@ local function info_changed(driver, device, event, args)
   end
 
   if device.profile.id ~= args.old_st_store.profile.id or device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    local parent = device:get_parent_device()
-    local matter_device = get_matter_device(parent)
-    local map = {}
     device.thread:call_with_delay(2, function()
+      local parent = device:get_parent_device()
+      local matter_device = get_matter_device(parent)
+      local map = {}
       if device:supports_capability(capabilities.button) then
         local button_eps = parent:get_field(BUTTON_EPS)
         local clean_eps = {}
