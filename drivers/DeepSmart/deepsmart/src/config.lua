@@ -6,7 +6,13 @@ local config = {}
 config.DEVICE_PROFILE={}
 config.DEVICE_PROFILE[3]='Ac.v1'
 config.DEVICE_PROFILE[4]='Heater.v1'
+config.DEVICE_PROFILE[14]='Light.v1'
+config.DEVICE_PROFILE[16]='Slider.v1'
+config.DEVICE_PROFILE[39]='Slider.v1'
+config.DEVICE_PROFILE[25]='Hue.v1'
+config.DEVICE_PROFILE[38]='Hue.v1'
 config.DEVICE_PROFILE[53]='Newfan.v1'
+config.DEVICE_PROFILE[15]='Curtain.v1'
 config.DEVICE_TYPE='LAN'
 
 -- SSDP Config
@@ -18,7 +24,10 @@ config.ENUM = {}
 config.ENUM.AC = 3
 config.ENUM.HEATER = 4
 config.ENUM.NEWFAN = 53
-
+config.ENUM.SWITCH = 14
+config.ENUM.SLIDER = 39
+config.ENUM.HUE = 38
+config.ENUM.CURTAIN = 15
 
 --device addrtype
 config.AC = {}
@@ -36,6 +45,24 @@ config.HEATER.TEMP = 3
 config.NEWFAN = {}
 config.NEWFAN.ONOFF = 0
 config.NEWFAN.FAN = 1
+
+config.SWITCH = {}
+config.SWITCH.ONOFF = 0
+
+config.SLIDER = {}
+config.SLIDER.ONOFF = 0
+config.SLIDER.BRIGHT = 1
+
+config.HUE = {}
+config.HUE.ONOFF = 0
+config.HUE.BRIGHT = 1
+config.HUE.HUE = 2
+
+config.CURTAIN = {}
+config.CURTAIN.PAUSE= 0
+config.CURTAIN.OPEN = 1
+config.CURTAIN.CLOSE = 2
+config.CURTAIN.LEVEL = 3
 
 config.DEVICE = {}
 config.DEVICE.ONOFF = 0
