@@ -1,0 +1,69 @@
+name: ts0601-scene-switch-4-gang
+components:
+  - id: main
+    capabilities:
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - title: Indicator Light
+    name: lightMode
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        none: Off
+        relay: Follow Relay
+        pos: Position Indicator
+      default: relay
+  - title: Global Power-on State
+    name: relayStatus
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        off: Off
+        on: On
+        memory: Memory
+      default: memory
+  - title: Gang 1 Power-on State
+    name: relayStatus1
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        off: Off
+        on: On
+        memory: Memory
+      default: memory
+  - title: Gang 2 Power-on State
+    name: relayStatus2
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        off: Off
+        on: On
+        memory: Memory
+      default: memory
+  - title: Gang 3 Power-on State
+    name: relayStatus3
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        off: Off
+        on: On
+        memory: Memory
+      default: memory
+  - title: Gang 4 Power-on State
+    name: relayStatus4
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        off: Off
+        on: On
+        memory: Memory
+      default: memory
