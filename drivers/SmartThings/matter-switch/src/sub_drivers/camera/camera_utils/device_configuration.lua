@@ -41,15 +41,17 @@ local function set_hard_privacy_mode_presence(device, hard_privacy_mode_present)
   device:set_field(camera_fields.HARD_PRIVACY_MODE_PRESENT, hard_privacy_mode_present == true, { persist = true })
 end
 
--- Decides whether audioVolume belongs on this component. If the min/max levels aren't both known
--- yet, leaves the capability as-is instead of guessing; otherwise requires max > min to include it.
+--- Leaves audioVolume as-is if the min/max levels aren't both known yet instead of guessing;
+--- otherwise requires max > min to include it.
+--- @param component string a profile component name
+--- @return should_include boolean whether audioVolume belongs on the component argument.
 local function should_include_volume_capability(device, component)
-  local raw_min_volume = device:get_field(camera_fields.RAW_MIN_VOLUME_LEVEL .. "_" .. component)
-  local raw_max_volume = device:get_field(camera_fields.RAW_MAX_VOLUME_LEVEL .. "_" .. component)
-  if raw_min_volume == nil or raw_max_volume == nil then
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component)
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component)
+  if min_volume == nil or max_volume == nil then
     return device:supports_capability(capabilities.audioVolume, component)
   end
-  return raw_max_volume > raw_min_volume
+  return max_volume > min_volume
 end
 
 local function build_webrtc_supported_features()

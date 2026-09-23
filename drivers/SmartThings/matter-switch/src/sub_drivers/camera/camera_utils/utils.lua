@@ -82,6 +82,14 @@ function CameraUtils.feature_supported(device, cluster_id, feature_flag)
   return #device:get_endpoints(cluster_id, { feature_bitmap = feature_flag }) > 0
 end
 
+function CameraUtils.get_field_for_component(device, field, component)
+  return device:get_field(string.format("%s_%s", field, component))
+end
+
+function CameraUtils.set_field_for_component(device, field, component, value, additional_params)
+  device:set_field(string.format("%s_%s", field, component), value, additional_params)
+end
+
 function CameraUtils.update_supported_attributes(device, ib, capability, attribute)
   local attribute_set = device:get_latest_state(
     camera_fields.profile_components.main, capability.ID, capability.supportedAttributes.NAME

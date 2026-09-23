@@ -57,13 +57,10 @@ end
 
 function CameraAttributeHandlers.volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MIN
   local limited_range = max_volume - min_volume
   if limited_range <= 0 then
-    -- Non-adjustable (min == max) range: nothing to normalize against. A report can still arrive here
-    -- while the profile update dropping audioVolume is in flight, so report a fixed value instead of
-    -- dividing by zero.
     device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(0))
     return
   end
@@ -75,28 +72,32 @@ end
 function CameraAttributeHandlers.max_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local max_volume = ib.data.value
-  device:set_field(camera_fields.RAW_MAX_VOLUME_LEVEL .. "_" .. component, max_volume)
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component)
-  -- min == max is a valid (non-adjustable) range per the Matter spec, so only max < min is malformed.
-  if max_volume > camera_fields.ABS_VOL_MAX or (min_volume and max_volume < min_volume) then
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component)
+  -- min == max is a valid (non-adjustable) range per the Matter spec, so only max < min is malformed;
+  -- an out-of-bounds value is clamped, but a malformed relationship is only logged and left as-is,
+  -- since volume_level_handler already guards against a non-positive range.
+  if max_volume > camera_fields.ABS_VOL_MAX then
     device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
     max_volume = camera_fields.ABS_VOL_MAX
+  elseif min_volume and max_volume < min_volume then
+    device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component, max_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component, max_volume)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.min_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local min_volume = ib.data.value
-  device:set_field(camera_fields.RAW_MIN_VOLUME_LEVEL .. "_" .. component, min_volume)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component)
-  -- min == max is a valid (non-adjustable) range per the Matter spec, so only min > max is malformed.
-  if min_volume < camera_fields.ABS_VOL_MIN or (max_volume and min_volume > max_volume) then
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component)
+  -- See max_volume_level_handler: min == max is valid, only min > max is malformed and only logged.
+  if min_volume < camera_fields.ABS_VOL_MIN then
     device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
     min_volume = camera_fields.ABS_VOL_MIN
+  elseif max_volume and min_volume > max_volume then
+    device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component, min_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component, min_volume)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 

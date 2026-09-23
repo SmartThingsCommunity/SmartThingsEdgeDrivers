@@ -423,10 +423,10 @@ local additional_subscribed_attributes = {
 -- audioVolume is only added to the speaker/microphone components once a usable (max > min) volume
 -- range has been reported; seed a usable range directly so unrelated tests don't have to simulate it.
 local function seed_usable_volume_range(device)
-  device:set_field(camera_fields.RAW_MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 0)
-  device:set_field(camera_fields.RAW_MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 200)
-  device:set_field(camera_fields.RAW_MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 0)
-  device:set_field(camera_fields.RAW_MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 200)
+  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 0)
+  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 200)
+  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 0)
+  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 200)
 end
 
 local expected_metadata = {
@@ -1025,8 +1025,8 @@ test.register_coroutine_test(
 
     -- microphone reports an unusable range (min >= max); speaker hasn't reported a range at all yet
     local fake_device = build_fake_device_with_volume_ranges({
-      [camera_fields.RAW_MIN_VOLUME_LEVEL .. "_microphone"] = 100,
-      [camera_fields.RAW_MAX_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 100,
     })
 
     camera_cfg.match_profile(fake_device)
@@ -1051,10 +1051,10 @@ test.register_coroutine_test(
     local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
 
     local fake_device = build_fake_device_with_volume_ranges({
-      [camera_fields.RAW_MIN_VOLUME_LEVEL .. "_speaker"] = 0,
-      [camera_fields.RAW_MAX_VOLUME_LEVEL .. "_speaker"] = 200,
-      [camera_fields.RAW_MIN_VOLUME_LEVEL .. "_microphone"] = 0,
-      [camera_fields.RAW_MAX_VOLUME_LEVEL .. "_microphone"] = 200,
+      [camera_fields.MIN_VOLUME_LEVEL .. "_speaker"] = 0,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_speaker"] = 200,
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 0,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 200,
     })
 
     camera_cfg.match_profile(fake_device)
@@ -1082,8 +1082,8 @@ test.register_coroutine_test(
       speaker = { capabilities = { audioVolume = { id = capabilities.audioVolume.ID } } }
     }
     local raw_levels = {
-      [camera_fields.RAW_MIN_VOLUME_LEVEL .. "_microphone"] = 100,
-      [camera_fields.RAW_MAX_VOLUME_LEVEL .. "_microphone"] = 100, -- unusable; forces a real profile change so we can inspect it
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 100, -- unusable; forces a real profile change so we can inspect it
     }
     local fake_device = {
       profile = { components = existing_components },
