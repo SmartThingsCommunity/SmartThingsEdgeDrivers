@@ -39,5 +39,14 @@ zigbeeManufacturer :
     manufacturer: Compacta
     model: ZBVC1(1023A)
     deviceProfileName: valve-battery-powerSource
-
+  - id: SONOFF/SWV-ZF2U
+    deviceLabel: SONOFF Water Valve 2
+    manufacturer: SONOFF
+    model: SWV-ZF2U
+    deviceProfileName: valve-battery-2
+  - id: SONOFF/SWV-ZF2
+    deviceLabel: SONOFF Water Valve 2
+    manufacturer: SONOFF
+    model: SWV-ZF2
+    deviceProfileName: valve-battery-2
 
