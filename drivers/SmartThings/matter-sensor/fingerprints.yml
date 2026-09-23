@@ -89,6 +89,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1060
     deviceProfileName: temperature-humidity-battery
+  - id: "4619/4129"
+    deviceLabel: Photoelectric Smoke Alarm
+    vendorId: 0x120B
+    productId: 0x1021
+    deviceProfileName: smoke-battery
   # Ikea
   - id: "4476/32773"
     deviceLabel: TIMMERFLOTTE Temperature/Humidity Sensor
