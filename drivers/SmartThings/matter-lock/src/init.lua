@@ -113,10 +113,13 @@ local function find_default_endpoint(device, cluster)
   local eps = device:get_endpoints(cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
+    device.log.info_with({hub_logs=true}, string.format("!!find_default_endpoint1: v: %s", v))
     if v ~= 0 then --0 is the matter RootNode endpoint
+      device.log.info_with({hub_logs=true}, string.format("!!find_default_endpoint2: v: %s", v))
       return v
     end
   end
+  device.log.info_with({hub_logs=true}, string.format("!!find_default_endpoint: device.MATTER_DEFAULT_ENDPOINT: %s", device.MATTER_DEFAULT_ENDPOINT))
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
@@ -155,14 +158,16 @@ local function device_added(driver, device)
 end
 
 local function set_reader_config(device)
+  device.log.info_with({hub_logs=true}, string.format("!!set_reader_config"))
   local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
   if reader_config_updated == "TRUE" or reader_config_updated == "IN_PROGRESS" then return end
-
   local cmdName = "setReaderConfig"
   local groupId = lock_utils.create_group_id_resolving_key()
   local groupResolvingKey = nil
-  local aliro_ble_uwb_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIROBLEUWB})
-  if #aliro_ble_uwb_eps > 0 then
+  local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+  local feature_map = lock_utils.get_field_for_endpoint(device, tonumber(ep)) or nil
+  device.log.info_with({hub_logs=true}, string.format("!!set_reader_config %s.", feature_map))
+  if feature_map ~= nil and feature_map & DoorLock.types.Feature.ALIROBLEUWB then
     groupResolvingKey = lock_utils.create_group_id_resolving_key()
   end
   local privKey, pubKey = lock_utils.generate_keypair(device)
@@ -196,7 +201,6 @@ local function set_reader_config(device)
   device:set_field(lock_utils.GROUP_RESOLVING_KEY, groupResolvingKey, {persist = true})
 
   -- Send command
-  local ep = find_default_endpoint(device, clusters.DoorLock.ID)
   device:send(
     DoorLock.server.commands.SetAliroReaderConfig(
       device, ep,
@@ -639,6 +643,7 @@ end
 local function door_lock_feature_map_handler(driver, device, ib, response)
   if ib.data.value == nil then return end
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
+  device.log.info_with({hub_logs=true}, string.format("!!door_lock_feature_map_handler: old: %s, new: %s", feature_map, ib.data.value))
   if feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
     match_profile(driver, device, true)
