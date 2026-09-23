@@ -23,6 +23,7 @@ local PRODUCT_ID = {
   SWITCH_2G = 0x0006,
   PIR_1_1M = 0x0007,
   PIR_2_2M = 0x000A,
+  ROTARY_DIMMER = 0x000C
 }
 
 if version.api < 16 then
@@ -31,6 +32,21 @@ end
 
 local function subscribe (device, endpoint_id, cluster_id, attr_id, event_id)
   device:send(cluster_base.subscribe(device, endpoint_id, cluster_id, attr_id, event_id))
+end
+
+-- The Rotary Dimmer (0x000C) is a non-bridge type Hager Matter device, which
+-- additionally supports manual mode transitions that enable/disable
+-- functionality via a physical knob. Unlike bridge-type Hager devices, it has
+-- no Aggregator device type on its root endpoint. This non-bridge device
+-- requires explicit handling to: (1) process endpoint EP1 (normally filtered
+-- out for bridge devices), (2) manage its own device type changes without a
+-- parent-child hierarchy, endpoint mapping and event routing, (3) support
+-- dynamic profile switching triggered by user interaction, as with the knob
+-- mode switching from Dimmer to only On/Off.
+local function is_non_bridge_type(device)
+  if switch_utils.get_product_override_field(device, "is_non_bridge_type") then
+    return true
+  end
 end
 
 local function get_parent (driver, device)
@@ -51,12 +67,14 @@ local function get_matter_device(device)
   return nil
 end
 
-local function extract_reported_endpoints(ib)
+local function extract_reported_endpoints(ib, device)
   local eps = {}
   if ib.data and ib.data.elements then
     for _, el in ipairs(ib.data.elements) do
       local ep_id = el.value
-      if type(ep_id) == "number" and ep_id ~= 1 and ep_id ~= 2 then
+      -- For bridge architecture HBnet devices: filter out endpoints 1-2 (reserved for hub infrastructure)
+      -- For simple non-bridge type HBnet devices: accept all endpoints including 1-2 (active application endpoints)
+      if type(ep_id) == "number" and ep_id ~= 1 and ep_id ~= 2 or is_non_bridge_type(device) then
         table.insert(eps, ep_id)
       end
     end
@@ -188,6 +206,11 @@ local function info_changed(driver, device, event, args)
     return
   end
 
+  if is_non_bridge_type(device) then
+    device:subscribe()
+    return
+  end
+
   if device.profile.id ~= args.old_st_store.profile.id or device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device.thread:call_with_delay(2, function()
       local parent = device:get_parent_device()
@@ -225,7 +248,7 @@ local function info_changed(driver, device, event, args)
         subscribe(device, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.OperationalStatus.ID)
         subscribe(device, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil)
       end
-      if device.id == matter_device.id then
+      if not is_non_bridge_type(device) and device.id == matter_device.id then
         parent:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, map, { persist = true })
         matter_device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, map, { persist = true })
       end
@@ -234,6 +257,13 @@ local function info_changed(driver, device, event, args)
 end
 
 local function device_init (driver, device)
+  if is_non_bridge_type(device) then
+    device:set_find_child(switch_utils.find_child)
+    device:set_field(PARENT_ID, device.id)
+    device:set_field(MATTER_DEVICE_ID, device.id)
+    subscribe(device, nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID, nil)
+    return
+  end
   if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
     device.thread:call_with_delay(4, function()
       info_changed(driver, device, nil, {
@@ -265,7 +295,6 @@ local function device_init (driver, device)
       end)
     end)
   end
-
   device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
   device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
 end
@@ -274,21 +303,26 @@ local function handle_descriptor_report(driver, device, ib, response)
   local product_id = device.manufacturer_info and device.manufacturer_info.product_id
   local parent = get_parent(driver, device)
 
-  if not parent or ib.endpoint_id ~= 2 then
-    return
+  if is_non_bridge_type(device) then
+    if ib.endpoint_id ~= 0 then
+      return
+    end
+  else
+    if ib.endpoint_id ~= 2 or not parent then
+      return
+    end
   end
 
-  local matter_device = get_matter_device(device)
+  local matter_device = get_matter_device(device) or device
+  local new_eps = extract_reported_endpoints(ib, device) or {}
 
-  local new_eps = extract_reported_endpoints(ib) or {}
   table.sort(new_eps)
-  local removed_eps, added_eps = detect_endpoint_changes(device, new_eps)
 
+  local removed_eps, added_eps = detect_endpoint_changes(device, new_eps)
   device:set_field(ACTIVE_EPS, new_eps, { persist = true })
 
   for _, ep_id in ipairs(added_eps or {}) do
     subscribe(parent, ep_id, clusters.Descriptor.ID, clusters.Descriptor.attributes.DeviceTypeList.ID, nil)
-
     if product_id == PRODUCT_ID.SWITCH_1G and ep_id == 3 then
       matter_device:try_update_metadata({ profile = "light-binary" })
     elseif product_id == PRODUCT_ID.SWITCH_2G then
@@ -347,6 +381,7 @@ local function device_type_handler (driver, device, ib)
   end
 
   local parent = get_parent(driver, device)
+
   if not parent then
     return
   end
@@ -356,10 +391,19 @@ local function device_type_handler (driver, device, ib)
   local new_btn_eps = {}
   local ep_id = ib.endpoint_id
   local value = ib.data.elements
+  local reports_dimmable = false
+
+  for _, element in ipairs(value or {}) do
+    local device_type_field = element.elements.device_type
+    if device_type_field and device_type_field.value == fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE then
+      reports_dimmable = true
+    end
+  end
 
   for _, v in ipairs(stored_btn_eps) do
     table.insert(new_btn_eps, v)
   end
+
   for _, element in ipairs(value) do
     local device_type_field = element.elements.device_type
     local device_type_id = device_type_field and device_type_field.value
@@ -396,11 +440,17 @@ local function device_type_handler (driver, device, ib)
           driver:try_delete_device(ep_id)
         end
         return
+      elseif ep_id == 1 and device.manufacturer_info.product_id == PRODUCT_ID.ROTARY_DIMMER then
+        if not reports_dimmable then
+          device:try_update_metadata({ profile = "light-binary" })
+        end
       end
       create_child(driver, parent, { ep_id }, 1, assign_profile_for_endpoint(device_type_id))
     elseif device_type_id == fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE then
       if ep_id == 4 and device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_1G then
         return
+      elseif ep_id == 1 and device.manufacturer_info.product_id == PRODUCT_ID.ROTARY_DIMMER then
+        device:try_update_metadata({ profile = "light-level" })
       end
       create_child(driver, parent, { ep_id }, 1, assign_profile_for_endpoint(device_type_id))
     elseif device_type_id == fields.DEVICE_TYPE_ID.WINDOW_COVERING then
@@ -433,7 +483,7 @@ local function do_configure (driver, device)
       device:try_update_metadata({ profile = "4-button" })
     elseif #bt_eps == 2 then
       device:try_update_metadata({ profile = "2-button" })
-    elseif #lvl_eps > 0 and product_id == PRODUCT_ID.SWITCH_1G then
+    elseif #lvl_eps > 0 and product_id == PRODUCT_ID.SWITCH_1G or is_non_bridge_type(device) then
       device:try_update_metadata({ profile = "light-level" })
     end
     device:set_field(BUTTON_EPS, bt_eps, { persist = true })
