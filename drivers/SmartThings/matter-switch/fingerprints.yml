@@ -4253,6 +4253,16 @@ matterManufacturer:
     vendorId: 0x1397
     productId: 0x07E7
     deviceProfileName: matter-bridge
+  - id: "5015/2040"
+    deviceLabel: SwitchBot Color Lighting
+    vendorId: 0x1397
+    productId: 0x07F8
+    deviceProfileName: light-color-level
+  - id: "5015/2039"
+    deviceLabel: SwitchBot Floor Lamp
+    vendorId: 0x1397
+    productId: 0x07F7
+    deviceProfileName: light-color-level
   - id: "Nature/Bridge"
     deviceLabel: Matter Bridge
     vendorId: 0x138A
@@ -4295,6 +4305,11 @@ matterManufacturer:
     deviceLabel: Utilitech 17 Smart Flush Mount - Full Color
     vendorId: 0x1664
     productId: 0x0600
+    deviceProfileName: light-color-level
+  - id: "5732/768"
+    deviceLabel: Utilitech 1x4 Smart Panel  - Full Color
+    vendorId: 0x1664
+    productId: 0x0300
     deviceProfileName: light-color-level
 
 

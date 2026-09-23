@@ -39,7 +39,7 @@ def getDockerCredentialId() {
     def nodeLabel = params.NODE_LABEL ?: 'production'
     def region = get_region()
     if (nodeLabel == 'production' && region == 'cn') {
-      return 'artifactory-credentials'
+      return 'artifactory-cn'
     }
     else {
       return ''
