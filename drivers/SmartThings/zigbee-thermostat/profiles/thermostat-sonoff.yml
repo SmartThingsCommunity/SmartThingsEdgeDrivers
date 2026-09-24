@@ -1,0 +1,248 @@
+name: thermostat-sonoff
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+    config:
+      values:
+      - key: "thermostatOperatingState.value"
+        enabledValues:
+        - heating
+        - idle
+  - id: thermostatMode
+    version: 1
+    config:
+      values:
+      - key: "thermostatMode.value"
+        enabledValues:
+        - off
+        - auto
+        - heat
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+      - key: "heatingSetpoint.value"
+        range: [5, 30]
+        step: 0.5
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+- name: temperatureCompensation
+  title: Temperature compensation
+  description: Local temperature calibration in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: -5
+    maximum: 5
+    default: 0
+- name: childLock
+  title: Child lock
+  description: Lock the thermostat controls.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: bluetoothPairingBroadcast
+  title: Bluetooth pairing broadcast
+  description: Enable Bluetooth pairing broadcasts.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: openWindowDetection
+  title: Open window detection
+  description: Enable open-window detection.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: frostProofTemperature
+  title: Frost protection temperature
+  description: Frost protection setpoint in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: 5
+    maximum: 15
+    default: 5
+- name: temporaryModeAction
+  title: Temporary mode
+  description: Apply an override using the duration and temperature below.
+  required: true
+  preferenceType: enumeration
+  definition:
+    options:
+      exit: Exit
+      boost: Boost
+      timer: Timer
+    default: exit
+- name: temporaryModeDuration
+  title: Temporary mode duration
+  description: Override duration in minutes.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 1
+    maximum: 1440
+    default: 30
+- name: temporaryModeTemperature
+  title: Temporary mode temperature
+  description: Timer override temperature in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: 5
+    maximum: 30
+    default: 30
+- name: temperatureThresholdLow
+  title: Temperature threshold low
+  description: Lower temperature-control threshold in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: -2.6
+    maximum: -0.2
+    default: -2
+- name: temperatureThresholdHigh
+  title: Temperature threshold high
+  description: Upper temperature-control threshold in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: 0
+    maximum: 2.6
+    default: 2
+- name: radarSensitivity
+  title: Radar sensitivity
+  description: Set the radar sensitivity level.
+  required: true
+  preferenceType: enumeration
+  definition:
+    options:
+      "0": Low
+      "1": Medium
+      "2": High
+    default: "2"
+- name: radarDoNotDisturb
+  title: Radar do not disturb
+  description: Enable radar do-not-disturb mode.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: radarDoNotDisturbStart
+  title: Radar do not disturb start
+  description: Start time in minutes after midnight rounded to 30 minutes.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 1410
+    default: 0
+- name: radarDoNotDisturbEnd
+  title: Radar do not disturb end
+  description: End time in minutes after midnight rounded to 30 minutes.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 1410
+    default: 0
+- name: screenWorkingBrightness
+  title: Screen working brightness
+  description: Screen brightness while active.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 8
+    default: 5
+- name: screenStandbyBrightness
+  title: Screen standby brightness
+  description: Screen brightness while on standby.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 8
+    default: 0
+- name: screenNightStandbyBrightness
+  title: Screen night standby brightness
+  description: Screen brightness during night standby.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 8
+    default: 0
+- name: screenNightMode
+  title: Screen night mode
+  description: Enable screen night mode.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: screenNightStart
+  title: Screen night mode start
+  description: Start time in minutes after midnight rounded to 30 minutes.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 1410
+    default: 0
+- name: screenNightEnd
+  title: Screen night mode end
+  description: End time in minutes after midnight rounded to 30 minutes.
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 1410
+    default: 0
+- name: relayHeatingNormallyClosed
+  title: Heating relay normally closed
+  description: Configure the heating relay contact type.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: relayBoilerNormallyClosed
+  title: Boiler relay normally closed
+  description: Configure the boiler relay contact type.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: overheatProtectionTemperature
+  title: Overheat protection temperature
+  description: Overheat protection setpoint in degrees Celsius.
+  required: true
+  preferenceType: number
+  definition:
+    minimum: 20
+    maximum: 50
+    default: 33.5
+- name: overheatProtection
+  title: Overheat protection
+  description: Enable overheat protection.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
+- name: radarEnabled
+  title: Radar enabled
+  description: Enable the radar sensor.
+  required: true
+  preferenceType: boolean
+  definition:
+    default: false
