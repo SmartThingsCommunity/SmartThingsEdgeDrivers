@@ -106,7 +106,7 @@ test.register_message_test(
 
 -- init lifecycle
 test.register_coroutine_test(
-    "Init lifecycle should register battery percentage reporting configuration",
+    "Init lifecycle should use default battery percentage reporting configuration",
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
@@ -125,7 +125,7 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 7200, 1)
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 300, 900, 2)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,

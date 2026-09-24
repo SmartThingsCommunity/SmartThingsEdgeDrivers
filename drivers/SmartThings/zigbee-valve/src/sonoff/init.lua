@@ -7,15 +7,6 @@ local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local utils = require "st.utils"
 
-local battery_configuration = {
-  cluster = PowerConfiguration.ID,
-  attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
-  minimum_interval = 30,
-  maximum_interval = 7200,
-  data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-  reportable_change = 1,
-}
-
 --- OnOff Property Reporting Handler → Valve Capability Point Event
 --- SONOFF reports valve state through the OnOff cluster, so keep an explicit mapping
 --- from OnOff reports to valve events while using the parent driver's default commands.
@@ -42,19 +33,8 @@ local function battery_percentage_handler(driver, device, value)
   device:emit_event(capabilities.battery.battery(percent))
 end
 
---- Lifecycle initialization handler
---- Register BatteryPercentageRemaining reporting configuration for the sleeping battery device
---- @param driver table Driver instance
---- @param device table Device instance
-local function device_init(driver, device)
-  device:add_configured_attribute(battery_configuration)
-end
-
 local sonoff_valve_handler = {
   NAME = "SONOFF Water Valve Handler",
-  lifecycle_handlers = {
-    init = device_init
-  },
   zigbee_handlers = {
     attr = {
       -- OnOff property reporting → valve event (to compensate for the defect of the parent driver's default mapping being skipped)
