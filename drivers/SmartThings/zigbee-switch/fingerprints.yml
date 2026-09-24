@@ -2548,6 +2548,11 @@ zigbeeManufacturer:
     manufacturer: Legrand
     model: Micromodule switch
     deviceProfileName: basic-switch
+  - id: Legrand/Light switch with neutral
+    deviceLabel: Connected Switch with Neutral
+    manufacturer: Legrand
+    model: Light switch with neutral
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
