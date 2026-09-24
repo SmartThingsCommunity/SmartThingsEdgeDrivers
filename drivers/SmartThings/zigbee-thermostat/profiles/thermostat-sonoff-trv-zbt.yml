@@ -25,3 +25,14 @@ components:
     version: 1
   categories:
   - name: Button
+preferences:
+- name: "childLock"
+  title: "Child lock"
+  description: "Enable or disable the child lock of the thermostat."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Unlock"
+      1: "Lock"
+    default: 0

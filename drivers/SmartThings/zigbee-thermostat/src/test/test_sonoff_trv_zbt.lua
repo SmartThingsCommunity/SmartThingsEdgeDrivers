@@ -4,6 +4,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local device_management = require "st.zigbee.device_management"
 local generic_body = require "st.zigbee.generic_body"
@@ -15,8 +16,10 @@ local zb_const = require "st.zigbee.constants"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local Thermostat = clusters.Thermostat
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 
 local SONOFF_CLUSTER = 0xFC11
+local CHILD_LOCK_ATTR = 0x0000
 local WORK_MODE_ATTR = 0x0018
 local BUTTON_COMMAND = 0x10
 
@@ -233,6 +236,40 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "SONOFF TRV-ZBT writes the child lock preference",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { childLock = 1 },
+    }))
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.write_attribute(
+        mock_device,
+        data_types.ClusterId(SONOFF_CLUSTER),
+        data_types.AttributeId(CHILD_LOCK_ATTR),
+        data_types.validate_or_build_type(true, data_types.Boolean, "payload")
+      ),
+    })
+    test.wait_for_events()
+
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { childLock = 0 },
+    }))
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.write_attribute(
+        mock_device,
+        data_types.ClusterId(SONOFF_CLUSTER),
+        data_types.AttributeId(CHILD_LOCK_ATTR),
+        data_types.validate_or_build_type(false, data_types.Boolean, "payload")
+      ),
+    })
+    test.wait_for_events()
+  end,
+  { min_api_version = 14 }
+)
+
+test.register_coroutine_test(
   "SONOFF TRV-ZBT writes thermostat mode and refreshes required attributes",
   function()
     test.socket.capability:__queue_receive({
@@ -277,6 +314,7 @@ test.register_coroutine_test(
   "SONOFF TRV-ZBT configures reporting and cluster bindings",
   function()
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -288,7 +326,7 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      device_management.build_bind_request(mock_device, SONOFF_CLUSTER, zigbee_test_utils.mock_hub_eui),
+      device_management.build_bind_request(mock_device, TemperatureMeasurement.ID, zigbee_test_utils.mock_hub_eui),
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -305,6 +343,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 5),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100),
     })
     for _, attribute in ipairs({
       Thermostat.attributes.LocalTemperature,

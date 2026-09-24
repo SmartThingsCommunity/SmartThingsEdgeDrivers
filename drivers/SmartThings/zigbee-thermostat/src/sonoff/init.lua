@@ -3,8 +3,8 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 local generic_body = require "st.zigbee.generic_body"
 local messages = require "st.zigbee.messages"
 local zcl_messages = require "st.zigbee.zcl"
@@ -22,6 +22,7 @@ local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 
 local SONOFF_CLUSTER = 0xFC11
+local CHILD_LOCK_ATTR = 0x0000
 local WORK_MODE_ATTR = 0x0018
 local BUTTON_COMMAND = 0x10
 local BLUETOOTH_PAIRING_START = 0x01
@@ -34,15 +35,54 @@ local WORK_MODE_TEMP_MANUAL = 0x05
 local MIN_SETPOINT = 5
 local MAX_SETPOINT = 30
 local SETPOINT_STEP = 0.5
+local CHILD_LOCK_PREFERENCE = "childLock"
 local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.off.NAME,
   ThermostatMode.thermostatMode.heat.NAME,
   ThermostatMode.thermostatMode.auto.NAME,
 }
 
+local CONFIGURATIONS = {
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.LocalTemperature.ID,
+    minimum_interval = 10,
+    maximum_interval = 300,
+    data_type = Thermostat.attributes.LocalTemperature.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.OccupiedHeatingSetpoint.ID,
+    minimum_interval = 1,
+    maximum_interval = 600,
+    data_type = Thermostat.attributes.OccupiedHeatingSetpoint.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.SystemMode.ID,
+    minimum_interval = 1,
+    maximum_interval = 600,
+    data_type = Thermostat.attributes.SystemMode.base_type,
+  },
+  {
+    cluster = PowerConfiguration.ID,
+    attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+    reportable_change = 5,
+  },
+}
+
 local function emit_setpoint_range(device)
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpointRange({
-    value = { minimum = MIN_SETPOINT, maximum = MAX_SETPOINT, step = SETPOINT_STEP },
+    value = {
+      minimum = MIN_SETPOINT,
+      maximum = MAX_SETPOINT,
+      step = SETPOINT_STEP,
+    },
     unit = "C",
   }, { visibility = { displayed = false } }))
 end
@@ -55,10 +95,6 @@ end
 
 local function emit_mode(device, mode)
   device:emit_event(ThermostatMode.thermostatMode[mode]())
-end
-
-local function endpoint_for(device, cluster)
-  return device:get_endpoint(cluster) or 1
 end
 
 local function command_argument(command, name)
@@ -80,7 +116,7 @@ local function send_bluetooth_pairing_start(device)
       zb_const.HUB.ADDR,
       zb_const.HUB.ENDPOINT,
       device:get_short_address(),
-      endpoint_for(device, SONOFF_CLUSTER),
+      device:get_endpoint(SONOFF_CLUSTER) or 1,
       zb_const.HA_PROFILE_ID,
       SONOFF_CLUSTER
     ),
@@ -107,14 +143,7 @@ local function refresh(_, device)
 end
 
 local function configure(driver, device)
-  local hub_eui = driver.environment_info.hub_zigbee_eui
-  device:send(device_management.build_bind_request(device, Thermostat.ID, hub_eui))
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, hub_eui))
-  device:send(device_management.build_bind_request(device, SONOFF_CLUSTER, hub_eui))
-  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 10, 300, 50))
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 1, 600, 50))
-  device:send(Thermostat.attributes.SystemMode:configure_reporting(device, 1, 600, 1))
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 5))
+  device:configure()
   refresh(driver, device)
 end
 
@@ -124,8 +153,26 @@ local function added(_, device)
 end
 
 local function init(driver, device)
+  for _, configuration in ipairs(CONFIGURATIONS) do
+    device:add_configured_attribute(configuration)
+  end
   added(driver, device)
   refresh(driver, device)
+end
+
+local function info_changed(_, device, _, args)
+  local old_preferences = args.old_st_store and args.old_st_store.preferences or {}
+  local child_lock = device.preferences[CHILD_LOCK_PREFERENCE]
+  if child_lock == nil or old_preferences[CHILD_LOCK_PREFERENCE] == child_lock then
+    return
+  end
+
+  device:send(cluster_base.write_attribute(
+    device,
+    data_types.ClusterId(SONOFF_CLUSTER),
+    data_types.AttributeId(CHILD_LOCK_ATTR),
+    data_types.validate_or_build_type(tonumber(child_lock) == 1, data_types.Boolean, "payload")
+  ))
 end
 
 local function local_temperature_handler(_, device, value)
@@ -245,6 +292,7 @@ local sonoff = {
     added = added,
     init = init,
     doConfigure = configure,
+    infoChanged = info_changed,
   },
   can_handle = require "sonoff.can_handle",
 }
