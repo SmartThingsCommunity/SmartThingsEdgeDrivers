@@ -220,7 +220,9 @@ local function device_init(driver, device)
     return
   end
 
-  do_refresh(driver, device, nil)
+  driver.device_manager.init_presence(driver, device)
+  driver.device_manager.init_movement(driver, device)
+  driver.device_manager.init_activity(driver, device)
 end
 
 local function device_info_changed(driver, device, event, args)
