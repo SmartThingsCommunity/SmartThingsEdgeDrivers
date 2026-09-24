@@ -214,6 +214,12 @@ matterManufacturer:
     vendorId: 0x145C
     productId: 0x0003
     deviceProfileName: lock-modular
+  #Deasino
+  - id: "5515/1"
+    deviceLabel: DS-MT01
+    vendorId: 0x158B
+    productId: 0x0001
+    deviceProfileName: lock-modular
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
