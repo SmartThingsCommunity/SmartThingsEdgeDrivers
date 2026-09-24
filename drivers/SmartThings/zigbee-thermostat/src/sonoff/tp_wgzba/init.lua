@@ -15,8 +15,10 @@ local ZigbeeMessages = require "st.zigbee.messages"
 local ZigbeeZcl = require "st.zigbee.zcl"
 local log = require "log"
 
+local Basic = clusters.Basic
 local Thermostat = clusters.Thermostat
 
+local FirmwareUpdate = capabilities.firmwareUpdate
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState = capabilities.thermostatOperatingState
@@ -1016,9 +1018,21 @@ local function do_refresh(self, device)
   device:send(Thermostat.attributes.SystemMode:read(device))
   device:send(Thermostat.attributes.ThermostatRunningState:read(device))
   device:send(Thermostat.attributes.LocalTemperatureCalibration:read(device))
+  device:send(Basic.attributes.SWBuildID:read(device))
   for _, attribute_id in ipairs(PRIVATE_REFRESH_ATTRIBUTES) do
     device:send(read_private_attribute(device, attribute_id))
   end
+end
+
+-- Publishes the device-provided Basic Cluster software build identifier as its firmware version.
+local function software_build_id_handler(driver, device, value, zb_rx)
+  -- Ignore malformed reports because the capability requires a non-empty string.
+  if type(value.value) ~= "string" or value.value == "" then
+    log.warn("Invalid TP-WGZBA Basic SWBuildID payload")
+    return
+  end
+
+  emit_event_if_supported(device, FirmwareUpdate, FirmwareUpdate.currentVersion({ value = value.value }))
 end
 
 -- Configures standard thermostat reporting only.
@@ -1262,6 +1276,9 @@ local sonoff_thermostat = {
   NAME = "SONOFF TP-WGZBA Handler",
   zigbee_handlers = {
     attr = {
+      [Basic.ID] = {
+        [Basic.attributes.SWBuildID.ID] = software_build_id_handler
+      },
       [Thermostat.ID] = {
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_running_state_handler,
         [Thermostat.attributes.LocalTemperatureCalibration.ID] = local_temperature_calibration_handler

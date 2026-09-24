@@ -24,6 +24,7 @@ local zcl_messages = require "st.zigbee.zcl"
 local messages = require "st.zigbee.messages"
 local zb_const = require "st.zigbee.constants"
 
+local Basic = clusters.Basic
 local Thermostat = clusters.Thermostat
 local ThermostatSystemMode = Thermostat.attributes.SystemMode
 
@@ -193,6 +194,7 @@ local function expect_refresh_reads()
   test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.SystemMode:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.ThermostatRunningState:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.LocalTemperatureCalibration:read(mock_device) })
+  test.socket.zigbee:__expect_send({ mock_device.id, Basic.attributes.SWBuildID:read(mock_device) })
   for _, attribute_id in ipairs(PRIVATE_REFRESH_ATTRIBUTES) do
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -343,6 +345,22 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("heating"))
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic SWBuildID reports should update the firmware version",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "1.0.4") }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.firmwareUpdate.currentVersion({ value = "1.0.4" }))
     }
   }
 )
@@ -557,6 +575,11 @@ test.register_message_test(
       channel = "zigbee",
       direction = "send",
       message = { mock_device.id, Thermostat.attributes.LocalTemperatureCalibration:read(mock_device) }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = { mock_device.id, Basic.attributes.SWBuildID:read(mock_device) }
     },
     {
       channel = "zigbee",
