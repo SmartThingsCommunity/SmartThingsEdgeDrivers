@@ -4,6 +4,7 @@
 local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local sensor_utils = require "sensor_utils.utils"
 local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
 local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 local attribute_handlers = require "sub_drivers.air_quality_sensor.air_quality_sensor_handlers.attribute_handlers"
@@ -67,7 +68,7 @@ function AirQualitySensorLifecycleHandlers.device_init(driver, device)
 end
 
 function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, args)
-  if not aqs_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
+  if not sensor_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
       --re-up subscription with new capabilities using the modular supports_capability override
        device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)

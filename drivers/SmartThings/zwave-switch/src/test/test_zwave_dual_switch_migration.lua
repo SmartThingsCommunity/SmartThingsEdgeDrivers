@@ -36,11 +36,14 @@ local mock_parent = test.mock_device.build_test_zwave_device({
   zwave_manufacturer_id = 0x0086,
   zwave_product_type = 0x0103,
   zwave_product_id = 0x008C,
-  child_ids = {
-    "abcdefghijklmnopq",
-    "12345678910111213"
-  }
 })
+
+local mock_child = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  parent_device_id = mock_parent.id,
+  parent_assigned_child_key = string.format("%02X", 2)
+})
+
 
 local mock_parent_no_data = test.mock_device.build_test_zwave_device({
   label = "Aeotec Switch 1",
@@ -53,6 +56,7 @@ local mock_parent_no_data = test.mock_device.build_test_zwave_device({
 
 local function test_init()
   test.mock_device.add_test_device(mock_parent)
+  test.mock_device.add_test_device(mock_child)
   test.mock_device.add_test_device(mock_parent_no_data)
 end
 

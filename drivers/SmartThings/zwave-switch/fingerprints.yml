@@ -885,6 +885,12 @@ zwaveManufacturer:
     productId: 0xFF97
     productType: 0xFF01
     deviceProfileName: switch-binary
+  - id: "0312/FF00/FF0C"
+    deviceLabel: Z-Wave Smart Plug
+    manufacturerId: 0x0312
+    productId: 0xFF0C
+    productType: 0xFF00
+    deviceProfileName: smartplug-binary
   - id: Evolve/RelaySwitch
     deviceLabel: Evolve Switch
     manufacturerId: 0x0113
@@ -965,7 +971,7 @@ zwaveManufacturer:
     manufacturerId: 0x0460
     productId: 0x0083
     productType: 0x0002
-    deviceProfileName: switch-binary 
+    deviceProfileName: switch-binary
   - id: 1120/2/132
     deviceLabel: Wave 1PM
     manufacturerId: 0x0460
