@@ -2553,6 +2553,11 @@ zigbeeManufacturer:
     manufacturer: Legrand
     model: Light switch with neutral
     deviceProfileName: basic-switch
+  - id: Legrand/Connected outlet
+    deviceLabel: Connected Socket
+    manufacturer: Legrand
+    model: Connected outlet
+    deviceProfileName: switch-power
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
