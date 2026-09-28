@@ -29,6 +29,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.curtain.agl001
     deviceProfileName: window-treatment-aqara-curtain-driver-e1
+  - id: "LUMI/lumi.curtain.vagl02"
+    deviceLabel: Roller Shade Controller T1S
+    manufacturer: LUMI
+    model: lumi.curtain.vagl02
+    deviceProfileName: window-treatment-aqara-roller-shade-rotate
   - id: "REXENSE/KG0001"
     deviceLabel: Window Treatment
     manufacturer: REXENSE
