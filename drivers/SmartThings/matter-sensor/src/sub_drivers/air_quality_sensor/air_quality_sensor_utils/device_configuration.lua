@@ -30,53 +30,37 @@ function DeviceConfiguration.supported_level_measurements(device)
   return measurement_caps, level_caps
 end
 
--- Match Modular Profile
 function DeviceConfiguration.match_profile(device)
+  local update_metadata_request = require "sensor_utils.update_metadata_request"
+
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
-  local optional_supported_component_capabilities = {}
-  local main_component_capabilities = {}
-  local profile_name
-  local MAIN_COMPONENT_IDX = 1
-  local CAPABILITIES_LIST_IDX = 2
+  local updated_metadata = update_metadata_request.init()
+  local preference_tags = ""
 
   if #temp_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    updated_metadata:add_capabilities_to_component("main", { capabilities.temperatureMeasurement.ID })
+    preference_tags = preference_tags .. "-temp"
   end
   if #humidity_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+    updated_metadata:add_capabilities_to_component("main", { capabilities.relativeHumidityMeasurement.ID })
+    preference_tags = preference_tags .. "-humidity"
   end
 
   local measurement_caps, level_caps = DeviceConfiguration.supported_level_measurements(device)
+  updated_metadata:add_capabilities_to_component("main", measurement_caps)
+  updated_metadata:add_capabilities_to_component("main", level_caps)
 
-  for _, cap_id in ipairs(measurement_caps) do
-    table.insert(main_component_capabilities, cap_id)
-  end
-
-  for _, cap_id in ipairs(level_caps) do
-    table.insert(main_component_capabilities, cap_id)
-  end
-
-  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-
-  if #temp_eps > 0 and #humidity_eps > 0 then
-    profile_name = "aqs-modular-temp-humidity"
-  elseif #temp_eps > 0 then
-    profile_name = "aqs-modular-temp"
-  elseif #humidity_eps > 0 then
-    profile_name = "aqs-modular-humidity"
-  else
-    profile_name = "aqs-modular"
-  end
-
-  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+  device:try_update_metadata(updated_metadata:add_profile("aqs-modular" .. preference_tags):format_request())
 
   -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
   -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
   if version.api < 15 or version.rpc < 9 then
+    local MAIN_COMPONENT_IDX = 1
+    local CAPABILITIES_LIST_IDX = 2
     -- add mandatory capabilities for subscription
-    local total_supported_capabilities = optional_supported_component_capabilities
+    local total_supported_capabilities = updated_metadata:formatted_enabled_components()
     table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airQualityHealthConcern.ID)
     table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
     table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)

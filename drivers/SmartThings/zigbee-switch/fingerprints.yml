@@ -1744,7 +1744,7 @@ zigbeeManufacturer:
     deviceLabel: SMART ZIGBEE PLUG EU EM T
     manufacturer: LEDVANCE
     model: PLUG EU EM T
-    deviceProfileName: switch-power-energy    
+    deviceProfileName: switch-power-energy
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -2115,11 +2115,6 @@ zigbeeManufacturer:
     manufacturer: OSRAM
     model: CLA60 RGBW OSRAM
     deviceProfileName: rgbw-bulb
-  - id: "OSRAM/Flex RGBW"
-    deviceLabel: OSRAM Light
-    manufacturer: OSRAM
-    model: Flex RGBW
-    deviceProfileName: rgbw-bulb
   - id: "OSRAM/Gardenpole RGBW-Lightify"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
@@ -2230,11 +2225,6 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: JORMLIEN door WS 40x80
     deviceProfileName: color-temp-bulb-2200K-4000K
-  - id: "OSRAM/Classic B40 TW - LIGHTIFY"
-    deviceLabel: OSRAM Light
-    manufacturer: OSRAM
-    model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
   - id: "OSRAM/CLA60 TW OSRAM"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
