@@ -233,9 +233,6 @@ local function set_mode(_, device, command)
 
   device:send(Thermostat.attributes.SystemMode:write(device, system_mode))
   emit_mode(device, mode)
-  device.thread:call_with_delay(1, function()
-    device:send(Thermostat.attributes.SystemMode:read(device))
-  end)
 end
 
 local function mode_setter(mode)
