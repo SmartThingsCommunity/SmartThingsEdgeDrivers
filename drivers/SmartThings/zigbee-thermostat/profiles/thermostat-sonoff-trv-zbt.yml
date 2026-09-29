@@ -18,13 +18,6 @@ components:
     version: 1
   categories:
   - name: Thermostat
-- id: bluetooth
-  label: Bluetooth Pairing
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: Button
 preferences:
 - name: "childLock"
   title: "Child lock"
@@ -36,3 +29,10 @@ preferences:
       0: "Unlock"
       1: "Lock"
     default: 0
+- name: "enterBluetoothPairing"
+  title: "Enter Bluetooth pairing"
+  description: "Enable to put the thermostat into Bluetooth pairing mode. The pairing window is controlled by the thermostat firmware."
+  required: false
+  preferenceType: boolean
+  definition:
+    default: false

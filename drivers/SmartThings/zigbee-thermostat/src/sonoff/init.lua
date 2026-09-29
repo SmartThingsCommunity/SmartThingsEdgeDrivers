@@ -15,7 +15,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local Thermostat = clusters.Thermostat
 
 local Battery = capabilities.battery
-local Momentary = capabilities.momentary
 local Refresh = capabilities.refresh
 local TemperatureMeasurement = capabilities.temperatureMeasurement
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
@@ -24,9 +23,6 @@ local ThermostatMode = capabilities.thermostatMode
 local SONOFF_CLUSTER = 0xFC11
 local CHILD_LOCK_ATTR = 0x0000
 local WORK_MODE_ATTR = 0x0018
-local BUTTON_COMMAND = 0x10
-local BLUETOOTH_PAIRING_START = 0x01
-
 local WORK_MODE_OFF = 0x01
 local WORK_MODE_MANUAL = 0x03
 local WORK_MODE_SCHEDULE = 0x04
@@ -36,6 +32,7 @@ local MIN_SETPOINT = 5
 local MAX_SETPOINT = 30
 local SETPOINT_STEP = 0.5
 local CHILD_LOCK_PREFERENCE = "childLock"
+local BLUETOOTH_PAIRING_PREFERENCE = "enterBluetoothPairing"
 local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.off.NAME,
   ThermostatMode.thermostatMode.heat.NAME,
@@ -105,28 +102,6 @@ local function command_argument(command, name)
   return command.named_args and command.named_args[name]
 end
 
-local function send_bluetooth_pairing_start(device)
-  local zcl_header = zcl_messages.ZclHeader({
-    cmd = data_types.ZCLCommandId(BUTTON_COMMAND),
-  })
-  zcl_header.frame_ctrl:set_cluster_specific()
-
-  device:send(messages.ZigbeeMessageTx({
-    address_header = messages.AddressHeader(
-      zb_const.HUB.ADDR,
-      zb_const.HUB.ENDPOINT,
-      device:get_short_address(),
-      device:get_endpoint(SONOFF_CLUSTER) or 1,
-      zb_const.HA_PROFILE_ID,
-      SONOFF_CLUSTER
-    ),
-    body = zcl_messages.ZclMessageBody({
-      zcl_header = zcl_header,
-      zcl_body = generic_body.GenericBody(string.char(0x03, 0x01, BLUETOOTH_PAIRING_START)),
-    }),
-  }))
-end
-
 local function refresh(_, device)
   local attributes = {
     Thermostat.attributes.LocalTemperature,
@@ -163,16 +138,36 @@ end
 local function info_changed(_, device, _, args)
   local old_preferences = args.old_st_store and args.old_st_store.preferences or {}
   local child_lock = device.preferences[CHILD_LOCK_PREFERENCE]
-  if child_lock == nil or old_preferences[CHILD_LOCK_PREFERENCE] == child_lock then
-    return
+  if child_lock ~= nil and old_preferences[CHILD_LOCK_PREFERENCE] ~= child_lock then
+    device:send(cluster_base.write_attribute(
+      device,
+      data_types.ClusterId(SONOFF_CLUSTER),
+      data_types.AttributeId(CHILD_LOCK_ATTR),
+      data_types.validate_or_build_type(tonumber(child_lock) == 1, data_types.Boolean, "payload")
+    ))
   end
 
-  device:send(cluster_base.write_attribute(
-    device,
-    data_types.ClusterId(SONOFF_CLUSTER),
-    data_types.AttributeId(CHILD_LOCK_ATTR),
-    data_types.validate_or_build_type(tonumber(child_lock) == 1, data_types.Boolean, "payload")
-  ))
+  local bluetooth_pairing = device.preferences[BLUETOOTH_PAIRING_PREFERENCE]
+  if bluetooth_pairing == true and old_preferences[BLUETOOTH_PAIRING_PREFERENCE] ~= true then
+    local zcl_header = zcl_messages.ZclHeader({
+      cmd = data_types.ZCLCommandId(0x10),
+    })
+    zcl_header.frame_ctrl:set_cluster_specific()
+    device:send(messages.ZigbeeMessageTx({
+      address_header = messages.AddressHeader(
+        zb_const.HUB.ADDR,
+        zb_const.HUB.ENDPOINT,
+        device:get_short_address(),
+        device:get_endpoint(SONOFF_CLUSTER) or 1,
+        zb_const.HA_PROFILE_ID,
+        SONOFF_CLUSTER
+      ),
+      body = zcl_messages.ZclMessageBody({
+        zcl_header = zcl_header,
+        zcl_body = generic_body.GenericBody(string.char(0x03, 0x01, 0x01)),
+      }),
+    }))
+  end
 end
 
 local function local_temperature_handler(_, device, value)
@@ -222,9 +217,6 @@ local function set_heating_setpoint(_, device, command)
   setpoint = math.floor((setpoint / SETPOINT_STEP) + 0.000001) * SETPOINT_STEP
   device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(setpoint * 100)))
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = setpoint, unit = "C" }))
-  device.thread:call_with_delay(1, function()
-    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
-  end)
 end
 
 local function set_mode(_, device, command)
@@ -257,11 +249,6 @@ local sonoff = {
   capability_handlers = {
     [Refresh.ID] = {
       [Refresh.commands.refresh.NAME] = refresh,
-    },
-    [Momentary.ID] = {
-      [Momentary.commands.push.NAME] = function(_, device)
-        send_bluetooth_pairing_start(device)
-      end,
     },
     [ThermostatHeatingSetpoint.ID] = {
       [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_heating_setpoint,

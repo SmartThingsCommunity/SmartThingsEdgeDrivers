@@ -223,13 +223,17 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "SONOFF TRV-ZBT starts Bluetooth pairing from the momentary component",
+  "SONOFF TRV-ZBT starts Bluetooth pairing when the preference is enabled",
   function()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "momentary", component = "bluetooth", command = "push", args = {} },
-    })
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { enterBluetoothPairing = true },
+    }))
     test.socket.zigbee:__expect_send({ mock_device.id, bluetooth_pairing_command(mock_device) })
+    test.wait_for_events()
+
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { enterBluetoothPairing = false },
+    }))
     test.wait_for_events()
   end,
   { min_api_version = 14 }
