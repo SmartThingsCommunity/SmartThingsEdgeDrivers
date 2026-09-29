@@ -2542,6 +2542,22 @@ zigbeeManufacturer:
     manufacturer: FIRSTLED
     model: DC2DC12MiV1
     deviceProfileName: light-color-temp-time-restore
+#Legrand/BTicino
+  - id: Legrand/Micromodule switch
+    deviceLabel: Connected Lighting Micromodule
+    manufacturer: Legrand
+    model: Micromodule switch
+    deviceProfileName: basic-switch
+  - id: Legrand/Light switch with neutral
+    deviceLabel: Connected Switch with Neutral
+    manufacturer: Legrand
+    model: Light switch with neutral
+    deviceProfileName: basic-switch
+  - id: Legrand/Connected outlet
+    deviceLabel: Connected Socket
+    manufacturer: Legrand
+    model: Connected outlet
+    deviceProfileName: switch-power
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
