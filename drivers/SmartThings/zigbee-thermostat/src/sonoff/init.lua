@@ -63,14 +63,6 @@ local CONFIGURATIONS = {
     maximum_interval = 600,
     data_type = Thermostat.attributes.SystemMode.base_type,
   },
-  {
-    cluster = PowerConfiguration.ID,
-    attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
-    minimum_interval = 30,
-    maximum_interval = 21600,
-    data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-    reportable_change = 1,
-  },
 }
 
 local function emit_setpoint_range(device)
