@@ -69,7 +69,7 @@ local CONFIGURATIONS = {
     minimum_interval = 30,
     maximum_interval = 21600,
     data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-    reportable_change = 5,
+    reportable_change = 1,
   },
 }
 
