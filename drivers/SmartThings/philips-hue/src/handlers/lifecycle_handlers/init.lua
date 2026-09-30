@@ -14,6 +14,10 @@ local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
 
+-- Capture Logger for lifecycle events
+local capture_logger = require "capture_logger"
+local capture_device_wrapper = require "capture_device_wrapper"
+
 local function check_parent_assigned_child_key(device)
   local device_type = utils.determine_device_type(device)
   local device_rid = utils.get_hue_rid(device)
@@ -65,6 +69,19 @@ end
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_init(driver, device, ...)
+  -- CAPTURE: Log device init event
+  capture_logger.log_lifecycle_event(device.id, "init", {
+    label = device.label,
+    device_network_id = device.device_network_id,
+    parent_device_id = device.parent_device_id,
+  })
+
+  -- CAPTURE: Hook this device's emit_event/set_field. Devices that persisted
+  -- across a driver restart only receive `init`, not `added`, so this must be
+  -- wrapped here too (both calls are idempotent).
+  capture_device_wrapper.wrap_device_emit_event(device)
+  capture_device_wrapper.wrap_device_set_field(device)
+
   local device_type = utils.determine_device_type(device)
   log.info(
     string.format
@@ -83,6 +100,20 @@ end
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_added(driver, device, ...)
+  -- CAPTURE: Log device added event
+  capture_logger.log_lifecycle_event(device.id, "added", {
+    label = device.label,
+    device_network_id = device.device_network_id,
+    parent_device_id = device.parent_device_id,
+    manufacturer = device.manufacturer,
+    model = device.model,
+    vendor_provided_label = device.vendor_provided_label,
+  })
+
+  -- CAPTURE: Hook this device's emit_event/set_field (idempotent).
+  capture_device_wrapper.wrap_device_emit_event(device)
+  capture_device_wrapper.wrap_device_set_field(device)
+
   log.info(
     string.format("device_added for device %s", (device.label or device.id or "unknown device"))
   )
