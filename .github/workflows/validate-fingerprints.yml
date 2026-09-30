@@ -1,0 +1,24 @@
+name: Validate fingerprints
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**/fingerprints.yml'
+
+jobs:
+  validate-fingerprints:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pyyaml
+        run: pip install pyyaml --quiet
+
+      - name: Validate changed fingerprints.yml files
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: python .github/scripts/validate_fingerprints.py
