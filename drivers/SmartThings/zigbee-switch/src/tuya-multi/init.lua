@@ -1,7 +1,6 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
 local zcl_messages = require "st.zigbee.zcl"
@@ -44,9 +43,6 @@ local tuya_switch_handler = {
   NAME = "Tuya Switch Handler",
   lifecycle_handlers = {
       doConfigure = do_configure
-  },
-  supported_capabilities = {
-      capabilities.switch
   },
   can_handle = require("tuya-multi.can_handle"),
 }
