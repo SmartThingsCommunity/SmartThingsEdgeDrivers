@@ -9,7 +9,6 @@ return {
     lazy_load_if_possible("hanssem"),
     lazy_load_if_possible("aqara"),
     lazy_load_if_possible("aqara-light"),
-    lazy_load_if_possible("ezex"),
     lazy_load_if_possible("rexense"),
     lazy_load_if_possible("sinope"),
     lazy_load_if_possible("sinope-dimmer"),
