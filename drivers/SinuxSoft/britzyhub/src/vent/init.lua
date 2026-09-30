@@ -4,6 +4,7 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
+local britz_utils = require "utils"
 
 local VENTILATOR_DEVICE_TYPE_ID = 0xFF03
 
@@ -101,9 +102,10 @@ local function set_fan_mode(driver, device, cmd)
 end
 
 local function device_init(driver, device)
-  device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:extend_device("subscribe", britz_utils.make_subscribe(subscribed_attributes))
+  device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
