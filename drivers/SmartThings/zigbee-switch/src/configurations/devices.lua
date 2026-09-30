@@ -20,6 +20,16 @@ local data_types = require "st.zigbee.data_types"
 --   METERING_FIELDS_IF_UNSET: device fields set at init only if not already set,
 --     so values later reported by the device take precedence
 local devices = {
+  LEDVANCE_METERING_PLUG = {
+    FINGERPRINTS = {
+      { mfr = "LEDVANCE", model = "PLUG COMPACT EU EM T" },
+      { mfr = "LEDVANCE", model = "PLUG EU EM T" }
+    },
+    METERING_FIELDS_IF_UNSET = {
+      [constants.SIMPLE_METERING_MULTIPLIER_KEY] = 1,
+      [constants.SIMPLE_METERING_DIVISOR_KEY] = 100
+    }
+  },
   JASCO_DIMMER_POWER_ENERGY = {
     FINGERPRINTS = {
       { mfr = "Jasco Products", model = "43082" }

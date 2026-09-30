@@ -5,6 +5,5 @@ local lazy_load = require "lazy_load_subdriver"
 
 return {
   lazy_load("zigbee-switch-power.aurora-relay"),
-  lazy_load("zigbee-switch-power.vimar"),
-  lazy_load("zigbee-switch-power.ledvance-metering-plug")
+  lazy_load("zigbee-switch-power.vimar")
 }
