@@ -27,6 +27,7 @@ local mock_sensor = test.mock_device.build_test_zwave_device({
   profile = t_utils.get_profile_definition("aeotec-door-window-sensor-8.yml"),
   zwave_endpoints = sensor_endpoints,
   zwave_manufacturer_id = 0x0371,
+  zwave_product_type = 0x0002,
   zwave_product_id = 0x0037,
 })
 
@@ -41,7 +42,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_sensor.id, "added" })
     test.socket.capability:__expect_send(
-      mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "moderate"}))
+      mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
     )
 
     test.socket.capability:__expect_send(
@@ -51,7 +52,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     )
-
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -69,10 +69,6 @@ test.register_coroutine_test(
   "Device init lifecycle event",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_sensor.id, "init" })
-
-    mock_sensor:set_field("three_axis_x", 0)
-    mock_sensor:set_field("three_axis_y", 0)
-    mock_sensor:set_field("three_axis_z", 0)
   end,
   {
     min_api_version = 17
@@ -293,7 +289,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70, unit= '%' }))
+      message = mock_sensor:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70 }))
     },
   },
   {
@@ -325,65 +321,46 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "Three Axis x reports should be correctly handled",
+  "Three Axis reports are converted, clamped and combined",
   function()
-    test.socket.zwave:__queue_receive({
-      mock_sensor.id,
-      SensorMultilevel:Report({
-        sensor_type = SensorMultilevel.sensor_type.ACCELERATION_X_AXIS,
-        sensor_value = 200,
-        scale = SensorMultilevel.scale.acceleration_x_axis.METERS_PER_SQUARE_SECOND }
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_sensor:generate_test_message("main",
-        capabilities.threeAxis.threeAxis({value = {200, 0, 0}, unit = 'mG'})
-      )
-    )
-  end,
-  {
-    min_api_version = 17
-  }
-)
+    local function receive_axis(sensor_type, value)
+      test.socket.zwave:__queue_receive({
+        mock_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SensorMultilevel:Report({
+            sensor_type = sensor_type,
+            sensor_value = value,
+            scale = 0
+          })
+        )
+      })
+    end
 
-test.register_coroutine_test(
-  "Three Axis y reports should be correctly handled",
-  function()
-    test.socket.zwave:__queue_receive({
-      mock_sensor.id,
-      SensorMultilevel:Report({
-        sensor_type = SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS,
-        sensor_value = 200,
-        scale = SensorMultilevel.scale.acceleration_y_axis.METERS_PER_SQUARE_SECOND }
+    local function expect_vector(x, y, z)
+      test.socket.capability:__expect_send(
+        mock_sensor:generate_test_message(
+          "main",
+          capabilities.threeAxis.threeAxis({
+            value = { x, y, z },
+            unit = "mG"
+          })
+        )
       )
-    })
-    test.socket.capability:__expect_send(
-      mock_sensor:generate_test_message("main",
-        capabilities.threeAxis.threeAxis({value = {0, 200, 0}, unit = 'mG'})
-      )
-    )
-  end,
-  {
-    min_api_version = 17
-  }
-)
+    end
 
-test.register_coroutine_test(
-  "Three Axis z reports should be correctly handled",
-  function()
-    test.socket.zwave:__queue_receive({
-      mock_sensor.id,
-      SensorMultilevel:Report({
-        sensor_type = SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS,
-        sensor_value = 400,
-        scale = SensorMultilevel.scale.acceleration_z_axis.METERS_PER_SQUARE_SECOND }
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_sensor:generate_test_message("main",
-        capabilities.threeAxis.threeAxis({value = {0, 0, 400}, unit = 'mG'})
-      )
-    )
+    -- X: 9,81 m/s² -> 1000 mG. Noch kein vollständiger Vektor.
+    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_X_AXIS, 9.81)
+
+    -- Y: -9,81 m/s² -> -1000 mG. Noch kein vollständiger Vektor.
+    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS, -9.81)
+
+    -- Z: 120 m/s² -> über 10000 mG -> auf 10000 begrenzt.
+    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS, 120)
+    expect_vector(1000, -1000, 10000)
+
+    -- Ein neuer X-Report sendet einen Vektor mit den zuletzt bekannten Y/Z.
+    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_X_AXIS, -120)
+    expect_vector(-10000, -1000, 10000)
   end,
   {
     min_api_version = 17
@@ -413,7 +390,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification report type WEATHER_ALARM event MOISTURE_ALARM should be handled mold healt concern state moderate",
+  "Notification report type WEATHER_ALARM event MOISTURE_ALARM should be handled mold healt concern state unhealthy",
   {
     {
       channel = "zwave",
@@ -426,7 +403,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.moderate())
+      message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.unhealthy())
     }
   },
   {

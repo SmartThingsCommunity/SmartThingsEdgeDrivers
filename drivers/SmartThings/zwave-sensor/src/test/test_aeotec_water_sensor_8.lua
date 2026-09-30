@@ -126,9 +126,9 @@ local DEVICE_PROFILES = {
     profile = "aeotec-water-sensor-8-co2",
     mock_device = mock_co2_sensor,
     default_cap = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good(),
-    active_cap = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.moderate(),
+    active_cap = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.unhealthy(),
     default_cap_str = "good",
-    active_cap_str = "moderate",
+    active_cap_str = "unhealthy",
     notification_typ = Notification.notification_type.CO2,
     on_event = Notification.event.co2.CARBON_DIOXIDE_DETECTED,
     off_event = Notification.event.co2.STATE_IDLE
@@ -196,7 +196,6 @@ local function test_init()
   test.mock_device.add_test_device(mock_co_sensor)
   test.mock_device.add_test_device(mock_co2_sensor)
   test.mock_device.add_test_device(mock_contact_sensor)
-  test.mock_device.add_test_device(mock_contact_sensor)
   test.mock_device.add_test_device(mock_motion_sensor)
   test.mock_device.add_test_device(mock_glass_break_sensor)
   test.mock_device.add_test_device(mock_panic_sensor)
@@ -217,7 +216,7 @@ test.register_coroutine_test(
       )
     )
     test.socket.capability:__expect_send(
-      mock_water_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "moderate"}))
+      mock_water_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
     )
     test.socket.capability:__expect_send(
       mock_water_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
@@ -449,7 +448,7 @@ for param_value, data in pairs(DEVICE_PROFILES) do
         )
       elseif profile == "aeotec-water-sensor-8-co2" then
         test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "moderate"}))
+          mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
         )
       end
 

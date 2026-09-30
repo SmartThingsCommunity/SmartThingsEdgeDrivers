@@ -25,7 +25,7 @@ components:
         - key: "moldHealthConcern.value"
           enabledValues:
             - good
-            - moderate
+            - unhealthy
   - id: tamperAlert
     version: 1
   - id: powerSource
@@ -80,7 +80,7 @@ preferences:
       default: 0
   - name: "parameter5"
     title: "5 Dry contact sensor polarity"
-    description: "This parameter allows to set the states of alarm when the dry contact is closed"
+    description: "This parameter allows to set the states of alarm when the dry contact is closed."
     required: false
     preferenceType: enumeration
     definition:

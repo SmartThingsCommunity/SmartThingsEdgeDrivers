@@ -65,7 +65,7 @@ local function set_profile(device, profile)
 end
 
 local function added_handler(driver, device)
-  -- Get parameter 10 to switch device profile bsaed on the parameter value
+  -- Get parameter 10 to switch device profile based on the parameter value
   device:send(Configuration:Get({ parameter_number = 10 }))
 
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
@@ -83,7 +83,7 @@ local function notification_report_handler(self, device, cmd)
   local event
   local event_parameter
 
-  if (0 ~= string.len(cmd.args.event_parameter)) then
+  if (cmd.args.event_parameter ~= nil and 0 ~= string.len(cmd.args.event_parameter)) then
     event_parameter = string.byte(cmd.args.event_parameter)
   end
 
@@ -158,9 +158,9 @@ local function notification_report_handler(self, device, cmd)
   -- CO2
   if cmd.args.notification_type == Notification.notification_type.CO2 then
     if cmd.args.event == Notification.event.co2.STATE_IDLE then
-      event = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good()
+      event = CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good()
     elseif cmd.args.event == Notification.event.co2.CARBON_DIOXIDE_DETECTED then
-      event = capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.unhealthy()
+      event = CarbonDioxideHealthConcern.carbonDioxideHealthConcern.unhealthy()
     end
   end
 

@@ -22,7 +22,7 @@ components:
         - key: "moldHealthConcern.value"
           enabledValues:
             - good
-            - moderate
+            - unhealthy
     version: 1
   - id: tamperAlert
     version: 1
@@ -105,7 +105,7 @@ preferences:
       default: 43200
   - name: "parameter25"
     title: "25 Offset value for temperature"
-    description: "Calibrate temperature. Scale is defined by Param 64 .eg: Value 15 means 1.5°C or 1.5F"
+    description: "Calibrate temperature. Scale is defined by Param 64 .eg: Value 15 means 1.5°C or 1.5F."
     required: false
     preferenceType: integer
     definition:

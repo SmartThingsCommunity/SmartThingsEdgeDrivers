@@ -25,7 +25,7 @@ components:
         - key: "moldHealthConcern.value"
           enabledValues:
             - good
-            - moderate
+            - unhealthy
   - id: tamperAlert
     version: 1
   - id: powerSource
@@ -179,7 +179,7 @@ preferences:
       default: 8
   - name: "parameter36"
     title: "36 Min. acc. change to report"
-    description: "Minimum acceleration change to trigger report"
+    description: "Minimum acceleration change to trigger report."
     required: false
     preferenceType: integer
     definition:
