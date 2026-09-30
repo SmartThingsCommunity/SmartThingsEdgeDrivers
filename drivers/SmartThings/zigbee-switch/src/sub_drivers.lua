@@ -27,7 +27,6 @@ return {
     lazy_load_if_possible("zll-polling"),
     lazy_load_if_possible("zigbee-switch-power"),
     lazy_load_if_possible("ge-link-bulb"),
-    lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
     lazy_load_if_possible("inovelli"), -- Combined driver for both VZM31-SN and VZM32-SN
