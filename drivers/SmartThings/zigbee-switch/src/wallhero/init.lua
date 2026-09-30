@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local log = require "log"
 local stDevice = require "st.device"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -93,7 +92,6 @@ local function device_init(driver, device, event)
 end
 
 local function scenes_cluster_handler(driver, device, zb_rx)
-  log.info("Enter scenes_cluster_handler")
   device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
     capabilities.button.button.pushed({ state_change = true }))
 end
