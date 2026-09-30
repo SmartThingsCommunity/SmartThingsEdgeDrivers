@@ -84,7 +84,7 @@ end
 
 local DeviceConfiguration = {}
 
-function DeviceConfiguration.match_modular_profile_air_purifer(device)
+function DeviceConfiguration.match_modular_profile_air_purifier(device)
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
   local hepa_filter_component_capabilities = {}
@@ -93,6 +93,11 @@ function DeviceConfiguration.match_modular_profile_air_purifer(device)
 
   local MAIN_COMPONENT_IDX = 1
   local CAPABILITIES_LIST_IDX = 2
+
+  local on_off_eps = device:get_endpoints(clusters.OnOff.ID)
+  if #on_off_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.switch.ID)
+  end
 
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
@@ -184,31 +189,22 @@ function DeviceConfiguration.match_modular_profile_air_purifer(device)
   end
 end
 
-function DeviceConfiguration.match_modular_profile_thermostat(device)
+function DeviceConfiguration.match_modular_profile_fan(device)
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
-  local profile_name = "thermostat-modular"
+  local profile_name = "fan-modular"
 
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  if #humidity_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  local MAIN_COMPONENT_IDX = 1
+  local CAPABILITIES_LIST_IDX = 2
+
+  local on_off_eps = device:get_endpoints(clusters.OnOff.ID)
+  if #on_off_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.switch.ID)
   end
 
-  -- determine fan capabilities
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
 
-  if #fan_eps > 0 then
-    if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED}) > 0 then
-      table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
-      if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.AUTO}) > 0 then
-        table.insert(main_component_capabilities, capabilities.fanMode.ID)
-      end
-    else
-      table.insert(main_component_capabilities, capabilities.fanMode.ID)
-    end
-  end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
   end
@@ -216,19 +212,8 @@ function DeviceConfiguration.match_modular_profile_thermostat(device)
     table.insert(main_component_capabilities, capabilities.windMode.ID)
   end
 
-  local thermostat_capabilities = DeviceConfigurationHelpers.get_thermostat_optional_capabilities(device)
-  for _, capability_id in pairs(thermostat_capabilities) do
-    table.insert(main_component_capabilities, capability_id)
-  end
-
-  local battery_supported = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
-  if battery_supported == fields.battery_support.BATTERY_LEVEL then
-    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
-  elseif battery_supported == fields.battery_support.BATTERY_PERCENTAGE then
-    table.insert(main_component_capabilities, capabilities.battery.ID)
-  end
-
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
   -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
@@ -236,10 +221,10 @@ function DeviceConfiguration.match_modular_profile_thermostat(device)
   if version.api < 15 or version.rpc < 9 then
     -- add mandatory capabilities for subscription
     local total_supported_capabilities = optional_supported_component_capabilities
-    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
-    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
-    table.insert(main_component_capabilities, capabilities.refresh.ID)
-    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanMode.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
     device:set_field(fields.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
   end
@@ -301,8 +286,70 @@ function DeviceConfiguration.match_modular_profile_room_ac(device)
   end
 end
 
+function DeviceConfiguration.match_modular_profile_thermostat(device)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  local profile_name = "thermostat-modular"
+
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  -- determine fan capabilities
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+
+  if #fan_eps > 0 then
+    if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED}) > 0 then
+      table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+      if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.AUTO}) > 0 then
+        table.insert(main_component_capabilities, capabilities.fanMode.ID)
+      end
+    else
+      table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    end
+  end
+  if #rock_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
+  end
+  if #wind_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.windMode.ID)
+  end
+
+  local thermostat_capabilities = DeviceConfigurationHelpers.get_thermostat_optional_capabilities(device)
+  for _, capability_id in pairs(thermostat_capabilities) do
+    table.insert(main_component_capabilities, capability_id)
+  end
+
+  local battery_supported = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
+  if battery_supported == fields.battery_support.BATTERY_LEVEL then
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+  elseif battery_supported == fields.battery_support.BATTERY_PERCENTAGE then
+    table.insert(main_component_capabilities, capabilities.battery.ID)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
+  if version.api < 15 or version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.refresh.ID)
+    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+
+    device:set_field(fields.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
+end
+
 local match_modular_device_type = {
-  [fields.AP_DEVICE_TYPE_ID] = DeviceConfiguration.match_modular_profile_air_purifer,
+  [fields.AP_DEVICE_TYPE_ID] = DeviceConfiguration.match_modular_profile_air_purifier,
+  [fields.FAN_DEVICE_TYPE_ID] = DeviceConfiguration.match_modular_profile_fan,
   [fields.RAC_DEVICE_TYPE_ID] = DeviceConfiguration.match_modular_profile_room_ac,
   [fields.THERMOSTAT_DEVICE_TYPE_ID] = DeviceConfiguration.match_modular_profile_thermostat,
 }
