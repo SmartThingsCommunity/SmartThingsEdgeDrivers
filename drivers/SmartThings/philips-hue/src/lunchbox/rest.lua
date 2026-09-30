@@ -67,10 +67,12 @@ local function send_request(client, request, request_id)
   local payload = request:serialize()
   
   -- CAPTURE: Log outgoing REST request
-  local full_url = string.format("%s://%s%s", 
+  -- Note: `Request` has no `.path` field -- the path lives on the parsed
+  -- `net.url` table at `request.url.path` (see luncheon/request.lua).
+  local full_url = string.format("%s://%s%s",
     client.base_url.scheme or "https",
     client.base_url.host,
-    request.path
+    (request.url and request.url.path) or "/"
   )
   local headers = {}
   if request.headers then

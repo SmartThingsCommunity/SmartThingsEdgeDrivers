@@ -527,7 +527,9 @@ function EventSource.new(url, extra_headers, sock_builder)
     -- CAPTURE: Generate unique connection ID for tracking
     _connection_id = capture_logger.new_request_id(),
     _connect_logged = false,
-    _reconnect_count = 0,
+    -- Left nil (not 0) so the `not source._reconnect_count` first-disconnect
+    -- check below actually triggers -- 0 is truthy in Lua.
+    _reconnect_count = nil,
   }, EventSource)
 
   cosock.spawn(function()
