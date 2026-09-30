@@ -120,7 +120,7 @@ test.register_coroutine_test(
       "Device Energy Management Endpoint must be 3")
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -150,7 +150,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -201,7 +201,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -225,7 +225,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -248,7 +248,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -271,7 +271,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -294,7 +294,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -317,7 +317,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -340,7 +340,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -364,7 +364,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -438,7 +438,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -541,7 +541,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

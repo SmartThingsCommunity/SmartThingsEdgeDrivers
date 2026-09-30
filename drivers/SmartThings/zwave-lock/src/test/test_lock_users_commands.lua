@@ -192,7 +192,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "addUser: assigns the next sequential userIndex when users already exist",
@@ -223,7 +226,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "addUser: fills a gap left by a deleted user rather than appending beyond max",
@@ -259,7 +265,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "addUser: returns resourceExhausted when totalUsersSupported has been reached",
@@ -284,7 +293,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- updateUser
@@ -322,7 +334,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "updateUser: creates user when userIndex does not exist",
@@ -352,7 +367,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "updateUser: can change a user's type as well as name",
@@ -380,7 +398,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- deleteUser (no associated credential — pure local delete)
@@ -415,7 +436,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "deleteUser: returns failure when the target userIndex is not in the users table",
@@ -435,7 +459,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- deleteAllUsers  (injects deleteAllCredentials → ClearAllPINCodes z-wave flow)
@@ -495,7 +522,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "deleteAllUsers: emits busy when another lock command is in progress",
@@ -517,7 +547,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- ============================================================================
 -- State-consistency: add → delete → re-add (indices 1, 2, 3 lifecycle)
@@ -590,7 +623,10 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "State-consistency: add users+credentials 1-3, deleteUser 2 (with credential), re-add user+credential reclaims index 2 cleanly",
@@ -700,6 +736,9 @@ test.register_coroutine_test(
     }) == constants.COMMAND_RESULT.SUCCESS)
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.run_registered_tests()

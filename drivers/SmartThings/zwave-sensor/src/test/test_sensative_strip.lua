@@ -61,7 +61,7 @@ test.register_coroutine_test(
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -72,7 +72,7 @@ test.register_coroutine_test(
     mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -94,7 +94,7 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({})})
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

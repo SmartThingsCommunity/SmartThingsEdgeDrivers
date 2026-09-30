@@ -353,6 +353,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_modular_fingerprint,
+    min_api_version = 15
   }
 )
 
@@ -409,7 +410,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_all,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -439,7 +440,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_common,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -466,7 +467,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device_modular_fingerprint:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
     test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, subscribe_request_tvoc})
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -475,7 +479,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({}))
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -501,7 +508,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device_modular_fingerprint:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
     test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, subscribe_request_tvoc})
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -510,7 +520,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({}))
   end,
-  { test_init = test_init_modular_fingerprint }
+  {
+    test_init = test_init_modular_fingerprint,
+    min_api_version = 15
+  }
 )
 
 -- run tests

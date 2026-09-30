@@ -155,7 +155,10 @@ test.register_coroutine_test(
         capabilities.lockAliro.readerVerificationKey(EXPECTED_PUB_HEX, {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -176,7 +179,10 @@ test.register_coroutine_test(
         capabilities.lockAliro.readerGroupIdentifier(EXPECTED_GROUP_ID_HEX, {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -199,7 +205,10 @@ test.register_coroutine_test(
           {visibility = {displayed = false}})
         )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -222,7 +231,10 @@ test.register_coroutine_test(
           {visibility = {displayed = false}})
         )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -245,7 +257,10 @@ test.register_coroutine_test(
           {visibility = {displayed = false}})
         )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -266,7 +281,10 @@ test.register_coroutine_test(
         capabilities.lockAliro.groupResolvingKey(EXPECTED_GROUP_ID_HEX, {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -289,7 +307,10 @@ test.register_coroutine_test(
           {visibility = {displayed = false}})
         )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -312,7 +333,10 @@ test.register_coroutine_test(
           {visibility = {displayed = false}})
         )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -334,7 +358,10 @@ test.register_coroutine_test(
         capabilities.lockAliro.cardId("3icub18c8pr00", {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -386,7 +413,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -546,7 +576,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -585,7 +618,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -660,7 +693,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -730,7 +763,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -800,7 +833,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -957,7 +990,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -993,7 +1029,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1066,7 +1102,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1133,7 +1169,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1200,7 +1236,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1229,7 +1265,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -1257,7 +1296,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.run_registered_tests()

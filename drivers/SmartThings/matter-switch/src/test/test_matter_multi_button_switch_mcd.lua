@@ -271,7 +271,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -294,7 +294,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 17
+   min_api_version = 15
 }
 )
 
@@ -327,7 +327,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 17
+   min_api_version = 15
 }
 )
 
@@ -352,7 +352,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -411,7 +411,7 @@ test.register_coroutine_test(
     end,
   {
     test_init = test_init_mcd_unsupported_switch_device_type,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -419,20 +419,23 @@ test.register_coroutine_test(
   "Test driver switched event",
   function()
     test.mock_device.add_test_device(mock_child)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
+    test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+
     local subscribe_request = CLUSTER_SUBSCRIBE_LIST_WITH_CHILD[1]:subscribe(mock_device)
-    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_WITH_CHILD) do
-      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
-    end
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
-    mock_child:expect_metadata_update({ profile = "light-color-level" })
-    mock_device:expect_metadata_update({ profile = "light-level-3-button" })
-    expect_configure_buttons()
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+     for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_WITH_CHILD) do
+       if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+     end
+     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+     mock_child:expect_metadata_update({ profile = "light-color-level" })
+     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+     expect_configure_buttons()
+     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -450,7 +453,7 @@ test.register_coroutine_test(
     expect_configure_buttons()
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -464,7 +467,7 @@ test.register_coroutine_test(
     expect_configure_buttons()
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -475,6 +478,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device)})
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "init" })
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
     local subscribe_request = CLUSTER_SUBSCRIBE_LIST_WITH_CHILD[1]:subscribe(mock_device)
     for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_WITH_CHILD) do
       if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -484,7 +488,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
