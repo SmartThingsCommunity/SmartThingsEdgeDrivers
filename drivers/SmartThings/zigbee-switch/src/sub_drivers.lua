@@ -18,7 +18,6 @@ return {
     lazy_load_if_possible("jasco"),
     lazy_load_if_possible("multi-switch-no-master"),
     lazy_load_if_possible("zigbee-dual-metering-switch"),
-    lazy_load_if_possible("rgb-bulb"),
     lazy_load_if_possible("zigbee-dimming-light"),
     lazy_load_if_possible("white-color-temp-bulb"),
     lazy_load_if_possible("rgbw-bulb"),
