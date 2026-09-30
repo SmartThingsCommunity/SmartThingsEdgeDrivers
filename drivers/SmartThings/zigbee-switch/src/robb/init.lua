@@ -4,14 +4,7 @@
 local constants = require "st.zigbee.constants"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local configurations = require "configurations"
 local SimpleMetering = zcl_clusters.SimpleMetering
-
-
-local do_init = function(driver, device)
-  device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
-end
 
 local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
@@ -30,9 +23,6 @@ local robb_dimmer_handler = {
         [SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler
       }
     }
-  },
-  lifecycle_handlers = {
-    init = configurations.reconfig_wrapper(do_init)
   },
   can_handle = require("robb.can_handle"),
 }

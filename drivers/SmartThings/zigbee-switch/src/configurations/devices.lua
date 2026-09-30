@@ -20,6 +20,16 @@ local data_types = require "st.zigbee.data_types"
 --   METERING_FIELDS_IF_UNSET: device fields set at init only if not already set,
 --     so values later reported by the device take precedence
 local devices = {
+  ROBB_DIMMER = {
+    FINGERPRINTS = {
+      { mfr = "ROBB smarrt", model = "ROB_200-011-0" },
+      { mfr = "ROBB smarrt", model = "ROB_200-014-0" }
+    },
+    METERING_FIELDS = {
+      [constants.SIMPLE_METERING_DIVISOR_KEY] = 1000000,
+      [constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY] = 10
+    }
+  },
   EZEX_METERING_SWITCH = {
     FINGERPRINTS = {
       { mfr = nil, model = "E240-KR116Z-HA" }
