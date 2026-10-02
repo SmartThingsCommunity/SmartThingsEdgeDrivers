@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
@@ -107,6 +112,59 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
   },
 })
 
+--- Models an outlet of a multi-outlet power strip, which combines the Electrical Sensor and
+--- OnOff Plug In Unit device types on a single endpoint. Note that the Electrical Sensor device
+--- type is listed first, so it is the endpoint's primary device type and no profile is mapped to it.
+local function build_power_strip_outlet_endpoint(endpoint_id)
+  return {
+    endpoint_id = endpoint_id,
+    clusters = {
+      { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 1, },
+      { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", feature_map = 2, },
+      { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 15, },
+      { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, }, -- SET_TOPOLOGY
+    },
+    device_types = {
+      { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
+      { device_type_id = 0x010A, device_type_revision = 1 }, -- OnOff Plug In Unit
+    }
+  }
+end
+
+--- A 4-outlet power strip that reports its endpoints out of numerical order, as the Tapo
+--- P304M does. The order in which the AvailableEndpoints reports are handled must not affect
+--- profiling: every Electrical Sensor endpoint has to be accounted for before profiles are matched.
+local mock_device_power_strip = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("plug-power-energy-powerConsumption.yml"),
+  manufacturer_info = {
+    vendor_id = 0x1392,
+    product_id = 0x010F,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    build_power_strip_outlet_endpoint(1),
+    build_power_strip_outlet_endpoint(3),
+    build_power_strip_outlet_endpoint(4),
+    build_power_strip_outlet_endpoint(2),
+  },
+})
+
+local subscribed_attributes_power_strip = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.PowerTopology.attributes.AvailableEndpoints,
+}
+
 local subscribed_attributes_periodic = {
   clusters.OnOff.attributes.OnOff,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
@@ -196,6 +254,17 @@ local function test_init_periodic()
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
 end
 
+local function test_init_power_strip()
+  test.mock_device.add_test_device(mock_device_power_strip)
+  local subscribe_request = subscribed_attributes_power_strip[1]:subscribe(mock_device_power_strip)
+  for i, cluster in ipairs(subscribed_attributes_power_strip) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_power_strip))
+    end
+  end
+  test.socket.matter:__expect_send({ mock_device_power_strip.id, subscribe_request })
+end
+
 test.register_message_test(
   "Active power measurement should generate correct messages",
   {
@@ -222,7 +291,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -290,7 +359,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -315,7 +384,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -377,7 +446,7 @@ test.register_coroutine_test(
     end,
     {
       test_init = test_init_periodic,
-      min_api_version = 17
+      min_api_version = 14
     }
 )
 
@@ -402,7 +471,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -417,7 +486,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_periodic,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -548,7 +617,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -612,14 +681,14 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         start = "1970-01-01T00:15:01Z",
         ["end"] = "1970-01-01T00:48:20Z",
-        deltaEnergy = -4.0,
+        deltaEnergy = 19.0,
         energy = 19.0
       }))
     )
   end,
   {
     test_init = test_init_periodic,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -702,7 +771,42 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Profiling of a power strip must wait for the AvailableEndpoints report of every Electrical Sensor endpoint",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_power_strip.id, "doConfigure" })
+    mock_device_power_strip:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    -- the reports arrive in endpoint order, which does not match the order that the endpoints
+    -- were reported in during the interview. Each outlet is the only endpoint in its own power set.
+    for _, endpoint_id in ipairs({1, 2, 3, 4}) do
+      test.socket.matter:__queue_receive({
+        mock_device_power_strip.id,
+        clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(
+          mock_device_power_strip, endpoint_id, {uint32(endpoint_id)}
+        )
+      })
+    end
+    -- every outlet supports both power and energy measurement, so none of them should fall back
+    -- to the generic "switch-binary" profile used for an OnOff endpoint without electrical tags
+    for _, endpoint_id in ipairs({2, 3, 4}) do
+      mock_device_power_strip:expect_device_create({
+        type = "EDGE_CHILD",
+        label = string.format("nil %d", endpoint_id),
+        profile = "plug-power-energy-powerConsumption",
+        parent_device_id = mock_device_power_strip.id,
+        parent_assigned_child_key = string.format("%d", endpoint_id)
+      })
+    end
+    mock_device_power_strip:expect_metadata_update({ profile = "plug-power-energy-powerConsumption" })
+  end,
+  {
+    test_init = test_init_power_strip,
+    min_api_version = 14
   }
 )
 

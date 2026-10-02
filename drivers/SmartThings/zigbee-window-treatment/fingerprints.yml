@@ -148,6 +148,11 @@ zigbeeManufacturer:
     manufacturer: Sombra Shades
     model: SS25/L-Z
     deviceProfileName: window-treatment-battery
+  - id: "Sombra Shades/SOMBRA/Z-M"
+    deviceLabel: Sombra Automated Shades
+    manufacturer: Sombra Shades
+    model: SOMBRA/Z-M
+    deviceProfileName: window-treatment-powerSource
 
 zigbeeGeneric:
   - id: "genericShade"

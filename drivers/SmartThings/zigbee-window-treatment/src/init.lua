@@ -33,6 +33,7 @@ local zigbee_window_treatment_driver_template = {
     capabilities.windowShade,
     capabilities.windowShadePreset,
     capabilities.windowShadeLevel,
+    capabilities.statelessWindowShadeLevelStep,
     capabilities.powerSource,
     capabilities.battery
   },
@@ -40,7 +41,10 @@ local zigbee_window_treatment_driver_template = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = window_shade_utils.set_preset_position_cmd,
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_utils.window_shade_preset_cmd,
-    }
+    },
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = window_shade_utils.step_shade_level_handler
+    },
   },
   lifecycle_handlers = {
     init = init_handler,

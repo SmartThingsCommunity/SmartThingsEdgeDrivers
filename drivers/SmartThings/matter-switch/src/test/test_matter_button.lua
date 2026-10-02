@@ -49,7 +49,6 @@ local expected_initial_press_only_state = true
 
 local function expect_configure_button(device)
   test.socket.capability:__expect_send(device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(device:generate_test_message("main", button_attr.pushed({state_change = false})))
 end
 
 local function test_init_for_lifecycle_tests()
@@ -88,7 +87,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_for_lifecycle_tests,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -110,7 +109,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_for_lifecycle_tests,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -133,7 +132,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -171,7 +170,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -210,7 +209,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -258,7 +257,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -282,7 +281,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -306,7 +305,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -330,7 +329,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -369,7 +368,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -408,7 +407,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -483,7 +482,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -510,7 +509,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -522,7 +521,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -537,7 +536,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -552,7 +551,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -572,7 +571,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -595,7 +594,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

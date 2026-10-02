@@ -19,6 +19,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
@@ -158,7 +163,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -226,7 +231,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 17
+       min_api_version = 14
     }
 )
 
@@ -252,7 +257,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -335,7 +340,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 

@@ -70,17 +70,15 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, req})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
-  subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-
 
   test.mock_device.add_test_device(mock_device_level)
   test.socket.device_lifecycle:__queue_receive({ mock_device_level.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_level.id, "init" })
   local subscribe_request_level = clusters.DoorLock.attributes.LockState:subscribe(mock_device_level)
+  subscribe_request_level:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device_level))
   test.socket["matter"]:__expect_send({mock_device_level.id, subscribe_request_level})
 end
 test.set_test_init_function(test_init)
@@ -93,7 +91,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -104,7 +102,7 @@ test.register_coroutine_test(
     mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

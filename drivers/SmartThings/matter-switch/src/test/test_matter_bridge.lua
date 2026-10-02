@@ -101,7 +101,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mock_bridge,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

@@ -1,6 +1,7 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local log = require "log"
 local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
@@ -205,13 +206,24 @@ ThermostatFields.molecular_weights = {
   [capabilities.tvocMeasurement.NAME] = "N/A",
 }
 
-ThermostatFields.conversion_tables = {
+local function is_valid_molecular_weight(molecular_weight)
+  if type(molecular_weight) ~= "number" or molecular_weight <= 0 then
+    log.warn_with({hub_logs = true}, string.format("unit conversion molecular weight (%s) is not a valid number", molecular_weight))
+    return false
+  end
+  return true
+end
+
+ThermostatFields.unit_conversion = {
   [units.PPM] = {
     [units.PPM] = function(value) return st_utils.round(value) end,
     [units.PPB] = function(value) return st_utils.round(value * (10^3)) end,
-    [units.UGM3] = function(value, molecular_weight) return st_utils.round((value * molecular_weight * 10^3) / ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) end,
-    [units.MGM3] = function(value, molecular_weight) return st_utils.round((value * molecular_weight) / ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) end,
-  },
+    [units.UGM3] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * molecular_weight * 10^3) / ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) end
+    end,
+    [units.MGM3] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * molecular_weight) / ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) end
+    end,},
   [units.PPB] = {
     [units.PPM] = function(value) return st_utils.round(value/(10^3)) end,
     [units.PPB] = function(value) return st_utils.round(value) end,
@@ -221,11 +233,15 @@ ThermostatFields.conversion_tables = {
   },
   [units.MGM3] = {
     [units.UGM3] = function(value) return st_utils.round(value * (10^3)) end,
-    [units.PPM] = function(value, molecular_weight) return st_utils.round((value * ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) / molecular_weight) end,
+    [units.PPM] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) / molecular_weight) end
+    end,
   },
   [units.UGM3] = {
     [units.UGM3] = function(value) return st_utils.round(value) end,
-    [units.PPM] = function(value, molecular_weight) return st_utils.round((value * ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end,
+    [units.PPM] = function(value, molecular_weight) if is_valid_molecular_weight(molecular_weight) then
+      return st_utils.round((value * ThermostatFields.MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end
+    end,
   },
   [units.NGM3] = {
     [units.UGM3] = function(value) return st_utils.round(value/(10^3)) end

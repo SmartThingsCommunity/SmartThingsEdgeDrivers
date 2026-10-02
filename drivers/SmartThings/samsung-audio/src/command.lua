@@ -34,6 +34,19 @@ local function is_empty(t)
   return not t or (type(t) == "table" and #t == 0)
 end
 
+local function get_uic_response(ret, command_name)
+  local root = ret and ret.handler_res and ret.handler_res.root
+  local uic = root and root.UIC
+  local response = uic and uic.response
+
+  if not uic then
+    log.warn(string.format("Missing UIC data in %s response", tostring(command_name)))
+    return nil, nil
+  end
+
+  return uic, response
+end
+
 local function tr(s,mappings)
   return string.gsub(s,
       "(.)",
@@ -94,8 +107,9 @@ function Command.volume(ip)
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetVolume</name>")
    local ret = handle_http_request(ip, url)
-   if ret then
-     response_map = { volume = ret.handler_res.root.UIC.response.volume, }
+   local _, response = get_uic_response(ret, "GetVolume")
+   if response and response.volume ~= nil then
+     response_map = { volume = response.volume, }
    end
   end
   return response_map
@@ -114,8 +128,9 @@ function Command.set_volume(ip, level)
    local encoded_str_vol = "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetVolume%3C/name%3E%3Cp%20type=%22dec%22%20name=%22volume%22%20val=%22" .. level .. "%22%3E%3C/p%3E"
    local url = format_url(ip, encoded_str_vol)
    local ret = handle_http_request(ip, url)
-   if ret then
-     response_map = { volume = ret.handler_res.root.UIC.response.volume, }
+   local _, response = get_uic_response(ret, "SetVolume")
+   if response and response.volume ~= nil then
+     response_map = { volume = response.volume, }
    end
   end
   return response_map
@@ -326,8 +341,9 @@ function Command.getMute(ip)
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetMute</name>")
    local ret = handle_http_request(ip, url)
-   if ret then
-     response_map = { muted = ret.handler_res.root.UIC.response.mute,}
+   local _, response = get_uic_response(ret, "GetMute")
+   if response and response.mute ~= nil then
+     response_map = { muted = response.mute,}
    end
   end
   return response_map
@@ -342,8 +358,9 @@ function Command.getPlayStatus(ip)
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetPlayStatus</name>")
    local ret = handle_http_request(ip, url)
-   if ret then
-     response_map = { playstatus = ret.handler_res.root.UIC.response.playstatus,}
+   local _, response = get_uic_response(ret, "GetPlayStatus")
+   if response and response.playstatus ~= nil then
+     response_map = { playstatus = response.playstatus,}
    end
   end
   return response_map

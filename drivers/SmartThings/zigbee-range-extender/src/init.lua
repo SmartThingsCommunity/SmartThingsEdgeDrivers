@@ -3,6 +3,7 @@
 
 
 local capabilities = require "st.capabilities"
+local log = require "log"
 local defaults = require "st.zigbee.defaults"
 local Basic = (require "st.zigbee.zcl.clusters").Basic
 local ZigbeeDriver = require "st.zigbee"
@@ -33,8 +34,13 @@ local zigbee_range_extender_driver = ZigbeeDriver("zigbee-range-extender", zigbe
 function zigbee_range_extender_driver:device_health_check()
   local device_list = self.device_api.get_device_list()
   for _, device_id in ipairs(device_list) do
-    local device = self:get_device_info(device_id, false)
-    device:send(Basic.attributes.ZCLVersion:read(device))
+    local device, err = self:get_device_info(device_id, false)
+    if device == nil then
+      log.warn_with({ hub_logs = true },
+        string.format("device_health_check failed to get device info for device_id %s: %s", device_id, err))
+    else
+      device:send(Basic.attributes.ZCLVersion:read(device))
+    end
   end
 end
 

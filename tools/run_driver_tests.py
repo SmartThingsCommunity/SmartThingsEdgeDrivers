@@ -38,6 +38,10 @@ def run_tests(verbosity_level, filter, junit, coverage_files, html):
     total_tests = 0
     total_passes = 0
     drivers_needing_html = {}
+    # Propagate ST_CAPABILITY_JSON_DIR so the mock capability channel can load
+    # capability definitions from pre-fetched JSON files produced by
+    # tools/fetch_capability_definitions.py.
+    env = os.environ.copy()
     for test_file in DRIVER_DIR.glob("*" + os.path.sep + "*" + os.path.sep + "src" + os.path.sep + "test" + os.path.sep + "test_*.lua"):
         if filter != None and re.search(filter, str(test_file)) is None:
             continue
@@ -46,9 +50,9 @@ def run_tests(verbosity_level, filter, junit, coverage_files, html):
         print("#" * len(test_line))
         print(test_line)
         if test_file in coverage_files:
-            a = subprocess.run("lua -lluacov {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            a = subprocess.run("lua -lluacov {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         else:
-            a = subprocess.run("lua {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            a = subprocess.run("lua {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         lines = a.stdout.decode().split("\n")
         test_count = 0
         passes = 0

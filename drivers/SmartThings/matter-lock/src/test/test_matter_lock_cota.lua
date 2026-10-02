@@ -44,9 +44,7 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -145,7 +143,7 @@ test.register_coroutine_test(
     expect_kick_off_cota_process(mock_device)
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -162,7 +160,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -179,7 +177,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -214,7 +212,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -238,7 +236,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -340,7 +338,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -438,7 +436,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -529,7 +527,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -589,7 +587,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -629,7 +627,7 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -710,7 +708,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -745,7 +743,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -753,7 +751,7 @@ test.register_coroutine_test(
   "Delay setting COTA cred if another cred is already being set.", function()
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

@@ -219,6 +219,19 @@ local function operating_state_init()
 end
 
 test.register_coroutine_test(
+  "Handle driverSwitched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.RvcOperationalState.attributes.AcceptedCommandList:read()})
+    mock_device:expect_metadata_update({ profile = "rvc-clean-mode-service-area" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
   "Assert profile applied over doConfigure",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -230,7 +243,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -261,7 +274,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -289,7 +302,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -317,7 +330,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -344,7 +357,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -365,7 +378,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -406,7 +419,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -444,7 +457,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -508,7 +521,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -562,7 +575,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -619,7 +632,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -676,7 +689,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -730,7 +743,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -784,7 +797,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1019,7 +1032,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1055,7 +1068,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1081,7 +1094,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1107,7 +1120,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -1192,7 +1205,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

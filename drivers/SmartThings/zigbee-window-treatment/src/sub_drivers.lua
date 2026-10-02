@@ -7,6 +7,7 @@ local sub_drivers = {
    lazy_load_if_possible("aqara"),
    lazy_load_if_possible("feibit"),
    lazy_load_if_possible("somfy"),
+   lazy_load_if_possible("sombra"),
    lazy_load_if_possible("invert-lift-percentage"),
    lazy_load_if_possible("rooms-beautiful"),
    lazy_load_if_possible("axis"),

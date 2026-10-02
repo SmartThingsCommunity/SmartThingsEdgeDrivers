@@ -134,6 +134,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.airrtc.agl001
     deviceProfileName: thermostat-aqara
+  - id: "WALL HERO/ACL-403STC1"
+    deviceLabel: WALLHERO Thermostat ACL-403STC1
+    manufacturer: WALL HERO
+    model: ACL-403STC1
+    deviceProfileName: thermostat-thirty-buttons-wallhero
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat

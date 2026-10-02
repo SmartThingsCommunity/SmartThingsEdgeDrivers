@@ -255,9 +255,20 @@ matterManufacturer:
     vendorId: 0x1523
     productId: 0x0A69
     deviceProfileName: window-covering-battery
+#3L Smart
+  - id: "5412/48897"
+    deviceLabel: Blinds motor
+    vendorId: 0x1524
+    productId: 0xBF01
+    deviceProfileName: window-covering-battery
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
     deviceTypes:
       - id: 0x0202 # Window Covering
     deviceProfileName: window-covering
+  - id: "closure"
+    deviceLabel: Matter Closure
+    deviceTypes:
+      - id: 0x0230 # Closure
+    deviceProfileName: covering

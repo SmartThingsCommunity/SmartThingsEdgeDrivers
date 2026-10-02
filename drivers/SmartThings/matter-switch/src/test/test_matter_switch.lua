@@ -93,7 +93,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -110,7 +110,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   end,
   {
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -143,7 +143,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -176,7 +176,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -204,7 +204,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -229,7 +229,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -242,6 +242,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
       }
     },
     {
@@ -261,6 +269,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -275,7 +291,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -289,10 +305,18 @@ test.register_message_test(
         mock_device.id,
         clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
       }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -322,7 +346,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -352,7 +376,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -389,6 +413,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6000))
@@ -402,13 +434,21 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_attr_id = "colorTemperature" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2800))
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -445,6 +485,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -461,6 +509,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -470,7 +526,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -495,7 +551,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -520,7 +576,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -550,7 +606,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -575,7 +631,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -620,7 +676,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -638,7 +694,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 17
+     min_api_version = 14
   }
 )
 
@@ -703,7 +759,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -735,7 +791,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -767,7 +823,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -825,7 +881,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -923,7 +979,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_with_hue_sat_color_mode_set,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -1009,7 +1065,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_with_hue_sat_color_mode_set,
-    min_api_version = 17
+    min_api_version = 14
   }
 )
 
@@ -1087,7 +1143,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_hue_sat,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -1139,7 +1195,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_color_temp,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -1166,7 +1222,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_color_temp,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

@@ -14,6 +14,5 @@ local sub_drivers = {
    lazy_load_if_possible("zipato-siren"),
    lazy_load_if_possible("utilitech-siren"),
    lazy_load_if_possible("fortrezz"),
-   lazy_load_if_possible("apiv6_bugfix"),
 }
 return sub_drivers
