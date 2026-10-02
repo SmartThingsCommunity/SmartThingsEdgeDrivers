@@ -241,6 +241,36 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x11DE
     deviceProfileName: light-color-level
+  - id: "5014/4224"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1080
+    deviceProfileName: light-color-level
+  - id: "5014/4223"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x107F
+    deviceProfileName: light-color-level
+  - id: "5014/4227"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1083
+    deviceProfileName: light-color-level
+  - id: "5014/4218"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107A
+    deviceProfileName: light-color-level
+  - id: "5014/4220"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107C
+    deviceProfileName: light-color-level
+  - id: "5014/4221"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107D
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
