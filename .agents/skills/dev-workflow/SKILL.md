@@ -125,6 +125,26 @@ Run it against a driver directory:
 luacheck --config .github/workflows/.luacheckrc drivers/SmartThings/zigbee-switch/
 ```
 
+### 7. Set Up the `test_driver` Shortcut (Optional)
+
+`tools/test_driver.sh` runs the Lua unit tests for whichever driver you're
+currently in (see `testing-edge-drivers`), but reaching it by path from deep
+inside a driver directory is tedious. Run this once to add a `test_driver`
+shell function to your profile:
+
+```bash
+tools/setup_test_driver_alias.sh
+```
+
+It detects your shell (bash or zsh), appends the function, and is safe to
+re-run — it won't add a duplicate. After sourcing your profile (or opening a
+new terminal), you can `cd` into any driver's `src` directory in any clone of
+this repo and just run:
+
+```bash
+test_driver -v
+```
+
 ---
 
 ## Deploying Drivers
