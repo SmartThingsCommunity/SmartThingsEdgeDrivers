@@ -577,6 +577,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0055
     deviceProfileName: plug-binary
+#Goods iQ
+  - id: "5187/256" # Not WWST certified, exposes incorrect Device Type
+    deviceLabel: Cabinet Lights
+    vendorId: 0x1443
+    productId: 0x0100
+    deviceProfileName: light-color-level
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
