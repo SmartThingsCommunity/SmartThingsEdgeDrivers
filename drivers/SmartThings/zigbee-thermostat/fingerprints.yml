@@ -139,6 +139,11 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-403STC1
     deviceProfileName: thermostat-thirty-buttons-wallhero
+  - id: "SONOFF/TP-WGZBA"
+    deviceLabel: SONOFF Thermostat
+    manufacturer: SONOFF
+    model: TP-WGZBA
+    deviceProfileName: thermostat-sonoff
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat
