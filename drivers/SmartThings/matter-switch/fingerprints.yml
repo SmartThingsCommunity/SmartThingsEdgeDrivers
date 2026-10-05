@@ -271,6 +271,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x107D
     deviceProfileName: light-color-level
+  - id: "5014/4713"
+    deviceLabel: Linkind Smart Outdoor Plug
+    vendorId: 0x1396
+    productId: 0x1269
+    deviceProfileName: plug-binary
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
