@@ -28,11 +28,13 @@ local WORK_MODE_MANUAL = 0x03
 local WORK_MODE_SCHEDULE = 0x04
 local WORK_MODE_TEMP_MANUAL = 0x05
 
-local MIN_SETPOINT = 5
-local MAX_SETPOINT = 30
+local DEFAULT_MIN_SETPOINT = 5
+local DEFAULT_MAX_SETPOINT = 30
 local SETPOINT_STEP = 0.5
 local CHILD_LOCK_PREFERENCE = "childLock"
 local BLUETOOTH_PAIRING_PREFERENCE = "enterBluetoothPairing"
+local MIN_HEAT_SETPOINT_LIMIT_FIELD = "min_heat_setpoint_limit"
+local MAX_HEAT_SETPOINT_LIMIT_FIELD = "max_heat_setpoint_limit"
 local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.off.NAME,
   ThermostatMode.thermostatMode.heat.NAME,
@@ -63,13 +65,44 @@ local CONFIGURATIONS = {
     maximum_interval = 600,
     data_type = Thermostat.attributes.SystemMode.base_type,
   },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.MinHeatSetpointLimit.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = Thermostat.attributes.MinHeatSetpointLimit.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.MaxHeatSetpointLimit.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = Thermostat.attributes.MaxHeatSetpointLimit.base_type,
+    reportable_change = 50,
+  },
 }
 
+local function get_setpoint_range(device)
+  local reported_min = device:get_field(MIN_HEAT_SETPOINT_LIMIT_FIELD)
+  local reported_max = device:get_field(MAX_HEAT_SETPOINT_LIMIT_FIELD)
+  local min = reported_min and (reported_min / 100) or DEFAULT_MIN_SETPOINT
+  local max = reported_max and (reported_max / 100) or DEFAULT_MAX_SETPOINT
+
+  if min > max then
+    min = DEFAULT_MIN_SETPOINT
+    max = DEFAULT_MAX_SETPOINT
+  end
+
+  return min, max
+end
+
 local function emit_setpoint_range(device)
+  local min, max = get_setpoint_range(device)
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpointRange({
     value = {
-      minimum = MIN_SETPOINT,
-      maximum = MAX_SETPOINT,
+      minimum = min,
+      maximum = max,
       step = SETPOINT_STEP,
     },
     unit = "C",
@@ -99,8 +132,6 @@ local function refresh(_, device)
     Thermostat.attributes.LocalTemperature,
     Thermostat.attributes.OccupiedHeatingSetpoint,
     Thermostat.attributes.SystemMode,
-    Thermostat.attributes.MinHeatSetpointLimit,
-    Thermostat.attributes.MaxHeatSetpointLimit,
     PowerConfiguration.attributes.BatteryPercentageRemaining,
   }
 
@@ -112,6 +143,8 @@ end
 local function configure(driver, device)
   device:configure()
   refresh(driver, device)
+  device:send(Thermostat.attributes.MinHeatSetpointLimit:read(device))
+  device:send(Thermostat.attributes.MaxHeatSetpointLimit:read(device))
 end
 
 local function added(_, device)
@@ -174,6 +207,15 @@ local function heating_setpoint_handler(_, device, value)
   end
 end
 
+local function setpoint_limit_handler(field)
+  return function(_, device, value)
+    if value.value ~= 0x8000 and value.value ~= -32768 then
+      device:set_field(field, value.value, { persist = true })
+      emit_setpoint_range(device)
+    end
+  end
+end
+
 local function system_mode_handler(_, device, value)
   if value.value == Thermostat.attributes.SystemMode.OFF then
     emit_mode(device, ThermostatMode.thermostatMode.off.NAME)
@@ -204,7 +246,8 @@ local function set_heating_setpoint(_, device, command)
     setpoint = utils.f_to_c(setpoint)
   end
 
-  setpoint = utils.clamp_value(setpoint, MIN_SETPOINT, MAX_SETPOINT)
+  local min, max = get_setpoint_range(device)
+  setpoint = utils.clamp_value(setpoint, min, max)
   -- The TRV-ZBT persists heating setpoints in 0.5 C increments.
   setpoint = math.floor((setpoint / SETPOINT_STEP) + 0.000001) * SETPOINT_STEP
   device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(setpoint * 100)))
@@ -257,6 +300,8 @@ local sonoff = {
       [Thermostat.ID] = {
         [Thermostat.attributes.LocalTemperature.ID] = local_temperature_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = heating_setpoint_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler(MIN_HEAT_SETPOINT_LIMIT_FIELD),
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler(MAX_HEAT_SETPOINT_LIMIT_FIELD),
         [Thermostat.attributes.SystemMode.ID] = system_mode_handler,
       },
       [SONOFF_CLUSTER] = {

@@ -53,8 +53,6 @@ test.set_test_init_function(function()
     Thermostat.attributes.LocalTemperature,
     Thermostat.attributes.OccupiedHeatingSetpoint,
     Thermostat.attributes.SystemMode,
-    Thermostat.attributes.MinHeatSetpointLimit,
-    Thermostat.attributes.MaxHeatSetpointLimit,
     PowerConfiguration.attributes.BatteryPercentageRemaining,
   }) do
     test.socket.zigbee:__expect_send({ mock_device.id, attribute:read(mock_device) })
@@ -223,6 +221,55 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "SONOFF TRV-ZBT updates setpoint range from reported limits",
+  function()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device, 1200),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({
+        value = { minimum = 12.0, maximum = 30, step = 0.5 },
+        unit = "C",
+      }, { visibility = { displayed = false } }))
+    )
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device, 2200),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({
+        value = { minimum = 12.0, maximum = 22.0, step = 0.5 },
+        unit = "C",
+      }, { visibility = { displayed = false } }))
+    )
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "thermostatHeatingSetpoint",
+        component = "main",
+        command = "setHeatingSetpoint",
+        args = {},
+        named_args = { setpoint = 25 },
+      },
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2200),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 22.0, unit = "C" }))
+    )
+    test.wait_for_events()
+  end,
+  { min_api_version = 14 }
+)
+
+test.register_coroutine_test(
   "SONOFF TRV-ZBT starts Bluetooth pairing when the preference is enabled",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
@@ -303,8 +350,6 @@ test.register_coroutine_test(
       Thermostat.attributes.LocalTemperature,
       Thermostat.attributes.OccupiedHeatingSetpoint,
       Thermostat.attributes.SystemMode,
-      Thermostat.attributes.MinHeatSetpointLimit,
-      Thermostat.attributes.MaxHeatSetpointLimit,
       PowerConfiguration.attributes.BatteryPercentageRemaining,
     }) do
       test.socket.zigbee:__expect_send({ mock_device.id, attribute:read(mock_device) })
@@ -346,6 +391,14 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
+      Thermostat.attributes.MinHeatSetpointLimit:configure_reporting(mock_device, 30, 21600, 50),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.MaxHeatSetpointLimit:configure_reporting(mock_device, 30, 21600, 50),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1),
     })
     test.socket.zigbee:__expect_send({
@@ -356,12 +409,18 @@ test.register_coroutine_test(
       Thermostat.attributes.LocalTemperature,
       Thermostat.attributes.OccupiedHeatingSetpoint,
       Thermostat.attributes.SystemMode,
-      Thermostat.attributes.MinHeatSetpointLimit,
-      Thermostat.attributes.MaxHeatSetpointLimit,
       PowerConfiguration.attributes.BatteryPercentageRemaining,
     }) do
       test.socket.zigbee:__expect_send({ mock_device.id, attribute:read(mock_device) })
     end
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.MinHeatSetpointLimit:read(mock_device),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.MaxHeatSetpointLimit:read(mock_device),
+    })
     test.wait_for_events()
   end,
   { min_api_version = 14 }
