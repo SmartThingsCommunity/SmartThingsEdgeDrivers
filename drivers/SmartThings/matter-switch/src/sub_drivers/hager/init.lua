@@ -189,7 +189,7 @@ local function info_changed(driver, device, event, args)
   end
 
   if device.profile.id ~= args.old_st_store.profile.id or device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    device.thread:call_with_delay(2, function()
+    device.thread:call_with_delay(3, function()
       local parent = device:get_parent_device()
       local matter_device = get_matter_device(parent)
       local map = {}

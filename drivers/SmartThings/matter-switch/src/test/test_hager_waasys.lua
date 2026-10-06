@@ -569,10 +569,13 @@ local function button_supported_values (matter_device)
   test.socket.capability:__expect_send(matter_device:generate_test_message("button4", capabilities.button.supportedButtonValues({ "pushed", "double", "held" })))
 end
 
-local function initiate_info_changed(device, profile)
-  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+local function initiate_info_changed(device, profile, parent)
   test.socket.device_lifecycle:__queue_receive(device:generate_info_changed({ profile = { id = profile } }))
-  test.mock_time.advance_time(2)
+  test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+  test.mock_time.advance_time(3)
+  if parent ~= nil then
+    test.socket.device_lifecycle:__queue_receive(parent:generate_info_changed({}))
+  end
 end
 
 local function configure_parent(device)
@@ -588,7 +591,7 @@ local function configure_parent(device)
 end
 
 -- Create window covering child device on EP12 via PartsList and DeviceTypeList reports
-local function announce_window_covering_child(host)
+local function announce_window_covering_child(host, matter_device)
   test.socket.matter:__queue_receive({
     host.id,
     clusters.Descriptor.attributes.PartsList:build_test_report_data(host, 2, data_types.Array({
@@ -1533,6 +1536,7 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
   })
   test.wait_for_events()
   initiate_info_changed(pir_device, "motion-illuminance")
+
   test.socket.matter:__expect_send({
     parent_pir.id,
     cluster_base.subscribe(parent_pir, nil, clusters.IlluminanceMeasurement.ID, clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID, nil)
@@ -1549,9 +1553,9 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
     parent_device_id = parent_pir.id,
     parent_assigned_child_key = "3"
   })
-
   test.mock_device.add_test_device(child_dimmer)
-  initiate_info_changed(child_dimmer, "light-level")
+
+  initiate_info_changed(child_dimmer, "light-level", parent_pir)
   test.socket.matter:__expect_send({
     parent_pir.id,
     cluster_base.subscribe(parent_pir, nil, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil)
@@ -1569,6 +1573,7 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
     cluster_base.subscribe(parent_pir, nil, clusters.LevelControl.ID, clusters.LevelControl.attributes.MinLevel.ID, nil)
   })
   test.wait_for_events()
+
   --Verify motion detected event
   test.socket.matter:__queue_receive({
     parent_pir.id,
@@ -1592,13 +1597,14 @@ test.register_coroutine_test("Test: PIR Device - Complete Functionality with Mot
     parent_pir.id,
     clusters.OnOff.commands.On(parent_pir, 3)
   })
+
   -- Verify on state via attribute report
   test.socket.matter:__queue_receive({
     parent_pir.id,
     clusters.OnOff.attributes.OnOff:build_test_report_data(parent_pir, 3, true)
   })
-  test.socket.capability:__expect_send(child_dimmer:generate_test_message("main", capabilities.switch.switch.on()))
   parent_pir.expect_native_attr_handler_registration(parent_pir, "switch", "switch")
+  test.socket.capability:__expect_send(child_dimmer:generate_test_message("main", capabilities.switch.switch.on()))
 
   -- Set dimmer level to 50%
   test.socket.capability:__queue_receive({ child_dimmer.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 50 } } })
@@ -1677,7 +1683,7 @@ test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile
   })
 
   test.mock_device.add_test_device(child_wc)
-  initiate_info_changed(child_wc, "window-covering")
+  initiate_info_changed(child_wc, "window-covering",parent)
 
   test.socket.matter:__expect_send({
     parent.id,
@@ -1844,6 +1850,7 @@ test.register_coroutine_test("Test: Window Covering - Preference Changes for Rev
 
   test.socket.device_lifecycle():__queue_receive(child_wc:generate_info_changed({ preferences = { reverse = "false" } }))
   test.socket.device_lifecycle():__queue_receive(child_wc:generate_info_changed({ preferences = { reverse = "true" } }))
+  test.socket.device_lifecycle():__queue_receive(parent:generate_info_changed({ }))
   test.wait_for_events()
   local reverse_preference_set = child_wc.preferences.reverse
   assert(reverse_preference_set == "true", "reverse_preference_set is True")
@@ -2086,6 +2093,15 @@ test.register_coroutine_test("Test: Window Covering - Unrecognised OperationalSt
   test.wait_for_events()
 
   local child_wc = announce_window_covering_child(parent)
+  initiate_info_changed(child_wc, "window-covering", parent)
+  test.socket.matter:__expect_send({
+    parent.id,
+    cluster_base.subscribe(parent, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.OperationalStatus.ID, nil)
+  })
+  test.socket.matter:__expect_send({
+    parent.id,
+    cluster_base.subscribe(parent, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil)
+  })
   test.wait_for_events()
 
   -- OperationalStatus 0x03 is neither opening (1) nor closing (2)
