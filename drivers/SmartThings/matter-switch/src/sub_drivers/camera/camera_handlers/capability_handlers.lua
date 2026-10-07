@@ -59,8 +59,8 @@ end
 
 function CameraCapabilityHandlers.handle_set_volume(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MIN
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MIN
   -- Convert from [0, 100] to [min_volume, max_volume] before writing attribute
   local volume_range = max_volume - min_volume
   local volume = utils.round(cmd.args.volume * volume_range / 100.0 + min_volume)
@@ -75,8 +75,8 @@ end
 
 function CameraCapabilityHandlers.handle_volume_up(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MIN
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MIN
   local volume = device:get_latest_state(cmd.component, capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME)
   if not volume or volume >= max_volume then return end
   -- Convert from [0, 100] to [min_volume, max_volume] before writing attribute
@@ -91,8 +91,8 @@ end
 
 function CameraCapabilityHandlers.handle_volume_down(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. cmd.component) or camera_fields.ABS_VOL_MIN
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, cmd.component) or camera_fields.ABS_VOL_MIN
   local volume = device:get_latest_state(cmd.component, capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME)
   if not volume or volume <= min_volume then return end
   -- Convert from [0, 100] to [min_volume, max_volume] before writing attribute
@@ -157,9 +157,15 @@ CameraCapabilityHandlers.ptz_set_position_factory = function(command)
     -- a single-axis command should only set (and clamp) the axis it targets.
     local pan, tilt, zoom
     if command == capabilities.mechanicalPanTiltZoom.commands.setPanTiltZoom then
-      pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
-      tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
-      zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
+      if cmd.args.pan ~= nil then
+        pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
+      end
+      if cmd.args.tilt ~= nil then
+        tilt = utils.clamp_value(cmd.args.tilt, ptz_map[camera_fields.TILT_IDX].range.minimum, ptz_map[camera_fields.TILT_IDX].range.maximum)
+      end
+      if cmd.args.zoom ~= nil then
+        zoom = utils.clamp_value(cmd.args.zoom, ptz_map[camera_fields.ZOOM_IDX].range.minimum, ptz_map[camera_fields.ZOOM_IDX].range.maximum)
+      end
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setPan then
       pan = utils.clamp_value(cmd.args.pan, ptz_map[camera_fields.PAN_IDX].range.minimum, ptz_map[camera_fields.PAN_IDX].range.maximum)
     elseif command == capabilities.mechanicalPanTiltZoom.commands.setTilt then

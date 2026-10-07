@@ -18,8 +18,6 @@ CameraAttributeHandlers.enabled_state_factory = function(attribute)
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipHorizontal")
     elseif attribute == capabilities.imageControl.imageFlipVertical then
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipVertical")
-    elseif attribute == capabilities.cameraPrivacyMode.hardPrivacyMode then
-      camera_utils.update_supported_attributes(device, ib, capabilities.cameraPrivacyMode, "hardPrivacyMode")
     end
   end
 end
@@ -59,10 +57,14 @@ end
 
 function CameraAttributeHandlers.volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
-  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MIN
   local limited_range = max_volume - min_volume
+  if limited_range <= 0 then
+    device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(0))
+    return
+  end
+  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local normalized_volume = utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
   device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(normalized_volume))
 end
@@ -70,23 +72,33 @@ end
 function CameraAttributeHandlers.max_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local max_volume = ib.data.value
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component)
-  if max_volume > camera_fields.ABS_VOL_MAX or (min_volume and max_volume <= min_volume) then
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component)
+  -- min == max is a valid (non-adjustable) range per the Matter spec, so only max < min is malformed;
+  -- an out-of-bounds value is clamped, but a malformed relationship is only logged and left as-is,
+  -- since volume_level_handler already guards against a non-positive range.
+  if max_volume > camera_fields.ABS_VOL_MAX then
     device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
     max_volume = camera_fields.ABS_VOL_MAX
+  elseif min_volume and max_volume < min_volume then
+    device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component, max_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component, max_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.min_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local min_volume = ib.data.value
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component)
-  if min_volume < camera_fields.ABS_VOL_MIN or (max_volume and min_volume >= max_volume) then
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component)
+  -- See max_volume_level_handler: min == max is valid, only min > max is malformed and only logged.
+  if min_volume < camera_fields.ABS_VOL_MIN then
     device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
     min_volume = camera_fields.ABS_VOL_MIN
+  elseif max_volume and min_volume > max_volume then
+    device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component, min_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component, min_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.status_light_enabled_handler(driver, device, ib, response)
@@ -450,7 +462,7 @@ end
 
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
   if not ib.data.elements then return end
-  local status_light_enabled_present, status_light_brightness_present = false, false
+  local status_light_enabled_present, status_light_brightness_present, hard_privacy_mode_present = false, false, false
   local attribute_ids = {}
   for _, attr in ipairs(ib.data.elements) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
@@ -459,6 +471,8 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+    elseif attr.value == clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn.ID then
+      hard_privacy_mode_present = true
     end
   end
   local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
@@ -469,6 +483,7 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
   }
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
   camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
+  camera_cfg.update_hard_privacy_mode_attribute_presence(device, hard_privacy_mode_present)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
