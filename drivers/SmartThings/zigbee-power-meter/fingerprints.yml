@@ -2,7 +2,7 @@ zigbeeManufacturer:
   - id: "E240-KR080Z0-HA"
     deviceLabel: Energy Monitor
     model: "E240-KR080Z0-HA"
-    deviceProfileName: power-meter-consumption-report
+    deviceProfileName: power-meter-consumption-report-ezex
   - id: "Develco/ZHEMI101"
     deviceLabel: frient Energy Monitor
     manufacturer: Develco
@@ -12,12 +12,12 @@ zigbeeManufacturer:
     deviceLabel: frient Energy Monitor
     manufacturer: Develco Products A/S
     model: "EMIZB-132"
-    deviceProfileName: frient-power-meter-consumption-report
+    deviceProfileName: power-meter-consumption-report
   - id: "frient A/S/EMIZB-132"
     deviceLabel: frient Energy Monitor
     manufacturer: frient A/S
     model: "EMIZB-132"
-    deviceProfileName: frient-power-meter-consumption-report
+    deviceProfileName: power-meter-consumption-report
   - id: "frient A/S/EMIZB-141"
     deviceLabel: "frient EMI 2 LED"
     manufacturer: frient A/S
@@ -32,17 +32,17 @@ zigbeeManufacturer:
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
     model: "PMM-300Z1"
-    deviceProfileName: power-meter-consumption-report-sihas
+    deviceProfileName: power-meter-consumption-report
   - id: "ShinaSystem/PMM-300Z2"
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
     model: "PMM-300Z2"
-    deviceProfileName: power-meter-consumption-report-sihas
+    deviceProfileName: power-meter-consumption-report
   - id: "ShinaSystem/PMM-300Z3"
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
     model: "PMM-300Z3"
-    deviceProfileName: power-meter-consumption-report-sihas
+    deviceProfileName: power-meter-consumption-report
   - id: "BITUO TECHNIK/SPM01-E0"
     deviceLabel: Energy Monitor 1PN
     manufacturer: BITUO TECHNIK
