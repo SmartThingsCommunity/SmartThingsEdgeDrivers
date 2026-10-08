@@ -39,8 +39,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                                true) }
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,true) }
       },
       {
         channel = "capability",
@@ -57,8 +56,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                                false) }
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,false) }
       },
       {
         channel = "capability",
