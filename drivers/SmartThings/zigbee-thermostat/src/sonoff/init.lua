@@ -2,205 +2,320 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local cluster_base = require "st.zigbee.cluster_base"
 local clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 local generic_body = require "st.zigbee.generic_body"
+local messages = require "st.zigbee.messages"
+local zcl_messages = require "st.zigbee.zcl"
+local zb_const = require "st.zigbee.constants"
 local utils = require "st.utils"
-local ZigbeeConstants = require "st.zigbee.constants"
-local ZigbeeMessages = require "st.zigbee.messages"
-local ZigbeeZcl = require "st.zigbee.zcl"
 
+local PowerConfiguration = clusters.PowerConfiguration
 local Thermostat = clusters.Thermostat
+
+local Battery = capabilities.battery
+local Refresh = capabilities.refresh
+local TemperatureMeasurement = capabilities.temperatureMeasurement
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 
-local SONOFF_MFG_CODE = 0x1286
-local SONOFF_PRIVATE_CLUSTER = 0xFC11
-local TEMPORARY_MODE_COMMAND_ID = 0x11
+local SONOFF_CLUSTER = 0xFC11
+local CHILD_LOCK_ATTR = 0x0000
+local WORK_MODE_ATTR = 0x0018
+local WORK_MODE_OFF = 0x01
+local WORK_MODE_MANUAL = 0x03
+local WORK_MODE_SCHEDULE = 0x04
+local WORK_MODE_TEMP_MANUAL = 0x05
 
-local PRIVATE_ATTR_CHILD_LOCK = 0x0000
-local PRIVATE_ATTR_BT_PAIRING_BROADCAST = 0x0029
-local PRIVATE_ATTR_OPEN_WINDOW_DETECTION = 0x6000
-local PRIVATE_ATTR_FROST_PROOF_TEMPERATURE = 0x6002
-local PRIVATE_ATTR_TEMPERATURE_CONTROL_THRESHOLD = 0x601F
-local PRIVATE_ATTR_RADAR_SENSITIVITY = 0x6020
-local PRIVATE_ATTR_RADAR_DO_NOT_DISTURB = 0x6021
-local PRIVATE_ATTR_RADAR_DO_NOT_DISTURB_PERIOD = 0x6022
-local PRIVATE_ATTR_SCREEN_WORKING_BRIGHTNESS = 0x6023
-local PRIVATE_ATTR_SCREEN_STANDBY_BRIGHTNESS = 0x6024
-local PRIVATE_ATTR_SCREEN_NIGHT_STANDBY_BRIGHTNESS = 0x6025
-local PRIVATE_ATTR_SCREEN_NIGHT_MODE = 0x6026
-local PRIVATE_ATTR_SCREEN_NIGHT_PERIOD = 0x6027
-local PRIVATE_ATTR_RELAY_OUTPUT_TYPE = 0x6028
-local PRIVATE_ATTR_OVERHEAT_PROTECTION_TEMPERATURE = 0x6032
-local PRIVATE_ATTR_OVERHEAT_PROTECTION = 0x6034
-local PRIVATE_ATTR_RADAR_ENABLED = 0x6035
-
-local PRIVATE_PREFERENCES = {
-  childLock = { attribute = PRIVATE_ATTR_CHILD_LOCK, data_type = data_types.Boolean },
-  btPairingBroadcast = { attribute = PRIVATE_ATTR_BT_PAIRING_BROADCAST, data_type = data_types.Uint8 },
-  openWindowDetection = { attribute = PRIVATE_ATTR_OPEN_WINDOW_DETECTION, data_type = data_types.Boolean },
-  frostProofTemperature = { attribute = PRIVATE_ATTR_FROST_PROOF_TEMPERATURE, data_type = data_types.Int16, scale = 100 },
-  radarSensitivity = { attribute = PRIVATE_ATTR_RADAR_SENSITIVITY, data_type = data_types.Uint8 },
-  radarDoNotDisturb = { attribute = PRIVATE_ATTR_RADAR_DO_NOT_DISTURB, data_type = data_types.Boolean },
-  screenWorkingBrightness = { attribute = PRIVATE_ATTR_SCREEN_WORKING_BRIGHTNESS, data_type = data_types.Uint8 },
-  screenStandbyBrightness = { attribute = PRIVATE_ATTR_SCREEN_STANDBY_BRIGHTNESS, data_type = data_types.Uint8 },
-  nightStandbyBrightness = { attribute = PRIVATE_ATTR_SCREEN_NIGHT_STANDBY_BRIGHTNESS, data_type = data_types.Uint8 },
-  screenNightMode = { attribute = PRIVATE_ATTR_SCREEN_NIGHT_MODE, data_type = data_types.Boolean },
-  overheatProtectTemp = { attribute = PRIVATE_ATTR_OVERHEAT_PROTECTION_TEMPERATURE, data_type = data_types.Int16, scale = 100 },
-  overheatProtection = { attribute = PRIVATE_ATTR_OVERHEAT_PROTECTION, data_type = data_types.Boolean },
-  radarEnabled = { attribute = PRIVATE_ATTR_RADAR_ENABLED, data_type = data_types.Boolean },
+local DEFAULT_MIN_SETPOINT = 5
+local DEFAULT_MAX_SETPOINT = 30
+local SETPOINT_STEP = 0.5
+local CHILD_LOCK_PREFERENCE = "childLock"
+local BLUETOOTH_PAIRING_PREFERENCE = "enterBluetoothPairing"
+local MIN_HEAT_SETPOINT_LIMIT_FIELD = "min_heat_setpoint_limit"
+local MAX_HEAT_SETPOINT_LIMIT_FIELD = "max_heat_setpoint_limit"
+local SUPPORTED_MODES = {
+  ThermostatMode.thermostatMode.off.NAME,
+  ThermostatMode.thermostatMode.heat.NAME,
+  ThermostatMode.thermostatMode.auto.NAME,
 }
 
--- Builds a manufacturer-specific attribute write for the SONOFF private cluster.
-local function write_private_attribute(device, attribute_id, data_type, value)
-  -- The vendor cluster requires the eWeLink manufacturer code on every write.
-  return cluster_base.write_manufacturer_specific_attribute(device, SONOFF_PRIVATE_CLUSTER, attribute_id, SONOFF_MFG_CODE, data_type, value)
+local CONFIGURATIONS = {
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.LocalTemperature.ID,
+    minimum_interval = 10,
+    maximum_interval = 300,
+    data_type = Thermostat.attributes.LocalTemperature.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.OccupiedHeatingSetpoint.ID,
+    minimum_interval = 1,
+    maximum_interval = 600,
+    data_type = Thermostat.attributes.OccupiedHeatingSetpoint.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.SystemMode.ID,
+    minimum_interval = 1,
+    maximum_interval = 600,
+    data_type = Thermostat.attributes.SystemMode.base_type,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.MinHeatSetpointLimit.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = Thermostat.attributes.MinHeatSetpointLimit.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = Thermostat.ID,
+    attribute = Thermostat.attributes.MaxHeatSetpointLimit.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = Thermostat.attributes.MaxHeatSetpointLimit.base_type,
+    reportable_change = 50,
+  },
+}
+
+local function get_setpoint_range(device)
+  local reported_min = device:get_field(MIN_HEAT_SETPOINT_LIMIT_FIELD)
+  local reported_max = device:get_field(MAX_HEAT_SETPOINT_LIMIT_FIELD)
+  local min = reported_min and (reported_min / 100) or DEFAULT_MIN_SETPOINT
+  local max = reported_max and (reported_max / 100) or DEFAULT_MAX_SETPOINT
+
+  if min > max then
+    min = DEFAULT_MIN_SETPOINT
+    max = DEFAULT_MAX_SETPOINT
+  end
+
+  return min, max
 end
 
--- Converts a preference value into the primitive expected by its Zigbee data type.
-local function preference_value(value, preference)
-  -- Boolean preferences are already represented as Lua booleans by the platform.
-  if preference.data_type == data_types.Boolean then
-    return value
-  end
-  -- Boolean preferences backed by numeric attributes (e.g. Uint8 0x00/0x01) must be encoded as 0/1.
-  if type(value) == "boolean" then
-    return value and 1 or 0
-  end
-  local numeric_value = tonumber(value)
-  if numeric_value == nil then
-    return nil
-  end
-  return preference.scale and utils.round(numeric_value * preference.scale) or numeric_value
+local function emit_setpoint_range(device)
+  local min, max = get_setpoint_range(device)
+  device:emit_event(ThermostatHeatingSetpoint.heatingSetpointRange({
+    value = {
+      minimum = min,
+      maximum = max,
+      step = SETPOINT_STEP,
+    },
+    unit = "C",
+  }, { visibility = { displayed = false } }))
 end
 
--- Restricts a clock value to the device's 30-minute schedule grid.
-local function normalize_schedule_minutes(value)
-  -- The device only accepts values from 00:00 through 23:30 at 30-minute intervals.
-  local numeric_value = tonumber(value)
-  if numeric_value == nil then
-    return nil
-  end
-  return utils.clamp_value(math.floor((numeric_value + 15) / 30) * 30, 0, 1410)
-end
-
--- Writes a paired start/end time preference as a typed Zigbee Structure.
-local function write_schedule(device, attribute_id, start_value, end_value)
-  -- Both schedule attributes are encoded symmetrically as two Uint16 structure members.
-  local start_minutes = normalize_schedule_minutes(start_value)
-  local end_minutes = normalize_schedule_minutes(end_value)
-  if start_minutes == nil or end_minutes == nil then
-    return
-  end
-  device:send(write_private_attribute(device, attribute_id, data_types.Structure, data_types.Structure({ data_types.Uint16(start_minutes), data_types.Uint16(end_minutes) })))
-end
-
--- Sends the vendor temporary-mode command using the current preference values.
-local function write_temporary_mode(device)
-  -- Temporary mode is a cluster command rather than an attribute write.
-  local action_byte = ({ exit = 0, boost = 1, timer = 2 })[device.preferences.temporaryModeAction]
-  if action_byte == nil then
-    return
-  end
-  local duration_seconds = math.floor(utils.clamp_value(tonumber(device.preferences.temporaryModeDuration) or 30, 1, 1440) * 60)
-  local temperature = device.preferences.temporaryModeAction == "boost" and 30 or utils.clamp_value(tonumber(device.preferences.temporaryModeTemperature) or 30, 5, 30)
-  local temperature_centi = utils.round(temperature * 100)
-  local payload = string.pack("<BI4i2", action_byte, duration_seconds, temperature_centi)
-  local endpoint = device:get_endpoint(SONOFF_PRIVATE_CLUSTER)
-  -- Unlike the private attribute writes, TP-WGZBA firmware expects this command without a manufacturer code.
-  local header = ZigbeeZcl.ZclHeader({ cmd = data_types.ZCLCommandId(TEMPORARY_MODE_COMMAND_ID) })
-  header.frame_ctrl:set_cluster_specific()
-  device:send(ZigbeeMessages.ZigbeeMessageTx({
-    address_header = ZigbeeMessages.AddressHeader(ZigbeeConstants.HUB.ADDR, ZigbeeConstants.HUB.ENDPOINT, device:get_short_address(), endpoint, ZigbeeConstants.HA_PROFILE_ID, SONOFF_PRIVATE_CLUSTER),
-    body = ZigbeeZcl.ZclMessageBody({ zcl_header = header, zcl_body = generic_body.GenericBody(payload) }),
+local function emit_supported_modes(device)
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES, {
+    visibility = { displayed = false },
   }))
 end
 
--- Reads the standard attributes that back the supported SmartThings capabilities.
-local function do_refresh(_, device)
-  -- Private settings are changed through preferences and do not expose custom capability state.
-  device:send(Thermostat.attributes.LocalTemperature:read(device))
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
-  device:send(Thermostat.attributes.SystemMode:read(device))
-  device:send(Thermostat.attributes.ThermostatRunningState:read(device))
+local function emit_mode(device, mode)
+  device:emit_event(ThermostatMode.thermostatMode[mode]())
 end
 
--- Configures reporting for the standard thermostat attributes shown in the app.
-local function do_configure(self, device)
-  -- TP-WGZBA only exposes off, auto, and heat through the certified profile.
-  device:emit_event(ThermostatMode.supportedThermostatModes({ "off", "auto", "heat" }, { visibility = { displayed = false } }))
-  device:send(device_management.build_bind_request(device, Thermostat.ID, self.environment_info.hub_zigbee_eui))
-  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 10, 300, 10))
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 10, 300, 50))
-  device:send(Thermostat.attributes.SystemMode:configure_reporting(device, 10, 300))
-  device:send(Thermostat.attributes.ThermostatRunningState:configure_reporting(device, 10, 300, 1))
+local function command_argument(command, name)
+  if command.args ~= nil and command.args[name] ~= nil then
+    return command.args[name]
+  end
+
+  return command.named_args and command.named_args[name]
 end
 
--- Applies preference changes to the matching standard or manufacturer-specific setting.
+local function refresh(_, device)
+  local attributes = {
+    Thermostat.attributes.LocalTemperature,
+    Thermostat.attributes.OccupiedHeatingSetpoint,
+    Thermostat.attributes.SystemMode,
+    PowerConfiguration.attributes.BatteryPercentageRemaining,
+  }
+
+  for _, attribute in ipairs(attributes) do
+    device:send(attribute:read(device))
+  end
+end
+
+local function configure(driver, device)
+  device:configure()
+  refresh(driver, device)
+  device:send(Thermostat.attributes.MinHeatSetpointLimit:read(device))
+  device:send(Thermostat.attributes.MaxHeatSetpointLimit:read(device))
+end
+
+local function added(_, device)
+  emit_supported_modes(device)
+  emit_setpoint_range(device)
+end
+
+local function init(driver, device)
+  for _, configuration in ipairs(CONFIGURATIONS) do
+    device:add_configured_attribute(configuration)
+  end
+  added(driver, device)
+  refresh(driver, device)
+end
+
 local function info_changed(_, device, _, args)
-  -- Only changed preferences generate Zigbee traffic to avoid rewriting settings on unrelated updates.
-  local old_preferences = args.old_st_store.preferences or {}
-  for name, preference in pairs(PRIVATE_PREFERENCES) do
-    local value = device.preferences[name]
-    if value ~= nil and old_preferences[name] ~= value then
-      local encoded_value = preference_value(value, preference)
-      if encoded_value ~= nil then
-        device:send(write_private_attribute(device, preference.attribute, preference.data_type, encoded_value))
-      end
-    end
+  local old_preferences = args.old_st_store and args.old_st_store.preferences or {}
+  local child_lock = device.preferences[CHILD_LOCK_PREFERENCE]
+  if child_lock ~= nil and old_preferences[CHILD_LOCK_PREFERENCE] ~= child_lock then
+    device:send(cluster_base.write_attribute(
+      device,
+      data_types.ClusterId(SONOFF_CLUSTER),
+      data_types.AttributeId(CHILD_LOCK_ATTR),
+      data_types.validate_or_build_type(tonumber(child_lock) == 1, data_types.Boolean, "payload")
+    ))
   end
-  if device.preferences.temperatureCompensation ~= old_preferences.temperatureCompensation then
-    local compensation = tonumber(device.preferences.temperatureCompensation)
-    if compensation ~= nil then
-      device:send(Thermostat.attributes.LocalTemperatureCalibration:write(device, utils.round(compensation * 10)))
-    end
-  end
-  if device.preferences.temperatureThresholdLow ~= old_preferences.temperatureThresholdLow or device.preferences.temperatureThresholdHigh ~= old_preferences.temperatureThresholdHigh then
-    local low, high = tonumber(device.preferences.temperatureThresholdLow), tonumber(device.preferences.temperatureThresholdHigh)
-    if low ~= nil and high ~= nil then
-      device:send(write_private_attribute(device, PRIVATE_ATTR_TEMPERATURE_CONTROL_THRESHOLD, data_types.Structure, data_types.Structure({ data_types.Int16(utils.round(low * 100)), data_types.Int16(utils.round(high * 100)) })))
-    end
-  end
-  if device.preferences.radarDoNotDisturbStart ~= old_preferences.radarDoNotDisturbStart or device.preferences.radarDoNotDisturbEnd ~= old_preferences.radarDoNotDisturbEnd then
-    write_schedule(device, PRIVATE_ATTR_RADAR_DO_NOT_DISTURB_PERIOD, device.preferences.radarDoNotDisturbStart, device.preferences.radarDoNotDisturbEnd)
-  end
-  if device.preferences.screenNightStart ~= old_preferences.screenNightStart or device.preferences.screenNightEnd ~= old_preferences.screenNightEnd then
-    write_schedule(device, PRIVATE_ATTR_SCREEN_NIGHT_PERIOD, device.preferences.screenNightStart, device.preferences.screenNightEnd)
-  end
-  if device.preferences.heatRelayNormClosed ~= old_preferences.heatRelayNormClosed or device.preferences.boilerRelayNormClosed ~= old_preferences.boilerRelayNormClosed then
-    local relay_bitmap = (device.preferences.heatRelayNormClosed and 1 or 0) + (device.preferences.boilerRelayNormClosed and 2 or 0)
-    device:send(write_private_attribute(device, PRIVATE_ATTR_RELAY_OUTPUT_TYPE, data_types.Bitmap8, relay_bitmap))
-  end
-  if device.preferences.temporaryModeAction ~= old_preferences.temporaryModeAction then
-    write_temporary_mode(device)
+
+  local bluetooth_pairing = device.preferences[BLUETOOTH_PAIRING_PREFERENCE]
+  if bluetooth_pairing == true and old_preferences[BLUETOOTH_PAIRING_PREFERENCE] ~= true then
+    local zcl_header = zcl_messages.ZclHeader({
+      cmd = data_types.ZCLCommandId(0x10),
+    })
+    zcl_header.frame_ctrl:set_cluster_specific()
+    device:send(messages.ZigbeeMessageTx({
+      address_header = messages.AddressHeader(
+        zb_const.HUB.ADDR,
+        zb_const.HUB.ENDPOINT,
+        device:get_short_address(),
+        device:get_endpoint(SONOFF_CLUSTER) or 1,
+        zb_const.HA_PROFILE_ID,
+        SONOFF_CLUSTER
+      ),
+      body = zcl_messages.ZclMessageBody({
+        zcl_header = zcl_header,
+        zcl_body = generic_body.GenericBody(string.char(0x03, 0x01, 0x01)),
+      }),
+    }))
   end
 end
 
--- Writes the requested heating setpoint using the thermostat cluster's centi-degree unit.
+local function local_temperature_handler(_, device, value)
+  if value.value ~= 0x8000 and value.value ~= -32768 then
+    device:emit_event(TemperatureMeasurement.temperature({ value = value.value / 100, unit = "C" }))
+  end
+end
+
+local function heating_setpoint_handler(_, device, value)
+  if value.value ~= 0x8000 and value.value ~= -32768 then
+    device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = value.value / 100, unit = "C" }))
+  end
+end
+
+local function setpoint_limit_handler(field)
+  return function(_, device, value)
+    if value.value ~= 0x8000 and value.value ~= -32768 then
+      device:set_field(field, value.value, { persist = true })
+      emit_setpoint_range(device)
+    end
+  end
+end
+
+local function system_mode_handler(_, device, value)
+  if value.value == Thermostat.attributes.SystemMode.OFF then
+    emit_mode(device, ThermostatMode.thermostatMode.off.NAME)
+  elseif value.value == Thermostat.attributes.SystemMode.AUTO then
+    emit_mode(device, ThermostatMode.thermostatMode.auto.NAME)
+  elseif value.value == Thermostat.attributes.SystemMode.HEAT then
+    emit_mode(device, ThermostatMode.thermostatMode.heat.NAME)
+  end
+end
+
+local function battery_handler(_, device, value)
+  device:emit_event(Battery.battery(utils.clamp_value(utils.round(value.value / 2), 0, 100)))
+end
+
+local function work_mode_handler(_, device, value)
+  if value.value == WORK_MODE_OFF then
+    emit_mode(device, ThermostatMode.thermostatMode.off.NAME)
+  elseif value.value == WORK_MODE_SCHEDULE then
+    emit_mode(device, ThermostatMode.thermostatMode.auto.NAME)
+  elseif value.value == WORK_MODE_MANUAL or value.value == WORK_MODE_TEMP_MANUAL then
+    emit_mode(device, ThermostatMode.thermostatMode.heat.NAME)
+  end
+end
+
 local function set_heating_setpoint(_, device, command)
-  -- The driver accepts Fahrenheit app input and clamps all writes to the profile range.
-  local value = command.args.setpoint
-  if value >= 40 then
-    value = utils.f_to_c(value)
+  local setpoint = command_argument(command, "setpoint")
+  if setpoint >= 40 then
+    setpoint = utils.f_to_c(setpoint)
   end
-  device:send_to_component(command.component, Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(utils.clamp_value(value, 5, 30) * 100)))
+
+  local min, max = get_setpoint_range(device)
+  setpoint = utils.clamp_value(setpoint, min, max)
+  -- The TRV-ZBT persists heating setpoints in 0.5 C increments.
+  setpoint = math.floor((setpoint / SETPOINT_STEP) + 0.000001) * SETPOINT_STEP
+  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(setpoint * 100)))
+  device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = setpoint, unit = "C" }))
 end
 
-local sonoff_thermostat = {
-  NAME = "SONOFF TP-WGZBA Thermostat Handler",
-  can_handle = require "sonoff.can_handle",
+local function set_mode(_, device, command)
+  local mode_to_system_mode = {
+    [ThermostatMode.thermostatMode.off.NAME] = Thermostat.attributes.SystemMode.OFF,
+    [ThermostatMode.thermostatMode.heat.NAME] = Thermostat.attributes.SystemMode.HEAT,
+    [ThermostatMode.thermostatMode.auto.NAME] = Thermostat.attributes.SystemMode.AUTO,
+  }
+  local mode = command_argument(command, "mode")
+  local system_mode = mode_to_system_mode[mode]
+  if system_mode == nil then
+    return
+  end
+
+  device:send(Thermostat.attributes.SystemMode:write(device, system_mode))
+  emit_mode(device, mode)
+end
+
+local function mode_setter(mode)
+  return function(driver, device, command)
+    set_mode(driver, device, { args = { mode = mode } })
+  end
+end
+
+local sonoff = {
+  NAME = "SONOFF TRV-ZBT",
+  capability_handlers = {
+    [Refresh.ID] = {
+      [Refresh.commands.refresh.NAME] = refresh,
+    },
+    [ThermostatHeatingSetpoint.ID] = {
+      [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_heating_setpoint,
+    },
+    [ThermostatMode.ID] = {
+      [ThermostatMode.commands.setThermostatMode.NAME] = set_mode,
+      [ThermostatMode.commands.off.NAME] = mode_setter(ThermostatMode.thermostatMode.off.NAME),
+      [ThermostatMode.commands.heat.NAME] = mode_setter(ThermostatMode.thermostatMode.heat.NAME),
+      [ThermostatMode.commands.auto.NAME] = mode_setter(ThermostatMode.thermostatMode.auto.NAME),
+    },
+  },
+  zigbee_handlers = {
+    attr = {
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_handler,
+      },
+      [Thermostat.ID] = {
+        [Thermostat.attributes.LocalTemperature.ID] = local_temperature_handler,
+        [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = heating_setpoint_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler(MIN_HEAT_SETPOINT_LIMIT_FIELD),
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler(MAX_HEAT_SETPOINT_LIMIT_FIELD),
+        [Thermostat.attributes.SystemMode.ID] = system_mode_handler,
+      },
+      [SONOFF_CLUSTER] = {
+        [WORK_MODE_ATTR] = work_mode_handler,
+      },
+    },
+  },
   lifecycle_handlers = {
-    added = do_refresh,
-    doConfigure = do_configure,
+    added = added,
+    init = init,
+    doConfigure = configure,
     infoChanged = info_changed,
   },
-  capability_handlers = {
-    [capabilities.refresh.ID] = { [capabilities.refresh.commands.refresh.NAME] = do_refresh },
-    [ThermostatHeatingSetpoint.ID] = { [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_heating_setpoint },
-  },
+  can_handle = require "sonoff.can_handle",
 }
 
-return sonoff_thermostat
+return sonoff

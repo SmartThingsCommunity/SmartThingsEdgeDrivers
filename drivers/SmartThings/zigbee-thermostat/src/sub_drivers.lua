@@ -3,6 +3,7 @@
 
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
+   lazy_load_if_possible("sonoff"),
    lazy_load_if_possible("zenwithin"),
    lazy_load_if_possible("fidure"),
    lazy_load_if_possible("sinope"),
@@ -16,6 +17,6 @@ local sub_drivers = {
    lazy_load_if_possible("resideo_korea"),
    lazy_load_if_possible("aqara"),
    lazy_load_if_possible("wallhero"),
-   lazy_load_if_possible("sonoff"),
+   lazy_load_if_possible("sonoff.tp_wgzba"),
 }
 return sub_drivers

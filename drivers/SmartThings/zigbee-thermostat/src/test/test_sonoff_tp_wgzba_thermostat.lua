@@ -85,7 +85,7 @@ test.register_coroutine_test(
   "SONOFF sub-driver should match only TP-WGZBA",
   function()
     -- The flattened handler owns the fingerprint without a nested TP-WGZBA dispatcher.
-    local can_handle = require "sonoff.can_handle"
+    local can_handle = require "sonoff.tp_wgzba.can_handle"
     assert(can_handle({}, nil, mock_device))
     local rejected = can_handle({}, nil, {
       get_manufacturer = function() return "SONOFF" end,
