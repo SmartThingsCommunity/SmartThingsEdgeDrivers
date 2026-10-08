@@ -1,0 +1,17 @@
+zigbeeManufacturer:
+  - id: "NodOn/SIN-4-FP-21"
+    deviceLabel: NodOn Fil Pilote Controller
+    manufacturer: NodOn
+    model: SIN-4-FP-21
+    deviceProfileName: nodon-fil-pilote
+
+zigbeeGeneric:
+  - id: "nodon-fil-pilote-generic"
+    deviceLabel: NodOn Fil Pilote
+    clusters:
+      server:
+        - 0xFC00  # Manufacturer cluster for Fil Pilote control
+        - 0x0006  # OnOff
+        - 0x0702  # Metering
+        - 0x0B04  # Electrical Measurement
+    deviceProfileName: nodon-fil-pilote
