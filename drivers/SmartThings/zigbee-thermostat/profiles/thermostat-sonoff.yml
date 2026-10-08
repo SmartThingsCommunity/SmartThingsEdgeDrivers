@@ -51,7 +51,7 @@ preferences:
   preferenceType: boolean
   definition:
     default: false
-- name: bluetoothPairingBroadcast
+- name: btPairingBroadcast
   title: Bluetooth pairing broadcast
   description: Enable Bluetooth pairing broadcasts.
   required: true
@@ -175,7 +175,7 @@ preferences:
     minimum: 0
     maximum: 8
     default: 0
-- name: screenNightStandbyBrightness
+- name: nightStandbyBrightness
   title: Screen night standby brightness
   description: Screen brightness during night standby.
   required: true
@@ -209,21 +209,21 @@ preferences:
     minimum: 0
     maximum: 1410
     default: 0
-- name: relayHeatingNormallyClosed
+- name: heatRelayNormClosed
   title: Heating relay normally closed
   description: Configure the heating relay contact type.
   required: true
   preferenceType: boolean
   definition:
     default: false
-- name: relayBoilerNormallyClosed
+- name: boilerRelayNormClosed
   title: Boiler relay normally closed
   description: Configure the boiler relay contact type.
   required: true
   preferenceType: boolean
   definition:
     default: false
-- name: overheatProtectionTemperature
+- name: overheatProtectTemp
   title: Overheat protection temperature
   description: Overheat protection setpoint in degrees Celsius.
   required: true
