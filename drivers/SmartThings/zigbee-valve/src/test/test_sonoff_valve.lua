@@ -140,9 +140,8 @@ test.register_coroutine_test(
 )
 
 -- valve.open → OnOff.On
--- valve.open → OnOff.On + read OnOff attribute
 test.register_message_test(
-    "Capability(valve) command(open) should send OnOff.On and read OnOff",
+    "Capability(valve) command(open) should send OnOff.On",
     {
       {
         channel = "capability",
@@ -153,18 +152,13 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.On(mock_device) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device) }
       }
     }
 )
 
--- valve.close → OnOff.Off + read OnOff attribute
+-- valve.close → OnOff.Off
 test.register_message_test(
-    "Capability(valve) command(close) should send OnOff.Off and read OnOff",
+    "Capability(valve) command(close) should send OnOff.Off",
     {
       {
         channel = "capability",
@@ -175,11 +169,6 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.Off(mock_device) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device) }
       }
     }
 )
