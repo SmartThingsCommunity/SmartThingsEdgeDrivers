@@ -4,6 +4,7 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
+local britz_utils = require "utils"
 
 local valve_cap = capabilities.safetyValve
 local onoff_cluster = clusters.OnOff
@@ -39,8 +40,11 @@ local function component_to_endpoint(device, component_name, cluster_id)
 end
 
 local function device_init(driver, device)
-  device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:extend_device("subscribe", britz_utils.make_subscribe({
+    [valve_cap.ID] = { onoff_cluster.attributes.OnOff }
+  }))
+  device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
