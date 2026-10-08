@@ -198,7 +198,7 @@ zwaveManufacturer:
     manufacturerId: 0x017F
     productType: 0x0100
     productId: 0x0001
-    deviceProfileName: contact-battery-tamperalert-temperature
+    deviceProfileName: contact-battery-tamperalert
   - id: Aotec/aerQ # all regions
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
