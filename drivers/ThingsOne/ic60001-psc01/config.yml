@@ -1,0 +1,5 @@
+name: 'ThingsOne Presence Sensor'
+packageKey: 'ic60001-psc01'
+permissions:
+  matter: {}
+description: "ThingsOne driver for the Matter presence sensor IC60001-PSC01"
