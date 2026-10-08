@@ -125,7 +125,7 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 300, 900, 2)
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
@@ -204,7 +204,7 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 300, 900, 2)
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
