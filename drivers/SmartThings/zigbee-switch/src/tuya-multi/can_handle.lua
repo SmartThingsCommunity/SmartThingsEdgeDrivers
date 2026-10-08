@@ -12,6 +12,10 @@ local function is_multi_endpoint(device)
 end
 
 return function(opts, driver, device)
+  -- The composite relay/scene device has its own configure and refresh handlers.
+  if device:get_manufacturer() == "_TZ3000_hurauima" and device:get_model() == "TS0726" then
+    return false
+  end
   local TUYA_MFR_HEADER = "_TZ"
   if string.sub(device:get_manufacturer(),1,3) == TUYA_MFR_HEADER and is_multi_endpoint(device) then  -- if it is a tuya device, then send the magic packet
       local subdriver = require("tuya-multi")
