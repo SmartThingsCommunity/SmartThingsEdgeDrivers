@@ -108,6 +108,12 @@ zigbeeManufacturer:
     manufacturer: Zemismart
     model: "SDM01-1Z1"
     deviceProfileName: power-meter-1p
+# NodOn
+  - id: "NodOn/SEM-4-1-00"
+    deviceLabel: Zigbee Smart Energy Monitor
+    manufacturer: NodOn
+    model: SEM-4-1-00
+    deviceProfileName: power-meter
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter
