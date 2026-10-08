@@ -156,6 +156,26 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Temperature compensation preference should write LocalTemperatureCalibration in 0.1 degree units",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { temperatureCompensation = -10 },
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.LocalTemperatureCalibration:write(mock_device, -100) })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { temperatureCompensation = 10 },
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.LocalTemperatureCalibration:write(mock_device, 100) })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
+      preferences = { temperatureCompensation = 2.3 },
+    }))
+    test.socket.zigbee:__expect_send({ mock_device.id, Thermostat.attributes.LocalTemperatureCalibration:write(mock_device, 23) })
+  end
+)
+
+test.register_coroutine_test(
   "Temporary-mode preference should send the vendor cluster command",
   function()
     -- Timer mode carries the selected duration and temperature as little-endian values.

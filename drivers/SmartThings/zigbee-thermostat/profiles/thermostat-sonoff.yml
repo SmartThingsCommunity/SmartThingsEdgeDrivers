@@ -41,8 +41,8 @@ preferences:
   required: true
   preferenceType: number
   definition:
-    minimum: -5
-    maximum: 5
+    minimum: -10
+    maximum: 10
     default: 0
 - name: childLock
   title: Child lock
