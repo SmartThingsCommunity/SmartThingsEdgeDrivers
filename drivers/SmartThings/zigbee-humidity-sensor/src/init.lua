@@ -54,7 +54,9 @@ local zigbee_humidity_driver = {
   supported_capabilities = {
     capabilities.battery,
     capabilities.relativeHumidityMeasurement,
-    capabilities.temperatureMeasurement
+    capabilities.temperatureMeasurement,
+    capabilities.temperatureAlarm,
+    capabilities.refresh,
   },
   zigbee_handlers = {
     attr = {
