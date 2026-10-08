@@ -167,6 +167,38 @@ local mock_device_no_per_zone_sensitivity = test.mock_device.build_test_matter_d
   }
 })
 
+local mock_device_pan_tilt_only = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = CAMERA_EP,
+      clusters = {
+        {
+          cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
+          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
+          cluster_type = "SERVER"
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+      }
+    }
+  }
+})
+
 local mock_device_no_user_defined_zone = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("camera.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
@@ -295,6 +327,31 @@ local function test_init_no_user_defined_zone()
   test.socket.matter:__expect_send({mock_device_no_user_defined_zone.id, subscribe_request_no_user_defined_zone})
   test.socket.device_lifecycle:__queue_receive({ mock_device_no_user_defined_zone.id, "doConfigure" })
   mock_device_no_user_defined_zone:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+-- mock_device_pan_tilt_only has no CameraAvStreamManagement cluster at all, so do_configure's
+-- `if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0` branch calls match_profile
+-- directly and synchronously during doConfigure, rather than waiting on an AttributeList report
+-- like the other reduced fixtures above. That means the profile/capability metadata update and the
+-- "PROVISIONED" transition both happen back-to-back off of the same doConfigure lifecycle event.
+local subscribe_request_pan_tilt_only
+
+local function test_init_pan_tilt_only()
+  test.mock_device.add_test_device(mock_device_pan_tilt_only)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "init" })
+  subscribe_request_pan_tilt_only = cluster_base.subscribe(
+    mock_device_pan_tilt_only, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster, camera_fields.CameraAVSULMFeatureMapAttr.ID
+  )
+  test.socket.matter:__expect_send({mock_device_pan_tilt_only.id, subscribe_request_pan_tilt_only})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_pan_tilt_only.id, "doConfigure" })
+  mock_device_pan_tilt_only:expect_metadata_update({
+    optional_component_capabilities = {
+      { "main", { "mechanicalPanTiltZoom" } }
+    },
+    profile = "camera"
+  })
+  mock_device_pan_tilt_only:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local additional_subscribed_attributes = {
@@ -616,6 +673,40 @@ local function update_device_profile_no_user_defined_zone()
   test.socket.matter:__expect_send({mock_device_no_user_defined_zone.id, subscribe_request_no_user_defined_zone})
 end
 
+local additional_subscribed_attributes_pan_tilt_only = {
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MaxPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.ZoomMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
+}
+
+-- Unlike the other reduced fixtures, mock_device_pan_tilt_only's profile/capability update already
+-- happened synchronously during doConfigure (see test_init_pan_tilt_only), so this only needs to
+-- simulate the platform pushing the updated profile back down via infoChanged, then confirm the PTZ
+-- capability is initialized with pan/tilt/presets only -- no zoom or zoomRange, since this device's
+-- CameraAvSettingsUserLevelManagement feature_map never claimed MECHANICAL_ZOOM support.
+local function update_device_profile_pan_tilt_only()
+  local updated_device_profile = t_utils.get_profile_definition(
+    "camera.yml", {enabled_optional_capabilities = {
+      { "main", { "mechanicalPanTiltZoom" } }
+    }}
+  )
+  test.socket.device_lifecycle:__queue_receive(mock_device_pan_tilt_only:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.capability:__expect_send(
+    mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
+      {"pan", "panRange", "tilt", "tiltRange", "presets", "maxPresets"}
+    ))
+  )
+  for _, attr in ipairs(additional_subscribed_attributes_pan_tilt_only) do
+    subscribe_request_pan_tilt_only:merge(attr:subscribe(mock_device_pan_tilt_only))
+  end
+  test.socket.matter:__expect_send({mock_device_pan_tilt_only.id, subscribe_request_pan_tilt_only})
+end
+
 -- Matter Handler UTs
 
 test.register_coroutine_test(
@@ -709,6 +800,7 @@ test.register_coroutine_test(
       subscribe = function() subscribe_called = true end,
       supports_capability = function() return false end,
       get_endpoints = function() return { DOORBELL_EP } end,
+      get_field = function() return nil end,
     }
 
     local original_match_profile = camera_cfg.match_profile
@@ -803,6 +895,9 @@ test.register_coroutine_test(
       get_endpoints = function()
         return { CAMERA_EP }
       end,
+      get_field = function()
+        return nil
+      end,
       emit_event_for_endpoint = function()
         init_event_count = init_event_count + 1
       end
@@ -812,6 +907,132 @@ test.register_coroutine_test(
     camera_cfg.match_profile = original_match_profile
 
     assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode should be added to profile when HardPrivacyModeOn is present even without the PRIV feature",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local updated_metadata = nil
+    local fake_device = {
+      profile = { components = {} },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          },
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO, -- no PRIVACY feature
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      get_field = function(_, field)
+        return field == camera_fields.HARD_PRIVACY_MODE_PRESENT
+      end,
+      get_endpoints = function() return {} end,
+      try_update_metadata = function(_, metadata) updated_metadata = metadata end,
+    }
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(updated_metadata ~= nil, "profile update should be requested when HardPrivacyModeOn is present")
+    local main_capabilities
+    for _, component in ipairs(updated_metadata.optional_component_capabilities) do
+      if component[1] == "main" then
+        main_capabilities = component[2]
+      end
+    end
+    local found = false
+    for _, cap_id in ipairs(main_capabilities or {}) do
+      if cap_id == capabilities.cameraPrivacyMode.ID then
+        found = true
+      end
+    end
+    assert(found, "cameraPrivacyMode should be added to the profile based on HardPrivacyModeOn presence alone")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode supportedAttributes/supportedCommands should only expose hardPrivacyMode when PRIV feature is absent",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local emitted = {}
+    local fake_device = {
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO, -- no PRIVACY feature
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      supports_capability = function(_, capability)
+        return capability == capabilities.cameraPrivacyMode
+      end,
+      get_field = function(_, field)
+        return field == camera_fields.HARD_PRIVACY_MODE_PRESENT
+      end,
+      get_endpoints = function(self, cluster_id, opts)
+        opts = opts or {}
+        local eps = {}
+        for _, ep in ipairs(self.endpoints) do
+          for _, clus in ipairs(ep.clusters) do
+            if clus.cluster_id == cluster_id and
+              (opts.feature_bitmap == nil or (clus.feature_map & opts.feature_bitmap) == opts.feature_bitmap) then
+              table.insert(eps, ep.endpoint_id)
+            end
+          end
+        end
+        return eps
+      end,
+      emit_event_for_endpoint = function(_, _, capability_event)
+        table.insert(emitted, capability_event)
+      end,
+    }
+
+    camera_cfg.initialize_camera_capabilities(fake_device)
+
+    local function list_equals(a, b)
+      if #a ~= #b then return false end
+      for i, v in ipairs(a) do
+        if v ~= b[i] then return false end
+      end
+      return true
+    end
+
+    local supported_attributes_event, supported_commands_event
+    for _, event in ipairs(emitted) do
+      if event.attribute == capabilities.cameraPrivacyMode.supportedAttributes then
+        supported_attributes_event = event
+      elseif event.attribute == capabilities.cameraPrivacyMode.supportedCommands then
+        supported_commands_event = event
+      end
+    end
+
+    assert(supported_attributes_event ~= nil, "supportedAttributes should be emitted")
+    assert(list_equals(supported_attributes_event.value.value, {"hardPrivacyMode"}),
+      "supportedAttributes should contain only hardPrivacyMode when PRIV feature is absent")
+    assert(supported_commands_event ~= nil, "supportedCommands should be emitted")
+    assert(list_equals(supported_commands_event.value.value, {}),
+      "supportedCommands should be empty when PRIV feature is absent, since HardPrivacyModeOn is read-only")
   end,
   {
     min_api_version = 14
@@ -848,10 +1069,6 @@ test.register_coroutine_test(
       elseif v.capability == capabilities.imageControl.imageFlipVertical then
         test.socket.capability:__expect_send(
           mock_device:generate_test_message("main", capabilities.imageControl.supportedAttributes({"imageFlipHorizontal", "imageFlipVertical"}))
-        )
-      elseif v.capability == capabilities.cameraPrivacyMode.hardPrivacyMode then
-        test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes({"softRecordingPrivacyMode", "softLivestreamPrivacyMode", "hardPrivacyMode"}))
         )
       end
       test.socket.matter:__queue_receive({
@@ -1355,6 +1572,32 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "PTZ Position report with zoom omitted should be handled normally on a device with no zoom feature",
+  function()
+    update_device_profile_pan_tilt_only()
+    test.wait_for_events()
+    -- This device has no zoom feature, so its MPTZPosition report never has a zoom field;
+    -- pan/tilt should still be handled normally.
+    test.socket.matter:__queue_receive({
+      mock_device_pan_tilt_only.id,
+      clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition:build_test_report_data(
+        mock_device_pan_tilt_only, CAMERA_EP, {pan = 10, tilt = 20})
+    })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.pan(10))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_pan_tilt_only:generate_test_message("main", capabilities.mechanicalPanTiltZoom.tilt(20))
+    )
+  end,
+  {
+     min_api_version = 14,
+     test_init = test_init_pan_tilt_only
   }
 )
 
@@ -2006,21 +2249,21 @@ test.register_coroutine_test(
       { capability = "mechanicalPanTiltZoom", component = "main", command = "panRelative", args = { 10 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 10, 0, 0)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 10, nil, nil)
     })
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "tiltRelative", args = { -35 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, -35, 0)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, nil, -35, nil)
     })
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "zoomRelative", args = { 80 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, 0, 80)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, nil, nil, 80)
     })
   end,
   {
@@ -2061,7 +2304,7 @@ test.register_coroutine_test(
       { capability = "mechanicalPanTiltZoom", component = "main", command = "setPan", args = { 50 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 50, 20, 30)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 50, nil, nil)
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2077,7 +2320,7 @@ test.register_coroutine_test(
       { capability = "mechanicalPanTiltZoom", component = "main", command = "setTilt", args = { -44 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 50, -44, 30)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, nil, -44, nil)
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2093,7 +2336,7 @@ test.register_coroutine_test(
       { capability = "mechanicalPanTiltZoom", component = "main", command = "setZoom", args = { 5 } },
     })
     test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 50, -44, 5)
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, nil, nil, 5)
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2103,6 +2346,24 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.zoom(5))
     )
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Set PTZ command with a zoom-omitting setPanTiltZoom should not clamp the missing axis",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "mechanicalPanTiltZoom", component = "main", command = "setPanTiltZoom", args = { 0, 0 } },
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZSetPosition(mock_device, CAMERA_EP, 0, 0, nil)
+    })
   end,
   {
      min_api_version = 14
@@ -3309,6 +3570,35 @@ test.register_coroutine_test(
     }
     mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode supportedAttributes should include hardPrivacyMode when reported in AttributeList",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn.ID)
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
+        {"softRecordingPrivacyMode", "softLivestreamPrivacyMode", "hardPrivacyMode"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
+        {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
+      ))
+    )
   end,
   {
      min_api_version = 14
