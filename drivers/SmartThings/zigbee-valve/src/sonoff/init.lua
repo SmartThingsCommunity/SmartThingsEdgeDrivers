@@ -10,7 +10,23 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local st_device = require "st.device"
 local utils = require "st.utils"
 
-local BATTERY_POLL_INTERVAL = 7200
+local CONFIGURATION = {
+  {
+    cluster = PowerConfiguration.ID,
+    attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+    reportable_change = 1
+  },
+  {
+    cluster = OnOff.ID,
+    attribute = OnOff.attributes.OnOff.ID,
+    minimum_interval = 0,
+    maximum_interval = 600,
+    data_type = OnOff.attributes.OnOff.base_type
+  }
+}
 
 local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
@@ -41,23 +57,17 @@ end
 local function device_init(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
-    device.thread:call_on_schedule(
-      BATTERY_POLL_INTERVAL,
-      function()
-        device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-      end
-    )
+    for _, attribute in ipairs(CONFIGURATION) do
+      device:add_configured_attribute(attribute)
+    end
   end
 end
 
 --- doConfigure
 local function do_configure(driver, device)
-  device:try_update_metadata({ provisioning_state = "PROVISIONED" })
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
-    device:emit_event(capabilities.valve.valve.closed())
-    device:emit_event(capabilities.battery.battery(100))
-  else
-    device:emit_event(capabilities.valve.valve.closed())
+    device:refresh()
+    device:configure()
   end
 end
 
@@ -74,26 +84,13 @@ local function device_added(driver, device)
         vendor_provided_label = string.format("%s 2", device.label),
       })
     end
-  else
-    device:emit_event(capabilities.valve.valve.closed())
   end
+  device:refresh()
 end
 
 --- driverSwitched
 local function driver_switched(driver, device)
   device_added(driver, device)
-end
-
---- valve.open
-local function valve_open_handler(driver, device, command)
-  device:send(OnOff.server.commands.On(device))
-  device:send(OnOff.attributes.OnOff:read(device))
-end
-
---- valve.close
-local function valve_close_handler(driver, device, command)
-  device:send(OnOff.server.commands.Off(device))
-  device:send(OnOff.attributes.OnOff:read(device))
 end
 
 --- Identity cluster handler：button pressed on the device, sync valve states
@@ -112,12 +109,6 @@ local sonoff_valve_handler = {
     added = device_added,
     doConfigure = do_configure,
     driverSwitched = driver_switched,
-  },
-  capability_handlers = {
-    [capabilities.valve.ID] = {
-      [capabilities.valve.commands.open.NAME] = valve_open_handler,
-      [capabilities.valve.commands.close.NAME] = valve_close_handler,
-    }
   },
   zigbee_handlers = {
     attr = {

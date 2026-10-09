@@ -12,9 +12,6 @@ local function sonoff_can_handle(opts, driver, device, ...)
       return true, require "sonoff"
     end
   end
-  if device.parent_device_id ~= nil then
-    return true, require "sonoff"
-  end
   return false
 end
 

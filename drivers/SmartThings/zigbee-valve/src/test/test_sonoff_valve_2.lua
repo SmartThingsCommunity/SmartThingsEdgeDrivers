@@ -13,18 +13,18 @@ local t_utils = require "integration_test.utils"
 
 -- Parent device (endpoint 1): valve + battery + powerSource + firmwareUpdate + refresh
 local mock_device = test.mock_device.build_test_zigbee_device(
-  { profile = t_utils.get_profile_definition("sonoff-irrigation-2.yml"),
+  { profile = t_utils.get_profile_definition("valve-battery-2.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
         manufacturer = "SONOFF",
-        model = "SWV-ZF2E",
+        model = "SWV-ZF2U",
         server_clusters = { 0x0000, 0x0001, 0x0006, 0x0404, 0xFC11 }
       },
       [2] = {
         id = 2,
         manufacturer = "SONOFF",
-        model = "SWV-ZF2E",
+        model = "SWV-ZF2U",
         server_clusters = { 0x0006 }
       }
     }
@@ -47,6 +47,11 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+local function test_init_without_child()
+  test.mock_device.add_test_device(mock_device)
+  zigbee_test_utils.init_noop_health_check_timer()
+end
 
 -- ============================================================================
 -- Parent device (endpoint 1) tests: OnOff attribute reports -> valve events
@@ -168,7 +173,7 @@ test.register_message_test(
 -- ============================================================================
 
 test.register_message_test(
-    "Capability(valve) command(open) should send OnOff.On and read OnOff",
+    "Capability(valve) command(open) should send OnOff.On",
     {
       {
         channel = "capability",
@@ -179,17 +184,12 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.On(mock_device) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device) }
       }
     }
 )
 
 test.register_message_test(
-    "Capability(valve) command(close) should send OnOff.Off and read OnOff",
+    "Capability(valve) command(close) should send OnOff.Off",
     {
       {
         channel = "capability",
@@ -200,11 +200,6 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.Off(mock_device) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device) }
       }
     }
 )
@@ -225,11 +220,6 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.On(mock_device):to_endpoint(0x02) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02) }
       }
     }
 )
@@ -246,11 +236,6 @@ test.register_message_test(
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.Off(mock_device):to_endpoint(0x02) }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02) }
       }
     }
 )
@@ -274,6 +259,10 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
         Basic.attributes.PowerSource:read(mock_device)
       })
       test.socket.zigbee:__expect_send({
@@ -291,6 +280,14 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({
         mock_device.id,
         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID, 2):to_endpoint(0x02)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0):to_endpoint(0x02)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
@@ -333,6 +330,11 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
+        message = { mock_device.id, OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02) }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
         message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) }
       }
     },
@@ -371,9 +373,14 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
       })
-    end
+    end,
+    { test_init = test_init_without_child }
 )
 
 test.run_registered_tests()
