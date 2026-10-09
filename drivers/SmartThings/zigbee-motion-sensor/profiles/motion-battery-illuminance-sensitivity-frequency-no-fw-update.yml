@@ -1,0 +1,26 @@
+name: motion-battery-illuminance-sensitivity-frequency-no-fw-update
+components:
+  - id: main
+    capabilities:
+      - id: motionSensor
+        version: 1
+      - id: illuminanceMeasurement
+        version: 1
+      - id: stse.sensitivityAdjustment
+        version: 1
+      - id: battery
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: MotionSensor
+preferences:
+  - title: "检测频率/秒(detection frequency/sec)"
+    name: detectionfrequency
+    description: "传感器检测频率(Sensor detects frequency unit: seconds)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 10
+      maximum: 1800
+      default: 60

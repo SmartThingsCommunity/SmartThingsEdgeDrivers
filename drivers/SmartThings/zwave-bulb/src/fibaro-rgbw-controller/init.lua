@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Association
@@ -32,19 +22,6 @@ local SwitchLevelDefaults = require "st.zwave.defaults.switchLevel"
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
 local LAST_COLOR_SWITCH_CMD_FIELD = "lastColorSwitchCmd"
 local FAKE_RGB_ENDPOINT = 10
-
-local FIBARO_MFR_ID = 0x010F
-local FIBARO_RGBW_CONTROLLER_PROD_TYPE = 0x0900
-local FIBARO_RGBW_CONTROLLER_PROD_ID_US = 0x2000
-local FIBARO_RGBW_CONTROLLER_PROD_ID_EU = 0x1000
-
-local function is_fibaro_rgbw_controller(opts, driver, device, ...)
-  return device:id_match(
-    FIBARO_MFR_ID,
-    FIBARO_RGBW_CONTROLLER_PROD_TYPE,
-    {FIBARO_RGBW_CONTROLLER_PROD_ID_US, FIBARO_RGBW_CONTROLLER_PROD_ID_EU}
-  )
-end
 
 -- This handler is copied from defaults with scraped of sets for both WHITE channels
 local function set_color(driver, device, command)
@@ -201,7 +178,7 @@ local fibaro_rgbw_controller = {
     added = device_added,
     init = device_init
   },
-  can_handle = is_fibaro_rgbw_controller,
+  can_handle = require("fibaro-rgbw-controller.can_handle"),
 }
 
 return fibaro_rgbw_controller

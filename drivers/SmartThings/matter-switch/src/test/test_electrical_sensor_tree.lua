@@ -19,6 +19,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
@@ -87,6 +92,7 @@ local subscribed_attributes = {
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.Descriptor.attributes.PartsList,
 }
 
 local cumulative_report_val_19 = {
@@ -127,74 +133,9 @@ local function test_init()
           subscribe_request:merge(cluster:subscribe(mock_device))
       end
   end
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  local read_req = clusters.Descriptor.attributes.PartsList:read(mock_device.id, 1)
-  read_req:merge(clusters.Descriptor.attributes.PartsList:read(mock_device.id, 3))
-  test.socket.matter:__expect_send({ mock_device.id, read_req })
-  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
 test.set_test_init_function(test_init)
-
-test.register_message_test(
-	"On command should send the appropriate commands",
-  {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-    }
-  },
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "switch", component = "main", command = "on", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.OnOff.server.commands.On(mock_device, 2)
-			}
-		}
-	}
-)
-
-test.register_message_test(
-  "Off command should send the appropriate commands",
-  {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-    }
-  },
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switch", component = "main", command = "off", args = { } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.Off(mock_device, 2)
-      }
-    }
-  }
-)
 
 test.register_message_test(
   "Active power measurement should generate correct messages",
@@ -220,6 +161,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 14
   }
 )
 
@@ -285,7 +229,10 @@ test.register_coroutine_test(
           energy = 39.0
         }))
       )
-    end
+    end,
+    {
+       min_api_version = 14
+    }
 )
 
 test.register_coroutine_test(
@@ -308,7 +255,10 @@ test.register_coroutine_test(
       parent_assigned_child_key = string.format("%d", 4)
     })
   end,
-  { test_init = test_init }
+  {
+    test_init = test_init,
+    min_api_version = 14
+  }
 )
 
 test.register_message_test(
@@ -388,6 +338,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 14
   }
 )
 

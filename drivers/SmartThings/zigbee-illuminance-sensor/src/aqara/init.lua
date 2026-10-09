@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
@@ -19,9 +22,6 @@ local FREQUENCY_ATTRIBUTE_ID = 0x0000
 local FREQUENCY_DEFAULT_VALUE = 5
 local FREQUENCY_PREF = "frequencyPref"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.sen_ill.agl01" }
-}
 
 local configuration = {
   {
@@ -42,14 +42,6 @@ local configuration = {
   }
 }
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function detection_frequency_capability_handler(driver, device, command)
   local frequency = command.args.frequency
@@ -104,7 +96,7 @@ local aqara_illuminance_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_illuminance_handler

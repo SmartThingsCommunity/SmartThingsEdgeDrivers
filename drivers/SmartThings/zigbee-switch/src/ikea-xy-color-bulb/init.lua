@@ -147,7 +147,7 @@ end
 local ikea_xy_color_bulb = {
   NAME = "IKEA XY Color Bulb",
   lifecycle_handlers = {
-    init = configurationMap.power_reconfig_wrapper(device_init)
+    init = configurationMap.reconfig_wrapper(device_init)
   },
   capability_handlers = {
     [capabilities.colorControl.ID] = {

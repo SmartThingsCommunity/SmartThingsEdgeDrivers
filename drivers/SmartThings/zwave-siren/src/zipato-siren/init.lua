@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc  = require "st.zwave.CommandClass"
@@ -18,13 +8,9 @@ local AlarmDefaults = require "st.zwave.defaults.alarm"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 
-local ZIPATO_MFR = 0x0131
 local BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT = 33
 local BASIC_AND_SWITCH_BINARY_REPORT_SIREN_LIMIT = 66
 
-local function can_handle_zipato_siren(opts, driver, device, ...)
-  return device.zwave_manufacturer_id == ZIPATO_MFR
-end
 
 local function basic_report_handler(driver, device, cmd)
   local value = cmd.args.value
@@ -64,7 +50,7 @@ end
 
 local zipato_siren = {
   NAME = "zipato-siren",
-  can_handle = can_handle_zipato_siren,
+  can_handle = require("zipato-siren.can_handle"),
   capability_handlers = {
     [capabilities.alarm.ID] = {
       [capabilities.alarm.commands.both.NAME] = siren_on,

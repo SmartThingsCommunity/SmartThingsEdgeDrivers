@@ -56,6 +56,12 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x0001
     deviceProfileName: inovelli-dimmer
+  - id: "Inovelli/VZW31-SN"
+    deviceLabel: Inovelli Dimmer Red Series
+    manufacturerId: 0x031E
+    productType: 0x0015
+    productId: 0x0001
+    deviceProfileName: inovelli-dimmer-vzw31-sn
   - id: "Inovelli/VZW32-SN"
     deviceLabel: Inovelli mmWave Dimmer Red Series
     manufacturerId: 0x031E
@@ -559,7 +565,7 @@ zwaveManufacturer:
     productId: 0xC001
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF07
-    deviceLabel: Minoston Outlet
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF07
@@ -868,11 +874,23 @@ zwaveManufacturer:
     productId: 0x1000
     deviceProfileName: metering-switch
   - id: 0312/FF00/FF0E
-    deviceLabel: Minoston Outlet
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF0E
     deviceProfileName: metering-switch
+  - id: "0312/FF01/FF97"
+    deviceLabel: IP65 Outdoor Zwave Smart Plug with 2 Individual Outlets
+    manufacturerId: 0x0312
+    productId: 0xFF97
+    productType: 0xFF01
+    deviceProfileName: switch-binary
+  - id: "0312/FF00/FF0C"
+    deviceLabel: Z-Wave Smart Plug
+    manufacturerId: 0x0312
+    productId: 0xFF0C
+    productType: 0xFF00
+    deviceProfileName: smartplug-binary
   - id: Evolve/RelaySwitch
     deviceLabel: Evolve Switch
     manufacturerId: 0x0113
@@ -916,6 +934,19 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: 013C/0005/008A
+    deviceLabel: Philio Dimmer Switch PAD19
+    manufacturerId: 0x013C
+    productType: 0x0005
+    productId: 0x008A
+    deviceProfileName: switch-level
+#Zooz
+  - id: "Zooz/ZEN05"
+    deviceLabel: Zooz Outdoor Plug ZEN05
+    manufacturerId: 0x027A
+    productType: 0x7000
+    productId: 0xB001
+    deviceProfileName: zooz-zen05-plug
 #Shelly/Qubino
   - id: 1120/2/137
     deviceLabel: Wave Plug UK
@@ -940,7 +971,7 @@ zwaveManufacturer:
     manufacturerId: 0x0460
     productId: 0x0083
     productType: 0x0002
-    deviceProfileName: switch-binary 
+    deviceProfileName: switch-binary
   - id: 1120/2/132
     deviceLabel: Wave 1PM
     manufacturerId: 0x0460

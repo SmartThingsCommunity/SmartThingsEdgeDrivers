@@ -49,7 +49,7 @@ end
 local multi_switch_no_master = {
   NAME = "multi switch no master",
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = require("multi-switch-no-master.can_handle"),

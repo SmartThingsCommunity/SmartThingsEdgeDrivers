@@ -41,7 +41,7 @@ local zigbee_dimmer_power_energy_handler = {
     }
   },
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   can_handle = require("zigbee-dimmer-power-energy.can_handle"),

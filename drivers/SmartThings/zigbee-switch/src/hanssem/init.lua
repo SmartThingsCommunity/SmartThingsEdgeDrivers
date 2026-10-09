@@ -50,7 +50,7 @@ local HanssemSwitch = {
   NAME = "Zigbee Hanssem Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = configurations.power_reconfig_wrapper(device_init)
+    init = configurations.reconfig_wrapper(device_init)
   },
   can_handle = require("hanssem.can_handle"),
 }

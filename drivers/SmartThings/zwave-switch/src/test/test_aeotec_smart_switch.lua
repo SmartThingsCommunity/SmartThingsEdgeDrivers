@@ -58,7 +58,10 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -85,7 +88,10 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.run_registered_tests()

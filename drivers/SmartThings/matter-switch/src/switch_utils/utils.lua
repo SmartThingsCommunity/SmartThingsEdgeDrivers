@@ -21,6 +21,11 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local utils = {}
 
 function utils.tbl_contains(array, value)
@@ -48,8 +53,17 @@ end
 function utils.remove_field_index(device, field_name, index)
   local new_table = device:get_field(field_name)
   if type(new_table) == "table" then
-    new_table[index] = nil -- remove value associated with index from table
+    new_table[index] = nil -- remove value associated with index from table without altering table structure
     device:set_field(field_name, new_table)
+  end
+end
+
+function utils.is_field_empty(device, field_name)
+  local field = device:get_field(field_name)
+  if type(field) == "table" then
+    return next(field) == nil
+  else
+    return field == nil
   end
 end
 
@@ -151,10 +165,6 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
-  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
-
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
     for _,ep in ipairs(endpoints) do
@@ -166,23 +176,24 @@ function utils.find_default_endpoint(device)
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
+  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
     return get_first_non_zero_endpoint(fan_endpoint_ids)
   end
 
-  -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
-  if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
-    return get_first_non_zero_endpoint(onoff_ep_ids)
-  end
-
-  -- Return the first momentary switch endpoint as the default endpoint if no onoff endpoints are present
-  if #onoff_ep_ids == 0 and #momentary_switch_ep_ids > 0 then
-    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+  -- Return the first water valve endpoint as the default endpoint if any is found
+  local water_valve_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  if #water_valve_endpoint_ids > 0 then
+    return get_first_non_zero_endpoint(water_valve_endpoint_ids)
   end
 
   -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
   -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
-  -- default endpoint.
+  -- default endpoint. Else return the first onoff endpoint as the default endpoint.
+  --
+  -- If only one of the two types of endpoints are present, return the first endpoint of the present type.
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
@@ -191,6 +202,10 @@ function utils.find_default_endpoint(device)
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
+  elseif #onoff_ep_ids > 0 then
+    return get_first_non_zero_endpoint(onoff_ep_ids)
+  elseif #momentary_switch_ep_ids > 0 then
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
@@ -207,7 +222,8 @@ end
 
 --- An extension of the library function endpoint_to_component, used to support a mapping scheme
 --- that optionally includes cluster and attribute ids so that multiple components can be mapped
---- to a single endpoint.
+--- to a single endpoint. This extension also handles the case that multiple endpoints map to the
+--- same component
 ---
 --- @param device any a Matter device object
 --- @param ep_info number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
@@ -220,10 +236,19 @@ function utils.endpoint_to_component(device, ep_info)
   for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
     if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
-    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id
-      and (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
-      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))) then
-        return component
+    elseif type(map_info) == "table" then
+      if type(map_info.endpoint_id) == "number" then
+        map_info = {map_info}
+      end
+      for _, ep_map_info in ipairs(map_info) do
+        if type(ep_map_info) == "number" and ep_map_info == ep_info.endpoint_id then
+          return component
+        elseif type(ep_map_info) == "table" and ep_map_info.endpoint_id == ep_info.endpoint_id
+          and (not ep_map_info.cluster_id or (ep_map_info.cluster_id == ep_info.cluster_id
+          and (not ep_map_info.attribute_ids or utils.tbl_contains(ep_map_info.attribute_ids, ep_info.attribute_id)))) then
+            return component
+        end
+      end
     end
   end
   return "main"
@@ -269,7 +294,8 @@ function utils.find_cluster_on_ep(ep, cluster_id, opts)
   local clus_has_features = function(cluster, checked_feature)
     return (cluster.feature_map & checked_feature) == checked_feature
   end
-  for _, cluster in ipairs(ep.clusters) do
+  if type(ep) ~= "table" then return nil end
+  for _, cluster in ipairs(ep.clusters or {}) do
     if ((cluster.cluster_id == cluster_id)
       and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
       and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
@@ -315,6 +341,50 @@ function utils.create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
+--- Deeply compare two values.
+--- Handles metatables. Can optionally ignore cycle checking and/or function differences.
+---
+--- @param a any
+--- @param b any
+--- @param opts table|nil { ignore_functions = boolean, ignore_cycles = boolean }
+--- @param seen table|nil
+--- @return boolean
+function utils.deep_equals(a, b, opts, seen)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  if not (opts and opts.ignore_cycles) then
+    seen = seen or {}
+    seen[a] = seen[a] or {}
+    if seen[a][b] then
+      return seen[a][b]
+    end
+    seen[a][b] = true
+  end
+
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not utils.deep_equals(v, b[k], opts, seen) then
+      return false
+    end
+  end
+
+  -- Ensure b doesn't have extra keys
+  for k in pairs(b) do
+    if a[k] == nil then
+      return false
+    end
+  end
+
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return utils.deep_equals(mt_a, mt_b, opts, seen)
+end
+
 function utils.detect_bridge(device)
   return #utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
 end
@@ -336,22 +406,23 @@ end
 
 function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  local last_time = utils.get_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id) or 0
 
   -- Ensure that the previous report was sent at least 15 minutes ago
   if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
     return
   end
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  utils.set_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id, current_time, { persist = true })
 
   local previous_imported_report = utils.get_latest_state_for_endpoint(device, endpoint_id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local delta_energy = total_imported_energy_wh - previous_imported_report.energy
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
   device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
+    deltaEnergy = delta_energy >= 0.0 and delta_energy or total_imported_energy_wh, -- clarifying assumption: a negative delta means the meter was reset
     energy = total_imported_energy_wh
   }))
 end
@@ -374,7 +445,7 @@ function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sens
     table.sort(associated_endpoint_ids)
     local primary_associated_ep_id = associated_endpoint_ids[1]
     -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
-    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags, {persist = true})
     utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_sensor_ep.endpoint_id, string.format("%d", primary_associated_ep_id), { persist = true })
     return true
   end
@@ -388,32 +459,32 @@ function utils.handle_electrical_sensor_info(device)
     return
   end
 
-  -- check the feature map for the first (or only) Electrical Sensor EP
-  local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
-  local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
-  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
-    local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- SET read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
+  -- energy reporting must be handled by a cumulative report, a periodic report, or both attributes simultaneously.
+  -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+  for _, ep_info in ipairs(electrical_sensor_eps) do
+    if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) then
+      device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true)
+      break
     end
-    device:send(available_eps_req)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
-    local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- TREE read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep.endpoint_id))
+  end
+
+  -- check the feature map for the first (or only) Electrical Sensor EP if the device profiling has not been completed
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
+      clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+      -- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
+      device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
+      device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
+      if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
+        device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+      end
     end
-    device:send(parts_list_req)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
-    if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
-      device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
-    end
-    return
   end
 end
 
@@ -433,27 +504,98 @@ function utils.lazy_load_if_possible(sub_driver_name)
   end
 end
 
-function utils.update_subscriptions(device)
-  local default_endpoint_id = utils.find_default_endpoint(device)
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
-  for idx, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= default_endpoint_id then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-        if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-           attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-           attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
+--- helper for the switch subscribe override, which adds to a subscribed request for a checked device
+---
+--- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param subscribe_request table a subscribe request that will be appended to as needed for the device
+--- @param capabilities_seen table a list of capabilities that have already been checked by previously handled devices
+--- @param attributes_seen table a list of attributes that have already been checked
+--- @param events_seen table a list of events that have already been checked
+--- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
+--- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
+function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+ for _, component in pairs(checked_device.st_store.profile.components) do
+    for _, capability in pairs(component.capabilities) do
+      if not capabilities_seen[capability.id] then
+        for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
+          local cluster_id = attr.cluster or attr._cluster.ID
+          local attr_id = attr.ID or attr.attribute
+          if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribe_request:with_info_block(ib)
+            attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
+            attributes_seen[cluster_id][attr_id] = ib
+          end
         end
+        for _, event in ipairs(subscribed_events[capability.id] or {}) do
+          local cluster_id = event.cluster or event._cluster.ID
+          local event_id = event.ID or event.event
+          if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
+            subscribe_request:with_info_block(ib)
+            events_seen[cluster_id] = events_seen[cluster_id] or {}
+            events_seen[cluster_id][event_id] = ib
+          end
+        end
+        capabilities_seen[capability.id] = true -- only loop through any capability once
       end
     end
   end
-  device:subscribe()
+end
+
+--- create and send a subscription request by checking all devices, accounting for both parent and child devices
+---
+--- @param device any a Matter device object
+function utils.subscribe(device)
+  local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+  local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+
+  for _, endpoint_info in ipairs(device.endpoints) do
+    local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
+    if not devices_seen[checked_device.id] then
+      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        device.driver.subscribed_attributes, device.driver.subscribed_events
+      )
+      devices_seen[checked_device.id] = true -- only loop through any device once
+    end
+  end
+
+  -- If the type of battery support has not yet been determined, add the PowerSource AttributeList to the list of
+  -- subscribed attributes in order to determine which if any battery capability should be used.
+  if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
+    local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
+    subscribe_request:with_info_block(ib)
+    attributes_seen[clusters.PowerSource.ID] = attributes_seen[clusters.PowerSource.ID] or {}
+    attributes_seen[clusters.PowerSource.ID][clusters.PowerSource.attributes.AttributeList.ID] = ib
+  end
+
+  -- If the power topology of the device has not yet been determined, add the AvailableEndpoints (for SET topology)
+  -- or PartsList (for TREE topology) attributes to the list of subscribed attributes in order to map the device's electrical endpoints
+  -- to the proper device card(s).
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true }) or {}
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.PowerTopology.ID, clusters.PowerTopology.attributes.AvailableEndpoints.ID)
+      subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.PowerTopology.ID] = attributes_seen[clusters.PowerTopology.ID] or {}
+      attributes_seen[clusters.PowerTopology.ID][clusters.PowerTopology.attributes.AvailableEndpoints.ID] = ib
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID)
+      subscribe_request:with_info_block(ib)
+      attributes_seen[clusters.Descriptor.ID] = attributes_seen[clusters.Descriptor.ID] or {}
+      attributes_seen[clusters.Descriptor.ID][clusters.Descriptor.attributes.PartsList.ID] = ib
+    end
+  end
+
+  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
+  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
+  -- attributes and not events.
+  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
+
+  if #subscribe_request.info_blocks > 0 then
+    device:send(subscribe_request)
+  end
 end
 
 return utils

@@ -1,0 +1,90 @@
+name: zooz-zen05-plug
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: voltageMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+preferences:
+  - name: "driverInfo"
+    title: "Driver Info"
+    description: "This driver may have limited features, check the online Zooz documentation for information about custom drivers."
+    preferenceType: string
+    definition:
+      stringType: paragraph
+  #param 1
+  - name: "ledMode"
+    title: "LED Indicator Behavior"
+    description: "Decide how the LED indicator behaves depending on the on/off status of the plug."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "On when on, off when off *"
+        1: "On when off, off when on"
+        2: "Always off"
+      default: 0
+  #param 7
+  - name: "ledBrightness"
+    title: "LED Brightness"
+    description: "Choose the LED indicator brightness level."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "High"
+        1: "Medium"
+        2: "Low *"
+      default: 2
+  #param 2
+  - name: "autoTurnOff"
+    title: "Auto-off Timer"
+    description: "Default: 0=disabled; Auto-off timer will automatically turn the Smart Plug off after x minutes once it has been turned on."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  #param 4
+  - name: "autoTurnOn"
+    title: "Auto-on Timer"
+    description: "Default: 0=disabled; Auto-on timer will automatically turn the Smart Plug on after x minutes once it has been turned off."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  #param 6
+  - name: "powerRecovery"
+    title: "On/Off Status After Power Failure"
+    description: "Choose the recovery state for your Smart Plug if power outage occurs."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        2: "Restores Prior Status *"
+        0: "Always Off once restored"
+        1: "Always On once restored"
+      default: 2
+  #param 8
+  - name: "manualControl"
+    title: "Manual Control"
+    description: "Disable or enable manual control (turning the Smart Plug on and off using the physical button)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled *"
+      default: 1

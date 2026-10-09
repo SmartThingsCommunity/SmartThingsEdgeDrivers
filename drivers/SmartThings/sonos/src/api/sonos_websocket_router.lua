@@ -233,11 +233,11 @@ end
 ---@return string?
 function SonosWebSocketRouter.register_listener_for_socket(listener, unique_key_for_socket)
   if listener and listener.device and listener.device.label then
-    log.debug(
+    log.debug(string.format(
       "Registering SonosConnection for device %s as listener for player %s websocket",
       listener.device.label,
       unique_key_for_socket
-    )
+    ))
   end
   local ws = websockets[unique_key_for_socket]
 

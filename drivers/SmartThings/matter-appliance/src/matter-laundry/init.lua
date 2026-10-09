@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
@@ -47,23 +37,12 @@ local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
 local SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS = "__supported_laundry_spin_speeds"
 local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
 
-local function is_matter_laundry_device(opts, driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == LAUNDRY_WASHER_DEVICE_TYPE_ID or dt.device_type_id == LAUNDRY_DRYER_DEVICE_TYPE_ID then
-        device:set_field(LAUNDRY_DEVICE_TYPE_ID, dt.device_type_id, {persist = true})
-        return dt.device_type_id
-      end
-    end
-  end
-  return false
-end
-
 -- Lifecycle Handlers --
 local function do_configure(driver, device)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
-  local device_type = is_matter_laundry_device({}, driver, device)
+  local is_matter_laundry_device = require("matter-laundry.can_handle")
+  local device_type, _ = is_matter_laundry_device({}, driver, device)
   local profile_name = "laundry"
   if (device_type == LAUNDRY_WASHER_DEVICE_TYPE_ID) then
     profile_name = profile_name.."-washer"
@@ -316,7 +295,7 @@ local matter_laundry_handler = {
       [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume
     }
   },
-  can_handle = is_matter_laundry_device
+  can_handle = require("matter-laundry.can_handle"),
 }
 
 return matter_laundry_handler

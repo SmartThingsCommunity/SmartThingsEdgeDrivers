@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -71,7 +61,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -115,7 +108,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -149,6 +145,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
         }
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -178,6 +177,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -197,6 +199,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -232,6 +237,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 67)
         }
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -267,6 +275,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
         }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -290,7 +301,10 @@ test.register_coroutine_test(
         mock_device.id,
         clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -322,7 +336,140 @@ test.register_coroutine_test(
         clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports closed when shade reaches level 0",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 0 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports open when shade reaches level 100",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 100 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "SetLevel command emits closing when requested level is below current level",
+    function()
+      -- Attr report sets current shade level to 90 (inverted value=10)
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+      })
+      test.wait_for_events()
+      -- Now both vimar flags are false; requesting level 30 (< 90) triggers closing branch
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 30 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(30))
+      )
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 70)
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "SetLevel command is ignored (early return) when shades are already moving",
+    function()
+      -- Open command: current=0 < 100 → opening, sets VIMAR_SHADES_OPENING=true
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      )
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      })
+      test.wait_for_events()
+      -- While opening, a different setShadeLevel is requested: ignored with current level re-emitted
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      )
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

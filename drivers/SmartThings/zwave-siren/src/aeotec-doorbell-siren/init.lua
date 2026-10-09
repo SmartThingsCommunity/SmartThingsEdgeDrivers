@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -20,14 +10,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({version=1})
 local preferencesMap = require "preferences"
 
-local AEOTEC_DOORBELL_SIREN_FINGERPRINTS = {
-  { manufacturerId = 0x0371, productType = 0x0003, productId = 0x00A2}, -- Aeotec Doorbell 6 (EU)
-  { manufacturerId = 0x0371, productType = 0x0103, productId = 0x00A2}, -- Aeotec Doorbell 6 (US)
-  { manufacturerId = 0x0371, productType = 0x0203, productId = 0x00A2}, -- Aeotec Doorbell 6 (AU)
-  { manufacturerId = 0x0371, productType = 0x0003, productId = 0x00A4}, -- Aeotec Siren 6 (EU)
-  { manufacturerId = 0x0371, productType = 0x0103, productId = 0x00A4}, -- Aeotec Siren 6 (US)
-  { manufacturerId = 0x0371, productType = 0x0203, productId = 0x00A4}, -- Aeotec Siren 6 (AU)
-}
 
 local COMPONENT_NAME = "componentName"
 local TONE = "tone"
@@ -50,15 +32,6 @@ local BUTTON_BATTERY_LOW = 5
 local BUTTON_BATTERY_NORMAL = 99
 local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
 local NEXT_BUTTON_BATTERY_EVENT_DETAILS = "next_button_battery_event_details"
-
-local function can_handle_aeotec_doorbell_siren(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEOTEC_DOORBELL_SIREN_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function querySoundStatus(device)
   for endpoint = 2, NUMBER_OF_SOUND_COMPONENTS do
@@ -234,6 +207,7 @@ local function changeDeviceProfileIfNeeded(device, endpoint)
   end
 end
 
+-- Note that endpoint should be a number not a dst_channels table.
 local function setActiveEndpoint(device, endpoint)
   if (endpoint) then
     device:set_field(LAST_TRIGGERED_ENDPOINT, endpoint, {persist = true})
@@ -297,26 +271,28 @@ end
 
 local function alarmChimeOnOff(device, command, newValue)
   if (device and command and newValue) then
+    -- Note that zwave/device.lua send_to_component expects the component_to_endpoint function to
+    -- return a dst_channels table, not a single endpoint number
     local endpoint = component_to_endpoint(device, command.component)
-    device:send(Basic:Set({value = newValue})):to_endpoint(endpoint)
+    device:send_to_component(Basic:Set({value = newValue}), command.component)
     if (newValue == ON) then
-      setActiveEndpoint(endpoint)
+      setActiveEndpoint(device, endpoint[1])
     end
   end
 end
 
-local function alarm_chime_on(device, command)
+local function alarm_chime_on(self, device, command)
   resetActiveEndpoint(device)
   alarmChimeOnOff(device, command, ON)
 end
 
-local function alarm_chime_off(device, command)
+local function alarm_chime_off(self, device, command)
   alarmChimeOnOff(device, command, OFF)
 end
 
 local aeotec_doorbell_siren = {
   NAME = "aeotec-doorbell-siren",
-  can_handle = can_handle_aeotec_doorbell_siren,
+  can_handle = require("aeotec-doorbell-siren.can_handle"),
 
   lifecycle_handlers = {
     added = device_added,
@@ -332,6 +308,9 @@ local aeotec_doorbell_siren = {
       [Notification.REPORT] = notification_report_handler
     }
   },
+  -- This typo is a bug. There are many unit tests that fail, when
+  -- it is enabled, and it is not clear what the correct functionality is
+  -- without real device testing.
   capabilities_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh

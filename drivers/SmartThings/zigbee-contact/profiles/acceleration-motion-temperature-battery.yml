@@ -1,0 +1,50 @@
+name: acceleration-motion-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: accelerationSensor
+    version: 1
+  - id: motionSensor
+    version: 1
+  - id: threeAxis
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - title: "Temperature sensitivity (°)"
+    name: temperatureSensitivity
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0
+  - title: "Sensitivity level"
+    name: sensitivityLevel
+    description: "How sensitivite the device is to vibrations"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 15
+      default: 10
+  - title: "Use with Contact Sensor"
+    name: garageSensor
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes": "Yes"
+        "No": "No"
+      default: "No"

@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
@@ -22,19 +12,7 @@ local SHORT_POLL_INTERVAL = 0x0200
 local LONG_POLL_INTERVAL = 0xB1040000
 local FAST_POLL_TIMEOUT = 0x0028
 
-local ECOLINK_CONTACT_TEMPERATURE_FINGERPRINTS = {
-  { mfr = "Ecolink", model = "4655BC0-R" },
-  { mfr = "Ecolink", model = "DWZB1-ECO" }
-}
 
-local function can_handle_ecolink_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ECOLINK_CONTACT_TEMPERATURE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function do_configure(driver, device)
   device:configure()
@@ -51,7 +29,7 @@ local ecolink_sensor = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_ecolink_sensor
+  can_handle = require("contact-temperature-sensor.ecolink-contact.can_handle"),
 }
 
 return ecolink_sensor

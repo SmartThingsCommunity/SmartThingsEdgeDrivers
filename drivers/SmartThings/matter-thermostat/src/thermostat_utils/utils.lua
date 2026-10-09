@@ -3,8 +3,9 @@
 
 local log = require "log"
 local capabilities = require "st.capabilities"
-local embedded_cluster_utils = require "thermostat_utils.embedded_cluster_utils"
+local clusters = require "st.matter.clusters"
 local fields = require "thermostat_utils.fields"
+local embedded_cluster_utils = require "thermostat_utils.embedded_cluster_utils"
 
 local ThermostatUtils = {}
 
@@ -71,6 +72,50 @@ function ThermostatUtils.get_total_cumulative_energy_imported(device)
   return total_energy
 end
 
+--- Deeply compare two values.
+--- Handles metatables. Can optionally ignore cycle checking and/or function differences.
+---
+--- @param a any
+--- @param b any
+--- @param opts table|nil { ignore_functions = boolean, ignore_cycles = boolean }
+--- @param seen table|nil
+--- @return boolean
+function ThermostatUtils.deep_equals(a, b, opts, seen)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  if not (opts and opts.ignore_cycles) then
+    seen = seen or {}
+    seen[a] = seen[a] or {}
+    if seen[a][b] then
+      return seen[a][b]
+    end
+    seen[a][b] = true
+  end
+
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not ThermostatUtils.deep_equals(v, b[k], opts, seen) then
+      return false
+    end
+  end
+
+  -- Ensure b doesn't have extra keys
+  for k in pairs(b) do
+    if a[k] == nil then
+      return false
+    end
+  end
+
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return ThermostatUtils.deep_equals(mt_a, mt_b, opts, seen)
+end
+
 function ThermostatUtils.get_endpoints_by_device_type(device, device_type)
   local endpoints = {}
   for _, ep in ipairs(device.endpoints) do
@@ -83,6 +128,25 @@ function ThermostatUtils.get_endpoints_by_device_type(device, device_type)
   end
   table.sort(endpoints)
   return endpoints
+end
+
+  -- set the supportedThermostatOperatingStates attribute if the thermostatOperatingState capability is supported and it has not been set before
+function ThermostatUtils.handle_thermostat_operating_state_info(device)
+  local thermostat_operating_state_supported = device:supports_capability(capabilities.thermostatOperatingState)
+  local latest_supported_operating_states = thermostat_operating_state_supported and device:get_latest_state(
+    "main", capabilities.thermostatOperatingState.ID, capabilities.thermostatOperatingState.supportedThermostatOperatingStates.NAME
+  )
+  if thermostat_operating_state_supported and latest_supported_operating_states == nil then
+    local supported_operating_modes = { "idle" }
+    if #device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING}) > 0 then
+      table.insert(supported_operating_modes, "heating")
+    end
+    if #device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING}) > 0 then
+      table.insert(supported_operating_modes, "cooling")
+    end
+    local thermostat_ep_id = device:get_endpoints(clusters.Thermostat.ID)[1]
+    device:emit_event_for_endpoint(thermostat_ep_id, capabilities.thermostatOperatingState.supportedThermostatOperatingStates(supported_operating_modes, {visibility = {displayed = false}}))
+  end
 end
 
 function ThermostatUtils.get_device_type(device)
@@ -116,18 +180,15 @@ function ThermostatUtils.get_device_type(device)
   return main_device_type
 end
 
-function ThermostatUtils.unit_conversion(value, from_unit, to_unit, capability_name)
-  local conversion_function = fields.conversion_tables[from_unit] and fields.conversion_tables[from_unit][to_unit] or nil
+function ThermostatUtils.convert_value_to_unit(value, from_unit, to_unit, capability_name)
+  local conversion_function = fields.unit_conversion[from_unit] and fields.unit_conversion[from_unit][to_unit]
   if not conversion_function then
     log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", fields.unit_strings[from_unit], fields.unit_strings[to_unit]))
     return
-  end
-
-  if not value then
-    log.info_with( {hub_logs = true} , "unit conversion value is nil")
+  elseif type(value) ~= "number" then
+    log.info_with( {hub_logs = true} , string.format("unit conversion value (%s) is not a number", value))
     return
   end
-
   return conversion_function(value, fields.molecular_weights[capability_name])
 end
 

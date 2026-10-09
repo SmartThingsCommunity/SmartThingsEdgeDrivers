@@ -1,22 +1,9 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
-
-local AEON_MFR = 0x0086
-local AEON_SIREN_PRODUCT_ID = 0x0050
 
 local SOUND_TYPE_AND_VOLUME_PARAMETER_NUMBER = 37
 local CONFIGURE_SOUND_TYPE = "type"
@@ -24,9 +11,6 @@ local SOUND_TYPE_DEFAULT = 1
 local CONFIGURE_VOLUME = "volume"
 local VOLUME_DEFAULT = 3
 
-local function can_handle_aeon_siren(opts, driver, device, ...)
-  return device.zwave_manufacturer_id == AEON_MFR and device.zwave_product_id == AEON_SIREN_PRODUCT_ID
-end
 
 local function configure_sound(device, sound_type, volume)
   if sound_type == nil then sound_type = SOUND_TYPE_DEFAULT end
@@ -64,7 +48,7 @@ end
 
 local aeon_siren = {
   NAME = "aeon-siren",
-  can_handle = can_handle_aeon_siren,
+  can_handle = require("aeon-siren.can_handle"),
   lifecycle_handlers = {
     doConfigure = do_configure,
     infoChanged = info_changed

@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -18,7 +7,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local shus_mattress_profile_def = t_utils.get_profile_definition("shus-smart-mattress.yml")
 test.add_package_capability("aiMode.yaml")
@@ -28,6 +16,8 @@ test.add_package_capability("rightControl.yaml")
 test.add_package_capability("strongExpMode.yaml")
 test.add_package_capability("yoga.yaml")
 test.add_package_capability("mattressHardness.yaml")
+
+local custom_capabilities = require "shus-mattress/custom_capabilities"
 
 local PRIVATE_CLUSTER_ID = 0xFCC2
 local MFG_CODE = 0x1235
@@ -94,7 +84,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x000F_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0010_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0011_messge})
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -136,7 +129,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x000F_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0010_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0011_messge})
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -151,7 +147,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -166,7 +165,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -181,7 +183,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -196,7 +201,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -211,7 +219,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -226,7 +237,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -241,7 +255,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -256,7 +273,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -271,7 +291,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -286,7 +309,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -301,7 +327,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -316,7 +345,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -331,7 +363,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.leftBackHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -346,7 +381,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.leftWaistHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -361,7 +399,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.leftHipHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -376,7 +417,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.rightBackHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -391,7 +435,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.rightWaistHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -406,7 +453,28 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.rightHipHardness(1)))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Device reported yoga 3 and driver emit custom_capabilities.yoga.state.both()",
+  function()
+    local attr_report_data = {
+      { 0x0008, data_types.Uint8.ID, 3 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.yoga.state.both()))
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -421,7 +489,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.yoga.state.right()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -436,7 +507,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.yoga.state.left()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -451,7 +525,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.yoga.state.stop()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -466,7 +543,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.ai_mode.left.off()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -481,7 +561,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.ai_mode.left.on()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -496,7 +579,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.ai_mode.right.on()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -511,7 +597,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.ai_mode.right.off()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -526,7 +615,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.auto_inflation.inflationState.off()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -541,7 +633,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.auto_inflation.inflationState.on()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -556,7 +651,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.strong_exp_mode.expState.off()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -571,7 +669,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.strong_exp_mode.expState.on()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 
@@ -586,7 +687,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       0x0006, MFG_CODE, data_types.Boolean, true)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -600,7 +704,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0006, MFG_CODE, data_types.Boolean, false)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -614,7 +721,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0007, MFG_CODE, data_types.Boolean, true)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -628,7 +738,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0007, MFG_CODE, data_types.Boolean, false)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -642,7 +755,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0009, MFG_CODE, data_types.Boolean, true)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -656,7 +772,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0009, MFG_CODE, data_types.Boolean, false)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -670,7 +789,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x000a, MFG_CODE, data_types.Boolean, true)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -684,7 +806,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x000a, MFG_CODE, data_types.Boolean, false)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -700,7 +825,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftback.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -716,7 +844,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftwaist.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -732,7 +863,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.lefthip.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -748,7 +882,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftback.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -764,7 +901,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.leftwaist.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -780,7 +920,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.left_control.lefthip.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -796,7 +939,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightback.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -812,7 +958,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightwaist.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -828,7 +977,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.righthip.soft()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -844,7 +996,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightback.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -860,7 +1015,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.rightwaist.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -876,7 +1034,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.right_control.righthip.hard()))
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -890,7 +1051,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0008, MFG_CODE, data_types.Uint8, 1)
     })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -904,7 +1068,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0008, MFG_CODE, data_types.Uint8, 2)
       })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -918,7 +1085,35 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0008, MFG_CODE, data_types.Uint8, 0)
       })
-  end
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "capability left_control backControl soft emits idle event after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = custom_capabilities.left_control.ID, component = "main", command ="backControl" , args = {"soft"}}
+    })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+        0x0000, MFG_CODE, data_types.Uint8, 0)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback.soft()))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback("idle", { visibility = { displayed = false }})))
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.run_registered_tests()

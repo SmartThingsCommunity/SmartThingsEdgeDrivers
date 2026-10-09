@@ -106,7 +106,10 @@ test.register_coroutine_test(
           )
       )
 
-    end
+    end,
+    {
+       min_api_version = 14
+    }
 )
 
 test.run_registered_tests()

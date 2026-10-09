@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -52,7 +42,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
-  subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -79,6 +68,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 10)},
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -100,6 +92,9 @@ test.register_message_test(
         clusters.DoorLock.server.commands.UnlockDoor(mock_device, 10),
       },
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -120,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -140,6 +138,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -160,6 +161,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked()),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -180,6 +184,32 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
+  },
+  {
+     min_api_version = 15
+  }
+)
+
+test.register_message_test(
+  "Handle unknown LockState value from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, 0xFF
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unknown()),
+    },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -202,6 +232,9 @@ test.register_message_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       ),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -226,6 +259,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, refresh_commands(mock_device)},
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -292,6 +328,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -329,6 +368,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()),
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -341,7 +383,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.run_registered_tests()

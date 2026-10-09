@@ -44,7 +44,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 14
     }
 )
 
@@ -69,7 +70,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 14
   }
 )
 
@@ -110,6 +112,9 @@ test.register_message_test(
         { device_uuid = mock_zwave_device1.id, capability_id = "switchLevel", capability_attr_id = "level" }
       }
     },
+  },
+  {
+     min_api_version = 14
   }
 )
 
@@ -137,6 +142,9 @@ test.register_message_test(
         { device_uuid = mock_zwave_device1.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 14
   }
 )
 
@@ -177,6 +185,9 @@ test.register_message_test(
         { device_uuid = mock_zwave_device1.id, capability_id = "switchLevel", capability_attr_id = "level" }
       }
     },
+  },
+  {
+     min_api_version = 14
   }
 )
 
@@ -203,7 +214,10 @@ test.register_coroutine_test(
         Basic:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.register_coroutine_test(
@@ -229,7 +243,10 @@ test.register_coroutine_test(
         Basic:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 local level = 49
@@ -256,7 +273,10 @@ test.register_coroutine_test(
         Basic:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 14
+  }
 )
 
 test.run_registered_tests()

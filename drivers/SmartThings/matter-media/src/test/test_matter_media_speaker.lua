@@ -124,6 +124,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.audioMute.mute.muted())
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -162,6 +165,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_device, 10)
       }
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -205,6 +211,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.audioVolume.volume(20))
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -324,6 +333,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.audioVolume.volume(20))
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -352,6 +364,9 @@ test.register_message_test(
         refresh_commands(mock_device)
       }
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 test.run_registered_tests()

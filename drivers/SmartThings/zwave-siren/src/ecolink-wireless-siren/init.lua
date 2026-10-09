@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -20,18 +10,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
-local ECOLINK_WIRELESS_SIREN_FINGERPRINTS = {
-  { manufacturerId = 0x014A, productType = 0x0005, productId = 0x000A }, -- Ecolink Siren
-}
 
-local function can_handle_ecolink_wireless_siren(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ECOLINK_WIRELESS_SIREN_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function basic_set_handler(driver, device, cmd)
   local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
@@ -103,7 +82,7 @@ local ecolink_wireless_siren = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = can_handle_ecolink_wireless_siren,
+  can_handle = require("ecolink-wireless-siren.can_handle"),
 }
 
 return ecolink_wireless_siren

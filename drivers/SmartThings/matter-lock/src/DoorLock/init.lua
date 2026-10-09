@@ -1,3 +1,7 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 local cluster_base = require "st.matter.cluster_base"
 local DoorLockServerAttributes = require "DoorLock.server.attributes"
 local DoorLockServerCommands = require "DoorLock.server.commands"

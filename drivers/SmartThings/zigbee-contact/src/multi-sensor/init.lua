@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
@@ -18,23 +9,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local contactSensor_defaults = require "st.zigbee.defaults.contactSensor_defaults"
 local capabilities = require "st.capabilities"
 
-local MULTI_SENSOR_FINGERPRINTS = {
-  { mfr = "CentraLite", model = "3320" },
-  { mfr = "CentraLite", model = "3321" },
-  { mfr = "CentraLite", model = "3321-S" },
-  { mfr = "SmartThings", model = "multiv4" },
-  { mfr = "Samjin", model = "multi" },
-  { mfr = "Third Reality, Inc", model = "3RVS01031Z" }
-}
 
-local function can_handle_zigbee_multi_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(MULTI_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function multi_sensor_report_handler(driver, device, zb_rx)
   local x, y, z
@@ -98,12 +73,7 @@ local multi_sensor = {
       }
     }
   },
-  sub_drivers = {
-    require("multi-sensor/smartthings-multi"),
-    require("multi-sensor/samjin-multi"),
-    require("multi-sensor/centralite-multi"),
-    require("multi-sensor/thirdreality-multi")
-  },
-  can_handle = can_handle_zigbee_multi_sensor
+  sub_drivers = require("multi-sensor.sub_drivers"),
+  can_handle = require("multi-sensor.can_handle"),
 }
 return multi_sensor

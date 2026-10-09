@@ -45,22 +45,35 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local cluster_subscribe_list = {
-  clusters.ValveConfigurationAndControl.attributes.CurrentState,
-  clusters.ValveConfigurationAndControl.attributes.CurrentLevel
-}
-
 local function test_init()
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Device should be added with correct subscription and profile",
+  function()
+    local cluster_subscribe_list = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentState,
+      clusters.ValveConfigurationAndControl.attributes.CurrentLevel
+    }
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_device))
+      end
+    end
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ profile = "water-valve-level" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    min_api_version = 15
+  }
+)
 
 test.register_message_test(
   "Open command should send the appropriate commands",
@@ -81,6 +94,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -103,6 +119,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -124,13 +143,7 @@ test.register_message_test(
         mock_device.id,
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1, nil, 25)
       }
-    }
-  }
-)
-
-test.register_message_test(
-  "Set level command should send the appropriate commands",
-  {
+    },
     {
       channel = "capability",
       direction = "receive",
@@ -147,6 +160,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -166,12 +182,6 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.closed())
     },
-  }
-)
-
-test.register_message_test(
-  "Current state reports should generate appropriate events",
-  {
     {
       channel = "matter",
       direction = "receive",
@@ -185,12 +195,6 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
-  }
-)
-
-test.register_message_test(
-  "Current state reports should generate appropriate events",
-  {
     {
       channel = "matter",
       direction = "receive",
@@ -204,6 +208,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 
@@ -223,6 +230,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.level.level(50))
     },
+  },
+  {
+     min_api_version = 15
   }
 )
 

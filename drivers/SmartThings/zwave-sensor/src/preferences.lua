@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -160,6 +150,19 @@ local devices = {
       sensitivity = {parameter_number = 158, size = 1},
       blindTime = {parameter_number = 159, size = 2},
       motionNotdetRepT = {parameter_number = 160, size = 2},
+    },
+  },
+  ZOOZ_ZSE42_WATER_LEAK = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x7000,
+      product_ids = 0xE002
+    },
+    PARAMETERS = {
+      ledIndicator = { parameter_number = 1, size = 1 },
+      leakAlertClearDelay = { parameter_number = 2, size = 4 },
+      batteryThreshold = { parameter_number = 3, size = 1 },
+      lowBatteryAlert = { parameter_number = 4, size = 1 },
     },
   },
 }

@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -10,9 +13,6 @@ local MFG_CODE = 0x115F
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.flood.agl02" }
-}
 
 local CONFIGURATIONS = {
   {
@@ -25,14 +25,6 @@ local CONFIGURATIONS = {
   }
 }
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.waterSensor.water.dry())
@@ -56,7 +48,7 @@ local aqara_contact_handler = {
     init = device_init,
     added = device_added
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_contact_handler
