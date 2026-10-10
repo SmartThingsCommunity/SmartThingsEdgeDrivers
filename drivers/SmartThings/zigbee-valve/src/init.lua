@@ -19,7 +19,6 @@ local function device_added(self, device)
 end
 
 local zigbee_valve_driver_template = {
-  health_check = false,
   supported_capabilities = {
     valve,
     battery,
