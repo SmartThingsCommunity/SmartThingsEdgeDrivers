@@ -420,6 +420,15 @@ local additional_subscribed_attributes = {
   clusters.Switch.server.events.MultiPressComplete
 }
 
+-- audioVolume is only added to the speaker/microphone components once a usable (max > min) volume
+-- range has been reported; seed a usable range directly so unrelated tests don't have to simulate it.
+local function seed_usable_volume_range(device)
+  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 0)
+  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.speaker, 200)
+  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 0)
+  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. camera_fields.profile_components.microphone, 200)
+end
+
 local expected_metadata = {
   optional_component_capabilities = {
     {
@@ -473,6 +482,7 @@ local expected_metadata = {
 }
 
 local function update_device_profile()
+  seed_usable_volume_range(mock_device)
   test.socket.matter:__queue_receive({
     mock_device.id,
     clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
@@ -712,6 +722,7 @@ end
 test.register_coroutine_test(
   "Software version change should trigger camera reprofiling when camera endpoint is present",
   function()
+    seed_usable_volume_range(mock_device)
     test.socket.device_lifecycle:__queue_receive(
       mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })
     )
@@ -959,6 +970,293 @@ test.register_coroutine_test(
       end
     end
     assert(found, "cameraPrivacyMode should be added to the profile based on HardPrivacyModeOn presence alone")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+local function build_fake_device_with_volume_ranges(raw_levels)
+  return {
+    profile = { components = {} },
+    endpoints = {
+      {
+        endpoint_id = CAMERA_EP,
+        device_types = {
+          {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+        },
+        clusters = {
+          {
+            cluster_id = clusters.CameraAvStreamManagement.ID,
+            feature_map = clusters.CameraAvStreamManagement.types.Feature.AUDIO |
+              clusters.CameraAvStreamManagement.types.Feature.SPEAKER,
+            cluster_type = "SERVER"
+          }
+        }
+      }
+    },
+    get_field = function(_, field) return raw_levels[field] end,
+    get_endpoints = function() return {} end,
+    supports_capability = function() return false end,
+    try_update_metadata = function(self, metadata) self.updated_metadata = metadata end,
+  }
+end
+
+local function component_capabilities(updated_metadata, component_name)
+  for _, component in ipairs(updated_metadata.optional_component_capabilities) do
+    if component[1] == component_name then
+      return component[2]
+    end
+  end
+  return {}
+end
+
+local function list_contains(list, value)
+  for _, v in ipairs(list) do
+    if v == value then return true end
+  end
+  return false
+end
+
+test.register_coroutine_test(
+  "audioVolume should be excluded from speaker and microphone when the volume range is unusable or unknown",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    -- microphone reports an unusable range (min >= max); speaker hasn't reported a range at all yet
+    local fake_device = build_fake_device_with_volume_ranges({
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 100,
+    })
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(fake_device.updated_metadata ~= nil, "profile update should be requested")
+    local speaker_capabilities = component_capabilities(fake_device.updated_metadata, "speaker")
+    local microphone_capabilities = component_capabilities(fake_device.updated_metadata, "microphone")
+
+    assert(list_contains(speaker_capabilities, capabilities.audioMute.ID), "audioMute should still be present on speaker")
+    assert(not list_contains(speaker_capabilities, capabilities.audioVolume.ID), "audioVolume should be excluded from speaker when its range is unknown")
+    assert(list_contains(microphone_capabilities, capabilities.audioMute.ID), "audioMute should still be present on microphone")
+    assert(not list_contains(microphone_capabilities, capabilities.audioVolume.ID), "audioVolume should be excluded from microphone when min >= max")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "audioVolume should be included on speaker and microphone when the volume range is usable",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local fake_device = build_fake_device_with_volume_ranges({
+      [camera_fields.MIN_VOLUME_LEVEL .. "_speaker"] = 0,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_speaker"] = 200,
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 0,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 200,
+    })
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(fake_device.updated_metadata ~= nil, "profile update should be requested")
+    local speaker_capabilities = component_capabilities(fake_device.updated_metadata, "speaker")
+    local microphone_capabilities = component_capabilities(fake_device.updated_metadata, "microphone")
+
+    assert(list_contains(speaker_capabilities, capabilities.audioVolume.ID), "audioVolume should be included on speaker when max > min")
+    assert(list_contains(microphone_capabilities, capabilities.audioVolume.ID), "audioVolume should be included on microphone when max > min")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "audioVolume should be preserved on a component whose volume range isn't fully known yet",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    -- Speaker already has audioVolume from a prior match; its raw min/max aren't in raw_levels (nil),
+    -- so it should be carried over as-is rather than being dropped for lack of information.
+    local existing_components = {
+      speaker = { capabilities = { audioVolume = { id = capabilities.audioVolume.ID } } }
+    }
+    local raw_levels = {
+      [camera_fields.MIN_VOLUME_LEVEL .. "_microphone"] = 100,
+      [camera_fields.MAX_VOLUME_LEVEL .. "_microphone"] = 100, -- unusable; forces a real profile change so we can inspect it
+    }
+    local fake_device = {
+      profile = { components = existing_components },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          },
+          clusters = {
+            {
+              cluster_id = clusters.CameraAvStreamManagement.ID,
+              feature_map = clusters.CameraAvStreamManagement.types.Feature.AUDIO |
+                clusters.CameraAvStreamManagement.types.Feature.SPEAKER,
+              cluster_type = "SERVER"
+            }
+          }
+        }
+      },
+      get_field = function(_, field) return raw_levels[field] end,
+      get_endpoints = function() return {} end,
+      supports_capability = function(_, capability, component)
+        local comp = existing_components[component]
+        if not comp then return false end
+        for _, cap in pairs(comp.capabilities) do
+          if cap.id == capability.ID then return true end
+        end
+        return false
+      end,
+      try_update_metadata = function(self, metadata) self.updated_metadata = metadata end,
+    }
+
+    camera_cfg.match_profile(fake_device)
+
+    assert(fake_device.updated_metadata ~= nil, "profile update should be requested")
+    local speaker_capabilities = component_capabilities(fake_device.updated_metadata, "speaker")
+    local microphone_capabilities = component_capabilities(fake_device.updated_metadata, "microphone")
+
+    assert(list_contains(speaker_capabilities, capabilities.audioVolume.ID), "audioVolume should be preserved on speaker while its range is unknown")
+    assert(list_contains(microphone_capabilities, capabilities.audioMute.ID), "audioMute should still be present on microphone")
+    assert(not list_contains(microphone_capabilities, capabilities.audioVolume.ID), "audioVolume should be excluded from microphone when min >= max")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Speaker audioVolume should be removed from the profile when its volume range becomes unusable",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.server.attributes.SpeakerMaxLevel:build_test_report_data(mock_device, CAMERA_EP, 0)
+    })
+
+    local updated_expected_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
+            "webrtc", "motionSensor", "sounds" }
+        },
+        { "statusLed",
+          { "switch", "mode" }
+        },
+        { "speaker",
+          { "audioMute" } -- audioVolume removed: reported max (0) is no longer greater than the known min (0)
+        },
+        { "microphone",
+          { "audioMute", "audioVolume" }
+        },
+        { "doorbell",
+          { "button" }
+        }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(updated_expected_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Speaker/Microphone volume range attributes should stay subscribed even when audioVolume isn't granted yet",
+  function()
+    -- Fresh pairing: no volume range has been reported yet, so audioVolume shouldn't be granted on
+    -- the very first profile match.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      })
+    })
+    local first_pass_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
+            "webrtc", "motionSensor", "sounds" }
+        },
+        { "statusLed", { "switch", "mode" } },
+        { "speaker", { "audioMute" } },
+        { "microphone", { "audioMute" } },
+        { "doorbell", { "button" } }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(first_pass_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+    test.wait_for_events()
+
+    local first_pass_profile = t_utils.get_profile_definition(
+      "camera.yml", {enabled_optional_capabilities = first_pass_metadata.optional_component_capabilities}
+    )
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = first_pass_profile }))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.webrtc.supportedFeatures(
+        {audio="sendrecv", bundle=true, order="audio/video", supportTrickleICE=true, turnSource="player", video="recvonly"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
+        {"pan", "panRange", "tilt", "tiltRange", "zoom", "zoomRange", "presets", "maxPresets"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.supportedFeatures(
+        {"triggerAugmentation", "perZoneSensitivity"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.localMediaStorage.supportedAttributes(
+        {"localVideoRecording"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.audioRecording.audioRecording("enabled"))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
+        {"liveStreaming", "clipRecording", "perStreamViewports", "watermark", "onScreenDisplay"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
+        {"softRecordingPrivacyMode", "softLivestreamPrivacyMode"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
+        {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
+      ))
+    )
+
+    -- audioVolume isn't active yet, so its current-value attributes shouldn't be (re-)subscribed, but
+    -- the min/max discovery attributes -- now bundled with audioMute -- must still be. Without that,
+    -- the driver could never learn the range needed to decide whether audioVolume belongs at all.
+    for _, attr in ipairs(additional_subscribed_attributes) do
+      if attr ~= clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel and
+         attr ~= clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel then
+        subscribe_request:merge(attr:subscribe(mock_device))
+      end
+    end
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   end,
   {
     min_api_version = 14
@@ -1276,6 +1574,56 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioVolume.volume(32))
       )
     end
+  end,
+  {
+     min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "A volume level report racing a zero-width range update should not divide by zero",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    -- Narrow the range to min == max. This drops audioVolume from the profile, but the internal
+    -- MAX/MIN_VOLUME_LEVEL fields used for normalization are updated synchronously, before the
+    -- platform round-trips the narrowed profile back down.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.server.attributes.SpeakerMaxLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.server.attributes.SpeakerMinLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    local updated_expected_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
+            "webrtc", "motionSensor", "sounds" }
+        },
+        { "statusLed", { "switch", "mode" } },
+        { "speaker", { "audioMute" } }, -- audioVolume dropped: the range is now zero-width (100 == 100)
+        { "microphone", { "audioMute", "audioVolume" } },
+        { "doorbell", { "button" } }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(updated_expected_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+    test.wait_for_events()
+
+    -- A late SpeakerVolumeLevel report can still arrive before the narrowed profile comes back down.
+    -- It should report a fixed value instead of dividing by (max - min) == 0.
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel:build_test_report_data(mock_device, CAMERA_EP, 100)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("speaker", capabilities.audioVolume.volume(0))
+    )
   end,
   {
      min_api_version = 14
