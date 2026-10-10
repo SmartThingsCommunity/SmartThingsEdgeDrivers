@@ -1,7 +1,6 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
--- Mock out globals
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
@@ -32,7 +31,6 @@ end
 
 test.set_test_init_function(test_init)
 
--- OnOff(on) → valve.open
 test.register_message_test(
     "OnOff(on) should set valve to open",
     {
@@ -49,7 +47,6 @@ test.register_message_test(
     }
 )
 
--- OnOff(off) → valve.closed
 test.register_message_test(
     "OnOff(off) should set valve to closed",
     {
@@ -85,7 +82,6 @@ test.register_message_test(
     }
 )
 
--- Battery percentage
 test.register_message_test(
     "Battery percentage report should be handled",
     {
@@ -102,7 +98,6 @@ test.register_message_test(
     }
 )
 
--- init lifecycle
 test.register_coroutine_test(
     "Init lifecycle should use default battery percentage reporting configuration",
     function ()
@@ -137,7 +132,6 @@ test.register_coroutine_test(
     end
 )
 
--- valve.open → OnOff.On
 test.register_message_test(
     "Capability(valve) command(open) should send OnOff.On",
     {
@@ -154,7 +148,6 @@ test.register_message_test(
     }
 )
 
--- valve.close → OnOff.Off
 test.register_message_test(
     "Capability(valve) command(close) should send OnOff.Off",
     {
@@ -171,7 +164,6 @@ test.register_message_test(
     }
 )
 
--- doConfigure lifecycle
 test.register_coroutine_test(
     "doConfigure lifecycle should configure device",
     function ()
@@ -205,7 +197,6 @@ test.register_coroutine_test(
     end
 )
 
--- Refresh
 test.register_message_test(
     "Refresh should read all necessary attributes",
     {
@@ -233,7 +224,6 @@ test.register_message_test(
     }
 )
 
--- Device added
 test.register_message_test(
     "Device added event should refresh device states",
     {
