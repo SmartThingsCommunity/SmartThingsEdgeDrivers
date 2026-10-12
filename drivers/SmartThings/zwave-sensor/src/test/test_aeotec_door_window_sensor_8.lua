@@ -252,7 +252,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Temperature reports should be handled",
+  "Temperature reports should be handled (C)",
   {
     {
       channel = "zwave",
@@ -268,6 +268,14 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
     },
+     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
+    }
   },
   {
     min_api_version = 17
@@ -315,53 +323,6 @@ test.register_message_test(
       message = mock_sensor:generate_test_message("main", capabilities.dewPoint.dewpoint({value = 8, unit = "C"}))
     }
   },
-  {
-    min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Three Axis reports are converted, clamped and combined",
-  function()
-    local function receive_axis(sensor_type, value)
-      test.socket.zwave:__queue_receive({
-        mock_sensor.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          SensorMultilevel:Report({
-            sensor_type = sensor_type,
-            sensor_value = value,
-            scale = 0
-          })
-        )
-      })
-    end
-
-    local function expect_vector(x, y, z)
-      test.socket.capability:__expect_send(
-        mock_sensor:generate_test_message(
-          "main",
-          capabilities.threeAxis.threeAxis({
-            value = { x, y, z },
-            unit = "mG"
-          })
-        )
-      )
-    end
-
-    -- X: 9,81 m/s² -> 1000 mG. Noch kein vollständiger Vektor.
-    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_X_AXIS, 9.81)
-
-    -- Y: -9,81 m/s² -> -1000 mG. Noch kein vollständiger Vektor.
-    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS, -9.81)
-
-    -- Z: 120 m/s² -> über 10000 mG -> auf 10000 begrenzt.
-    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS, 120)
-    expect_vector(1000, -1000, 10000)
-
-    -- Ein neuer X-Report sendet einen Vektor mit den zuletzt bekannten Y/Z.
-    receive_axis(SensorMultilevel.sensor_type.ACCELERATION_X_AXIS, -120)
-    expect_vector(-10000, -1000, 10000)
-  end,
   {
     min_api_version = 17
   }

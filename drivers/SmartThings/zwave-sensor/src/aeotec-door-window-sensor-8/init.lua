@@ -11,19 +11,11 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 
-local utils = require "st.utils"
-
-local TemperatureDefaults = require "st.zwave.defaults.temperatureMeasurement"
-local HumidityDefaults = require "st.zwave.defaults.relativeHumidityMeasurement"
-local DewPointDefaults = require "st.zwave.defaults.dewPoint"
-
 local MoldHealthConcern = capabilities.moldHealthConcern
 local ContactSensor = capabilities.contactSensor
 local PowerSource = capabilities.powerSource
 local ThreeAxis = capabilities.threeAxis
 local TamperAlert = capabilities.tamperAlert
-
-local ACCELERATION_VECTOR_FIELD = "accelerationVector"
 
 local function added_handler(driver, device)
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "unhealthy"}))
@@ -83,63 +75,6 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
-local function custom_three_axis_report_handler(self, device, cmd)
-  local sensor_type = cmd.args.sensor_type
-  local axis
-
-  if sensor_type == SensorMultilevel.sensor_type.ACCELERATION_X_AXIS then
-    axis = "X"
-  elseif sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS then
-    axis = "Y"
-  elseif sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS then
-    axis = "Z"
-  else
-    return
-  end
-
-  local value = cmd.args.sensor_value
-  if value == nil then
-    return
-  end
-
-  -- Z-Wave: m/s²; SmartThings threeAxis: mG
-  local mg = utils.round(value / 9.81 * 1000)
-  mg = math.max(-10000, math.min(10000, mg))
-
-  local vector = device:get_field(ACCELERATION_VECTOR_FIELD) or {}
-  vector[axis] = mg
-  device:set_field(ACCELERATION_VECTOR_FIELD, vector, { persist = true })
-
-  if vector.X ~= nil and vector.Y ~= nil and vector.Z ~= nil then
-    device:emit_event(ThreeAxis.threeAxis({
-      value = { vector.X, vector.Y, vector.Z },
-      unit = "mG"
-    }))
-  end
-end
-
-local function sensor_multilevel_report_handler(self, device, cmd)
-  local sensor_type = cmd.args.sensor_type
-
-  if sensor_type == SensorMultilevel.sensor_type.TEMPERATURE then
-    TemperatureDefaults.zwave_handlers[cc.SENSOR_MULTILEVEL][SensorMultilevel.REPORT](
-      self, device, cmd
-    )
-  elseif sensor_type == SensorMultilevel.sensor_type.RELATIVE_HUMIDITY then
-    HumidityDefaults.zwave_handlers[cc.SENSOR_MULTILEVEL][SensorMultilevel.REPORT](
-      self, device, cmd
-    )
-  elseif sensor_type == SensorMultilevel.sensor_type.DEW_POINT then
-    DewPointDefaults.zwave_handlers[cc.SENSOR_MULTILEVEL][SensorMultilevel.REPORT](
-      self, device, cmd
-    )
-  elseif sensor_type == SensorMultilevel.sensor_type.ACCELERATION_X_AXIS
-      or sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS
-      or sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS then
-    custom_three_axis_report_handler(self, device, cmd)
-  end
-end
-
 local aeotec_door_window_sensor_8 = {
   supported_capabilities = {
     capabilities.powerSource
@@ -148,9 +83,6 @@ local aeotec_door_window_sensor_8 = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
     },
-    [cc.SENSOR_MULTILEVEL] = {
-      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
-    }
   },
   lifecycle_handlers = {
     added = added_handler

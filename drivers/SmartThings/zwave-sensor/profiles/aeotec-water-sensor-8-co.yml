@@ -90,7 +90,7 @@ preferences:
       default: 0
   - name: "parameter10"
     title: "Notification Type"
-    description: "Set the notification type."
+    description: "Set the notification type. Remove and re-add the device for the change to take effect."
     required: false
     preferenceType: enumeration
     definition:

@@ -441,14 +441,34 @@ for param_value, data in pairs(DEVICE_PROFILES) do
           profile = profile
         })
       )
+    end,
+    {
+      min_api_version = 17
+    }
+  )
+
+  test.register_coroutine_test(
+    "infoChanged emits initial events for profile " .. profile,
+    function()
+      mock_device:set_field("active_profile", profile)
+
+      test.socket.device_lifecycle:__queue_receive(
+        mock_device:generate_info_changed({})
+      )
 
       if profile == "aeotec-water-sensor-8-glass-break" then
         test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.soundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
+          mock_device:generate_test_message(
+            "main",
+            capabilities.soundDetection.supportedSoundTypes({ "noSound", "glassBreaking" })
+          )
         )
       elseif profile == "aeotec-water-sensor-8-co2" then
         test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
+          mock_device:generate_test_message(
+            "main",
+            capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({ "good", "unhealthy" })
+          )
         )
       end
 

@@ -40,27 +40,31 @@ local function set_profile(device, profile)
   if current ~= profile.profile then
     device:try_update_metadata({ profile = profile.profile })
     device:set_field("active_profile", profile.profile, {persist = true})
+  end
+end
 
-    -- Set supported modes and default value based on profile
-    if profile.profile == "aeotec-water-sensor-8" then
-      device:emit_event(WaterSensor.water.dry())
-    elseif profile.profile == "aeotec-water-sensor-8-glass-break" then
-      device:emit_event(SoundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
-      device:emit_event(SoundDetection.soundDetected.noSound())
-    elseif profile.profile == "aeotec-water-sensor-8-co2" then
-      device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
-      device:emit_event(CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
-    elseif profile.profile == "aeotec-water-sensor-8-co" then
-      device:emit_event(CarbonMonoxideDetector.carbonMonoxide.clear())
-    elseif profile.profile == "aeotec-water-sensor-8-contact" then
-      device:emit_event(ContactSensor.contact.closed())
-    elseif profile.profile == "aeotec-water-sensor-8-motion" then
-      device:emit_event(MotionSensor.motion.inactive())
-    elseif profile.profile == "aeotec-water-sensor-8-panic" then
-      device:emit_event(PanicAlarm.panicAlarm.clear())
-    elseif profile.profile == "aeotec-water-sensor-8-smoke" then
-      device:emit_event(SmokeDetector.smoke.clear())
-    end
+local function info_changed_handler(driver, device, event, args) 
+  local profile = device:get_field("active_profile")
+
+  -- Set supported modes and default value based on profile
+  if profile == "aeotec-water-sensor-8" then
+    device:emit_event(WaterSensor.water.dry())
+  elseif profile == "aeotec-water-sensor-8-glass-break" then
+    device:emit_event(SoundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
+    device:emit_event(SoundDetection.soundDetected.noSound())
+  elseif profile == "aeotec-water-sensor-8-co2" then
+    device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
+    device:emit_event(CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
+  elseif profile == "aeotec-water-sensor-8-co" then
+    device:emit_event(CarbonMonoxideDetector.carbonMonoxide.clear())
+  elseif profile == "aeotec-water-sensor-8-contact" then
+    device:emit_event(ContactSensor.contact.closed())
+  elseif profile == "aeotec-water-sensor-8-motion" then
+    device:emit_event(MotionSensor.motion.inactive())
+  elseif profile == "aeotec-water-sensor-8-panic" then
+    device:emit_event(PanicAlarm.panicAlarm.clear())
+  elseif profile == "aeotec-water-sensor-8-smoke" then
+    device:emit_event(SmokeDetector.smoke.clear())
   end
 end
 
@@ -217,6 +221,7 @@ local aeotec_water_sensor_8 = {
   },
   lifecycle_handlers = {
     added = added_handler,
+    infoChanged = info_changed_handler
   },
   NAME = "Aeotec Water Sensor  8",
   can_handle = require("aeotec-water-sensor-8.can_handle"),
