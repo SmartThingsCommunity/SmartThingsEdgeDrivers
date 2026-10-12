@@ -278,7 +278,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -302,7 +302,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_battery,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -325,7 +325,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -358,7 +358,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -383,7 +383,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.held({state_change = true})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -408,7 +408,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -432,7 +432,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -472,7 +472,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("button5", button_attr.double({state_change = true})))
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -500,7 +500,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -528,7 +528,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -566,7 +566,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -605,7 +605,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -653,7 +653,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -677,7 +677,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -701,7 +701,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -725,7 +725,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -764,7 +764,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -803,7 +803,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -827,7 +827,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -871,7 +871,7 @@ test.register_message_test(
     -- no double event
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -929,7 +929,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -951,7 +951,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -972,7 +972,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "5-button-batteryLevel" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -993,7 +993,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "5-button-battery" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

@@ -458,7 +458,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_dishwasher,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -500,7 +500,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_dishwasher,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -542,7 +542,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_washer,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -584,7 +584,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_washer,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -626,7 +626,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_dryer,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -668,7 +668,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_dryer,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -710,7 +710,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_oven,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -752,7 +752,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_oven,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -794,7 +794,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_refrigerator,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -836,7 +836,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_refrigerator,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -878,7 +878,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_refrigerator,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -920,7 +920,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_refrigerator,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

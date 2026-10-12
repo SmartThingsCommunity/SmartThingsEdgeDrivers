@@ -78,7 +78,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 test.register_coroutine_test(
   "init should cause device to subscribe to all appropriate clusters", function()
@@ -109,7 +112,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
    end,
    {
-     min_api_version = 17
+     min_api_version = 15
    }
 )
 
@@ -131,7 +134,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -166,7 +169,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -245,7 +248,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_light_level_motion,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

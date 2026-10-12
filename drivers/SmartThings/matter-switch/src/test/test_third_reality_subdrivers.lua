@@ -95,6 +95,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.doorControl.door.open())
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -114,6 +117,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.doorControl.door.closed())
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -143,6 +149,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_device, 1)
       }
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -170,6 +179,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -192,6 +204,9 @@ test.register_message_test(
       -- BatPercentRemaining is in units of 0.5%, so 200 = 100%
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -212,6 +227,9 @@ test.register_message_test(
       -- 150 * 0.5 = 75%
       message = mock_device:generate_test_message("main", capabilities.battery.battery(75))
     }
+  },
+  {
+    min_api_version = 15
   }
 )
 
@@ -224,7 +242,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "garage-door-battery"})
     mock_device:expect_metadata_update({provisioning_state = "PROVISIONED"})
   end,
-  {min_api_version = 17}
+  {min_api_version = 15}
 )
 
 test.register_coroutine_test(
@@ -234,7 +252,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "garage-door-battery"})
     mock_device:expect_metadata_update({provisioning_state = "PROVISIONED"})
   end,
-  {min_api_version = 17}
+  {min_api_version = 15}
 )
 
 
@@ -298,6 +316,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = function() test.mock_device.add_test_device(mock_device_misprofiled) end,
+    min_api_version = 15
   }
 )
 
@@ -525,7 +544,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mk1,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

@@ -63,6 +63,12 @@ def run_test(test_file):
     else:
       successes += 1
     test_cases.append(test_case)
+  if error and error != "" and len(test_cases) == 0:
+    failure_output += "\t{} ERROR: test file failed to run\n".format(test_suite_name)
+    error_case = junit_xml.TestCase("(file error) {}".format(test_suite_name))
+    error_case.add_error_info("ERROR", error)
+    test_cases.append(error_case)
+    failures += 1
   test_suite.test_cases = test_cases
   return (test_suite, successes, failures, failure_output)
 

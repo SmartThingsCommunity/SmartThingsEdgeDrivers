@@ -88,7 +88,7 @@ test.register_coroutine_test(
     mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -116,7 +116,7 @@ test.register_coroutine_test(
     mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-batteryLevel" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -142,7 +142,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

@@ -1,6 +1,14 @@
 -- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local version = require "version"
+local test = require "integration_test"
+if version.api < 17 then
+  test.run_registered_tests()
+  os.exit(0)
+end
+
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"

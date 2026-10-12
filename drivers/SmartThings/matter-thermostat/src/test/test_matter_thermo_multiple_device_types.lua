@@ -240,7 +240,7 @@ test.register_coroutine_test(
       get_subscribe_request(mock_device, new_cluster_subscribe_list))
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -252,7 +252,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_disorder_endpoints,
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -286,7 +286,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 

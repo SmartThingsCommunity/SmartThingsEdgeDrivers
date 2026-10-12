@@ -108,7 +108,7 @@ zigbeeManufacturer:
     deviceLabel: Sengled Water Leak Sensor
     manufacturer: sengled
     model: E1L-G7K
-    deviceProfileName: water-battery 
+    deviceProfileName: water-battery
   - id: NEO/NAS_WS11
     deviceLabel: NEO Water Leak Sensor
     manufacturer: NEO

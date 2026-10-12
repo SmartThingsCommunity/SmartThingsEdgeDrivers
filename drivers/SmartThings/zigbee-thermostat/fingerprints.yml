@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "SONOFF/TRV-ZBT"
+    deviceLabel: SONOFF TRV-ZBT
+    manufacturer: SONOFF
+    model: TRV-ZBT
+    deviceProfileName: thermostat-sonoff-trv-zbt
   - id: "Vimar/02973-smart-wheel-thermostat"
     deviceLabel: Vimar Smart Thermostat
     manufacturer: Vimar

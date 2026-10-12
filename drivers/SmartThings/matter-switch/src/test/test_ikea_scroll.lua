@@ -233,7 +233,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -347,7 +347,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -461,7 +461,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -512,7 +512,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -563,7 +563,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -614,7 +614,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -665,7 +665,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -699,7 +699,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -733,7 +733,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -747,7 +747,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_ikea_scroll.id, read_request})
     test.wait_for_events()
   end
-)
+,
+    {
+      min_api_version = 15
+    })
 
 -- Coroutine tests for sensitivity preference logic.
 -- KNOB_SENSITIVITY_FACTORS = {0.5, 1.0, 2.0}, indexed by the preference value.
@@ -797,7 +800,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -845,7 +848,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -893,7 +896,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 
@@ -941,7 +944,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 17
+    min_api_version = 15
   }
 )
 

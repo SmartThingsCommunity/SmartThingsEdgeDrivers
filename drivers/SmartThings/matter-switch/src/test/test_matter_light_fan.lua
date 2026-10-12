@@ -157,7 +157,10 @@ test.register_coroutine_test(
     )
     test.socket.matter:__expect_send({mock_device_capabilities_disabled.id, subscribe_request})
   end,
-  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+  {
+    test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end,
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -165,7 +168,10 @@ test.register_coroutine_test(
     -- simulate no actual change
     test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed({}))
   end,
-  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+  {
+    test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end,
+    min_api_version = 15
+  }
 )
 
 local FanMode = clusters.FanControl.attributes.FanMode
@@ -213,7 +219,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -249,7 +255,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -274,7 +280,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
@@ -299,7 +305,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 17
+     min_api_version = 15
   }
 )
 
