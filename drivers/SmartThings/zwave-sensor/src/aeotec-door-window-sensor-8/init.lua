@@ -76,9 +76,6 @@ local function notification_report_handler(self, device, cmd)
 end
 
 local aeotec_door_window_sensor_8 = {
-  supported_capabilities = {
-    capabilities.powerSource
-  },
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler

@@ -10,6 +10,8 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
+local preferences = require "preferences"
+
 
 local MoldHealthConcern = capabilities.moldHealthConcern
 local CarbonDioxideHealthConcern = capabilities.carbonDioxideHealthConcern
@@ -43,28 +45,37 @@ local function set_profile(device, profile)
   end
 end
 
-local function info_changed_handler(driver, device, event, args) 
-  local profile = device:get_field("active_profile")
+local function info_changed_handler(driver, device, event, args)
+  preferences.update_preferences(driver, device, args)
 
-  -- Set supported modes and default value based on profile
-  if profile == "aeotec-water-sensor-8" then
-    device:emit_event(WaterSensor.water.dry())
-  elseif profile == "aeotec-water-sensor-8-glass-break" then
-    device:emit_event(SoundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
-    device:emit_event(SoundDetection.soundDetected.noSound())
-  elseif profile == "aeotec-water-sensor-8-co2" then
-    device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
-    device:emit_event(CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
-  elseif profile == "aeotec-water-sensor-8-co" then
-    device:emit_event(CarbonMonoxideDetector.carbonMonoxide.clear())
-  elseif profile == "aeotec-water-sensor-8-contact" then
-    device:emit_event(ContactSensor.contact.closed())
-  elseif profile == "aeotec-water-sensor-8-motion" then
-    device:emit_event(MotionSensor.motion.inactive())
-  elseif profile == "aeotec-water-sensor-8-panic" then
-    device:emit_event(PanicAlarm.panicAlarm.clear())
-  elseif profile == "aeotec-water-sensor-8-smoke" then
-    device:emit_event(SmokeDetector.smoke.clear())
+  local old_profile_id = args.old_st_store.profile.id
+  local new_profile_id = device.st_store.profile.id
+
+  if old_profile_id ~= new_profile_id then
+    local profile = device:get_field("active_profile")
+    
+    -- Set supported modes and default value based on profile
+    if profile == "aeotec-water-sensor-8" then
+      device:emit_event(WaterSensor.water.dry())
+    elseif profile == "aeotec-water-sensor-8-glass-break" then
+      device:emit_event(SoundDetection.supportedSoundTypes({"noSound", "glassBreaking"}))
+      device:emit_event(SoundDetection.soundDetected.noSound())
+    elseif profile == "aeotec-water-sensor-8-co2" then
+      device:emit_event(CarbonDioxideHealthConcern.supportedCarbonDioxideValues({"good", "unhealthy"}))
+      device:emit_event(CarbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
+    elseif profile == "aeotec-water-sensor-8-co" then
+      device:emit_event(CarbonMonoxideDetector.carbonMonoxide.clear())
+    elseif profile == "aeotec-water-sensor-8-contact" then
+      device:emit_event(ContactSensor.contact.closed())
+    elseif profile == "aeotec-water-sensor-8-motion" then
+      device:emit_event(MotionSensor.motion.inactive())
+    elseif profile == "aeotec-water-sensor-8-panic" then
+      device:emit_event(PanicAlarm.panicAlarm.clear())
+    elseif profile == "aeotec-water-sensor-8-smoke" then
+      device:emit_event(SmokeDetector.smoke.clear())
+    end
+
+    device:refresh()
   end
 end
 
@@ -96,7 +107,7 @@ local function notification_report_handler(self, device, cmd)
     -- TAMPER
     if cmd.args.event == Notification.event.home_security.STATE_IDLE and event_parameter == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
       event = TamperAlert.tamper.clear()
-    elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED and event_parameter == Notification.event.home_security.STATE_IDLE then
+    elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
       event = TamperAlert.tamper.detected()
     elseif active_profile == 'aeotec-water-sensor-8-motion' then -- MOTION
       if cmd.args.event == Notification.event.home_security.STATE_IDLE and event_parameter == Notification.event.home_security.MOTION_DETECTION then
@@ -204,13 +215,6 @@ local function configuration_report_handler(self, device, cmd)
 end
 
 local aeotec_water_sensor_8 = {
-  supported_capabilities = {
-    capabilities.powerSource,
-    capabilities.carbonMonoxideDetector,
-    capabilities.carbonDioxideHealthConcern,
-    capabilities.soundDetection,
-    capabilities.panicAlarm
-  },
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report_handler
