@@ -384,6 +384,28 @@ function HueDeviceBuilder:with_contact(rid, config)
   return self
 end
 
+--- Add a Hue room containing some of this fixture's lights.
+---
+--- Rooms are not discovered by the driver in tests (group scanning is disabled), so they are
+--- applied after init by calling `fixtures.seed_groups()` from within a test, which feeds Hue
+--- room resources through the driver's own `grouped_utils.group_add`.
+---
+--- @param rid string Hue resource ID for the room
+--- @param grouped_light_rid string resource ID of the room's grouped_light service
+--- @param light_rids string[] resource IDs of lights (added with `with_light`) in the room
+--- @param name string|nil room name (default "Test Room")
+--- @return HueDeviceBuilder self for chaining
+function HueDeviceBuilder:with_room(rid, grouped_light_rid, light_rids, name)
+  self.rooms = self.rooms or {}
+  table.insert(self.rooms, {
+    rid = rid,
+    grouped_light_rid = grouped_light_rid,
+    light_rids = light_rids,
+    name = name or "Test Room",
+  })
+  return self
+end
+
 --- Enable SSE support for this fixture.
 ---
 --- @return HueDeviceBuilder self for chaining
@@ -418,7 +440,9 @@ function HueDeviceBuilder:start()
     table.insert(mock_children, test.mock_device.build_test_lan_device(child_template))
   end
   
+  local driver_under_test = nil
   test.add_test_env_setup_func(function(driver)
+    driver_under_test = driver
     driver.datastore.bridge_netinfo = driver.datastore.bridge_netinfo or {}
     if self.sse_enabled then
       driver.datastore.bridge_netinfo[self.bridge_dni] = {
@@ -661,12 +685,41 @@ function HueDeviceBuilder:start()
     end
   end
   
+  local hue_device_id_by_rid = {}
+  for _, child_config in ipairs(self.children) do
+    hue_device_id_by_rid[child_config.rid] = child_config.state.hue_device_id
+  end
+
+  --- Apply the rooms declared with `with_room` to the bridge. Must be called from within a test
+  --- once the light children have been added (e.g. after `test.wait_for_events()`).
+  local function seed_groups()
+    local grouped_utils = require "utils.grouped_utils"
+    local bridge_device = driver_under_test:get_device_info(mock_bridge.id)
+    -- group_add expects the bridge's group list to already exist (normally set by a group scan).
+    bridge_device:set_field(Fields.GROUPS, {})
+    for _, room in ipairs(self.rooms or {}) do
+      local children = {}
+      for _, light_rid in ipairs(room.light_rids) do
+        table.insert(children, { rid = hue_device_id_by_rid[light_rid], rtype = "device" })
+      end
+      grouped_utils.group_add(driver_under_test, bridge_device, {
+        id = room.rid,
+        type = "room",
+        metadata = { name = room.name },
+        children = children,
+        services = { { rid = room.grouped_light_rid, rtype = "grouped_light" } },
+      })
+    end
+    return bridge_device:get_field(Fields.GROUPS)
+  end
+
   -- Return structured fixtures object
   return {
     bridge = mock_bridge,
     devices = mock_children,
     test_init = test_init,
-    configs = configs
+    configs = configs,
+    seed_groups = seed_groups,
   }
 end
 
