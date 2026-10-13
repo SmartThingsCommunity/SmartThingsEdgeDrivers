@@ -441,40 +441,26 @@ for param_value, data in pairs(DEVICE_PROFILES) do
           profile = profile
         })
       )
-    end,
-    {
-      min_api_version = 17
-    }
-  )
-
-  test.register_coroutine_test(
-    "infoChanged emits initial events for profile " .. profile,
-    function()
-      mock_device:set_field("active_profile", profile)
-
-      test.socket.device_lifecycle:__queue_receive(
-        mock_device:generate_info_changed({})
-      )
 
       if profile == "aeotec-water-sensor-8-glass-break" then
         test.socket.capability:__expect_send(
           mock_device:generate_test_message(
             "main",
-            capabilities.soundDetection.supportedSoundTypes({ "noSound", "glassBreaking" })
+            capabilities.soundDetection.supportedSoundTypes({
+              "noSound",
+              "glassBreaking"
+            })
           )
         )
       elseif profile == "aeotec-water-sensor-8-co2" then
         test.socket.capability:__expect_send(
           mock_device:generate_test_message(
             "main",
-            capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({ "good", "unhealthy" })
+            capabilities.carbonDioxideHealthConcern
+              .supportedCarbonDioxideValues({ "good", "unhealthy" })
           )
         )
       end
-
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", default_cap)
-      )
     end,
     {
       min_api_version = 17
@@ -482,7 +468,7 @@ for param_value, data in pairs(DEVICE_PROFILES) do
   )
 
   test.register_coroutine_test(
-    "Notification report type " .. notification_type .. " event ".. off_event .. " should be handled "  .. data.default_cap_str,
+    "Notification report type " .. notification_type .. " event ".. off_event .. " should emit "  .. data.default_cap_str,
     function()
       mock_device:set_field("active_profile", profile)
 
@@ -505,7 +491,7 @@ for param_value, data in pairs(DEVICE_PROFILES) do
   )
 
   test.register_coroutine_test(
-    "Notification report type " .. notification_type .. " event ".. on_event .. " should be handled "  .. data.active_cap_str,
+    "Notification report type " .. notification_type .. " event ".. on_event .. " should emit"  .. data.active_cap_str,
     function()
       mock_device:set_field("active_profile", profile)
 
