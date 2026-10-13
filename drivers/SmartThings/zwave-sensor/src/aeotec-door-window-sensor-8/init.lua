@@ -8,13 +8,10 @@ local cc = require "st.zwave.CommandClass"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 
 local MoldHealthConcern = capabilities.moldHealthConcern
 local ContactSensor = capabilities.contactSensor
 local PowerSource = capabilities.powerSource
-local ThreeAxis = capabilities.threeAxis
 local TamperAlert = capabilities.tamperAlert
 
 local function added_handler(driver, device)
