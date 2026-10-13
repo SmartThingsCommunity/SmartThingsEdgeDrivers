@@ -14,6 +14,7 @@ local read_attribute = require "st.zigbee.zcl.global_commands.read_attribute"
 local default_response = require "st.zigbee.zcl.global_commands.default_response"
 
 local OnOff = clusters.OnOff
+local PARENT_PROFILE = "ts0601-scene-switch-4-gang"
 local SWITCH_PROFILE = "ts0601-scene-switch-child"
 local SCENE_PROFILE = "ts0601-scene-switch-child-scene"
 local MODE_CLUSTER = 0xE001
@@ -45,6 +46,10 @@ local function mode_field(gang)
   return string.format("mode_gang_%d", gang)
 end
 
+local function pending_mode_field(gang)
+  return string.format("pending_mode_gang_%d", gang)
+end
+
 local function gang_mode(parent, gang)
   local mode = parent:get_field(mode_field(gang))
   if mode ~= nil then return mode end
@@ -56,8 +61,58 @@ local function gang_mode(parent, gang)
   return "switch"
 end
 
+local function switch_state_field(gang)
+  return string.format("switch_state_gang_%d", gang)
+end
+
+local function update_parent_switch(parent)
+  if not parent:supports_capability(capabilities.switch) then return end
+  local state = "off"
+  local unknown = false
+  for gang = 1, 4 do
+    if parent:get_field(pending_mode_field(gang)) ~= nil then
+      unknown = true
+    elseif gang_mode(parent, gang) ~= "scene" then
+      local gang_state = parent:get_field(switch_state_field(gang))
+      if gang_state == "on" then
+        state = "on"
+        break
+      end
+      if gang_state == nil then unknown = true end
+    end
+  end
+  -- An unknown relay cannot prove all relays are off. With no relay-mode gangs,
+  -- the aggregate is off and parent commands have no relay targets.
+  if state == "off" and unknown then return end
+  if parent:get_field("aggregate_switch_state") ~= state then
+    parent:emit_event(capabilities.switch.switch(state))
+    parent:set_field("aggregate_switch_state", state)
+  end
+end
+
+local function set_gang_mode(parent, gang, mode)
+  local previous = gang_mode(parent, gang)
+  local pending = parent:get_field(pending_mode_field(gang))
+  parent:set_field(mode_field(gang), mode, { persist = true })
+  parent:set_field(pending_mode_field(gang), nil)
+  if previous ~= mode or pending ~= nil or mode == "scene" then
+    -- Relay state from the previous mode must not survive a mode transition.
+    parent:set_field(switch_state_field(gang), nil)
+  end
+  update_parent_switch(parent)
+  return previous ~= mode or pending ~= nil
+end
+
 local function profile_for_mode(mode)
   return mode == "scene" and SCENE_PROFILE or SWITCH_PROFILE
+end
+
+local function ensure_parent_profile(parent)
+  if not parent:supports_capability(capabilities.switch)
+      or not parent:supports_capability(capabilities.button) then
+    -- Existing devices keep their cloud profile when a driver package updates.
+    parent:try_update_metadata({ profile = PARENT_PROFILE })
+  end
 end
 
 local function initialize_button(child)
@@ -81,17 +136,18 @@ local function ensure_children(driver, parent)
   for gang = 1, 4 do
     local child = get_child(parent, gang)
     local mode = gang_mode(parent, gang)
+    local profile_mode = parent:get_field(pending_mode_field(gang)) or mode
     if child == nil then
       driver:try_create_device({
         type = "EDGE_CHILD",
         parent_device_id = parent.id,
         parent_assigned_child_key = string.format("gang%d", gang),
         label = string.format("%s L%d", parent.label or "Zemismart KES606", gang),
-        profile = profile_for_mode(mode),
+        profile = profile_for_mode(profile_mode),
       })
     else
       parent:set_field(mode_field(gang), mode, { persist = true })
-      set_child_profile(child, mode)
+      set_child_profile(child, profile_mode)
     end
   end
 end
@@ -139,7 +195,7 @@ local function configure_enum(parent, cluster_id, attribute_id, gang)
 end
 
 local function read_gang(parent, gang)
-  if gang_mode(parent, gang) ~= "scene" then
+  if parent:get_field(pending_mode_field(gang)) == nil and gang_mode(parent, gang) ~= "scene" then
     parent:send(OnOff.attributes.OnOff:read(parent):to_endpoint(gang))
   end
   read_enum(parent, MODE_CLUSTER, MODE_ATTRIBUTE, gang)
@@ -161,20 +217,35 @@ end
 local function relay_command(device, on)
   local gang = child_gang(device)
   local parent = parent_from_device(device)
-  if gang == nil or parent == nil or gang_mode(parent, gang) == "scene" then return end
-  local command = on and OnOff.server.commands.On(parent) or OnOff.server.commands.Off(parent)
-  parent:send(command:to_endpoint(gang))
+  if parent == nil then return end
+  local first, last = gang, gang
+  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    first, last = 1, 4
+  elseif gang == nil then
+    return
+  end
+  for target = first, last do
+    if parent:get_field(pending_mode_field(target)) == nil and gang_mode(parent, target) ~= "scene" then
+      local command = on and OnOff.server.commands.On(parent) or OnOff.server.commands.Off(parent)
+      parent:send(command:to_endpoint(target))
+    end
+  end
 end
 
 local function onoff_report(_, device, value, zb_rx)
   local gang = endpoint_from_rx(zb_rx)
   local parent = parent_from_device(device)
-  if gang == nil or parent == nil or gang_mode(parent, gang) == "scene" then return end
+  if gang == nil or parent == nil or parent:get_field(pending_mode_field(gang)) ~= nil
+      or gang_mode(parent, gang) == "scene" then return end
+  local state = (value.value == true or value.value == 1) and "on" or "off"
+  -- Keep only states received during this driver lifetime, including reports
+  -- that arrive before an asynchronous child-profile update completes.
+  parent:set_field(switch_state_field(gang), state)
   local child = get_child(parent, gang)
   if child ~= nil and child:supports_capability(capabilities.switch) then
-    local state = (value.value == true or value.value == 1) and "on" or "off"
     child:emit_event(capabilities.switch.switch(state))
   end
+  update_parent_switch(parent)
 end
 
 local function mode_report(_, device, value, zb_rx)
@@ -182,11 +253,14 @@ local function mode_report(_, device, value, zb_rx)
   local parent = parent_from_device(device)
   if gang == nil or parent == nil or (value.value ~= 0 and value.value ~= 1) then return end
   local mode = value.value == 1 and "scene" or "switch"
-  parent:set_field(mode_field(gang), mode, { persist = true })
+  local mode_changed = set_gang_mode(parent, gang, mode)
   local child = get_child(parent, gang)
   if child ~= nil then
     set_child_profile(child, mode)
     initialize_button(child)
+  end
+  if mode_changed and mode == "switch" then
+    parent:send(OnOff.attributes.OnOff:read(parent):to_endpoint(gang))
   end
 end
 
@@ -211,20 +285,29 @@ end
 local function scene_command(_, device, zb_rx)
   local gang = endpoint_from_rx(zb_rx)
   local parent = parent_from_device(device)
-  if gang == nil or parent == nil or gang_mode(parent, gang) ~= "scene" then return end
+  if gang == nil or parent == nil or parent:get_field(pending_mode_field(gang)) ~= nil
+      or gang_mode(parent, gang) ~= "scene" then return end
   local child = get_child(parent, gang)
   if child ~= nil and child:supports_capability(capabilities.button) then
     initialize_button(child)
     child:emit_event(capabilities.button.button.pushed({ state_change = true }))
   end
+  if parent:supports_capability(capabilities.button) then
+    parent:emit_event(capabilities.button.button.pushed({ state_change = true }))
+  end
 end
 
 local function initialize(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    ensure_parent_profile(device)
     ensure_children(driver, device)
-  else
-    initialize_button(device)
+    for gang = 1, 4 do
+      if device:get_field(pending_mode_field(gang)) ~= nil then
+        read_enum(device, MODE_CLUSTER, MODE_ATTRIBUTE, gang)
+      end
+    end
   end
+  initialize_button(device)
 end
 
 local function do_configure(driver, device)
@@ -246,8 +329,10 @@ local function do_configure(driver, device)
 end
 
 local function driver_switched(driver, device)
-  -- The root driver's capability check does not include this sub-driver's refresh/button pair.
+  -- The root driver's capability check does not include this sub-driver's button capability.
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    ensure_parent_profile(device)
+    initialize_button(device)
     do_configure(driver, device)
   else
     initialize_button(device)
@@ -278,9 +363,29 @@ local function update_parent_preferences(device, old_preferences)
   end
 end
 
+local function profile_has_capability(profile, capability)
+  local main = profile and profile.components and profile.components.main
+  local supported = main and main.capabilities or {}
+  if supported[capability.ID] ~= nil then return true end
+  -- API 19 and API 21 can deliver capability maps and arrays respectively.
+  for _, entry in pairs(supported) do
+    if entry.id == capability.ID then return true end
+  end
+  return false
+end
+
 local function info_changed(_, device, _, args)
   local old_preferences = args and args.old_st_store and args.old_st_store.preferences or {}
+  local old_profile = args and args.old_st_store and args.old_st_store.profile
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    initialize_button(device)
+    if old_profile ~= nil and (not profile_has_capability(old_profile, capabilities.switch)
+        or not profile_has_capability(old_profile, capabilities.button))
+        and device:supports_capability(capabilities.switch)
+        and device:supports_capability(capabilities.button) then
+      update_parent_switch(device)
+      for gang = 1, 4 do read_gang(device, gang) end
+    end
     update_parent_preferences(device, old_preferences)
     return
   end
@@ -290,27 +395,24 @@ local function info_changed(_, device, _, args)
   local preferences = device.preferences or {}
   -- A profile update is asynchronous; initialize its button metadata when it arrives.
   initialize_button(device)
-  local old_profile = args and args.old_st_store and args.old_st_store.profile
   local old_main = old_profile and old_profile.components and old_profile.components.main
-  local old_switch = old_main and old_main.capabilities and old_main.capabilities.switch
-  if old_switch == nil and old_main ~= nil then
-    for _, capability in pairs(old_main.capabilities or {}) do
-      if capability.id == capabilities.switch.ID then
-        old_switch = capability
-        break
-      end
-    end
-  end
-  if old_main ~= nil and old_switch == nil and device:supports_capability(capabilities.switch) then
+  if old_main ~= nil and not profile_has_capability(old_profile, capabilities.switch)
+      and device:supports_capability(capabilities.switch)
+      and parent:get_field(pending_mode_field(gang)) == nil then
     -- A relay report may have arrived while the previous button profile was still active.
     parent:send(OnOff.attributes.OnOff:read(parent):to_endpoint(gang))
   end
   local mode = preferences.switchMode
   if changed(preferences, old_preferences, "switchMode")
       and (mode == "switch" or mode == "scene") then
-    parent:set_field(mode_field(gang), mode, { persist = true })
-    set_child_profile(device, mode)
+    -- A desired mode is not proof that the device accepted it. Freeze the
+    -- previous actual mode before the asynchronous child profile can change.
+    parent:set_field(mode_field(gang), gang_mode(parent, gang), { persist = true })
+    parent:set_field(pending_mode_field(gang), mode, { persist = true })
+    parent:set_field(switch_state_field(gang), nil)
+    update_parent_switch(parent)
     write_enum(parent, MODE_CLUSTER, MODE_ATTRIBUTE, gang, mode == "scene" and 1 or 0)
+    read_enum(parent, MODE_CLUSTER, MODE_ATTRIBUTE, gang)
   end
   if changed(preferences, old_preferences, "countdownSeconds") then
     local seconds = tonumber(preferences.countdownSeconds)
@@ -322,6 +424,8 @@ local function info_changed(_, device, _, args)
       parent:set_field(string.format("countdown_gang_%d", gang), seconds, { persist = true })
     end
   end
+  -- A requested profile can arrive after its mode write was rejected/read back.
+  set_child_profile(device, parent:get_field(pending_mode_field(gang)) or gang_mode(parent, gang))
 end
 
 return {
@@ -350,7 +454,7 @@ return {
       [OnOff.ID] = {
         [default_response.DefaultResponse.ID] = function()
           -- Relay state comes from attribute reports, not command acknowledgements.
-          -- The generic handler targets the display-only parent and registers native handling.
+          -- The generic handler would target only the parent and register native handling.
         end,
       },
     },
