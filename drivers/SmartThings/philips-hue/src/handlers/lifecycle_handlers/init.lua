@@ -58,6 +58,14 @@ local function emit_component_event_no_cache(device, component, capability_event
         log.warn_with({ hub_logs = true }, err_msg)
         return false, err_msg
     end
+    -- CAPTURE: every Hue device emit funnels through this override
+    capture_logger.log_capability_event(
+      device.id,
+      capability_event.capability.ID,
+      capability_event.attribute.NAME,
+      capability_event.value,
+      component.id
+    )
     local event, err = capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
     if err ~= nil then
         log.warn_with({ hub_logs = true }, err)
@@ -76,10 +84,8 @@ function LifecycleHandlers.device_init(driver, device, ...)
     parent_device_id = device.parent_device_id,
   })
 
-  -- CAPTURE: Hook this device's emit_event/set_field. Devices that persisted
-  -- across a driver restart only receive `init`, not `added`, so this must be
-  -- wrapped here too (both calls are idempotent).
-  capture_device_wrapper.wrap_device_emit_event(device)
+  -- CAPTURE: Hook set_field. Devices that persisted across a driver restart only
+  -- receive `init`, not `added`, so wrap here too (idempotent).
   capture_device_wrapper.wrap_device_set_field(device)
 
   local device_type = utils.determine_device_type(device)
@@ -110,8 +116,7 @@ function LifecycleHandlers.device_added(driver, device, ...)
     vendor_provided_label = device.vendor_provided_label,
   })
 
-  -- CAPTURE: Hook this device's emit_event/set_field (idempotent).
-  capture_device_wrapper.wrap_device_emit_event(device)
+  -- CAPTURE: Hook set_field (idempotent).
   capture_device_wrapper.wrap_device_set_field(device)
 
   log.info(

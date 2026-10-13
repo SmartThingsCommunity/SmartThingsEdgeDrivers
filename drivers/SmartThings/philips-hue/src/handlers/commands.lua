@@ -11,9 +11,6 @@ local attribute_emitters = require "handlers.attribute_emitters"
 
 local utils = require "utils"
 
--- Capture Logger for IPC logging
-local capture_logger = require "capture_logger"
-
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
@@ -74,14 +71,6 @@ end
 ---@param device HueChildDevice
 ---@param args table
 local function do_switch_action(driver, device, args)
-  -- CAPTURE: Log incoming command
-  capture_logger.log_command_received(
-    device.id,
-    args.command,
-    args.args,
-    args.component
-  )
-  
   local on = args.command == "on"
   local light_id, hue_api = get_light_device_id_and_hue_api_module(driver, device)
   if not (light_id and hue_api) then return end
@@ -94,14 +83,6 @@ end
 ---@param device HueChildDevice
 ---@param args table
 local function do_switch_level_action(driver, device, args)
-  -- CAPTURE: Log incoming command
-  capture_logger.log_command_received(
-    device.id,
-    args.command,
-    args.args,
-    args.component
-  )
-  
   local level = st_utils.clamp_value(args.args.level, 1, 100)
   local light_id, hue_api = get_light_device_id_and_hue_api_module(driver, device)
   if not (light_id and hue_api) then return end

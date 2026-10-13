@@ -11,12 +11,14 @@
     Call capture_device_wrapper.wrap_driver(driver) once in driver initialization
     to hook the driver-level device_api (create/delete/online/offline).
 
-    Call capture_device_wrapper.wrap_device_emit_event(device) and
-    capture_device_wrapper.wrap_device_set_field(device) from the device
-    lifecycle handlers themselves (device_added/device_init) -- these cannot be
+    Call capture_device_wrapper.wrap_device_set_field(device) from the device
+    lifecycle handlers themselves (device_added/device_init). It can't be
     installed via a post-construction `driver.lifecycle_handlers` patch, since
-    the driver's lifecycle dispatcher is built from a deep copy of
-    `lifecycle_handlers` at construction time.
+    the lifecycle dispatcher is built from a deep copy of `lifecycle_handlers`
+    at construction time.
+
+    Capability events are captured in `emit_component_event_no_cache`
+    (handlers/lifecycle_handlers/init.lua), which every Hue device emit goes through.
 ]]
 
 local capture_logger = require "capture_logger"
@@ -24,43 +26,6 @@ local log = require "log"
 local json = require "st.json"
 
 local M = {}
-
--- Store original emit_event method
-local original_emit_event = nil
-
--- Wrapped emit_event that logs before calling original
-local function wrapped_emit_event(device, event)
-  -- CAPTURE: Log outgoing capability event
-  if event and event.capability and event.attribute then
-    capture_logger.log_capability_event(
-      device.id,
-      event.capability,
-      event.attribute.NAME or event.attribute,
-      event.attribute.value,
-      event.component or "main",
-      nil  -- state_change_id (could be added later if needed)
-    )
-  end
-
-  -- Call original emit_event
-  return original_emit_event(device, event)
-end
-
--- Wrap a single device's emit_event method.
--- Note: this must be called directly from a lifecycle handler (e.g.
--- LifecycleHandlers.device_added/device_init), NOT installed by monkey-patching
--- `driver.lifecycle_handlers.added` after the driver is constructed. `Driver.init`
--- deep-copies `lifecycle_handlers` into `driver.lifecycle_dispatcher.default_handlers`
--- synchronously during `Driver(...)` construction, and all real dispatch goes through
--- that dispatcher -- so patching `driver.lifecycle_handlers` afterward is a no-op.
-function M.wrap_device_emit_event(device)
-  if device.emit_event and device.emit_event ~= wrapped_emit_event then
-    if not original_emit_event then
-      original_emit_event = device.emit_event
-    end
-    device.emit_event = wrapped_emit_event
-  end
-end
 
 -- Wrap device_online/device_offline to capture online/offline changes.
 -- Note: these are single-argument functions on `driver.device_api` (they take
@@ -125,9 +90,7 @@ end
 function M.wrap_driver(driver)
   log.info("[CAPTURE] Wrapping driver for event capture")
 
-  -- NOTE: per-device hooks (emit_event, set_field) are NOT installed here.
-  -- See `M.wrap_device_emit_event` / `M.wrap_device_set_field` -- they must be
-  -- called directly from the lifecycle handlers themselves.
+  -- Per-device hooks are NOT installed here; see the module header.
 
   -- Wrap device API methods for online/offline tracking
   if driver.device_api and driver.device_api.device_online then
@@ -143,7 +106,7 @@ function M.wrap_driver(driver)
     end
     driver.device_api.device_offline = wrapped_device_offline
   end
-  
+
   -- Wrap device creation
   if driver.device_api and driver.device_api.create_device then
     if not original_create_device then
@@ -151,7 +114,7 @@ function M.wrap_driver(driver)
     end
     driver.device_api.create_device = wrapped_create_device
   end
-  
+
   -- Wrap device deletion
   if driver.device_api and driver.device_api.delete_device then
     if not original_delete_device then
@@ -159,39 +122,38 @@ function M.wrap_driver(driver)
     end
     driver.device_api.delete_device = wrapped_delete_device
   end
-  
+
   log.info("[CAPTURE] Driver wrapping complete")
 end
 
--- Wrap device set_field to capture state changes
+-- Device objects are read-only (assigning a field throws), so we can't mark a
+-- device as wrapped on the device itself.
+local set_field_wrapped = setmetatable({}, { __mode = "k" })
+
+-- Wrap device set_field to capture state changes. Uses `extend_device`, the
+-- framework's supported override hook, because direct assignment to a Device throws.
 function M.wrap_device_set_field(device)
-  if device._capture_wrapped then
-    return  -- Already wrapped
+  if set_field_wrapped[device] then
+    return
   end
-  
+
   local original_set_field = device.set_field
-  
-  device.set_field = function(dev, field, value, opts)
-    -- Get old value before setting
+
+  device:extend_device("set_field", function(dev, field, value, opts)
     local old_value = dev:get_field(field)
-    
-    -- Call original
     local result = original_set_field(dev, field, value, opts)
-    
-    -- CAPTURE: Log field change
+
     if old_value ~= value then
-      capture_logger.log_field_change(
-        dev.id,
-        field,
-        old_value,
-        value
-      )
+      local ok, err = pcall(capture_logger.log_field_change, dev.id, field, old_value, value)
+      if not ok then
+        log.warn("[CAPTURE] Failed to log field change: " .. tostring(err))
+      end
     end
-    
+
     return result
-  end
-  
-  device._capture_wrapped = true
+  end)
+
+  set_field_wrapped[device] = true
 end
 
 return M

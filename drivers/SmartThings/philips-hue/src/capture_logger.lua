@@ -1,14 +1,14 @@
 --[[
   Capture Logger - Structured JSON logging for comprehensive driver behavior capture
-  
+
   This module provides extensive logging capabilities to capture:
   - All network traffic (REST requests/responses, SSE events)
   - All IPC communication (commands, capability events)
   - Device lifecycle events
   - State changes
-  
+
   Logs are written in JSON format with correlation IDs to track request->response chains.
-  
+
   Usage:
     local capture_logger = require "capture_logger"
     capture_logger.log_rest_request(request_id, method, url, headers, body)
@@ -17,7 +17,6 @@
 
 local log = require "log"
 local json = require "st.json"
-local st_utils = require "st.utils"
 
 local M = {}
 
@@ -52,16 +51,20 @@ local function safe_json_encode(data)
   end
 end
 
+local function is_sensitive_name(name)
+  local lower = string.lower(tostring(name))
+  return lower:find("key") or lower:find("auth") or lower:find("token")
+end
+
 -- Sanitize sensitive data from headers/body if needed
 local function sanitize_headers(headers)
   if M.include_sensitive then
     return headers
   end
-  
+
   local sanitized = {}
   for k, v in pairs(headers or {}) do
-    local k_lower = string.lower(k)
-    if k_lower:find("key") or k_lower:find("auth") or k_lower:find("token") then
+    if is_sensitive_name(k) then
       sanitized[k] = "***REDACTED***"
     else
       sanitized[k] = v
@@ -70,12 +73,38 @@ local function sanitize_headers(headers)
   return sanitized
 end
 
+-- The bridge returns its application key and client key in the body of the
+-- `POST /api` pairing response.
+local function sanitize_body(body)
+  if M.include_sensitive or type(body) ~= "string" then
+    return body
+  end
+  return (body:gsub('("username"%s*:%s*")[^"]*"', '%1***REDACTED***"')
+              :gsub('("clientkey"%s*:%s*")[^"]*"', '%1***REDACTED***"'))
+end
+
+-- Device fields can hold live objects (REST clients, EventSources, channels) that
+-- are huge or cyclic; log only their type rather than attempting to encode them.
+local function loggable_field_value(field, value)
+  if value ~= nil and not M.include_sensitive and is_sensitive_name(field) then
+    return "***REDACTED***"
+  end
+  local t = type(value)
+  if t == "function" or t == "userdata" or t == "thread" then
+    return "<" .. t .. ">"
+  end
+  if t == "table" and getmetatable(value) ~= nil then
+    return "<object>"
+  end
+  return value
+end
+
 -- Core logging function
 local function write_log(log_entry)
   if not M.enabled then return end
-  
+
   local json_log = safe_json_encode(log_entry)
-  
+
   if M.log_to_hub then
     log.info_with({ hub_logs = true }, "[CAPTURE] " .. json_log)
   else
@@ -91,6 +120,11 @@ end
 -- Generate a unique event ID
 function M.new_event_id()
   return string.format("evt_%d_%d", timestamp_ms(), next_id())
+end
+
+-- Generate a unique command batch ID
+function M.new_batch_id()
+  return string.format("batch_%d_%d", timestamp_ms(), next_id())
 end
 
 -- Generate a unique state change ID
@@ -117,7 +151,7 @@ function M.log_rest_request(request_id, method, url, headers, body)
     method = method,
     url = url,
     headers = sanitize_headers(headers),
-    body = body,
+    body = sanitize_body(body),
   }
   write_log(log_entry)
 end
@@ -136,7 +170,7 @@ function M.log_rest_response(request_id, status, headers, body, elapsed_ms)
     request_id = request_id,
     status = status,
     headers = sanitize_headers(headers),
-    body = body,
+    body = sanitize_body(body),
     elapsed_ms = elapsed_ms,
   }
   write_log(log_entry)
@@ -238,21 +272,69 @@ end
 -- IPC LOGGING
 --------------------------------------------------------------------------------
 
---- Log an incoming command from the hub
+--- Log a capability command received by the driver
 -- @param device_id string Device identifier
--- @param command string Command name
--- @param args table Command arguments
--- @param component string Component name
-function M.log_command_received(device_id, command, args, component)
+-- @param cap_command table Capability command table (capability, command, component, args)
+-- @param source string "hub" for commands from the platform, "internal" for driver-injected commands
+-- @param batch_id string|nil Set when the command arrived as part of a batched receive
+function M.log_command_received(device_id, cap_command, source, batch_id)
+  cap_command = cap_command or {}
   local log_entry = {
-    type = "IPC_IN",
+    type = source == "hub" and "IPC_IN" or "INTERNAL",
     subtype = "COMMAND",
     timestamp = timestamp_ms(),
     device_id = device_id,
-    command = command,
-    args = args,
-    component = component or "main",
+    source = source,
+    batch_id = batch_id,
+    capability = cap_command.capability,
+    command = cap_command.command,
+    args = cap_command.args,
+    component = cap_command.component or "main",
   }
+  write_log(log_entry)
+end
+
+--- Log a batch of capability commands received in a single `receive_batch` call.
+-- Each command in the batch is also logged as a COMMAND entry carrying this batch_id.
+-- @param batch_id string Batch identifier
+-- @param batch BatchedCommand[] The received batch
+function M.log_command_batch(batch_id, batch)
+  local device_ids = {}
+  for i, cmd in ipairs(batch) do
+    device_ids[i] = cmd.device_uuid
+  end
+  write_log({
+    type = "IPC_IN",
+    subtype = "COMMAND_BATCH",
+    timestamp = timestamp_ms(),
+    batch_id = batch_id,
+    size = #batch,
+    device_ids = device_ids,
+  })
+end
+
+--- Log how a batched command is sent on to the bridge.
+-- @param batch_id string Batch the command arrived in
+-- @param mode string "group" (one grouped_light request for several devices) or "single"
+-- @param reason string|nil Why a command was sent singly
+-- @param cap_command table Capability command being dispatched
+-- @param details table Mode-specific fields (device_id for single; group info for group)
+function M.log_command_dispatch(batch_id, mode, reason, cap_command, details)
+  cap_command = cap_command or {}
+  local log_entry = {
+    type = "DISPATCH",
+    subtype = "COMMAND_DISPATCH",
+    timestamp = timestamp_ms(),
+    batch_id = batch_id,
+    mode = mode,
+    reason = reason,
+    capability = cap_command.capability,
+    command = cap_command.command,
+    args = cap_command.args,
+  }
+  for k, v in pairs(details or {}) do
+    log_entry[k] = v
+  end
   write_log(log_entry)
 end
 
@@ -368,8 +450,8 @@ function M.log_field_change(device_id, field, old_value, new_value)
     timestamp = timestamp_ms(),
     device_id = device_id,
     field = field,
-    old_value = old_value,
-    new_value = new_value,
+    old_value = loggable_field_value(field, old_value),
+    new_value = loggable_field_value(field, new_value),
   }
   write_log(log_entry)
 end
