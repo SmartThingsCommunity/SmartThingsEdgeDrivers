@@ -21,7 +21,14 @@ local logjam = require "logjam"
 logjam.enable_passthrough()
 logjam.inject_global()
 
+-- Initialize capture logging for comprehensive behavior capture
+local capture_logger = require "capture_logger"
+local capture_device_wrapper = require "capture_device_wrapper"
+
 local log = require "log"
+
+log.info("[CAPTURE] Hue driver starting with instrumentation enabled")
+capture_logger.log_custom("DRIVER_START", { message = "Philips Hue driver starting" })
 
 local Driver = require "st.driver"
 local st_utils = require "st.utils"
@@ -34,6 +41,9 @@ local HueDriverTemplate = require "hue_driver_template"
 
 --- @type HueDriver
 local hue = Driver("hue", HueDriverTemplate.new_driver_template())
+
+-- CAPTURE: Wrap driver to automatically capture device events
+capture_device_wrapper.wrap_driver(hue)
 
 if hue.datastore["bridge_netinfo"] == nil then
   hue.datastore["bridge_netinfo"] = {}

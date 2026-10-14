@@ -14,6 +14,10 @@ local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
 
+-- Capture Logger for lifecycle events
+local capture_logger = require "capture_logger"
+local capture_device_wrapper = require "capture_device_wrapper"
+
 local function check_parent_assigned_child_key(device)
   local device_type = utils.determine_device_type(device)
   local device_rid = utils.get_hue_rid(device)
@@ -54,6 +58,14 @@ local function emit_component_event_no_cache(device, component, capability_event
         log.warn_with({ hub_logs = true }, err_msg)
         return false, err_msg
     end
+    -- CAPTURE: every Hue device emit funnels through this override
+    capture_logger.log_capability_event(
+      device.id,
+      capability_event.capability.ID,
+      capability_event.attribute.NAME,
+      capability_event.value,
+      component.id
+    )
     local event, err = capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
     if err ~= nil then
         log.warn_with({ hub_logs = true }, err)
@@ -65,6 +77,17 @@ end
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_init(driver, device, ...)
+  -- CAPTURE: Log device init event
+  capture_logger.log_lifecycle_event(device.id, "init", {
+    label = device.label,
+    device_network_id = device.device_network_id,
+    parent_device_id = device.parent_device_id,
+  })
+
+  -- CAPTURE: Hook set_field. Devices that persisted across a driver restart only
+  -- receive `init`, not `added`, so wrap here too (idempotent).
+  capture_device_wrapper.wrap_device_set_field(device)
+
   local device_type = utils.determine_device_type(device)
   log.info(
     string.format
@@ -83,6 +106,19 @@ end
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_added(driver, device, ...)
+  -- CAPTURE: Log device added event
+  capture_logger.log_lifecycle_event(device.id, "added", {
+    label = device.label,
+    device_network_id = device.device_network_id,
+    parent_device_id = device.parent_device_id,
+    manufacturer = device.manufacturer,
+    model = device.model,
+    vendor_provided_label = device.vendor_provided_label,
+  })
+
+  -- CAPTURE: Hook set_field (idempotent).
+  capture_device_wrapper.wrap_device_set_field(device)
+
   log.info(
     string.format("device_added for device %s", (device.label or device.id or "unknown device"))
   )

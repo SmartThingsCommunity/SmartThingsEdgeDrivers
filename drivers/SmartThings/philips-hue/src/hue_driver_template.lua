@@ -15,11 +15,17 @@ local lifecycle_handlers = require "handlers.lifecycle_handlers"
 local bridge_utils = require "utils.hue_bridge_utils"
 local utils = require "utils"
 local batched_command_utils = require "utils.batched_command_utils"
+local capture_logger = require "capture_logger"
 local st_utils = require "st.utils"
 
 ---@param driver HueDriver
 ---@param device HueDevice
 local function _remove(driver, device)
+  capture_logger.log_lifecycle_event(device.id, "removed", {
+    label = device.label,
+    device_network_id = device.device_network_id,
+    parent_device_id = device.parent_device_id,
+  })
   driver.datastore.dni_to_device_id[device.device_network_id] = nil
   if utils.determine_device_type(device) == "bridge" then
     local api_instance = device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
@@ -289,9 +295,38 @@ function HueDriver.check_hue_repr_for_capability_support(hue_repr, capability_id
   end
 end
 
+-- CAPTURE: commands are logged once, where they enter the driver. Batched receives are
+-- logged in `batch_capability_message_handler`, whose dispatch calls the class method
+-- `Driver.handle_capability_command` directly and so bypasses this override. Everything
+-- else (non-batching hubs, driver-injected commands) comes through here.
+-- The batch path can't be exercised by the integration test framework (its mock channel
+-- has no `receive_batch`), so capture calls there must never be able to break dispatch.
+local function capture(log_fn, ...)
+  local ok, result = pcall(log_fn, ...)
+  if not ok then
+    log.warn("[CAPTURE] Capture logging failed: " .. tostring(result))
+    return nil
+  end
+  return result
+end
+
+function HueDriver:handle_capability_command(device, cap_command, quiet)
+  -- `quiet` is set by `inject_capability_command`, i.e. the command came from the driver itself.
+  capture(capture_logger.log_command_received, device and device.id, cap_command, quiet and "internal" or "hub")
+  return Driver.handle_capability_command(self, device, cap_command, quiet)
+end
+
 ---@param cmd_table BatchedCommand
-function HueDriver:handle_single_command(cmd_table)
+---@param batch_id string? capture batch ID, set when called from the batch handler
+---@param reason string? capture reason this command isn't being sent as part of a group
+function HueDriver:handle_single_command(cmd_table, batch_id, reason)
   local device = self:get_device_info(cmd_table.device_uuid)
+  if batch_id then
+    capture(capture_logger.log_command_dispatch, batch_id, "single", reason, cmd_table.capability_command, {
+      device_id = cmd_table.device_uuid,
+      device_found = device ~= nil,
+    })
+  end
   if device ~= nil then
     -- Default handler
     device.thread:queue_event(
@@ -304,7 +339,8 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group HueLightGroup
 ---@param cmd BatchedCommand
-function HueDriver:handle_batch_command(handler, bridge_device, group, cmd)
+---@param batch_id string? capture batch ID
+function HueDriver:handle_batch_command(handler, bridge_device, group, cmd, batch_id)
   local cap_command = cmd.capability_command
   local capability = cap_command.capability
   local command = cap_command.command
@@ -323,6 +359,20 @@ function HueDriver:handle_batch_command(handler, bridge_device, group, cmd)
         group.type, group.metadata.name, #group.devices
     ))
 
+    local group_device_ids = {}
+    for i, device in ipairs(group.devices) do
+      group_device_ids[i] = device.id
+    end
+    capture(capture_logger.log_command_dispatch, batch_id, "group", nil, cap_command, {
+      bridge_device_id = bridge_device.id,
+      group_id = group.id,
+      group_type = group.type,
+      group_name = group.metadata and group.metadata.name,
+      grouped_light_rid = group.grouped_light_rid,
+      device_count = #group.devices,
+      device_ids = group_device_ids,
+    })
+
     bridge_device.thread:queue_event(
       handler, self, bridge_device, group, cap_command, cmd.auxilary_command_data
     )
@@ -338,10 +388,16 @@ function HueDriver:batch_capability_message_handler(capability_channel)
     return
   end
 
+  local batch_id = capture(capture_logger.new_batch_id)
+  capture(capture_logger.log_command_batch, batch_id, batch)
+  for _, cmd in ipairs(batch) do
+    capture(capture_logger.log_command_received, cmd.device_uuid, cmd.capability_command, "hub", batch_id)
+  end
+
   -- Handle common case of single command.
   if #batch == 1 then
     log.info("Batch not big enough to handle with group commands")
-    self:handle_single_command(batch[1])
+    self:handle_single_command(batch[1], batch_id, "batch_of_one")
     return
   end
 
@@ -353,7 +409,8 @@ function HueDriver:batch_capability_message_handler(capability_channel)
   if #misfits ~= 0 then
     log.info(string.format("Handling %d batch misfits", #misfits))
     for _, command in ipairs(misfits) do
-      self:handle_single_command(command)
+      -- no group handler for this command, or its device/bridge couldn't be resolved
+      self:handle_single_command(command, batch_id, "not_groupable")
     end
   end
 
@@ -373,7 +430,7 @@ function HueDriver:batch_capability_message_handler(capability_channel)
         -- Unique command
         if #matching_commands == 1 then
           for _, command in pairs(matching_commands) do
-            self:handle_single_command(command)
+            self:handle_single_command(command, batch_id, "unique_args")
           end
         else
           local matching_groups =
@@ -382,12 +439,12 @@ function HueDriver:batch_capability_message_handler(capability_channel)
           for group, command in pairs(matching_groups) do
             local handler = batched_command_utils.get_handler(command)
             if handler then -- Should never be nil at this point but to make the diagnostic happy
-              self:handle_batch_command(handler, bridge_device, group, command)
+              self:handle_batch_command(handler, bridge_device, group, command, batch_id)
             end
           end
           -- Handle any potential remaining commands
           for _, command in pairs(matching_commands) do
-            self:handle_single_command(command)
+            self:handle_single_command(command, batch_id, "not_covered_by_group")
           end
         end
       end
