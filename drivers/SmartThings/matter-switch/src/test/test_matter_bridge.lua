@@ -38,7 +38,7 @@ local mock_bridge = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 1} -- Dimmable Light
       }
     },
     {
@@ -53,7 +53,7 @@ local mock_bridge = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 1} -- Dimmable Light
       }
     }
   }
@@ -83,6 +83,22 @@ local function test_init_mock_bridge()
   test.mock_device.add_test_device(mock_bridge)
   test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
+  test.socket.matter:__expect_send({ mock_bridge.id, clusters.LevelControl.attributes.Options:write(mock_bridge, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF) })
+  test.socket.matter:__expect_send({ mock_bridge.id, clusters.LevelControl.attributes.Options:write(mock_bridge, 2, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF) })
+  mock_bridge:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "nil 1",
+    profile = "light-level",
+    parent_device_id = mock_bridge.id,
+    parent_assigned_child_key = string.format("%d", 1)
+  })
+  mock_bridge:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "nil 2",
+    profile = "light-level",
+    parent_device_id = mock_bridge.id,
+    parent_assigned_child_key = string.format("%d", 2)
+  })
   test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
   mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
