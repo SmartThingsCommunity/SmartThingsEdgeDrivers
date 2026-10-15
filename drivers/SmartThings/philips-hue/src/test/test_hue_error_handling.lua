@@ -272,4 +272,50 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "a command on a keep-alive connection the bridge has since closed is resent on a new connection",
+  function()
+    -- Physical test scenario 6: after ~90 idle minutes the first PUT went out on a connection the
+    -- bridge had already closed; the driver reconnected and resent it, and the light turned on.
+    local function expect_put()
+      http.expect_request_for_test(put_conn, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
+        status = 200,
+        body = { data = { { rid = LIGHT_RID, rtype = "light" } }, errors = {} },
+      })
+    end
+    local function switch_on()
+      test.socket.capability:__queue_receive({
+        mock_light.id,
+        { capability = "switch", component = "main", command = "on", args = {} },
+      })
+      test.wait_for_events()
+    end
+
+    expect_put()
+    switch_on()
+
+    put_conn:close_connection()
+    expect_put()
+    switch_on()
+
+    -- The second command went out on the closed connection, then again on a new one after the
+    -- REST client's retry backoff.
+    local function count_puts()
+      local _, n = put_conn:get_sent_log():gsub("PUT /clip/v2/resource/light/", "")
+      return n
+    end
+    for _ = 1, 50 do
+      if count_puts() >= 3 then break end
+      test.wait_for_events()
+    end
+    local connections = {}
+    for chunk in (put_conn:get_sent_log() .. "\n--- Next physical connection ---\n"):gmatch("(.-)\n%-%-%- Next physical connection %-%-%-\n") do
+      table.insert(connections, chunk)
+    end
+    assert(#connections == 2, string.format("expected a reconnect, got %d connection(s)", #connections))
+    local _, on_new = connections[2]:gsub("PUT /clip/v2/resource/light/", "")
+    assert(on_new == 1, string.format("expected the command to be resent once on the new connection, got %d", on_new))
+  end
+)
+
 test.run_registered_tests()

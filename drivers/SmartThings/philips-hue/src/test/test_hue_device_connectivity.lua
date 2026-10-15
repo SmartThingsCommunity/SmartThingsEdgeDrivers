@@ -184,6 +184,12 @@ test.register_coroutine_test(
     assert_offline_calls(1)
     assert_online(mock_bridge, true, "the bridge")
 
+    -- Once the stream has reconnected, a later outage is reported again.
+    scenario:get_connection("sse"):close_connection()
+    wait_until(function() return is_online(mock_bridge) == false end)
+    assert_offline_calls(2)
+    wait_until(function() return is_online(mock_bridge) == true end)
+
     mock_devices_api.device_offline = device_offline
   end
 )
