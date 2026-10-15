@@ -290,7 +290,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
     if light_info ~= nil then
       if light_info.id == light_resource_id then
         if light_info.color ~= nil and light_info.color.gamut then
-          light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
+          light_device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
         end
         attribute_emitters.emit_light_attribute_events(light_device, light_info)
         do_light_request = false
@@ -348,7 +348,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
         for _, light_info in ipairs(rest_resp.data) do
           if light_info.id == light_resource_id then
             if light_info.color ~= nil and light_info.color.gamut then
-              light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
+              light_device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
             end
             attribute_emitters.emit_light_attribute_events(light_device, light_info)
             return light_info
