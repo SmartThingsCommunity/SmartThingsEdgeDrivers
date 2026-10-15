@@ -253,7 +253,7 @@ test.register_coroutine_test(
     })
     test.wait_for_events()
 
-    rest:assert_sent('"dimming":%s*{%s*"brightness":%s*1%s*}')
+    http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, { dimming = { brightness = 1 } })
   end
 )
 
@@ -271,8 +271,8 @@ for _, case in ipairs({
       })
       test.wait_for_events()
 
-      rest:assert_sent('"color_temperature":%s*{%s*"mirek":%s*' .. case.mirek .. '%s*}')
-      rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
+      http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID,
+        { color_temperature = { mirek = case.mirek }, on = { on = true } })
     end
   )
 end

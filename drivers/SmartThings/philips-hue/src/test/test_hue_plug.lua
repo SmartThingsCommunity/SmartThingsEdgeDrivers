@@ -93,7 +93,7 @@ for _, command in ipairs({ "on", "off" }) do
       })
       test.wait_for_events()
 
-      put:assert_sent('"on":%s*{%s*"on":%s*' .. tostring(command == "on") .. '%s*}')
+      http.assert_sent_json(put, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, { on = { on = command == "on" } })
     end
   )
 end

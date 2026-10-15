@@ -69,21 +69,9 @@ local function expect_grouped_light_put(rid)
   })
 end
 
---- Count requests sent in this test whose request line targets `path` (plain-text match).
-local function count_requests(method, path)
-  local sent = rest:get_sent_log()
-  local needle = method .. " " .. path
-  local count, start = 0, 1
-  while true do
-    local i = sent:find(needle, start, true)
-    if not i then return count end
-    count = count + 1
-    start = i + #needle
-  end
-end
-
 local function assert_requests(method, path, expected)
-  local actual = count_requests(method, path)
+  -- `path` is either a full resource path or a collection prefix like LIGHT_PATH.
+  local actual = http.count_requests(rest, method, path, { prefix = true })
   assert(actual == expected,
     string.format("expected %d %s %s request(s), got %d", expected, method, path, actual))
 end
@@ -107,7 +95,7 @@ test.register_coroutine_test(
 
     assert_requests("PUT", LIGHT_PATH .. LIGHT_1_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
-    rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
+    http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { on = { on = true } })
   end
 )
 
@@ -125,7 +113,7 @@ test.register_coroutine_test(
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
     assert_requests("PUT", LIGHT_PATH, 0)
-    rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
+    http.assert_sent_json(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, { on = { on = true } })
   end
 )
 
@@ -184,8 +172,8 @@ test.register_coroutine_test(
     assert_requests("PUT", LIGHT_PATH .. LIGHT_1_RID, 1)
     assert_requests("PUT", LIGHT_PATH .. LIGHT_2_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
-    rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
-    rest:assert_sent('"on":%s*{%s*"on":%s*false%s*}')
+    http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { on = { on = true } })
+    http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_2_RID, { on = { on = false } })
   end
 )
 
@@ -232,8 +220,10 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
-    rest:assert_sent('"dimming":%s*{%s*"brightness":%s*23%s*}')
-    assert(not rest:get_sent_log():find('"on":', 1, true), "expected no on/off request for a room that is already on")
+    http.assert_sent_json(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, { dimming = { brightness = 23 } })
+    for _, request in ipairs(http.find_requests(rest, "PUT", GROUPED_LIGHT_PATH, { prefix = true })) do
+      assert(request.json.on == nil, "expected no on/off request for a room that is already on")
+    end
   end
 )
 
@@ -253,8 +243,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 2)
-    rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
-    rest:assert_sent('"dimming":%s*{%s*"brightness":%s*23%s*}')
+    http.assert_sent_json(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, { on = { on = true } })
+    http.assert_sent_json(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, { dimming = { brightness = 23 } })
   end
 )
 

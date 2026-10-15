@@ -128,8 +128,8 @@ test.register_coroutine_test(
         args = { { hue = 100 / 3, saturation = 100 } } },
     })
     test.wait_for_events()
-    rest:assert_sent('"x":%s*0%.2151[,}]')
-    rest:assert_sent('"y":%s*0%.7106[,}]')
+    http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID,
+      { color = { xy = { x = 0.2151, y = 0.7106 } } })
   end
 )
 
