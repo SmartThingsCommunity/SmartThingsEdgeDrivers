@@ -14,11 +14,14 @@ local Groups = clusters.Groups
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 
-local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local reverseRollerShadeDir = capabilities["stse.reverseRollerShadeDir"]
-local shadeRotateState = capabilities["stse.shadeRotateState"]
-local setRotateStateCommandName = "setRotateState"
-local directionReversal = "directionReversal"
+local curtainPowerButton = capabilities.statelessCurtainPowerButton
+
+local TILT_COMPONENT = "tilt"
+local MODE_COMPONENT = "mode"
+
+local MODE_INITIALIZED = "Initialized"
+local MODE_NOT_INITIALIZED = "Not initialized"
 
 local MULTISTATE_CLUSTER_ID = 0x0013
 local MULTISTATE_ATTRIBUTE_ID = 0x0055
@@ -38,11 +41,8 @@ local function is_not_init(device)
   if not device:get_field(INIT_STATE_REPORTED) then return false end
 
   -- True if uninitialized; false if already initialized
-  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
-    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
-  local ret = true
-  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then ret = false end
-  return ret
+  local initialized = device:get_latest_state(MODE_COMPONENT, capabilities.mode.ID, capabilities.mode.mode.NAME)
+  return initialized ~= MODE_INITIALIZED
 end
 
 
@@ -66,18 +66,16 @@ local function window_shade_close_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
 end
 
-local function set_rotate_command_handler(driver, device, command)
-  device:emit_event(shadeRotateState.rotateState.idle({ state_change = true, visibility = { displayed = false } })) -- update UI
-
+local function set_button_command_handler(driver, device, command)
   -- Cannot be controlled if not initialized
   if is_not_init(device) then return end
-  local state = command.args.state
-  if state == "rotateUp" then
+  local button = command.args.button
+  if button == "open" then
     local message = cluster_base.write_manufacturer_specific_attribute(device, MULTISTATE_CLUSTER_ID,
       MULTISTATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint16, ROTATE_UP_VALUE)
     message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
     device:send(message)
-  elseif state == "rotateDown" then
+  elseif button == "close" then
     local message = cluster_base.write_manufacturer_specific_attribute(device, MULTISTATE_CLUSTER_ID,
       MULTISTATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint16, ROTATE_DOWN_VALUE)
     message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
@@ -92,9 +90,8 @@ end
 
 local function init_state_handler(driver, device, value, zb_rx)
   device:set_field(INIT_STATE_REPORTED, true, { persist = true })
-  local state = value.value == 0x02 and initializedStateWithGuide.initializedStateWithGuide.initialized() or
-  initializedStateWithGuide.initializedStateWithGuide.notInitialized()
-  device:emit_event(state)
+  device:emit_component_event(device.profile.components[MODE_COMPONENT],
+    capabilities.mode.mode(value.value == 0x02 and MODE_INITIALIZED or MODE_NOT_INITIALIZED))
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
@@ -148,10 +145,17 @@ local function device_added(driver, device)
     capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
   window_treatment_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShade,
     capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
-  window_treatment_utils.emit_event_if_latest_state_missing(device, "main", initializedStateWithGuide,
-    initializedStateWithGuide.initializedStateWithGuide.NAME,
-    initializedStateWithGuide.initializedStateWithGuide.notInitialized())
-  device:emit_event(shadeRotateState.rotateState.idle({ visibility = { displayed = false } }))
+  -- The mode capability is used as a read-only initialization status, so no arguments are offered for setMode
+  local mode_component = device.profile.components[MODE_COMPONENT]
+  device:emit_component_event(mode_component, capabilities.mode.supportedModes(
+    { MODE_INITIALIZED, MODE_NOT_INITIALIZED }, { visibility = { displayed = false } }))
+  device:emit_component_event(mode_component, capabilities.mode.supportedArguments({},
+    { visibility = { displayed = false } }))
+  if device:get_latest_state(MODE_COMPONENT, capabilities.mode.ID, capabilities.mode.mode.NAME) == nil then
+    device:emit_component_event(mode_component, capabilities.mode.mode(MODE_NOT_INITIALIZED))
+  end
+  device:emit_component_event(device.profile.components[TILT_COMPONENT],
+    curtainPowerButton.availableCurtainPowerButtons({ "open", "close" }, { visibility = { displayed = false } }))
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
     aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
 end
@@ -178,8 +182,8 @@ local aqara_roller_shade_t1s_handler = {
       [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
       -- [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd,
     },
-    [shadeRotateState.ID] = {
-      [setRotateStateCommandName] = set_rotate_command_handler
+    [curtainPowerButton.ID] = {
+      [curtainPowerButton.commands.setButton.NAME] = set_button_command_handler
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh

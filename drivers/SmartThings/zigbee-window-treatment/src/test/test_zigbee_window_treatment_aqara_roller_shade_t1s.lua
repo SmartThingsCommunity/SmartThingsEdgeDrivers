@@ -16,11 +16,10 @@ local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
-local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local shadeRotateState = capabilities["stse.shadeRotateState"]
-local shadeRotateStateId = "stse.shadeRotateState"
-test.add_package_capability("initializedStateWithGuide.yaml")
-test.add_package_capability("shadeRotateState.yaml")
+local TILT_COMPONENT = "tilt"
+local MODE_COMPONENT = "mode"
+local MODE_INITIALIZED = "Initialized"
+local MODE_NOT_INITIALIZED = "Not initialized"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -47,7 +46,7 @@ local SHADE_STATE_BLOCKED = 4
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("window-treatment-aqara-roller-shade-rotate.yml"),
+    profile = t_utils.get_profile_definition("window-treatment-aqara-roller-shade-t1s.yml"),
     fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
@@ -89,17 +88,32 @@ end
 -- Mark the device as initialized (travel points set) so that control commands are accepted
 local function set_initialized()
   test.socket.zigbee:__queue_receive({ mock_device.id, build_init_state_report(INIT_STATE_INITIALIZED) })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    initializedStateWithGuide.initializedStateWithGuide.initialized()))
+  test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+    capabilities.mode.mode(MODE_INITIALIZED)))
   test.wait_for_events()
 end
 
 -- Mark the device as not initialized so that control commands are rejected
 local function set_not_initialized()
   test.socket.zigbee:__queue_receive({ mock_device.id, build_init_state_report(INIT_STATE_NOT_INITIALIZED) })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
+  test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+    capabilities.mode.mode(MODE_NOT_INITIALIZED)))
   test.wait_for_events()
+end
+
+-- Events emitted to the mode and tilt components during the added lifecycle
+local function expect_added_mode_and_tilt_events(expect_mode_state)
+  test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+    capabilities.mode.supportedModes({ MODE_INITIALIZED, MODE_NOT_INITIALIZED }, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+    capabilities.mode.supportedArguments({}, { visibility = { displayed = false } })))
+  if expect_mode_state then
+    test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+      capabilities.mode.mode(MODE_NOT_INITIALIZED)))
+  end
+  test.socket.capability:__expect_send(mock_device:generate_test_message(TILT_COMPONENT,
+    capabilities.statelessCurtainPowerButton.availableCurtainPowerButtons({ "open", "close" },
+      { visibility = { displayed = false } })))
 end
 
 -- Lifecycle -----------------------------------------------------------------
@@ -119,27 +133,20 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({ visibility = { displayed = false } }))
-    )
+    expect_added_mode_and_tilt_events(true)
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
 
     -- After a driver switch-over the added lifecycle is re-triggered. The stateful events
-    -- (shadeLevel, windowShade, initializedStateWithGuide) must not be re-emitted so that the
-    -- previously known state is preserved.
+    -- (shadeLevel, windowShade, mode) must not be re-emitted so that the previously known
+    -- state is preserved.
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, { visibility = { displayed = false } }))
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({ visibility = { displayed = false } }))
-    )
+    expect_added_mode_and_tilt_events(false)
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
@@ -186,8 +193,8 @@ test.register_coroutine_test(
   "Init state report 0x02 should be handled as initialized",
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, build_init_state_report(INIT_STATE_INITIALIZED) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      initializedStateWithGuide.initializedStateWithGuide.initialized()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+      capabilities.mode.mode(MODE_INITIALIZED)))
   end,
   {
     min_api_version = 14
@@ -195,16 +202,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Init state report other than 0x02 should be handled as notInitialized",
+  "Init state report other than 0x02 should be handled as not initialized",
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, build_init_state_report(INIT_STATE_NOT_INITIALIZED) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+      capabilities.mode.mode(MODE_NOT_INITIALIZED)))
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({ mock_device.id, build_init_state_report(0x01) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message(MODE_COMPONENT,
+      capabilities.mode.mode(MODE_NOT_INITIALIZED)))
   end,
   {
     min_api_version = 14
@@ -531,21 +538,17 @@ test.register_coroutine_test(
   }
 )
 
--- Rotate ------------------------------------------------------------------------
+-- Tilt (rotate) -------------------------------------------------------------------
 
 test.register_coroutine_test(
-  "Rotate up cmd handler",
+  "Tilt open button should rotate up",
   function()
     set_initialized()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        { capability = shadeRotateStateId, component = "main", command = "setRotateState", args = { "rotateUp" } }
+        { capability = "statelessCurtainPowerButton", component = TILT_COMPONENT, command = "setButton", args = { "open" } }
       }
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        shadeRotateState.rotateState.idle({ state_change = true, visibility = { displayed = false } }))
     )
     test.socket.zigbee:__expect_send({ mock_device.id, build_rotate_write(ROTATE_UP_VALUE) })
   end,
@@ -555,18 +558,14 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Rotate down cmd handler",
+  "Tilt close button should rotate down",
   function()
     set_initialized()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        { capability = shadeRotateStateId, component = "main", command = "setRotateState", args = { "rotateDown" } }
+        { capability = "statelessCurtainPowerButton", component = TILT_COMPONENT, command = "setButton", args = { "close" } }
       }
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        shadeRotateState.rotateState.idle({ state_change = true, visibility = { displayed = false } }))
     )
     test.socket.zigbee:__expect_send({ mock_device.id, build_rotate_write(ROTATE_DOWN_VALUE) })
   end,
@@ -576,20 +575,22 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Rotate cmd should only reset the UI when the device is not initialized",
+  "Tilt buttons should be ignored when the device is not initialized",
   function()
     set_not_initialized()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        { capability = shadeRotateStateId, component = "main", command = "setRotateState", args = { "rotateUp" } }
+        { capability = "statelessCurtainPowerButton", component = TILT_COMPONENT, command = "setButton", args = { "open" } }
       }
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        shadeRotateState.rotateState.idle({ state_change = true, visibility = { displayed = false } }))
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "statelessCurtainPowerButton", component = TILT_COMPONENT, command = "setButton", args = { "close" } }
+      }
     )
-    -- No zigbee message is expected
+    -- No zigbee message and no capability event is expected
   end,
   {
     min_api_version = 14
