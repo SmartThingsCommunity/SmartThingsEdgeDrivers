@@ -227,8 +227,14 @@ function LightLifecycleHandlers.init(driver, device)
   if not svc_rids_for_device[device_light_resource_id] then
     svc_rids_for_device[device_light_resource_id] = HueDeviceTypes.LIGHT
   end
+  if hue_device_id ~= nil then
+    driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
+  end
   device:set_field(Fields._INIT, true, { persist = false })
-  device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
+  -- On/off-only lights (e.g. smart plugs) have no switchLevel capability.
+  if device:supports_capability_by_id(capabilities.switchLevel.ID) then
+    device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
+  end
 
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     driver:inject_capability_command(device, {

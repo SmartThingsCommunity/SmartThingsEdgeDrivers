@@ -41,10 +41,14 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       nil
     )
     local hue_identifier_to_device_record = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
+    -- Whether the current outage has already been reported; the EventSource calls `onerror` on
+    -- every failed reconnect attempt.
+    local marked_offline = false
 
     eventsource.onopen = function(msg)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", bridge_device.label))
+      marked_offline = false
       bridge_device:online()
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
@@ -71,18 +75,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         local scanned = false
-        local connectivity_status, rest_err
-
+        local backoff = utils.backoff_builder(30, 1, 0.5)
         while true do
-          if scanned then break end
-          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          local connectivity_status, rest_err = bridge_api:get_connectivity_status()
           if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
               bridge_device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
-            goto continue
-          end
-
-          if connectivity_status.errors and #connectivity_status.errors > 0 then
+          elseif connectivity_status.errors and #connectivity_status.errors > 0 then
             log.error(
               string.format(
                 "Hue Bridge %s replied with the following error message(s) " ..
@@ -93,10 +92,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             for idx, err in ipairs(connectivity_status.errors) do
               log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
             end
-            goto continue
-          end
-
-          if connectivity_status.data and #connectivity_status.data > 0 then
+          elseif connectivity_status.data and #connectivity_status.data > 0 then
             scanned = true
             for _, status in ipairs(connectivity_status.data) do
               local hue_device_id = (status.owner and status.owner.rid) or ""
@@ -125,7 +121,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           end
 
-          ::continue::
+          if scanned then break end
+          cosock.socket.sleep(backoff())
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
@@ -133,6 +130,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
     eventsource.onerror = function()
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", bridge_device.label))
+      if marked_offline then return end
+      marked_offline = true
 
       for _, device_record in ipairs(bridge_device:get_child_list()) do
         device_record:set_field(Fields.IS_ONLINE, false)
@@ -146,8 +145,12 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
+        -- json.decode (dkjson) returns `value, position, err` -- `position` (the index it
+        -- stopped scanning at) is a non-nil number even on a fully successful decode, so it
+        -- has to be captured and discarded here rather than accidentally landing in `err`,
+        -- which would otherwise make every SSE message look like a JSON parse error.
         ---@type HueSseEvent[], string?
-        local events, err = table.unpack(json_result, 1, json_result.n)
+        local events, _, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
           log.error_with(
