@@ -99,10 +99,8 @@ end)
 test.register_coroutine_test(
   "after a restart an onboarded light is initialized and refreshed once, without being re-added",
   function()
-    for _ = 1, 20 do
-      if mock_devices_api.__is_device_online(mock_lamp.id) then break end
-      test.wait_for_events()
-    end
+    test.wait_until(function() return mock_devices_api.__is_device_online(mock_lamp.id) end,
+      { message = "the lamp coming online" })
     test.wait_for_events()
 
     assert(mock_devices_api.__is_device_online(mock_bridge.id) == true, "expected the bridge to be online")

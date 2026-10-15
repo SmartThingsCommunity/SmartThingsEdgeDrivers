@@ -116,13 +116,8 @@ test.register_coroutine_test(
 
     -- Recorded alongside the delete: the plug's room and bridge_home dropping it as a child.
     http.queue_sse_event(conn, capture_payloads.get("plug_deleted"))
-    for _ = 1, 10 do
-      if mock_devices_api.__is_device_deleted(mock_plug.id) then break end
-      test.wait_for_events()
-    end
-
-    assert(mock_devices_api.__is_device_deleted(mock_plug.id) == true,
-      "expected the plug to be deleted after the bridge reported its light resource deleted")
+    test.wait_until(function() return mock_devices_api.__is_device_deleted(mock_plug.id) end,
+      { message = "the plug being deleted after the bridge reported its light resource deleted" })
   end
 )
 

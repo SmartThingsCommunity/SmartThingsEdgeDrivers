@@ -103,13 +103,10 @@ test.set_test_init_function(function()
   expect_other_state_events()
 end)
 
---- Let the driver run until `predicate` holds. Online/offline changes emit no capability events
---- for `wait_for_events` to wait on, so give the driver's threads a bounded number of turns.
+--- Let the driver run until `predicate` holds (online/offline changes emit no capability events
+--- for `wait_for_events` to wait on).
 local function wait_until(predicate)
-  for _ = 1, 50 do
-    if predicate() then return end
-    test.wait_for_events()
-  end
+  test.wait_until(predicate, { message = "the expected online/offline state" })
 end
 
 local function is_online(mock_device)
