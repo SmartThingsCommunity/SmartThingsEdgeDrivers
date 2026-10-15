@@ -1,5 +1,6 @@
---- Tests for online/offline status from per-light Zigbee connectivity reported over SSE. Built from
---- payloads recorded on real hardware (see test/fixtures/capture_payloads.lua).
+--- Tests for online/offline status: per-light Zigbee connectivity reported over SSE, and losing the
+--- bridge's event stream. Built from payloads recorded on real hardware (see
+--- test/fixtures/capture_payloads.lua).
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -7,6 +8,7 @@ local mock_devices_api = require "integration_test.mock_devices_api"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
 local capture_payloads = require "test.fixtures.capture_payloads"
+local Fields = require "fields"
 
 local LAMP_RID = capture_payloads.ids.color_lamp_light
 local LAMP_DEVICE_ID = capture_payloads.ids.color_lamp_device
@@ -150,6 +152,46 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_online(mock_lamp, true, "the lamp")
+  end
+)
+
+test.register_coroutine_test(
+  "while the event stream keeps failing to reconnect, devices are only marked offline once",
+  function()
+    test.wait_for_events()
+    assert_online(mock_bridge, true, "the bridge")
+
+    local offline_calls = {}
+    local device_offline = mock_devices_api.device_offline
+    mock_devices_api.device_offline = function(device)
+      local id = type(device) == "table" and device.id or device
+      offline_calls[id] = (offline_calls[id] or 0) + 1
+      return device_offline(device)
+    end
+    local function assert_offline_calls(expected)
+      for _, entry in ipairs({ { mock_bridge, "bridge" }, { mock_lamp, "lamp" }, { mock_other, "other light" } }) do
+        local count = offline_calls[entry[1].id] or 0
+        assert(count == expected,
+          string.format("expected the %s to be marked offline %d time(s), got %d", entry[2], expected, count))
+      end
+    end
+
+    -- The EventSource calls `onerror` once per failed connection attempt; while the bridge is
+    -- unreachable that is every few seconds (see scenarios 8 and 9 of the physical test captures).
+    -- The mock bridge can't refuse a reconnect, so drive the handler directly.
+    local eventsource = fixtures.driver_device(mock_bridge):get_field(Fields.EVENT_SOURCE)
+    for _ = 1, 3 do eventsource.onerror() end
+    assert_offline_calls(1)
+    assert_online(mock_bridge, false, "the bridge")
+    assert_online(mock_lamp, false, "the lamp")
+
+    -- Once the stream reconnects, a later failure marks everything offline again.
+    eventsource.onopen()
+    wait_until(function() return is_online(mock_bridge) == true end)
+    eventsource.onerror()
+    assert_offline_calls(2)
+
+    mock_devices_api.device_offline = device_offline
   end
 )
 

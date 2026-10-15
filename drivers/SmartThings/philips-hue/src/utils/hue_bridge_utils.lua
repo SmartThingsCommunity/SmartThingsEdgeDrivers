@@ -41,10 +41,14 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       nil
     )
     local hue_identifier_to_device_record = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
+    -- Whether the current outage has already been reported; the EventSource calls `onerror` on
+    -- every failed reconnect attempt.
+    local marked_offline = false
 
     eventsource.onopen = function(msg)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", bridge_device.label))
+      marked_offline = false
       bridge_device:online()
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
@@ -126,6 +130,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
     eventsource.onerror = function()
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", bridge_device.label))
+      if marked_offline then return end
+      marked_offline = true
 
       for _, device_record in ipairs(bridge_device:get_child_list()) do
         device_record:set_field(Fields.IS_ONLINE, false)
