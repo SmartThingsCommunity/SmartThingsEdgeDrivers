@@ -234,4 +234,47 @@ test.register_coroutine_test(
   end
 )
 
+-- Out-of-range values sent from the SmartThings API during physical testing (scenario 15), and the
+-- request bodies the driver sent the bridge for them.
+local function expect_light_put()
+  http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
+    status = 200,
+    body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
+  })
+end
+
+test.register_coroutine_test(
+  "setLevel 0 is clamped to the minimum brightness of 1",
+  function()
+    expect_light_put()
+    test.socket.capability:__queue_receive({
+      mock_light.id,
+      { capability = "switchLevel", component = "main", command = "setLevel", args = { 0 } },
+    })
+    test.wait_for_events()
+
+    rest:assert_sent('"dimming":%s*{%s*"brightness":%s*1%s*}')
+  end
+)
+
+for _, case in ipairs({
+  { kelvin = 100, mirek = 500 },  -- below the light's range: its warmest setting
+  { kelvin = 10000, mirek = 153 }, -- above the light's range: its coolest setting
+}) do
+  test.register_coroutine_test(
+    string.format("setColorTemperature %dK is clamped to the light's range (mirek %d)", case.kelvin, case.mirek),
+    function()
+      expect_light_put()
+      test.socket.capability:__queue_receive({
+        mock_light.id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = { case.kelvin } },
+      })
+      test.wait_for_events()
+
+      rest:assert_sent('"color_temperature":%s*{%s*"mirek":%s*' .. case.mirek .. '%s*}')
+      rest:assert_sent('"on":%s*{%s*"on":%s*true%s*}')
+    end
+  )
+end
+
 test.run_registered_tests()

@@ -119,4 +119,55 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "with two bridges on the network, only the one that hands out an API key gets a device",
+  function()
+    -- Physical testing had a second, never-paired bridge on the same network; both answered
+    -- discovery (recorded /api/config payloads), and only the paired one returned a key.
+    local capture_payloads = require "test.fixtures.capture_payloads"
+    local PAIRED_IP, UNPAIRED_IP = "192.168.1.30", "192.168.1.31"
+
+    mock_mdns.__queue_response(Discovery.ServiceType, Discovery.Domain, {
+      found = {
+        mock_mdns.build_event({ name = "Hue Bridge", service_type = Discovery.ServiceType,
+          domain = Discovery.Domain, address = PAIRED_IP, port = 443 }),
+        mock_mdns.build_event({ name = "Hue Bridge - 2", service_type = Discovery.ServiceType,
+          domain = Discovery.Domain, address = UNPAIRED_IP, port = 443 }),
+      },
+    })
+
+    local paired = lan_test_utils.build_mock_server(PAIRED_IP, 443)
+    paired:queue_http_response(200, {}, capture_payloads.get("bridge_config"))
+    paired:queue_http_response(200, {}, {
+      { success = { username = "new-bridge-api-key", clientkey = "some-client-key" } },
+    })
+    local unpaired = lan_test_utils.build_mock_server(UNPAIRED_IP, 443)
+    unpaired:queue_http_response(200, {}, capture_payloads.get("unpaired_bridge_config"))
+    unpaired:queue_http_response(200, {}, {
+      { error = { type = 101, address = "", description = "link button not pressed" } },
+    })
+
+    -- The recorded paired bridge's MAC is 00:17:88:00:00:01.
+    mock_devices_api.__expect_create_device({
+      deviceNetworkId = "001788000001",
+      label = "Hue Bridge",
+      profileReference = "hue-bridge",
+      manufacturer = "Signify Netherlands B.V.",
+      model = "BSB002",
+      vendorProvidedLabel = "Hue Bridge",
+      type = "LAN",
+    })
+
+    test.socket.discovery:__queue_receive({ "start", {} })
+    test.wait_for_events()
+    stop_discovery()
+    test.wait_for_events()
+
+    paired:assert_http_request_received("GET", "/api/config")
+    paired:assert_http_request_received("POST", "/api")
+    unpaired:assert_http_request_received("GET", "/api/config")
+    unpaired:assert_http_request_received("POST", "/api")
+  end
+)
+
 test.run_registered_tests()
