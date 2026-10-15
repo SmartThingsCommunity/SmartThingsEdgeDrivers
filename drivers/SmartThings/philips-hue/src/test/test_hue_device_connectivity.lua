@@ -18,8 +18,6 @@ local OTHER_ZIGBEE_RID = "other-light-zigbee"
 
 local function lamp_light_resource()
   local resp = capture_payloads.get("color_lamp_light")
-  -- `samsungim.hueSyncMode` (emitted for `mode`) has no definition available to the test framework.
-  resp.data[1].mode = nil
   return resp
 end
 
@@ -54,6 +52,7 @@ local function expect_lamp_state_events(first_refresh)
       capabilities.colorTemperature.colorTemperatureRange({ minimum = 2000, maximum = 6500 })))
   end
   for _, event in ipairs({
+    capabilities["samsungim.hueSyncMode"].mode("normal"),
     capabilities.switch.switch.on(),
     capabilities.switchLevel.level(100),
     capabilities.colorTemperature.colorTemperature(2732),

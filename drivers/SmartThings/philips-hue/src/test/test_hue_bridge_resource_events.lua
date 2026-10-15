@@ -13,8 +13,6 @@ local ids = capture_payloads.ids
 
 local function plug_light_resource()
   local resp = capture_payloads.get("plug_light")
-  -- `samsungim.hueSyncMode` (emitted for `mode`) has no definition available to the test framework.
-  resp.data[1].mode = nil
   return resp
 end
 
@@ -39,6 +37,8 @@ http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. ids.plug_light, {
 })
 
 local function expect_plug_refresh_events()
+  test.socket.capability:__set_channel_ordering("relaxed")
+  test.socket.capability:__expect_send(mock_plug:generate_test_message("main", capabilities["samsungim.hueSyncMode"].mode("normal")))
   test.socket.capability:__expect_send(mock_plug:generate_test_message("main", capabilities.switch.switch.on()))
 end
 

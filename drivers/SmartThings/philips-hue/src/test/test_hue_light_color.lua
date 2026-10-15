@@ -23,8 +23,6 @@ local function light_resource()
   local resp = capture_payloads.get("color_lamp_2_light")
   resp.data[1].color.gamut = GAMUT_A
   resp.data[1].color.gamut_type = "A"
-  -- `samsungim.hueSyncMode` (emitted for `mode`) has no definition available to the test framework.
-  resp.data[1].mode = nil
   return resp
 end
 
@@ -57,6 +55,7 @@ local function expect_light_state_events(first_refresh)
       capabilities.colorTemperature.colorTemperatureRange({ minimum = 2000, maximum = 6500 })))
   end
   for _, event in ipairs({
+    capabilities["samsungim.hueSyncMode"].mode("normal"),
     capabilities.switch.switch.on(),
     capabilities.switchLevel.level(100),
     capabilities.colorTemperature.colorTemperature(2710),

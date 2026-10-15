@@ -15,8 +15,6 @@ local ids = capture_payloads.ids
 
 local function lamp_light_resource()
   local resp = capture_payloads.get("color_lamp_light")
-  -- `samsungim.hueSyncMode` (emitted for `mode`) has no definition available to the test framework.
-  resp.data[1].mode = nil
   return resp
 end
 
@@ -87,6 +85,7 @@ test.set_test_init_function(function()
   test.socket.capability:__set_channel_ordering("relaxed")
   for _, event in ipairs({
     capabilities.colorTemperature.colorTemperatureRange({ minimum = 2000, maximum = 6500 }),
+    capabilities["samsungim.hueSyncMode"].mode("normal"),
     capabilities.switch.switch.on(),
     capabilities.switchLevel.level(100),
     capabilities.colorTemperature.colorTemperature(2732),

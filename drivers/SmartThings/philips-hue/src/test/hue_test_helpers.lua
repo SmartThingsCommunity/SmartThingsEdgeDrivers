@@ -22,6 +22,10 @@ local HueApi = require "hue.api"
 ---
 --- Use HueDeviceBuilder to create test fixtures with ConnectionScenario 2.0 for REST
 --- expectations and SSE event handling. See the documentation sections below for examples.
+-- `samsungim.hueSyncMode` is defined by the platform, not the driver package; its definition
+-- (fetched from the SmartThings API) lets the driver emit Hue sync mode events in tests.
+test.add_capability_definition("fixtures/capabilities/samsungim.hueSyncMode.json")
+
 local M = {}
 
 M.BRIDGE_IP = "192.168.1.15"

@@ -13,8 +13,6 @@ local PLUG_ZIGBEE_RID = capture_payloads.ids.plug_zigbee
 
 local function plug_light_resource(on)
   local resp = capture_payloads.get("plug_light")
-  -- `samsungim.hueSyncMode` (emitted for `mode`) has no definition available to the test framework.
-  resp.data[1].mode = nil
   if on ~= nil then resp.data[1].on.on = on end
   return resp
 end
@@ -46,10 +44,12 @@ local function refresh()
     mock_plug.id,
     { capability = "refresh", component = "main", command = "refresh", args = {} },
   })
+  test.socket.capability:__set_channel_ordering("relaxed")
+  test.socket.capability:__expect_send(mock_plug:generate_test_message("main", capabilities["samsungim.hueSyncMode"].mode("normal")))
 end
 
 test.register_coroutine_test(
-  "refreshing a plug emits only its switch state",
+  "refreshing a plug emits its switch and sync mode state",
   function()
     hue_test_helpers.mark_bridge_initialized(mock_bridge)
     http.expect_request_for_test(rest, "GET", "/clip/v2/resource/light/" .. PLUG_RID, {
