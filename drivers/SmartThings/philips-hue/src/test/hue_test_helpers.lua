@@ -761,7 +761,8 @@ M.HueDeviceBuilder = {
 ---   - port: Bridge port (default: 443)
 ---   - rest: Include REST connection (default: true)
 ---   - rest_name: Name for REST connection (default: "rest")
----   - rest_method: HTTP method for REST matcher (default: "GET")
+---   - rest_method: HTTP method(s) for the REST matcher (default: GET and PUT, or just GET when
+---     `put` adds a separate PUT connection)
 ---   - rest_ordering: Ordering for REST connection (default: "relaxed")
 ---   - sse: Include SSE connection (default: false)
 ---   - put: Include PUT connection (default: false)
@@ -782,8 +783,10 @@ function M.create_hue_scenario(options)
   
   -- REST connection (default)
   if options.rest ~= false then
+    -- Without a separate PUT connection, REST reads and commands share this one.
+    local rest_method = options.rest_method or (options.put and "GET" or { "GET", "PUT" })
     connections.rest = scenario:connection(options.rest_name or "rest", {
-      matcher = http.matcher(options.rest_method or "GET", "/clip/v2/resource/"),
+      matcher = http.matcher(rest_method, "/clip/v2/resource/"),
       ordering = options.rest_ordering or "relaxed"
     })
   end

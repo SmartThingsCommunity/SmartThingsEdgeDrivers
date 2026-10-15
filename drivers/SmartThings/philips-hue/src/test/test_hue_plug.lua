@@ -28,8 +28,8 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
 
 local mock_bridge, mock_plug = fixtures.bridge, fixtures.devices[1]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ put = true })
-local rest, put = conns.rest, conns.put_conn
+local scenario, conns = hue_test_helpers.create_hue_scenario()
+local rest = conns.rest
 
 hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
@@ -82,7 +82,7 @@ for _, command in ipairs({ "on", "off" }) do
   test.register_coroutine_test(
     "switch " .. command .. " sends a PUT to the plug's light resource",
     function()
-      http.expect_request_for_test(put, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, {
+      http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, {
         status = 200,
         body = { data = { { rid = PLUG_RID, rtype = "light" } }, errors = {} },
       })
@@ -93,7 +93,7 @@ for _, command in ipairs({ "on", "off" }) do
       })
       test.wait_for_events()
 
-      http.assert_sent_json(put, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, { on = { on = command == "on" } })
+      http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, { on = { on = command == "on" } })
     end
   )
 end
