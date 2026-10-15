@@ -414,6 +414,16 @@ function HueDeviceBuilder:enable_sse()
   return self
 end
 
+--- Whether a profile file declares a capability on any component.
+local function profile_has_capability(profile_filename, capability_id)
+  for _, component in pairs(t_utils.get_profile_definition(profile_filename).components or {}) do
+    for _, capability in pairs(component.capabilities or {}) do
+      if capability.id == capability_id then return true end
+    end
+  end
+  return false
+end
+
 --- Build the fixture and return a structured fixtures object.
 --- This creates all mock devices and returns them with their configurations.
 ---
@@ -607,12 +617,14 @@ function HueDeviceBuilder:start()
         end
         
       elseif child_config.type == "light" then
-        -- Lights always emit levelRange on init
-        test.socket.capability:__expect_send(
-          mock_child:generate_test_message("main", 
-            capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 })
+        -- Dimmable lights emit levelRange on init
+        if profile_has_capability(child_config.profile, capabilities.switchLevel.ID) then
+          test.socket.capability:__expect_send(
+            mock_child:generate_test_message("main",
+              capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 })
+            )
           )
-        )
+        end
       end
     end
   end
@@ -713,6 +725,12 @@ function HueDeviceBuilder:start()
     return bridge_device:get_field(Fields.GROUPS)
   end
 
+  --- The driver's own device object for a mock device, e.g. to inspect or seed device fields.
+  --- Must be called from within a test.
+  local function driver_device(mock_device)
+    return driver_under_test:get_device_info(mock_device.id)
+  end
+
   -- Return structured fixtures object
   return {
     bridge = mock_bridge,
@@ -720,6 +738,7 @@ function HueDeviceBuilder:start()
     test_init = test_init,
     configs = configs,
     seed_groups = seed_groups,
+    driver_device = driver_device,
   }
 end
 
