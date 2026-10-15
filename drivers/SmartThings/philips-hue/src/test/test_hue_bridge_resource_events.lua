@@ -43,7 +43,8 @@ local function expect_plug_refresh_events()
 end
 
 test.set_test_init_function(function()
-  http.expect_sse_handshake(sse, "/eventstream/clip/v2", true)
+  -- Answered once: these tests never reconnect the event stream.
+  http.expect_sse_handshake(sse, "/eventstream/clip/v2", false)
   scenario:activate()
   http.expect_request(rest, "GET", "/clip/v2/resource/zigbee_connectivity", {
     status = 200,
