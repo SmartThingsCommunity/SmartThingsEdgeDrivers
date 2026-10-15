@@ -121,23 +121,14 @@ local function assert_online(mock_device, expected, what)
     string.format("expected %s to be %s", what, expected and "online" or "offline"))
 end
 
---- Count Device:offline() calls per device until the returned `stop` is called.
-local function count_offline_calls()
-  local offline_calls = {}
-  local device_offline = mock_devices_api.device_offline
-  mock_devices_api.device_offline = function(device)
-    local id = type(device) == "table" and device.id or device
-    offline_calls[id] = (offline_calls[id] or 0) + 1
-    return device_offline(device)
+--- Assert how many times the bridge and each light were marked offline since the history was
+--- last cleared.
+local function assert_offline_calls(expected)
+  for _, entry in ipairs({ { mock_bridge, "bridge" }, { mock_lamp, "lamp" }, { mock_other, "other light" } }) do
+    local count = mock_devices_api.__count_device_status_calls(entry[1].id, false)
+    assert(count == expected,
+      string.format("expected the %s to be marked offline %d time(s), got %d", entry[2], expected, count))
   end
-  local function assert_offline_calls(expected)
-    for _, entry in ipairs({ { mock_bridge, "bridge" }, { mock_lamp, "lamp" }, { mock_other, "other light" } }) do
-      local count = offline_calls[entry[1].id] or 0
-      assert(count == expected,
-        string.format("expected the %s to be marked offline %d time(s), got %d", entry[2], expected, count))
-    end
-  end
-  return assert_offline_calls, function() mock_devices_api.device_offline = device_offline end
 end
 
 test.register_coroutine_test(
@@ -178,7 +169,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert_online(mock_bridge, true, "the bridge")
 
-    local assert_offline_calls, stop_counting = count_offline_calls()
+    mock_devices_api.__clear_device_status_history()
     -- The bridge drops the event stream and is unreachable for the next two reconnect attempts,
     -- as in physical test scenarios 8 and 9 ("No route to host" every few seconds).
     scenario:fail_connects(2, "No route to host")
@@ -187,6 +178,8 @@ test.register_coroutine_test(
     wait_until(function() return is_online(mock_bridge) == true end)
     assert_offline_calls(1)
     assert_online(mock_bridge, true, "the bridge")
+    assert(mock_devices_api.__count_device_status_calls(mock_bridge.id, true) == 1,
+      "expected the bridge to be marked online once, when the stream reconnected")
 
     -- Once the stream has reconnected, a later outage is reported again.
     scenario:get_connection("sse"):close_connection()
@@ -194,7 +187,6 @@ test.register_coroutine_test(
     assert_offline_calls(2)
     wait_until(function() return is_online(mock_bridge) == true end)
 
-    stop_counting()
   end
 )
 
@@ -202,7 +194,7 @@ test.register_coroutine_test(
   "while the bridge rejects event stream reconnects, devices are only marked offline once",
   function()
     test.wait_for_events()
-    local assert_offline_calls, stop_counting = count_offline_calls()
+    mock_devices_api.__clear_device_status_history()
 
     -- The bridge drops the stream and answers the next two reconnects with 503 (e.g. while it
     -- restarts), ahead of the reusable handshake registered in test_init.
@@ -215,7 +207,6 @@ test.register_coroutine_test(
     assert_online(mock_bridge, true, "the bridge")
     local _, handshakes = scenario:get_connection("sse"):get_sent_log():gsub("GET /eventstream/clip/v2", "")
     assert(handshakes == 4, string.format("expected the initial connect plus three reconnects, got %d", handshakes))
-    stop_counting()
   end
 )
 
