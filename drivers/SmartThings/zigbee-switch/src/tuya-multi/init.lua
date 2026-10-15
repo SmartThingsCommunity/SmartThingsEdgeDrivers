@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -48,6 +48,7 @@ local tuya_switch_handler = {
   supported_capabilities = {
       capabilities.switch
   },
+  sub_drivers = require("tuya-multi.sub_drivers"),
   can_handle = require("tuya-multi.can_handle"),
 }
 

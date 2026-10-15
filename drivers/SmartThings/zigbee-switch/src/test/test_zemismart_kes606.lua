@@ -63,7 +63,7 @@ local function expect_button_metadata(child)
     capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })))
 end
 
-test.set_test_init_function(function()
+local function initialize_devices()
   test.mock_device.add_test_device(parent)
   test.mock_device.add_test_device(scene_parent)
   expect_button_metadata(parent)
@@ -74,7 +74,8 @@ test.set_test_init_function(function()
     test.mock_device.add_test_device(scene_children[ep])
     expect_button_metadata(scene_children[ep])
   end
-end)
+end
+test.set_test_init_function(initialize_devices)
 
 local function enum_write(attribute, value, ep, cluster)
   return cluster_base.write_attribute(parent, data_types.ClusterId(cluster or 0xE001),
@@ -96,8 +97,58 @@ test.register_coroutine_test("Only the exact four-gang fingerprint uses the comp
   })
   assert(not matches({}, nil, other_model))
   assert(not matches({}, nil, nil))
-  assert(not require("tuya-multi.can_handle")({}, nil, parent))
+  assert(require("tuya-multi.can_handle")({}, nil, parent))
 end)
+
+local function assert_nested_dispatch(dispatcher, device, message)
+  local driver = test.driver_wrapper.driver_under_test
+  local tuya_dispatchers = dispatcher:find_child_dispatchers(driver, device, message)
+  assert(#tuya_dispatchers == 1 and tuya_dispatchers[1].name == "tuya-multi",
+    "KES606 must route through the generic Tuya parent exactly once")
+  local nested_dispatchers = tuya_dispatchers[1]:find_child_dispatchers(driver, device, message)
+  assert(#nested_dispatchers == 1 and nested_dispatchers[1].name == "zemismart-kes606",
+    "KES606 handlers must be nested under Tuya without a parallel root registration")
+  assert(nested_dispatchers[1].lazy_loaded, "Nested handlers must load when dispatching the device")
+end
+
+test.register_coroutine_test("Parent and all four children dispatch through the nested Tuya handler", function()
+  local driver = test.driver_wrapper.driver_under_test
+  local command = { capability = "switch", component = "main", command = "on", args = {} }
+  for _, devices in ipairs({ { parent, scene_parent }, children, scene_children }) do
+    for _, device in ipairs(devices) do
+      assert(require("tuya-multi.can_handle")({}, driver, device))
+      assert_nested_dispatch(driver.capability_dispatcher, device, command)
+      for _, lifecycle in ipairs({ "init", "added", "doConfigure", "driverSwitched", "infoChanged" }) do
+        assert_nested_dispatch(driver.lifecycle_dispatcher, device, lifecycle)
+      end
+    end
+  end
+end)
+
+for _, child_key in ipairs({ "gang0", "gang5", "gang1-extra", "invalid" }) do
+  local malformed_child = test.mock_device.build_test_child_device({
+    profile = t_utils.get_profile_definition(SWITCH_PROFILE),
+    parent_device_id = parent.id, parent_assigned_child_key = child_key,
+    label = "Malformed KES606 child " .. child_key,
+  })
+  test.register_coroutine_test("Malformed child key " .. child_key .. " stays isolated from generic relay handlers", function()
+    local driver = test.driver_wrapper.driver_under_test
+    assert(require("zemismart-kes606.can_handle")({}, driver, malformed_child))
+    for _, command_name in ipairs({ "on", "off" }) do
+      local command = { capability = "switch", component = "main", command = command_name, args = {} }
+      assert_nested_dispatch(driver.capability_dispatcher, malformed_child, command)
+      test.socket.capability:__queue_receive({ malformed_child.id, command })
+    end
+    test.socket.device_lifecycle:__queue_receive(malformed_child:generate_info_changed({
+      preferences = { switchMode = "scene", countdownSeconds = 30 }
+    }))
+  end, {
+    test_init = function()
+      initialize_devices()
+      test.mock_device.add_test_device(malformed_child)
+    end,
+  })
+end
 
 test.register_coroutine_test("Repeated parent initialization does not recreate children", function()
   expect_button_metadata(parent)

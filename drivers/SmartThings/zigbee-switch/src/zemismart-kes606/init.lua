@@ -51,6 +51,8 @@ local function pending_mode_field(gang)
 end
 
 local function gang_mode(parent, gang)
+  -- Child profile changes are asynchronous. Prefer the tracked mode, updated
+  -- by device readback; capabilities are only a fallback when it is not stored.
   local mode = parent:get_field(mode_field(gang))
   if mode ~= nil then return mode end
   local child = get_child(parent, gang)
