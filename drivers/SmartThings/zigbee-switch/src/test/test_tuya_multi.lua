@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+local version = require "version"
 local clusters = require "st.zigbee.zcl.clusters"
 local BasicCluster = clusters.Basic
 local OnOffCluster = clusters.OnOff
@@ -48,8 +49,9 @@ test.set_test_init_function(test_init)
 
 test.register_coroutine_test("Other Tuya switches retain their generic lifecycle handler", function()
   local driver = test.driver_wrapper.driver_under_test
+  local tuya_name = version.api >= 16 and "tuya-multi" or require("tuya-multi").NAME
   local dispatchers = driver.lifecycle_dispatcher:find_child_dispatchers(driver, mock_device, "doConfigure")
-  assert(#dispatchers == 1 and dispatchers[1].name == "tuya-multi")
+  assert(#dispatchers == 1 and dispatchers[1].name == tuya_name)
   assert(#dispatchers[1]:find_child_dispatchers(driver, mock_device, "doConfigure") == 0,
     "Generic Tuya devices must not enter the KES606 sub-driver")
   assert(not require("zemismart-kes606.can_handle")({}, driver, mock_device))

@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+local version = require "version"
 local t_utils = require "integration_test.utils"
 local zb_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
@@ -102,11 +103,14 @@ end)
 
 local function assert_nested_dispatch(dispatcher, device, message)
   local driver = test.driver_wrapper.driver_under_test
+  -- Legacy lazy loading retains the template NAME; API 16+ uses module paths.
+  local tuya_name = version.api >= 16 and "tuya-multi" or require("tuya-multi").NAME
+  local kes606_name = version.api >= 16 and "zemismart-kes606" or require("zemismart-kes606").NAME
   local tuya_dispatchers = dispatcher:find_child_dispatchers(driver, device, message)
-  assert(#tuya_dispatchers == 1 and tuya_dispatchers[1].name == "tuya-multi",
+  assert(#tuya_dispatchers == 1 and tuya_dispatchers[1].name == tuya_name,
     "KES606 must route through the generic Tuya parent exactly once")
   local nested_dispatchers = tuya_dispatchers[1]:find_child_dispatchers(driver, device, message)
-  assert(#nested_dispatchers == 1 and nested_dispatchers[1].name == "zemismart-kes606",
+  assert(#nested_dispatchers == 1 and nested_dispatchers[1].name == kes606_name,
     "KES606 handlers must be nested under Tuya without a parallel root registration")
   assert(nested_dispatchers[1].lazy_loaded, "Nested handlers must load when dispatching the device")
 end
