@@ -214,6 +214,12 @@ matterManufacturer:
     vendorId: 0x145C
     productId: 0x0003
     deviceProfileName: lock-modular
+  #ThorBolt
+  - id: "5708/1"
+    deviceLabel: ThorBolt Smart Lock
+    vendorId: 0x164C
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-schedule-battery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
