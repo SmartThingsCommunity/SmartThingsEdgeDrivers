@@ -34,6 +34,7 @@ local zigbee_window_treatment_driver_template = {
     capabilities.windowShadePreset,
     capabilities.windowShadeLevel,
     capabilities.statelessWindowShadeLevelStep,
+    capabilities.refresh,
     capabilities.powerSource,
     capabilities.battery
   },
