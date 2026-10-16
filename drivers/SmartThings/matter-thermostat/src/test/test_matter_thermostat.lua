@@ -746,6 +746,49 @@ test.register_message_test(
 )
 
 test.register_message_test(
+	"Without the Auto feature a heating setpoint above the cooling setpoint is written alone",
+	{
+		{
+			channel = "matter",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				clusters.Thermostat.server.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 20*100)
+			}
+		},
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+		},
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 20.0, unit = "C" }))
+		},
+		{
+			channel = "capability",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				{ capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 25 } }
+			}
+		},
+		{
+			channel = "matter",
+			direction = "send",
+			message = {
+				mock_device.id,
+				clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, 25*100)
+			}
+		}
+	},
+	{
+	   min_api_version = 15
+	}
+)
+
+test.register_message_test(
 	"Setting the cooling setpoint should send the appropriate commands",
 	{
 		{

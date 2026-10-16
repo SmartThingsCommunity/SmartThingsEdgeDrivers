@@ -210,6 +210,9 @@ function CapabilityHandlers.thermostat_set_setpoint_factory(setpoint)
     --Check setpoint limits for the device
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(fields.setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
+    -- With the AutoMode feature a setpoint that breaks the deadband moves the other setpoint along, as the
+    -- Thermostat cluster specification describes; it is rejected only if the other setpoint would leave its limits.
+    local companion_setpoint, companion_centi
     if setpoint_type == "Heat" then
       local min = device:get_field(fields.setpoint_limit_device_field.MIN_HEAT) or MIN_TEMP_IN_C
       local max = device:get_field(fields.setpoint_limit_device_field.MAX_HEAT) or MAX_TEMP_IN_C
@@ -222,12 +225,19 @@ function CapabilityHandlers.thermostat_set_setpoint_factory(setpoint)
         return
       end
       if is_auto_capable and value > (cached_cooling_val - deadband) then
-        log.warn(string.format(
-          "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s)",
-          value, cooling_setpoint, deadband
-        ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
-        return
+        local cool_min = device:get_field(fields.setpoint_limit_device_field.MIN_COOL) or MIN_TEMP_IN_C
+        local cool_max = device:get_field(fields.setpoint_limit_device_field.MAX_COOL) or MAX_TEMP_IN_C
+        companion_centi = st_utils.round((value + deadband) * 100.0)
+        if companion_centi < st_utils.round(cool_min * 100.0) or companion_centi > st_utils.round(cool_max * 100.0) then
+          log.warn(string.format(
+            "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s), and the cooling setpoint cannot be raised to %s (max %s)",
+            value, cached_cooling_val, deadband, companion_centi / 100.0, cool_max
+          ))
+          device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
+          return
+        end
+        log.info(string.format("Raising the cooling setpoint to %s to keep the deadband (%s)", companion_centi / 100.0, deadband))
+        companion_setpoint = clusters.Thermostat.attributes.OccupiedCoolingSetpoint
       end
     else
       local min = device:get_field(fields.setpoint_limit_device_field.MIN_COOL) or MIN_TEMP_IN_C
@@ -241,15 +251,28 @@ function CapabilityHandlers.thermostat_set_setpoint_factory(setpoint)
         return
       end
       if is_auto_capable and value < (cached_heating_val + deadband) then
-        log.warn(string.format(
-          "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s)",
-          value, heating_setpoint, deadband
-        ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
-        return
+        local heat_min = device:get_field(fields.setpoint_limit_device_field.MIN_HEAT) or MIN_TEMP_IN_C
+        local heat_max = device:get_field(fields.setpoint_limit_device_field.MAX_HEAT) or MAX_TEMP_IN_C
+        companion_centi = st_utils.round((value - deadband) * 100.0)
+        if companion_centi < st_utils.round(heat_min * 100.0) or companion_centi > st_utils.round(heat_max * 100.0) then
+          log.warn(string.format(
+            "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s), and the heating setpoint cannot be lowered to %s (min %s)",
+            value, cached_heating_val, deadband, companion_centi / 100.0, heat_min
+          ))
+          device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
+          return
+        end
+        log.info(string.format("Lowering the heating setpoint to %s to keep the deadband (%s)", companion_centi / 100.0, deadband))
+        companion_setpoint = clusters.Thermostat.attributes.OccupiedHeatingSetpoint
       end
     end
-    device:send(setpoint:write(device, thermostat_utils.component_to_endpoint(device, cmd.component, clusters.Thermostat.ID), st_utils.round(value * 100.0)))
+    if companion_setpoint then
+      -- The other setpoint goes first, so a server that rejects deadband violations accepts both writes,
+      -- and one that adjusts itself has nothing to adjust. Separate requests: the hub rejects a write
+      -- request with more than one attribute.
+      device:send(companion_setpoint:write(device, endpoint_id, companion_centi))
+    end
+    device:send(setpoint:write(device, endpoint_id, st_utils.round(value * 100.0)))
   end
 end
 
