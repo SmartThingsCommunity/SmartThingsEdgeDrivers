@@ -208,6 +208,23 @@ test.register_coroutine_test("Target level control and actual position reports a
   end
 end)
 
+test.register_coroutine_test("Target preset retains standard commands without steps", function()
+  confirm_position(43)
+  command("windowShadePreset", "setPresetPosition", { 40 })
+  expect_event(mock_device, capabilities.windowShadePreset.position(40))
+  test.wait_for_events()
+  command("windowShadePreset", "presetPosition")
+  test.socket.zigbee:__expect_send({ mock_device.id,
+    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 40) })
+  expect_position_read()
+  test.wait_for_events()
+  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
+  report_level(42)
+  report_level(40)
+  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 40)
+end)
+
+-- The shared step helper's named-argument injection requires capability-aware API 15.
 test.register_coroutine_test("Target preset and relative step retain standard commands", function()
   confirm_position(50)
   command("windowShadePreset", "setPresetPosition", { 40 })
@@ -221,7 +238,7 @@ test.register_coroutine_test("Target preset and relative step retain standard co
   report_level(45)
   report_level(40)
   step_and_expect(10, 50)
-end)
+end, { min_api_version = 15 })
 
 test.register_coroutine_test("Existing battery profiles retain percentage and voltage reporting", function()
   test.socket.zigbee:__queue_receive({ battery_device.id,
@@ -247,7 +264,7 @@ test.register_coroutine_test("Absolute movement ends the previous relative-step 
   test.wait_for_events()
   report_level(50)
   step_and_expect(-10, 40)
-end)
+end, { min_api_version = 15 })
 
 test.register_coroutine_test("Rapid relative steps accumulate despite intermediate reports", function()
   report_level(50)
@@ -255,7 +272,7 @@ test.register_coroutine_test("Rapid relative steps accumulate despite intermedia
   report_level(52)
   step_and_expect(-5, 55)
   step_and_expect(15, 70)
-end)
+end, { min_api_version = 15 })
 
 local motion_commands = {
   { name = "open", capability = "windowShade", zigbee = "UpOrOpen", actual = 70 },
@@ -279,7 +296,7 @@ for _, motion in ipairs(motion_commands) do
     test.wait_for_events()
     report_level(motion.actual)
     step_and_expect(-10, motion.actual - 10)
-  end)
+  end, { min_api_version = 15 })
 end
 
 test.register_coroutine_test("Refresh and preset configuration preserve relative-step accumulation",
@@ -292,7 +309,7 @@ test.register_coroutine_test("Refresh and preset configuration preserve relative
     expect_event(mock_device, capabilities.windowShadePreset.position(40))
     test.wait_for_events()
     step_and_expect(-5, 55)
-  end)
+  end, { min_api_version = 15 })
 
 test.register_coroutine_test("Interrupted step timers cannot clear a later sequence", function()
   report_level(50)
@@ -324,6 +341,18 @@ test.register_coroutine_test("Interrupted step timers cannot clear a later seque
   test.wait_for_events()
   report_level(45)
   step_and_expect(-5, 40)
+end, { min_api_version = 15 })
+
+test.register_coroutine_test("Zero step sends nothing from a confirmed position", function()
+  confirm_position(43)
+  command("statelessWindowShadeLevelStep", "stepShadeLevel", { 0 })
+  test.wait_for_events()
+  assert((require "zemismart.position_confirmation").position_is_known(mock_device))
+  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
+  assert(mock_device:get_field("_zemismartPositionCheck") == nil)
+  assert(mock_device:get_field("_zemismartMotionContext") == nil)
+  assert(mock_device:get_field("_latestTargetLevel") == nil)
+  assert(mock_device:get_field("_zemismartStepDispatch") == nil)
 end)
 
 test.register_coroutine_test("Zero relative steps preserve the sequence and clear the dispatch marker",
@@ -335,7 +364,7 @@ test.register_coroutine_test("Zero relative steps preserve the sequence and clea
     assert(mock_device:get_field("_latestTargetLevel") == 60)
     assert(mock_device:get_field("_zemismartStepDispatch") == nil)
     step_and_expect(-5, 55)
-  end)
+  end, { min_api_version = 15 })
 
 test.register_coroutine_test("Failed internal step dispatch leaves no stale target or marker", function()
   report_level(50)

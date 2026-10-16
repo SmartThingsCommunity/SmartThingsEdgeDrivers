@@ -629,6 +629,34 @@ test.register_coroutine_test("A direction-conflicting report is quarantined with
   assert(device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
 end)
 
+test.register_coroutine_test("Removal invalidates non-step timers through SDK deletion", function()
+  helpers.confirm(43)
+  local callbacks, restore = capture_delayed_callbacks()
+  helpers.command("windowShade", "open")
+  expect_motion("UpOrOpen")
+  helpers.expect_read()
+  test.wait_for_events()
+  helpers.report(44, 1)
+  helpers.expect_event(capabilities.windowShadeLevel.shadeLevel(44))
+  helpers.expect_event(shade.opening())
+  test.wait_for_events()
+  start_refresh()
+  restore()
+  local scheduled = {}
+  for _, entry in ipairs(callbacks) do scheduled[entry.seconds] = true end
+  assert(scheduled[2] and scheduled[10] and scheduled[30] and not scheduled[15])
+  assert(device:get_field(CHECK) ~= nil and device:get_field(MOTION) ~= nil)
+  assert(device:get_field("partial_open_timer") ~= nil)
+  test.socket.device_lifecycle:__queue_receive({ device.id, "removed" })
+  test.wait_for_events()
+  for _, entry in ipairs(callbacks) do
+    local ok, err = pcall(entry.callback)
+    assert(ok, "callback touched a deleted device: " .. tostring(err))
+  end
+  helpers.advance(60)
+end)
+
+-- Nonzero steps depend on the shared helper's capability-aware API 15 injection.
 test.register_coroutine_test("Removal invalidates round total motion partial and step callbacks", function()
   helpers.confirm(43)
   local callbacks, restore = capture_delayed_callbacks()
@@ -658,7 +686,7 @@ test.register_coroutine_test("Removal invalidates round total motion partial and
     assert(ok, "callback touched a deleted device: " .. tostring(err))
   end
   helpers.advance(60) -- Do not access the device after SDK invalidates it.
-end)
+end, { min_api_version = 15 })
 
 test.register_coroutine_test("Already-complete step timer cancellation still invalidates saved fields",
   function()
@@ -686,7 +714,7 @@ test.register_coroutine_test("Already-complete step timer cancellation still inv
     assert(old_generation.active == false)
     stale()
     test.wait_for_events()
-  end)
+  end, { min_api_version = 15 })
 
 test.register_coroutine_test("Replacing a completed step timer cannot let its old callback clear the new target",
   function()
@@ -717,7 +745,7 @@ test.register_coroutine_test("Replacing a completed step timer cannot let its ol
     assert(device:get_field("_latestTargetLevel") == 54)
     assert(device:get_field("_targetLevelTimeOut") == new_timer)
     assert(device:get_field("_targetLevelGeneration").active)
-  end)
+  end, { min_api_version = 15 })
 
 test.register_coroutine_test("Battery profile retains its original initialization without trust reads",
   function()
