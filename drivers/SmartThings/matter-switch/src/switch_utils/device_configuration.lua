@@ -90,6 +90,16 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
     or switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.SWITCH)
     or switch_utils.find_primary_device_type(ep_info)
 
+  -- some devices purporting to be COLOR_TEMPERATURE may actually expose EXTENDED_COLOR feature bits
+  if primary_dt_id == fields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE then
+    local color_control_ep = switch_utils.find_cluster_on_ep(ep_info, clusters.ColorControl.ID) or {}
+    local color_control_feature_map = color_control_ep.feature_map or 0
+    if clusters.ColorControl.are_features_supported(clusters.ColorControl.types.Feature.XY, color_control_feature_map) or
+      clusters.ColorControl.are_features_supported(clusters.ColorControl.types.Feature.HUE_AND_SATURATION, color_control_feature_map) then
+      primary_dt_id =  fields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR
+    end
+  end
+
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
