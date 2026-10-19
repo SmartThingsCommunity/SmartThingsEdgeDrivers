@@ -1313,7 +1313,10 @@ local function get_user_response_handler(driver, device, ib, response)
   end
 
   local ep = find_default_endpoint(device, DoorLock.ID)
-  local status = elements.user_status.value
+  local status = nil
+  if elements.user_status ~= nil then
+    status = elements.user_status.value
+  end
   local maxUser = device:get_latest_state(
     "main",
     capabilities.lockUsers.ID,
@@ -1624,11 +1627,11 @@ local function set_pin_response_handler(driver, device, ib, response)
 
     -- If user is added also, update User table
     if userIdx == nil then
+      userIdx = elements.user_index.value
       add_user_to_table(device, elements.user_index.value, nil, userType)
     end
 
     -- Update Credential table
-    userIdx = elements.user_index.value
     if cmdName == "addCredential" then
       add_credential_to_table(device, userIdx, credIdx, "pin")
     end
