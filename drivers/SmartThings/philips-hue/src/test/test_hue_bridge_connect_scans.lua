@@ -99,4 +99,54 @@ test.register_coroutine_test(
   }
 )
 
+--- Let mock time run on for `seconds`, well past the driver's longest backoff.
+local function let_time_pass(seconds)
+  local until_time = os.time() + seconds
+  test.wait_until(function() return os.time() >= until_time end,
+    { max_turns = 500, message = string.format("%ds of mock time passing", seconds) })
+end
+
+local function remove_bridge()
+  test.socket.device_lifecycle:__queue_receive({ fixtures.bridge.id, "removed" })
+  test.wait_for_events()
+end
+
+test.register_coroutine_test(
+  "a failing connectivity scan stops retrying once the bridge is removed",
+  function()
+    answer_next({ status = 500, body = FAILED })
+    answer_next({ status = 500, body = FAILED })
+    remove_bridge()
+    -- Another attempt would be an unexpected request.
+    let_time_pass(120)
+  end,
+  { test_init = answer_connectivity_scans(2) }
+)
+
+test.register_coroutine_test(
+  "a failing room scan stops retrying once the bridge is removed",
+  function()
+    answer_next({ status = 500, body = FAILED })
+    answer_next({ status = 500, body = FAILED })
+    remove_bridge()
+    let_time_pass(120)
+  end,
+  { test_init = answer_room_scans(2) }
+)
+
+test.register_coroutine_test(
+  "a failing connectivity scan is superseded by the scan of the next event stream connection",
+  function()
+    answer_next({ status = 500, body = FAILED })
+    answer_next({ status = 500, body = FAILED })
+    -- The stream drops and reconnects; the new connection's scan succeeds, and the room scan follows.
+    sse:close_connection()
+    answer_next({ body = CONNECTED })
+    http.await_request(rest, "GET", ROOM_PATH, { max_turns = 500 }):respond({ body = EMPTY })
+    -- A further attempt by the earlier connection's scan would be an unexpected request.
+    let_time_pass(120)
+  end,
+  { test_init = answer_connectivity_scans(3) }
+)
+
 test.run_registered_tests()

@@ -44,12 +44,26 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
     -- Whether the bridge's current outage has already been reported; the EventSource calls
     -- `onerror` on every failed reconnect attempt.
     local bridge_marked_offline = false
+    -- Counts the times the event stream has opened, so a connectivity scan started for an earlier
+    -- connection can tell it has been superseded.
+    local connection_count = 0
 
     eventsource.onopen = function(msg)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", bridge_device.label))
       bridge_marked_offline = false
       bridge_device:online()
+      connection_count = connection_count + 1
+      local this_connection = connection_count
+      -- Whether this scan's connection is still the bridge's current one: the stream may have
+      -- reconnected (and started a new scan), been replaced after an IP change, or the bridge may
+      -- have been removed.
+      local function connection_is_current()
+        -- A removed device's fields all read as nil.
+        return this_connection == connection_count
+          and bridge_device.id ~= nil
+          and bridge_device:get_field(Fields.EVENT_SOURCE) == eventsource
+      end
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
       cosock.spawn(function()
@@ -124,6 +138,11 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
           if scanned then break end
           cosock.socket.sleep(backoff())
+          if not connection_is_current() then
+            log.info(string.format("Stopping connectivity scan for %s, its event stream connection is gone",
+              tostring(bridge_device.label)))
+            return
+          end
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))

@@ -148,6 +148,12 @@ function grouped_utils.scan_groups(driver, bridge_device, api, hue_id_to_device)
     end
     if rooms and zones then break end
     cosock.socket.sleep(backoff())
+    -- The bridge was removed while the scan was retrying: a removed device's fields all read as
+    -- nil, and removing a bridge shuts down and clears its API client.
+    if bridge_device.id == nil or bridge_device:get_field(Fields.BRIDGE_API) ~= api then
+      log.info("Stopping group scan, the bridge's API client is gone")
+      return
+    end
   end
   -- Combine rooms and zones.
   for _, zone in ipairs(zones) do
@@ -303,6 +309,12 @@ function grouped_utils.queue_group_scan(driver, bridge_device)
         end
       end
 
+      -- A removed device's fields and methods all read as nil.
+      if bridge_device.id == nil then
+        log.info("Bridge was removed, skipping group scan")
+        return
+      end
+
       -- Finally do the scan
       local hue_device_table = build_hue_id_to_device_map(bridge_device)
       local api = bridge_device:get_field(Fields.BRIDGE_API)
@@ -317,7 +329,9 @@ function grouped_utils.queue_group_scan(driver, bridge_device)
       grouped_utils.scan_groups(driver, bridge_device, api, hue_device_table)
 
       -- Clear out tx for the next request
-      bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+      if bridge_device.id ~= nil then
+        bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+      end
     end)
     -- Set the queue to the tx
     bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, tx)
