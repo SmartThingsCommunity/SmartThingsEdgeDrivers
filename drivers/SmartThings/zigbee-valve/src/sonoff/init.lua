@@ -32,38 +32,43 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
---- OnOff Property Reporting → Valve Capability Point Event
+local function is_dual_channel(device)
+  local model = device:get_model()
+  return model == "SWV-ZF2U" or model == "SWV-ZF2"
+end
+
+--- Map OnOff reports to the corresponding valve.
 local function onoff_attr_handler(driver, device, value, zb_rx)
   local ep = zb_rx.address_header.src_endpoint.value
   local target = device
-  if ep == 0x02 then
+  if is_dual_channel(device) and ep == 0x02 then
     local child = find_child(device, 2)
     if child then target = child end
   end
   log.info(string.format("[SWV] OnOff report ep=%s value=%s", tostring(ep), tostring(value.value)))
-  if value.value == true or value.value == 1 then
+  if value.value ~= false and value.value ~= 0 then
     target:emit_event(capabilities.valve.valve.open())
   else
     target:emit_event(capabilities.valve.valve.closed())
   end
 end
 
---- Battery Percentage Attribute Handler
+--- Zigbee BatteryPercentageRemaining is measured in half-percent units.
 local function battery_percentage_handler(driver, device, value)
   device:emit_event(capabilities.battery.battery(utils.round(value.value / 2)))
 end
 
---- Lifecycle initialization handler
 local function device_init(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
-    device:set_find_child(find_child)
+    if is_dual_channel(device) then
+      device:set_find_child(find_child)
+    end
     for _, attribute in ipairs(CONFIGURATION) do
       device:add_configured_attribute(attribute)
     end
   end
 end
 
---- doConfigure
 local function do_configure(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:refresh()
@@ -71,9 +76,8 @@ local function do_configure(driver, device)
   end
 end
 
---- added
 local function device_added(driver, device)
-  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and is_dual_channel(device) then
     if find_child(device, 2) == nil then
       driver:try_create_device({
         type = "EDGE_CHILD",
@@ -88,13 +92,13 @@ local function device_added(driver, device)
   device:refresh()
 end
 
---- driverSwitched
 local function driver_switched(driver, device)
   device_added(driver, device)
 end
 
---- Identity cluster handler：button pressed on the device, sync valve states
+--- A device button press prompts a refresh of both SWV2C channels.
 local function identify_handler(driver, device, zb_rx)
+  if not is_dual_channel(device) then return end
   log.info("[SWV] Identify received, syncing valve states")
   device.thread:call_with_delay(2, function()
     device:send(OnOff.attributes.OnOff:read(device))
