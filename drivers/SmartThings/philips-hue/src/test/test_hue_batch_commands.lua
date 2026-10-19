@@ -257,6 +257,25 @@ register_batch_test(
   end
 )
 
+register_batch_test(
+  "a grouped setLevel turns the room on first when a light's state is not known yet",
+  function()
+    init_and_seed_groups()
+    set_switch_state(light_1, "on")
+    set_switch_state(light_2, nil)
+    expect_grouped_light_put(GROUPED_LIGHT_RID, { on = { on = true } })
+    expect_grouped_light_put(GROUPED_LIGHT_RID, { dimming = { brightness = 23 } })
+
+    test.socket.capability:__queue_receive_batch({
+      { light_1.id, set_level_cmd(23) },
+      { light_2.id, set_level_cmd(23) },
+    })
+    test.wait_for_events()
+
+    assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 2)
+  end
+)
+
 --- Run `fn`, returning the messages logged with `log.error_with` while it ran.
 local function capture_logged_errors(fn)
   local log = require "log"

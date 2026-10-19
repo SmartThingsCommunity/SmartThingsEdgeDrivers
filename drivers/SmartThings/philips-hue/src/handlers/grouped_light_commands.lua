@@ -74,10 +74,11 @@ local function do_switch_level_action(driver, bridge_device, group, args)
     return
   end
 
-  -- As with an individual command, only turn the group on first if one of its lights is off.
+  -- Only turn the group on first if one of its lights is off. A light whose state hasn't been
+  -- reported yet counts as off: setting the brightness of a light that is off doesn't turn it on.
   local any_off = false
   for _, device in ipairs(group.devices or {}) do
-    if device:get_field(Fields.SWITCH_STATE) == "off" then
+    if device:get_field(Fields.SWITCH_STATE) ~= "on" then
       any_off = true
       break
     end
