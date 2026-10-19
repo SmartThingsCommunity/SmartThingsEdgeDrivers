@@ -88,7 +88,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             for idx, err in ipairs(connectivity_status.errors) do
               log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
             end
-          elseif connectivity_status.data and #connectivity_status.data > 0 then
+          elseif connectivity_status.data then
+            -- A bridge with no Zigbee devices answers with no data; that is still a complete scan.
             scanned = true
             for _, status in ipairs(connectivity_status.data) do
               local hue_device_id = (status.owner and status.owner.rid) or ""

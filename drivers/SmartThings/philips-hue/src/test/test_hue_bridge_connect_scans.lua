@@ -85,4 +85,18 @@ test.register_coroutine_test(
   { test_init = answer_room_scans(3) }
 )
 
+test.register_coroutine_test(
+  "a connectivity scan reporting no devices is complete: it isn't repeated, and the room scan follows",
+  function()
+    -- The connectivity scan is answered once (a second one would be an unexpected request).
+    http.await_request(rest, "GET", ROOM_PATH, { max_turns = 500 }):respond({ body = EMPTY })
+  end,
+  {
+    test_init = function()
+      base_test_init()
+      http.expect_request(rest, "GET", CONNECTIVITY_PATH, { body = EMPTY })
+    end,
+  }
+)
+
 test.run_registered_tests()
