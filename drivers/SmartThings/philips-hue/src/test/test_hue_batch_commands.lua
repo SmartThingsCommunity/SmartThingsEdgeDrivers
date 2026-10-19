@@ -257,4 +257,45 @@ register_batch_test(
   end
 )
 
+--- Run `fn`, returning the messages logged with `log.error_with` while it ran.
+local function capture_logged_errors(fn)
+  local log = require "log"
+  local original = log.error_with
+  local messages = {}
+  log.error_with = function(opts, ...)
+    table.insert(messages, table.concat({ ... }, " "))
+    return original(opts, ...)
+  end
+  local ok, err = pcall(fn)
+  log.error_with = original
+  if not ok then error(err, 0) end
+  return messages
+end
+
+register_batch_test(
+  "errors the bridge returns for a grouped command are logged",
+  function()
+    init_and_seed_groups()
+    http.expect_request_for_test(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, {
+      status = 503,
+      body = { errors = { { description = "bridge is busy" } }, data = {} },
+    })
+
+    local messages = capture_logged_errors(function()
+      test.socket.capability:__queue_receive_batch({
+        { light_1.id, switch_cmd("on") },
+        { light_2.id, switch_cmd("on") },
+      })
+      test.wait_for_events()
+    end)
+
+    assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
+    local logged = false
+    for _, message in ipairs(messages) do
+      if message:find("bridge is busy", 1, true) then logged = true end
+    end
+    assert(logged, "expected the bridge's error to be logged, got: " .. table.concat(messages, " | "))
+  end
+)
+
 test.run_registered_tests()

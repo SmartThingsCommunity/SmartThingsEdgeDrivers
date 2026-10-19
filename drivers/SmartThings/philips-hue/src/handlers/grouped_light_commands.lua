@@ -11,6 +11,23 @@ local utils = require "utils"
 ---@class GroupedLightCommandHandlers
 local GroupedLightCommandHandlers = {}
 
+--- Log the error from a failed request, and any errors the bridge returned in its response.
+---@param resp table?
+---@param err string?
+---@param action_desc string
+local function log_response_errors(resp, err, action_desc)
+  if err ~= nil then
+    log.error_with({ hub_logs = true }, "Error performing " .. action_desc .. ": " .. err)
+  end
+
+  if resp and resp.errors and #resp.errors > 0 then
+    for _, error in ipairs(resp.errors) do
+      log.error_with({ hub_logs = true },
+        "Error returned in Hue response for " .. action_desc .. ": " .. tostring(error.description))
+    end
+  end
+end
+
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 ---@param group table
@@ -33,15 +50,7 @@ local function do_switch_action(driver, bridge_device, group, args)
   end
 
   local resp, err = hue_api:set_grouped_light_on_state(grouped_light_id, on)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing on/off action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  log_response_errors(resp, err, "on/off action")
 end
 
 ---@param driver HueDriver
@@ -75,27 +84,11 @@ local function do_switch_level_action(driver, bridge_device, group, args)
   end
   if any_off then
     local resp, err = hue_api:set_grouped_light_on_state(grouped_light_id, true)
-    if not resp or (resp.errors and #resp.errors == 0) then
-      if err ~= nil then
-        log.error_with({ hub_logs = true }, "Error performing on/off action: " .. err)
-      elseif resp and #resp.errors > 0 then
-        for _, error in ipairs(resp.errors) do
-          log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
-        end
-      end
-    end
+    log_response_errors(resp, err, "on/off action")
   end
 
   local resp, err = hue_api:set_grouped_light_level(grouped_light_id, level)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing switch level action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  log_response_errors(resp, err, "switch level action")
 end
 
 
@@ -129,15 +122,7 @@ local function do_color_action(driver, bridge_device, group, args, aux)
   local xy = HueColorUtils.safe_rgb_to_xy(red, green, blue, aux[Fields.GAMUT])
 
   local resp, err = hue_api:set_grouped_light_color_xy(grouped_light_id, xy)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing color action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  log_response_errors(resp, err, "color action")
 end
 
 ---@param driver HueDriver
@@ -200,15 +185,7 @@ local function do_color_temp_action(driver, bridge_device, group, args, aux)
 
   local resp, err = hue_api:set_grouped_light_color_temp(grouped_light_id, mirek)
 
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing color temp action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  log_response_errors(resp, err, "color temp action")
   grouped_utils.set_field_on_group_devices(group, Fields.COLOR_TEMP_SETPOINT, clamped_kelvin);
 end
 
