@@ -10,6 +10,7 @@ _capability_batch_receive = true
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
+local Fields = require "fields"
 
 local LIGHT_1_RID = "11111111-1111-1111-1111-111111111111"
 local LIGHT_2_RID = "22222222-2222-2222-2222-222222222222"
@@ -205,6 +206,54 @@ register_batch_test(
     assert_requests("PUT", LIGHT_PATH .. LIGHT_2_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
     http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { dimming_delta = { action = "up", brightness_delta = 10 } })
+  end
+)
+
+local function set_level_cmd(level)
+  return { capability = "switchLevel", component = "main", command = "setLevel", args = { level } }
+end
+
+local function set_switch_state(mock_light, state)
+  fixtures.driver_device(mock_light):set_field(Fields.SWITCH_STATE, state, { persist = true })
+end
+
+register_batch_test(
+  "a grouped setLevel for a room that is already on only sends the brightness",
+  function()
+    init_and_seed_groups()
+    set_switch_state(light_1, "on")
+    set_switch_state(light_2, "on")
+    expect_grouped_light_put(GROUPED_LIGHT_RID, { dimming = { brightness = 23 } })
+
+    test.socket.capability:__queue_receive_batch({
+      { light_1.id, set_level_cmd(23) },
+      { light_2.id, set_level_cmd(23) },
+    })
+    test.wait_for_events()
+
+    assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
+    for _, request in ipairs(http.find_requests(rest, "PUT", GROUPED_LIGHT_PATH, { prefix = true })) do
+      assert(request.json.on == nil, "expected no on/off request for a room that is already on")
+    end
+  end
+)
+
+register_batch_test(
+  "a grouped setLevel turns the room on first when one of its lights is off",
+  function()
+    init_and_seed_groups()
+    set_switch_state(light_1, "on")
+    set_switch_state(light_2, "off")
+    expect_grouped_light_put(GROUPED_LIGHT_RID, { on = { on = true } })
+    expect_grouped_light_put(GROUPED_LIGHT_RID, { dimming = { brightness = 23 } })
+
+    test.socket.capability:__queue_receive_batch({
+      { light_1.id, set_level_cmd(23) },
+      { light_2.id, set_level_cmd(23) },
+    })
+    test.wait_for_events()
+
+    assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 2)
   end
 )
 

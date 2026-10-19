@@ -65,15 +65,23 @@ local function do_switch_level_action(driver, bridge_device, group, args)
     return
   end
 
-  -- An individual command checks the state of the device before doing this.
-  -- It is probably not worth iterating through all the devices to check their state.
-  local resp, err = hue_api:set_grouped_light_on_state(grouped_light_id, true)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing on/off action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
+  -- As with an individual command, only turn the group on first if one of its lights is off.
+  local any_off = false
+  for _, device in ipairs(group.devices or {}) do
+    if device:get_field(Fields.SWITCH_STATE) == "off" then
+      any_off = true
+      break
+    end
+  end
+  if any_off then
+    local resp, err = hue_api:set_grouped_light_on_state(grouped_light_id, true)
+    if not resp or (resp.errors and #resp.errors == 0) then
+      if err ~= nil then
+        log.error_with({ hub_logs = true }, "Error performing on/off action: " .. err)
+      elseif resp and #resp.errors > 0 then
+        for _, error in ipairs(resp.errors) do
+          log.error_with({ hub_logs = true }, "Error returned in Hue response: " .. error.description)
+        end
       end
     end
   end
