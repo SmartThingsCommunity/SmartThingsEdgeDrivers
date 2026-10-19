@@ -34,7 +34,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Pressure report at or below 2000 should be divided by 10",
+  "Pressure report should be divided by 10",
   {
     {
       channel = "zigbee",
