@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local connection_scenario = require "integration_test.connection_scenario"

@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Tests for online/offline status: per-light Zigbee connectivity reported over SSE, and losing the
 --- bridge's event stream. Built from payloads recorded on real hardware (see
 --- test/fixtures/capture_payloads.lua).

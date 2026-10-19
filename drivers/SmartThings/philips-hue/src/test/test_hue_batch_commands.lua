@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Tests for batched capability command handling: commands received together are sent to the
 --- bridge as a single grouped_light request when they exactly cover a Hue room, and as
 --- per-light requests otherwise.

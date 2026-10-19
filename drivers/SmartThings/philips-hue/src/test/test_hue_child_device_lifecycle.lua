@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- A child device whose resource state isn't in the discovery cache is treated as a "stray":
 --- it isn't onboarded (no REST state fetch, no device fields set) until the bridge reports it.
 

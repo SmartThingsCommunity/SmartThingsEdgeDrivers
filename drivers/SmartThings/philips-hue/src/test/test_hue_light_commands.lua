@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Test for Hue light command handling (switch, level, color, temperature).
 --- Uses ConnectionScenario 2.0 for PUT command testing.
 

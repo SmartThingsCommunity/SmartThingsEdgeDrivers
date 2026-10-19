@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Real Hue bridge payloads recorded by the instrumented driver during physical testing.
 --- Identifiers (resource UUIDs, bridge ids, MACs, IPs, the Zigbee PAN id and v1 scene ids) are
 --- replaced with stable fakes; everything else (names, timestamps, versions, state) is as

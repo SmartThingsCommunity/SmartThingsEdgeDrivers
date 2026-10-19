@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- The scans the driver makes once the bridge's event stream connects: the Zigbee connectivity of
 --- its devices, followed by a (debounced) scan of its rooms and zones.
 

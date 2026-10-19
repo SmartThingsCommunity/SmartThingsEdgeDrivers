@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Tests for bridge resource add/delete events over SSE, replaying event payloads recorded on real
 --- hardware (see test/fixtures/capture_payloads.lua): a colour lamp being added to the bridge, the
 --- smart plug being removed from it, and resource events the driver has no use for.

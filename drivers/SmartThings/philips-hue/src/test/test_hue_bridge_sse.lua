@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- The bridge's SSE event stream: connecting marks the bridge online, update/add/delete events
 --- reach the right devices, and a dropped stream marks everything offline until it reconnects.
 ---

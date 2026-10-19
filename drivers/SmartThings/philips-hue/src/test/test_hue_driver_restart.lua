@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Tests for a driver restart with already-onboarded devices (physical test scenario 2): each device
 --- only receives `init`, with the fields an earlier `added` persisted, and is brought up to date by
 --- the refresh that follows the event stream's connectivity check rather than by re-onboarding.

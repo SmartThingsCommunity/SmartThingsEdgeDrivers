@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- The colour temperature range of a light whose range isn't the driver's default.
 
 local test = require "integration_test"

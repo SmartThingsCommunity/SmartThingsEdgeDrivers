@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- A button whose state is in the discovery cache is added and initialized without any REST
 --- requests (no address is registered, so any connection attempt would fail the test).
 

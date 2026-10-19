@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Tests for an on/off Hue smart plug (LOM010), built from payloads recorded on real hardware
 --- (see test/fixtures/capture_payloads.lua). The plug is a `light` resource with no `dimming`.
 

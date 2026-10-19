@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Error handling in Hue light commands and refresh: error statuses, Hue API errors, missing
 --- services, unparseable responses, and a keep-alive connection the bridge has closed.
 ---

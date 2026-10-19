@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 --- Test for Hue button device with SSE events.
 --- Uses HueDeviceBuilder and ConnectionScenario 2.0 with device-type-specific helper.
 
