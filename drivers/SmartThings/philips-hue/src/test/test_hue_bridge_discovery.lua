@@ -130,4 +130,49 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "with two bridges on the network, only the one that hands out an API key gets a device",
+  function()
+    -- Physical testing had a second, never-paired bridge on the same network; both answered
+    -- discovery (recorded /api/config payloads), and only the paired one returned a key.
+    local capture_payloads = require "test.fixtures.capture_payloads"
+    local PAIRED_IP, UNPAIRED_IP = "192.168.1.30", "192.168.1.31"
+
+    mock_mdns.__queue_response(Discovery.ServiceType, Discovery.Domain, {
+      found = {
+        mock_mdns.build_event({ name = "Hue Bridge", service_type = Discovery.ServiceType,
+          domain = Discovery.Domain, address = PAIRED_IP, port = 443 }),
+        mock_mdns.build_event({ name = "Hue Bridge - 2", service_type = Discovery.ServiceType,
+          domain = Discovery.Domain, address = UNPAIRED_IP, port = 443 }),
+      },
+    })
+
+    local paired, paired_api = bridge_at(PAIRED_IP, capture_payloads.get("bridge_config"), {
+      { success = { username = "new-bridge-api-key", clientkey = "some-client-key" } },
+    })
+    local unpaired, unpaired_api = bridge_at(UNPAIRED_IP, capture_payloads.get("unpaired_bridge_config"), {
+      { error = { type = 101, address = "", description = "link button not pressed" } },
+    })
+
+    -- The recorded paired bridge's MAC is 00:17:88:00:00:01.
+    mock_devices_api.__expect_create_device({
+      deviceNetworkId = "001788000001",
+      label = "Hue Bridge",
+      profileReference = "hue-bridge",
+      manufacturer = "Signify Netherlands B.V.",
+      model = "BSB002",
+      vendorProvidedLabel = "Hue Bridge",
+      type = "LAN",
+    })
+
+    test.socket.discovery:__queue_receive({ "start", {} })
+    test.wait_for_events()
+    stop_discovery()
+    test.wait_for_events()
+
+    assert_bridge_queried(paired, paired_api)
+    assert_bridge_queried(unpaired, unpaired_api)
+  end
+)
+
 test.run_registered_tests()
