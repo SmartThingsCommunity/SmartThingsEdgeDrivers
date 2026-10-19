@@ -60,37 +60,42 @@ local function _emit_light_events_inner(light_device, light_repr)
       if light_repr.color_temperature.mirek_valid then
         mirek = light_repr.color_temperature.mirek
       end
-      local mirek_schema = light_repr.color_temperature.mirek_schema or {
-        mirek_minimum = Consts.DEFAULT_MIN_MIREK,
-        mirek_maximum = Consts.DEFAULT_MAX_MIREK
-      }
-
       -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
       -- if the below is not intuitive.
       local color_temp_range = light_device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME);
       local min_kelvin = (color_temp_range and color_temp_range.minimum)
-      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
       local max_kelvin = (color_temp_range and color_temp_range.maximum)
-      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
 
-      local update_range = false
-      if min_kelvin ~= api_min_kelvin then
-        update_range = true
-        min_kelvin = api_min_kelvin
-        light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
-      end
+      -- Updates (e.g. over SSE) usually carry no `mirek_schema`; keep the range learned from the
+      -- full resource rather than resetting it to the defaults.
+      local mirek_schema = light_repr.color_temperature.mirek_schema
+      if mirek_schema or not (min_kelvin and max_kelvin) then
+        mirek_schema = mirek_schema or {
+          mirek_minimum = Consts.DEFAULT_MIN_MIREK,
+          mirek_maximum = Consts.DEFAULT_MAX_MIREK
+        }
+        local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+        local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
 
-      if max_kelvin ~= api_max_kelvin then
-        update_range = true
-        max_kelvin = api_max_kelvin
-        light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
-      end
+        local update_range = false
+        if min_kelvin ~= api_min_kelvin then
+          update_range = true
+          min_kelvin = api_min_kelvin
+          light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
+        end
 
-      if update_range then
-        light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
-        light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
-      else
-        light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
+        if max_kelvin ~= api_max_kelvin then
+          update_range = true
+          max_kelvin = api_max_kelvin
+          light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
+        end
+
+        if update_range then
+          light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
+          light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+        else
+          light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
+        end
       end
 
       -- In xy colour mode the bridge reports `mirek_valid = false` (and `mirek = null`); there is
