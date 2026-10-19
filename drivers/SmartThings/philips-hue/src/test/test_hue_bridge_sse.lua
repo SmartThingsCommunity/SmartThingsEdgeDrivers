@@ -129,6 +129,22 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "an SSE dimming-only update for a light emits only its level",
+  function()
+    local sse_conn = connect_sse()
+
+    -- The bridge only sends what changed: a brightness change carries no on/off state.
+    http.queue_sse_event(sse_conn, {
+      hue_test_helpers.light_event(LIGHT_RID, nil, 42)
+    })
+    test.socket.capability:__expect_send(
+      mock_light:generate_test_message("main", capabilities.switchLevel.level(42))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
   "an SSE add event for a new device creates it",
   function()
     local sse_conn, rest_conn = connect_sse()

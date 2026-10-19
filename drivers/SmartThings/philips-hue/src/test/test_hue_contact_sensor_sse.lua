@@ -114,9 +114,10 @@ test.register_coroutine_test(
       mock_sensor:generate_test_message("main", capabilities.battery.battery(45))
     )
 
-    http.queue_sse_event(sse, { hue_test_helpers.contact_event(CONTACT_RID, "no_contact", {
-      battery_level = 45
-    }) })
+    http.queue_sse_event(sse, { hue_test_helpers.combined_event(
+      hue_test_helpers.contact_event(CONTACT_RID, "no_contact"),
+      hue_test_helpers.device_power_event(POWER_RID, CONTACT_DEVICE_ID, 45)
+    ) })
 
     test.wait_for_events()
   end

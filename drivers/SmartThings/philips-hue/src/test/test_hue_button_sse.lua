@@ -93,11 +93,13 @@ test.register_coroutine_test(
       mock_button:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
     )
 
-    -- Send SSE event with both button and battery data using helper
+    -- The bridge reports the press and the battery level of the button's device_power resource
+    -- in one event.
     local sse_conn = scenario:get_connection("sse")
-    http.queue_sse_event(sse_conn, { hue_test_helpers.button_event(BUTTON_RID, "short_release", {
-      battery_level = 42
-    }) })
+    http.queue_sse_event(sse_conn, { hue_test_helpers.combined_event(
+      hue_test_helpers.button_event(BUTTON_RID, "short_release"),
+      hue_test_helpers.device_power_event(POWER_RID, BUTTON_DEVICE_ID, 42)
+    ) })
 
     test.wait_for_events()
   end

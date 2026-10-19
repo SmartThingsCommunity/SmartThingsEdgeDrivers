@@ -1074,7 +1074,6 @@ end
 --- @param event_type string Event type: "short_release", "long_press", "long_release", etc.
 --- @param options table|nil Options:
 ---   - timestamp: Event timestamp (default: "2024-01-01T12:00:00Z")
----   - battery_level: Include battery level in event
 ---   - update_type: Event type wrapper (default: "update")
 --- @return table SSE event structure
 function M.button_event(button_rid, event_type, options)
@@ -1091,10 +1090,6 @@ function M.button_event(button_rid, event_type, options)
     }
   }
 
-  if options.battery_level then
-    button_data.power_state = { battery_level = options.battery_level }
-  end
-
   return {
     type = options.update_type or "update",
     data = { button_data }
@@ -1107,9 +1102,6 @@ end
 --- @param is_active boolean Motion detected state
 --- @param options table|nil Options:
 ---   - motion_valid: Motion valid flag (default: true)
----   - battery_level: Include battery level in event
----   - temperature: Include temperature in event
----   - light_level: Include light level in event
 ---   - update_type: Event type wrapper (default: "update")
 --- @return table SSE event structure
 function M.motion_event(motion_rid, is_active, options)
@@ -1124,24 +1116,6 @@ function M.motion_event(motion_rid, is_active, options)
     }
   }
 
-  if options.battery_level then
-    motion_data.power_state = { battery_level = options.battery_level }
-  end
-
-  if options.temperature then
-    motion_data.temperature = {
-      temperature = options.temperature,
-      temperature_valid = true
-    }
-  end
-
-  if options.light_level then
-    motion_data.light = {
-      light_level = options.light_level,
-      light_level_valid = true
-    }
-  end
-
   return {
     type = options.update_type or "update",
     data = { motion_data }
@@ -1153,9 +1127,7 @@ end
 --- @param contact_rid string The contact sensor resource ID
 --- @param state string Contact state: "contact" (closed) or "no_contact" (open)
 --- @param options table|nil Options:
----   - battery_level: Include battery level in event
 ---   - tamper_state: Include tamper state in event
----   - temperature: Include temperature in event
 ---   - update_type: Event type wrapper (default: "update")
 --- @return table SSE event structure
 function M.contact_event(contact_rid, state, options)
@@ -1167,19 +1139,8 @@ function M.contact_event(contact_rid, state, options)
     contact_report = { state = state }
   }
 
-  if options.battery_level then
-    contact_data.power_state = { battery_level = options.battery_level }
-  end
-
   if options.tamper_state then
     contact_data.tamper_reports = {{ state = options.tamper_state }}
-  end
-
-  if options.temperature then
-    contact_data.temperature = {
-      temperature = options.temperature,
-      temperature_valid = true
-    }
   end
 
   return {
@@ -1210,8 +1171,11 @@ end
 
 --- Create a light SSE event.
 ---
+--- Like the bridge's own updates, it only carries what changed: pass `nil` for `on_state` (or
+--- `brightness`) to leave it out, e.g. for a dimming-only update.
+---
 --- @param light_rid string The light resource ID
---- @param on_state boolean Light on/off state
+--- @param on_state boolean|nil Light on/off state, or nil to leave it out
 --- @param brightness number|nil Brightness level (0-100)
 --- @param options table|nil Options:
 ---   - color: Color object with xy coordinates
@@ -1224,8 +1188,11 @@ function M.light_event(light_rid, on_state, brightness, options)
   local light_data = {
     type = "light",
     id = light_rid,
-    on = { on = on_state }
   }
+
+  if on_state ~= nil then
+    light_data.on = { on = on_state }
+  end
 
   if brightness then
     light_data.dimming = { brightness = brightness }
@@ -1243,6 +1210,47 @@ function M.light_event(light_rid, on_state, brightness, options)
     type = options.update_type or "update",
     data = { light_data }
   }
+end
+
+--- Create a device power (battery) SSE event. Battery levels come from a sensor's `device_power`
+--- resource, not from its button, motion or contact resource.
+---
+--- @param power_rid string The device power resource ID
+--- @param owner_device_id string The Hue device ID that owns the resource
+--- @param battery_level number Battery level (0-100)
+--- @param options table|nil Options:
+---   - battery_state: Battery state (default: "normal")
+---   - update_type: Event type wrapper (default: "update")
+--- @return table SSE event structure
+function M.device_power_event(power_rid, owner_device_id, battery_level, options)
+  options = options or {}
+
+  return {
+    type = options.update_type or "update",
+    data = {{
+      type = "device_power",
+      id = power_rid,
+      owner = { rid = owner_device_id, rtype = "device" },
+      power_state = { battery_level = battery_level, battery_state = options.battery_state or "normal" },
+    }}
+  }
+end
+
+--- Combine several SSE events of the same type into one, as the bridge does when several of a
+--- device's resources change together (e.g. a sensor's motion and battery level).
+---
+--- @param ... table SSE events from the builders above
+--- @return table SSE event structure
+function M.combined_event(...)
+  local combined = { type = nil, data = {} }
+  for _, event in ipairs({ ... }) do
+    combined.type = combined.type or event.type
+    assert(event.type == combined.type, "only events of the same type can be combined")
+    for _, resource in ipairs(event.data) do
+      table.insert(combined.data, resource)
+    end
+  end
+  return combined
 end
 
 --- Create a temperature sensor SSE event.

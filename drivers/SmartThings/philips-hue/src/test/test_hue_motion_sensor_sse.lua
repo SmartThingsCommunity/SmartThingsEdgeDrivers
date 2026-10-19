@@ -121,11 +121,13 @@ test.register_coroutine_test(
       mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 18.0, unit = "C" }))
     )
 
-    -- Motion sensors can send updates with multiple service types
-    http.queue_sse_event(sse, { hue_test_helpers.motion_event(MOTION_RID, true, {
-      battery_level = 50,
-      temperature = 18.0
-    }) })
+    -- A motion sensor's resources can change together; the bridge reports each resource's update
+    -- in the same event.
+    http.queue_sse_event(sse, { hue_test_helpers.combined_event(
+      hue_test_helpers.motion_event(MOTION_RID, true),
+      hue_test_helpers.device_power_event(POWER_RID, MOTION_DEVICE_ID, 50),
+      hue_test_helpers.temperature_event(TEMP_RID, 18.0)
+    ) })
 
     test.wait_for_events()
   end

@@ -111,7 +111,7 @@ test.register_coroutine_test(
       modelid = "BSB002",
       name = BRIDGE_NAME,
     }, {
-      { success = { username = "new-bridge-api-key", client_key = "some-client-key" } },
+      { success = { username = "new-bridge-api-key", clientkey = "some-client-key" } },
     })
 
     mock_devices_api.__expect_create_device({
