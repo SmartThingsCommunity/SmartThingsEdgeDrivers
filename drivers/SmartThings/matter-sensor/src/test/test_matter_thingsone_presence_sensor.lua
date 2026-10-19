@@ -279,29 +279,29 @@ test.register_coroutine_test(
 
 if HOLD_TIME ~= nil then
   test.register_coroutine_test(
-    "A presence hold time change should write HoldTime as 10 s plus the setting on EP1 and read it back",
+    "A presence hold time change should write HoldTime as 20 s plus the setting on EP1 and read it back",
     function()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
-      expect_write(HOLD_TIME, 70)
+      expect_write(HOLD_TIME, 80)
       test.wait_for_events()
-      expect_no_write(HOLD_TIME, 70)
+      expect_no_write(HOLD_TIME, 80)
       expect_no_write(HOLD_TIME, 120)
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "5"))
-      expect_write(HOLD_TIME, 15)
+      expect_write(HOLD_TIME, 25)
       test.wait_for_events()
     end
   )
 
   test.register_coroutine_test(
-    "The default presence hold time of 0 should not be written, the device already holds 10 s",
+    "The default presence hold time of 0 should not be written, the device already holds 20 s",
     function()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "30"))
-      expect_write(HOLD_TIME, 40)
+      expect_write(HOLD_TIME, 50)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
-      expect_write(HOLD_TIME, 10)
+      expect_write(HOLD_TIME, 20)
       test.wait_for_events()
     end
   )
@@ -310,22 +310,22 @@ if HOLD_TIME ~= nil then
     "A numeric or fractional presence hold time should be written as whole seconds",
     function()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 15))
-      expect_write(HOLD_TIME, 25)
+      expect_write(HOLD_TIME, 35)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 30.0))
-      expect_write(HOLD_TIME, 40)
+      expect_write(HOLD_TIME, 50)
       test.wait_for_events()
     end
   )
 
   test.register_coroutine_test(
-    "A presence hold time outside 0..290 s should be clamped so HoldTime stays within 10..300 s",
+    "A presence hold time outside 0..280 s should be clamped so HoldTime stays within 20..300 s",
     function()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "600"))
       expect_write(HOLD_TIME, 300)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "-5"))
-      expect_write(HOLD_TIME, 10)
+      expect_write(HOLD_TIME, 20)
       test.wait_for_events()
     end
   )
@@ -334,9 +334,9 @@ if HOLD_TIME ~= nil then
     "A HoldTime write that does not take should be retried three times, then given up",
     function()
       test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
-      expect_write(HOLD_TIME, 70)
+      expect_write(HOLD_TIME, 80)
       test.wait_for_events()
-      expect_rewrites_then_give_up(HOLD_TIME, 70, 10)
+      expect_rewrites_then_give_up(HOLD_TIME, 80, 10)
     end
   )
 end
