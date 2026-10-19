@@ -119,6 +119,30 @@ local function assert_online(mock_device, expected, what)
     string.format("expected %s to be %s", what, expected and "online" or "offline"))
 end
 
+--- Answer the connectivity scan the driver runs when the event stream (re)opens with both lights
+--- connected, so they are marked online again (and refreshed) after an outage.
+local function report_lights_connected_on_reconnect()
+  http.expect_request_for_test(rest, "GET", "/clip/v2/resource/zigbee_connectivity", {
+    status = 200,
+    body = {
+      errors = {},
+      data = {
+        { type = "zigbee_connectivity", id = capture_payloads.ids.color_lamp_zigbee, status = "connected",
+          owner = { rid = LAMP_DEVICE_ID, rtype = "device" } },
+        { type = "zigbee_connectivity", id = OTHER_ZIGBEE_RID, status = "connected",
+          owner = { rid = OTHER_DEVICE_ID, rtype = "device" } },
+      },
+    },
+    reusable = true,
+    prepend = true,
+  })
+end
+
+local function expect_reconnect_refresh_events()
+  expect_lamp_state_events(false)
+  expect_other_state_events()
+end
+
 --- Assert how many times the bridge and each light were marked offline since the history was
 --- last cleared.
 local function assert_offline_calls(expected)
@@ -166,6 +190,7 @@ test.register_coroutine_test(
   function()
     test.wait_for_events()
     assert_online(mock_bridge, true, "the bridge")
+    report_lights_connected_on_reconnect()
 
     mock_devices_api.__clear_device_status_history()
     -- The bridge drops the event stream and is unreachable for the next two reconnect attempts,
@@ -173,18 +198,53 @@ test.register_coroutine_test(
     scenario:fail_connects(2, "No route to host")
     scenario:get_connection("sse"):close_connection()
     wait_until(function() return is_online(mock_bridge) == false end)
+    expect_reconnect_refresh_events()
     wait_until(function() return is_online(mock_bridge) == true end)
     assert_offline_calls(1)
-    assert_online(mock_bridge, true, "the bridge")
     assert(mock_devices_api.__count_device_status_calls(mock_bridge.id, true) == 1,
       "expected the bridge to be marked online once, when the stream reconnected")
+    wait_until(function() return is_online(mock_lamp) and is_online(mock_other) end)
+    test.wait_for_events()
 
-    -- Once the stream has reconnected, a later outage is reported again.
+    -- Once the stream has reconnected and the lights are back, a later outage is reported again.
     scenario:get_connection("sse"):close_connection()
     wait_until(function() return is_online(mock_bridge) == false end)
     assert_offline_calls(2)
+    expect_reconnect_refresh_events()
     wait_until(function() return is_online(mock_bridge) == true end)
+    wait_until(function() return is_online(mock_lamp) and is_online(mock_other) end)
+    test.wait_for_events()
+  end
+)
 
+test.register_coroutine_test(
+  "a light refreshed back online during an outage is marked offline again on the next failed reconnect",
+  function()
+    test.wait_for_events()
+    mock_devices_api.__clear_device_status_history()
+
+    -- The bridge drops the stream and rejects the next two reconnects, while its REST API still
+    -- answers. The third reconnect is answered by the file's handshake.
+    local reconnects = http.expect_request(sse, "GET", "/eventstream/clip/v2", { defer = true, times = 2 })
+    scenario:get_connection("sse"):close_connection()
+    reconnects:await():respond({ status = 503 })
+    wait_until(function() return is_online(mock_lamp) == false end)
+    assert(mock_devices_api.__count_device_status_calls(mock_lamp.id, false) == 1,
+      "expected the lamp to be marked offline when the stream dropped")
+
+    -- Between reconnects, a refresh reaches the lamp over REST and finds its Zigbee connection fine.
+    test.socket.capability:__queue_receive({ mock_lamp.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    expect_lamp_state_events(false)
+    wait_until(function() return is_online(mock_lamp) == true end)
+
+    -- The next failed reconnect reports it offline again.
+    reconnects:await():respond({ status = 503 })
+    wait_until(function() return is_online(mock_lamp) == false end)
+    assert(mock_devices_api.__count_device_status_calls(mock_lamp.id, false) == 2,
+      "expected the lamp to be marked offline again")
+    assert(mock_devices_api.__count_device_status_calls(mock_bridge.id, false) == 1,
+      "expected the bridge to be reported offline once for the outage")
+    wait_until(function() return is_online(mock_bridge) == true end)
   end
 )
 
