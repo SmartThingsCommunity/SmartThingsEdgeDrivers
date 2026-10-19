@@ -3,6 +3,12 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
+
+-- File-level test modes for every Hue test file, which all require this module before the driver
+-- loads: LAN driver tests run with test coroutine priority, and the driver is tested on the
+-- batched capability receive path that current hubs always provide.
+test.set_test_coroutine_priority(true)
+test.set_capability_batch_receive(true)
 local connection_scenario = require "integration_test.connection_scenario"
 local http = require "integration_test.connection_scenario_http"
 local capabilities = require "st.capabilities"
@@ -419,8 +425,6 @@ function HueDeviceBuilder:start()
   end)
 
   local function test_init()
-    test.set_test_coroutine_priority(true)
-
     test.mock_device.add_test_device(mock_bridge)
     for _, mock_child in ipairs(mock_children) do
       test.mock_device.add_test_device(mock_child)

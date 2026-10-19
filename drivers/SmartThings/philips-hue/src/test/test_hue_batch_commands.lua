@@ -5,11 +5,7 @@
 --- bridge as a single grouped_light request when they exactly cover a Hue room, and as
 --- per-light requests otherwise.
 
--- Opt in to batched receives before requiring the framework: the driver checks for
--- `receive_batch` when it is loaded, and installs its batch handler only if it exists.
--- luacheck: globals _capability_batch_receive
-_capability_batch_receive = true
-
+-- Batched receives are turned on for every Hue test file by test.hue_test_helpers.
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"

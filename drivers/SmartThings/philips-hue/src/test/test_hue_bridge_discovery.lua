@@ -2,6 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+-- File-level test modes, as in test.hue_test_helpers: LAN driver tests run with test coroutine
+-- priority (discovery rescans every second until stopped), on the batched capability receive path.
+test.set_test_coroutine_priority(true)
+test.set_capability_batch_receive(true)
 local connection_scenario = require "integration_test.connection_scenario"
 local http = require "integration_test.connection_scenario_http"
 local mock_mdns = test.mock_mdns
@@ -23,14 +27,7 @@ test.add_test_env_setup_func(function(driver)
   Discovery.disco_api_instances = {}
 end)
 
-local function test_init()
-  -- No bridge device is pre-registered here -- discovering and creating it is exactly what
-  -- these tests exercise. Discovery rescans every second until stopped, so let the test act as
-  -- soon as the driver waits rather than only once mock time has run far ahead.
-  test.set_test_coroutine_priority(true)
-end
 
-test.set_test_init_function(test_init)
 
 --- Queue an mDNS response for the bridge and start discovery via the same "discovery" channel
 --- message the real hub sends when a user initiates a scan (see
