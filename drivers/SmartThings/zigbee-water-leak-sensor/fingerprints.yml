@@ -119,3 +119,9 @@ zigbeeManufacturer:
     manufacturer: MultIR
     model: MIR-WA100
     deviceProfileName: water-battery-no-fw-update
+# Not WWST Certified (OEM)     
+  - id: Tuya/TS0207
+    deviceLabel: Tuya Water Leak Sensor
+    manufacturer: _TZ3000_dvagjie2
+    model: TS0207
+    deviceProfileName: water-battery
