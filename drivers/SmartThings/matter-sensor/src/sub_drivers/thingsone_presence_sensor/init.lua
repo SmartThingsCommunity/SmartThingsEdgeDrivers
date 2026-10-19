@@ -20,7 +20,7 @@ local settings = {
 }
 if HOLD_TIME_ATTR ~= nil then
   table.insert(settings, {
-    -- HoldTime is the device's shipped 20 s (a 10 s rest, then 10 s of radar check) plus the presence hold time; max keeps it within HoldTimeLimits 1..300
+    -- HoldTime is the device's shipped 20 s (a 10 s rest after motion, then 10 s of radar check that each radar detection restarts) plus the presence hold time; max keeps it within HoldTimeLimits 1..300
     attr = HOLD_TIME_ATTR,
     pref = "stse.presenceHoldTime",
     default = 0, min = 0, max = 280,
