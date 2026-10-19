@@ -1,0 +1,54 @@
+{
+  "id": "filPiloteMode",
+  "version": 1,
+  "status": "proposed",
+  "name": "Fil Pilote Mode",
+  "ephemeral": false,
+  "attributes": {
+    "filPiloteMode": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "enum": [
+              "off",
+              "comfort",
+              "eco",
+              "antiFreeze",
+              "comfort1",
+              "comfort2"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value"
+        ]
+      },
+      "enumCommands": []
+    }
+  },
+  "commands": {
+    "setFilPiloteMode": {
+      "name": "setFilPiloteMode",
+      "arguments": [
+        {
+          "name": "mode",
+          "optional": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "off",
+              "comfort",
+              "eco",
+              "antiFreeze",
+              "comfort1",
+              "comfort2"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
