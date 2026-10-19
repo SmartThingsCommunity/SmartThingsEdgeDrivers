@@ -34,3 +34,8 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: REXZB-111
     deviceProfileName: range-extender-battery-source
+  - id: "SONOFF/Router"
+    deviceLabel: "SONOFF Zigbee Range Extender"
+    manufacturer: "SONOFF"
+    model: "Dongle-LMG21"
+    deviceProfileName: range-extender
