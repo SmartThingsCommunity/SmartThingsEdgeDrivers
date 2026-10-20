@@ -5,6 +5,7 @@
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local Basic = clusters.Basic
+local Identify = clusters.Identify
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
@@ -178,6 +179,28 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
       }
     }
+)
+
+test.register_coroutine_test(
+    "Button Identify command should refresh both valve channels",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Identify.server.commands.Identify.build_test_rx(mock_device, 1)
+      })
+      test.wait_for_events()
+
+      test.mock_time.advance_time(2)
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x02)
+      })
+    end
 )
 
 -- PowerSource(battery)

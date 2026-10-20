@@ -3,11 +3,10 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local Basic = zcl_clusters.Basic
+local Identify = zcl_clusters.Identify
 local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local st_device = require "st.device"
-local utils = require "st.utils"
 
 local CONFIGURATION = {
   {
@@ -49,11 +48,6 @@ local function onoff_attr_handler(driver, device, value, zb_rx)
   else
     target:emit_event(capabilities.valve.valve.closed())
   end
-end
-
---- Zigbee BatteryPercentageRemaining is measured in half-percent units.
-local function battery_percentage_handler(driver, device, value)
-  device:emit_event(capabilities.battery.battery(utils.round(value.value / 2)))
 end
 
 local function device_init(driver, device)
@@ -115,14 +109,11 @@ local sonoff_valve_handler = {
     attr = {
       [OnOff.ID] = {
         [OnOff.attributes.OnOff.ID] = onoff_attr_handler
-      },
-      [PowerConfiguration.ID] = {
-        [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_percentage_handler
       }
     },
     cluster = {
-      [Basic.ID] = {
-        [Basic.server.commands.ResetToFactoryDefaults.ID] = identify_handler
+      [Identify.ID] = {
+        [Identify.server.commands.Identify.ID] = identify_handler
       }
     }
   },
