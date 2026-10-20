@@ -30,6 +30,9 @@ local HueApi = require "hue.api"
 --- `setup_*_init_expectations` helpers register what each device type requests while it
 --- initializes; `wait_for_init` waits for all of that. SSE event builders (`button_event`,
 --- `motion_event`, ...) build the payloads to queue with `connection_scenario_http.queue_sse_event`.
+---
+--- Every test also fails if a driver handler raised an error that was caught and only logged (see
+--- `fail_on_caught_handler_errors`).
 
 -- `samsungim.hueSyncMode` is defined by the platform, not the driver package; its definition
 -- (fetched from the SmartThings API) lets the driver emit Hue sync mode events in tests.
@@ -40,6 +43,77 @@ local M = {}
 M.BRIDGE_IP = "192.168.1.15"
 M.BRIDGE_DNI = "AA:BB:CC:DD:EE:FF"
 M.API_KEY = "test-api-key"
+
+--- Errors a driver handler raised that were caught and only logged, so a test can't otherwise see
+--- them: the driver's own `utils.safe_wrap_handler` and light event emitter catch errors from
+--- capability command handlers and light state updates, the dispatcher catches errors from a
+--- sub-driver's `can_handle`, and a device thread catches errors from its watched-socket handlers.
+--- (Errors in lifecycle handlers and cosock threads already fail the test, since the test framework
+--- runs the driver with `_fail_on_error`.)
+local CAUGHT_HANDLER_ERROR_PATTERNS = {
+  "Failed to invoke capability command handler",
+  "Failed to invoke emit light status handler",
+  "Encountered error calling can_handle",
+  "handler on .- thread encountered error",
+}
+
+-- The caught handler errors logged during the current test, and the patterns of the ones it
+-- expects (see `allow_handler_errors`).
+local caught_handler_errors = {}
+local allowed_handler_errors = {}
+
+local function is_allowed_handler_error(message)
+  for _, pattern in ipairs(allowed_handler_errors) do
+    if message:find(pattern) then return true end
+  end
+  return false
+end
+
+-- Every log call reaches `log.log`: the driver's logjam module routes each level function through
+-- it once the driver loads, keeping the `log.log` it found as the real printer. Wrap it before
+-- the driver loads (every Hue test file requires this module first) so this sees them all.
+do
+  local log = require "log"
+  local original_log = log.log
+  log.log = function(opts, level, ...)
+    if level == "error" or level == "warn" then
+      local parts = table.pack(...)
+      for i = 1, parts.n do parts[i] = tostring(parts[i]) end
+      local message = table.concat(parts, " ", 1, parts.n)
+      for _, pattern in ipairs(CAUGHT_HANDLER_ERROR_PATTERNS) do
+        if message:find(pattern) and not is_allowed_handler_error(message) then
+          table.insert(caught_handler_errors, message)
+          break
+        end
+      end
+    end
+    return original_log(opts, level, ...)
+  end
+end
+
+--- Fail the current test at its end if a driver handler raised an error that the driver or the
+--- framework caught and only logged. Called from every fixture's `test_init`, so there is no need
+--- to call it directly unless a test file builds its fixture by hand.
+function M.fail_on_caught_handler_errors()
+  caught_handler_errors = {}
+  allowed_handler_errors = {}
+  test.mock_lan_socket.add_end_of_test_check("hue caught handler errors", function()
+    local problems = {}
+    for _, message in ipairs(caught_handler_errors) do
+      table.insert(problems, "a driver handler raised an error that was caught and logged: " .. message)
+    end
+    return problems
+  end)
+end
+
+--- Let the current test's driver handlers raise errors matching `pattern` (a Lua pattern matched
+--- against the logged message) without failing it, for a test that expects one.
+---
+--- @param pattern string
+function M.allow_handler_errors(pattern)
+  table.insert(allowed_handler_errors, pattern)
+end
+
 
 --- Whether a profile file declares a capability on any component.
 local function profile_has_capability(profile_filename, capability_id)
@@ -506,6 +580,7 @@ function HueDeviceBuilder:start()
   end
 
   local function test_init()
+    M.fail_on_caught_handler_errors()
     test.mock_device.add_test_device(mock_bridge)
     for _, mock_child in ipairs(mock_children) do
       test.mock_device.add_test_device(mock_child)

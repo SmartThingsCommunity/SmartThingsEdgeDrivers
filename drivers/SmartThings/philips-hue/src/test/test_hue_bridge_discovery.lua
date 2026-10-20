@@ -2,10 +2,9 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
--- File-level test modes, as in test.hue_test_helpers: LAN driver tests run with test coroutine
--- priority (discovery rescans every second until stopped), on the batched capability receive path.
-test.set_test_coroutine_priority(true)
-test.set_capability_batch_receive(true)
+-- Sets the file-level test modes every Hue test runs with (LAN driver tests need test coroutine
+-- priority: discovery rescans every second until stopped).
+local hue_test_helpers = require "test.hue_test_helpers"
 local connection_scenario = require "integration_test.connection_scenario"
 local http = require "integration_test.connection_scenario_http"
 local mock_mdns = test.mock_mdns
@@ -27,7 +26,7 @@ test.add_test_env_setup_func(function(driver)
   Discovery.disco_api_instances = {}
 end)
 
-
+test.set_test_init_function(hue_test_helpers.fail_on_caught_handler_errors)
 
 --- Queue an mDNS response for the bridge and start discovery via the same "discovery" channel
 --- message the real hub sends when a user initiates a scan (see
