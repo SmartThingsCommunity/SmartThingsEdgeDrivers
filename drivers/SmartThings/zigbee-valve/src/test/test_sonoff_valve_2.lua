@@ -129,6 +129,36 @@ test.register_message_test(
     }
 )
 
+test.register_message_test(
+    "Endpoint 2 report on parent should update child valve",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
+                                                                                   true):from_endpoint(0x02) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_child:generate_test_message("main", capabilities.valve.valve.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Endpoint 2 report should not update the parent before child creation",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
+                                                                                   true):from_endpoint(0x02) }
+      }
+    },
+    { test_init = test_init_without_child }
+)
+
 -- ============================================================================
 -- Parent device battery and power source tests
 -- ============================================================================

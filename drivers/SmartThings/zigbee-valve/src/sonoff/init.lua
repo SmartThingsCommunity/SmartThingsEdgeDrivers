@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local log = require "log"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Basic = zcl_clusters.Basic
 local OnOff = zcl_clusters.OnOff
@@ -41,11 +40,10 @@ end
 local function onoff_attr_handler(driver, device, value, zb_rx)
   local ep = zb_rx.address_header.src_endpoint.value
   local target = device
-  if is_dual_channel(device) and ep == 0x02 then
-    local child = find_child(device, 2)
-    if child then target = child end
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and is_dual_channel(device) and ep == 0x02 then
+    target = find_child(device, 2)
+    if not target then return end
   end
-  log.info(string.format("[SWV] OnOff report ep=%s value=%s", tostring(ep), tostring(value.value)))
   if value.value ~= false and value.value ~= 0 then
     target:emit_event(capabilities.valve.valve.open())
   else
@@ -99,7 +97,6 @@ end
 --- A device button press prompts a refresh of both SWV2C channels.
 local function identify_handler(driver, device, zb_rx)
   if not is_dual_channel(device) then return end
-  log.info("[SWV] Identify received, syncing valve states")
   device.thread:call_with_delay(2, function()
     device:send(OnOff.attributes.OnOff:read(device))
     device:send(OnOff.attributes.OnOff:read(device):to_endpoint(0x02))
