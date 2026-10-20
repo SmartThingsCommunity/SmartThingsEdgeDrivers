@@ -137,6 +137,7 @@ local aqara_roller_shade_handler = {
     }
   },
   can_handle = require("aqara.roller-shade.can_handle"),
+  sub_drivers = require("aqara.roller-shade.sub_drivers"),
 }
 
 return aqara_roller_shade_handler
