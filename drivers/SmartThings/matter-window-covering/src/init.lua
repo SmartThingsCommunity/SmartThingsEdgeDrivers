@@ -192,7 +192,7 @@ local function create_or_update_multi_devices(driver, device, wc_cluster_eps)
   table.sort(wc_cluster_eps)
   for device_num, ep_id in ipairs(wc_cluster_eps) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local label_and_name = string.format("%s %d", device.label, device_num)
+      local label_and_name = string.format("%s %d", device.label or "Window Covering", device_num)
       local existing_child_device = device:get_field(IS_PARENT_CHILD_DEVICE) and find_child(device, ep_id)
       if not existing_child_device then
         driver:try_create_device({
@@ -212,10 +212,12 @@ local function create_or_update_multi_devices(driver, device, wc_cluster_eps)
 end
 
 local function device_init(driver, device)
+  if device:get_field(IS_PARENT_CHILD_DEVICE) then
+    device:set_find_child(find_child)
+  end
   -- set unused fields to nil. These field settings can be removed after a single driver update.
   device:set_field("__preset_level_key", nil)
   device:set_field("__reverse_polarity", nil)
-
   device:set_component_to_endpoint_fn(component_to_endpoint)
   if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
     device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
