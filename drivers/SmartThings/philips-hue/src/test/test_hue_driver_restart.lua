@@ -12,6 +12,7 @@ local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
 local capture_payloads = require "test.fixtures.capture_payloads"
 local Fields = require "fields"
+local HueApi = require "hue.api"
 local HueDeviceTypes = require "hue_device_types"
 
 local ids = capture_payloads.ids
@@ -33,12 +34,11 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     hue_device_id = ids.color_lamp_device,
     label = lamp_repr.metadata.name,
   }, "white-and-color-ambiance.yml")
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_lamp = fixtures.bridge, fixtures.devices[1]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 http.expect_request(rest, "GET", "/clip/v2/resource/device/" .. ids.color_lamp_device, {
@@ -51,9 +51,16 @@ http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. ids.color_lamp_li
   status = 200, body = lamp_light_resource(), reusable = true,
 })
 
--- The fields the earlier `added` (and first `init`) left persisted.
+-- The fields the earlier `added` (and first `init`) left persisted. A restart is the one case where
+-- a device starts with state the driver didn't build in this run: the hub hands it the fields the
+-- driver persisted before the restart, so seeding them is how the test models that, rather than
+-- something to drive through the protocol.
 local function seed_persisted_fields()
   mock_bridge:set_field(Fields._ADDED, true, { persist = true })
+  mock_bridge:set_field(Fields.DEVICE_TYPE, HueDeviceTypes.BRIDGE, { persist = true })
+  mock_bridge:set_field(Fields.BRIDGE_ID, hue_test_helpers.BRIDGE_DNI, { persist = true })
+  mock_bridge:set_field(Fields.IPV4, hue_test_helpers.BRIDGE_IP, { persist = true })
+  mock_bridge:set_field(HueApi.APPLICATION_KEY_HEADER, hue_test_helpers.API_KEY, { persist = true })
   mock_lamp:set_field(Fields.DEVICE_TYPE, HueDeviceTypes.LIGHT, { persist = true })
   mock_lamp:set_field(Fields.RESOURCE_ID, ids.color_lamp_light, { persist = true })
   mock_lamp:set_field(Fields.HUE_DEVICE_ID, ids.color_lamp_device, { persist = true })

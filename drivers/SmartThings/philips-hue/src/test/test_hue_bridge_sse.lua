@@ -30,13 +30,12 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     dimming = { brightness = 80 },
     hue_device_id = HUE_DEVICE_ID,
   })
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
 -- Create connection scenario with REST and SSE connections
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- Helper to expect switch and level events

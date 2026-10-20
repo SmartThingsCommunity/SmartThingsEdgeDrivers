@@ -23,18 +23,17 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     color_temperature = COLOR_TEMPERATURE,
     hue_device_id = HUE_DEVICE_ID,
   }, "white-ambiance.yml")
-  :enable_sse()
   :start()
 
 local mock_light = fixtures.devices[1]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- The refreshes injected by the light's added and init handlers.
 hue_test_helpers.expect_device_info(rest, HUE_DEVICE_ID,
   { { rtype = "zigbee_connectivity", rid = ZIGBEE_RID } }, { reusable = true })
-hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID, { owner = HUE_DEVICE_ID, reusable = true })
+hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID, HUE_DEVICE_ID, { reusable = true })
 http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. LIGHT_RID, {
   body = { errors = {}, data = { {
     id = LIGHT_RID,

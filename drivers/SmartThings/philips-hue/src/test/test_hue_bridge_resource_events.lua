@@ -23,18 +23,17 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
   :with_bridge()
   :with_light(ids.plug_light, { on = { on = true }, hue_device_id = ids.plug_device, label = "Hue smart plug 1" },
     "plug.yml")
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_plug = fixtures.bridge, fixtures.devices[1]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 http.expect_request(rest, "GET", "/clip/v2/resource/device/" .. ids.plug_device, {
   status = 200, body = capture_payloads.get("plug_device"), reusable = true,
 })
-hue_test_helpers.expect_zigbee_connectivity(rest, ids.plug_zigbee, { owner = ids.plug_device, reusable = true })
+hue_test_helpers.expect_zigbee_connectivity(rest, ids.plug_zigbee, ids.plug_device, { reusable = true })
 http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. ids.plug_light, {
   status = 200, body = plug_light_resource(), reusable = true,
 })

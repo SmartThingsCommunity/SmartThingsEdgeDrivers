@@ -42,12 +42,11 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     hue_device_id = HUE_DEVICE_ID,
     label = light_repr.metadata.name,
   }, "white-and-color-ambiance.yml")
-  :enable_sse()
   :start()
 
 local mock_light = fixtures.devices[1]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- The events emitted for the recorded light resource on a refresh. The colour temperature range
@@ -72,7 +71,7 @@ end
 local function queue_light_refresh()
   hue_test_helpers.expect_device_info(rest, HUE_DEVICE_ID,
     { { rtype = "zigbee_connectivity", rid = ZIGBEE_RID } }, { reusable = false })
-  hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID, { owner = HUE_DEVICE_ID, reusable = false })
+  hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID, HUE_DEVICE_ID, { reusable = false })
   http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. LIGHT_RID, {
     status = 200,
     body = light_resource(),

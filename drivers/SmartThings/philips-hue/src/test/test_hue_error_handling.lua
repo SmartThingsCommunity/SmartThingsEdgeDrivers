@@ -8,6 +8,7 @@
 --- test on any it isn't expecting), and the driver must keep working afterwards.
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
 
@@ -23,12 +24,16 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     dimming = { brightness = 100 },
     hue_device_id = LIGHT_DEVICE_ID,
   }, "white-and-color-ambiance.yml")
+  :expect_light_init_refreshes()
   :start()
 
 local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
 local scenario, conns = hue_test_helpers.create_hue_scenario()
-local rest = conns.rest
+local rest, sse = conns.rest, conns.sse
+
+hue_test_helpers.setup_light_init_expectations(rest, fixtures.configs.light[1])
+hue_test_helpers.setup_sse_expectations(sse, rest)
 
 hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
@@ -38,13 +43,6 @@ local function send_command(capability, command, args)
     { capability = capability, component = "main", command = command, args = args or {} },
   })
   test.wait_for_events()
-end
-
-local function queue_command(capability, command, args)
-  test.socket.capability:__queue_receive({
-    mock_light.id,
-    { capability = capability, component = "main", command = command, args = args or {} },
-  })
 end
 
 local function hue_error(description, type)
@@ -63,6 +61,7 @@ end
 test.register_coroutine_test(
   "a light command answered with 404 emits nothing and doesn't stop later commands",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", LIGHT_PATH, {
       request_json = { on = { on = true } },
       status = 404,
@@ -76,6 +75,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "a light command answered with 500 emits nothing and doesn't stop later commands",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", LIGHT_PATH, {
       request_json = { dimming = { brightness = 50 } },
       status = 500,
@@ -89,6 +89,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "a light command answered with a Hue API error emits nothing and doesn't stop later commands",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", LIGHT_PATH, {
       request_json = { on = { on = true } },
       body = hue_error("Light is unreachable"),
@@ -98,41 +99,57 @@ test.register_coroutine_test(
   end
 )
 
+local CONNECTIVITY_PATH = "/clip/v2/resource/zigbee_connectivity"
+
+--- Refresh the light with its device GET answered by `device_response`: the refresh reads the
+--- light's state next, without querying connectivity, and still emits it.
+local function assert_refresh_skips_connectivity(device_response, why)
+  hue_test_helpers.wait_for_init(scenario, mock_bridge)
+  local before = http.count_requests(rest, "GET", CONNECTIVITY_PATH, { prefix = true })
+  test.socket.capability:__queue_receive({
+    mock_light.id, { capability = "refresh", component = "main", command = "refresh", args = {} },
+  })
+
+  http.await_request(rest, "GET", DEVICE_PATH):respond(device_response)
+  http.await_request(rest, "GET", LIGHT_PATH):respond({ body = hue_test_helpers.light_resource(fixtures.configs.light[1]) })
+  for _, event in ipairs({
+    capabilities["samsungim.hueSyncMode"].mode("normal"),
+    capabilities.switch.switch.on(),
+    capabilities.switchLevel.level(100),
+  }) do
+    test.socket.capability:__expect_send(mock_light:generate_test_message("main", event))
+  end
+  test.wait_for_events()
+  assert(http.count_requests(rest, "GET", CONNECTIVITY_PATH, { prefix = true }) == before,
+    "expected no connectivity request " .. why)
+end
+
 test.register_coroutine_test(
   "a refresh of a device without a zigbee_connectivity service doesn't query connectivity",
   function()
-    hue_test_helpers.mark_bridge_initialized(mock_bridge)
-    queue_command("refresh", "refresh")
-    http.await_request(rest, "GET", DEVICE_PATH):respond({
+    assert_refresh_skips_connectivity({
       body = {
         errors = {},
-        data = { { id = LIGHT_DEVICE_ID, services = { { rtype = "light", rid = LIGHT_RID } } } },
+        data = { { id = LIGHT_DEVICE_ID, type = "device", services = { { rtype = "light", rid = LIGHT_RID } } } },
       },
-    })
-    test.wait_for_events()
-    assert(http.count_requests(rest, "GET", "/clip/v2/resource/zigbee_connectivity", { prefix = true }) == 0,
-      "expected no connectivity request without a zigbee_connectivity service")
+    }, "without a zigbee_connectivity service")
   end
 )
 
 test.register_coroutine_test(
   "a refresh of a device the bridge no longer has (404) doesn't query connectivity",
   function()
-    hue_test_helpers.mark_bridge_initialized(mock_bridge)
-    queue_command("refresh", "refresh")
-    http.await_request(rest, "GET", DEVICE_PATH):respond({
+    assert_refresh_skips_connectivity({
       status = 404,
       body = hue_error("Device not found", "resource_not_found"),
-    })
-    test.wait_for_events()
-    assert(http.count_requests(rest, "GET", "/clip/v2/resource/zigbee_connectivity", { prefix = true }) == 0,
-      "expected no connectivity request for a device the bridge doesn't have")
+    }, "for a device the bridge doesn't have")
   end
 )
 
 test.register_coroutine_test(
   "a command answered with malformed JSON emits nothing and doesn't stop later commands",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     rest:expect_for_test({
       request = { pattern = "^PUT " .. hue_test_helpers.escape_uuid(LIGHT_PATH) },
       responses = {
@@ -147,6 +164,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "a command answered with an empty body emits nothing and doesn't stop later commands",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     rest:expect_for_test({
       request = { pattern = "^PUT " .. hue_test_helpers.escape_uuid(LIGHT_PATH) },
       responses = {
@@ -161,11 +179,17 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "a command on a keep-alive connection the bridge has since closed is resent on a new connection",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     -- Physical test scenario 6: after ~90 idle minutes the first PUT went out on a connection the
     -- bridge had already closed; the driver reconnected and resent it, and the light turned on.
     local OK = { body = { data = { { rid = LIGHT_RID, rtype = "light" } }, errors = {} } }
+    local function switch_on()
+      test.socket.capability:__queue_receive({
+        mock_light.id, { capability = "switch", component = "main", command = "on", args = {} },
+      })
+    end
 
-    queue_command("switch", "on")
+    switch_on()
     local first = http.await_request(rest, "PUT", LIGHT_PATH)
     first:respond(OK)
     test.wait_for_events()
@@ -175,7 +199,7 @@ test.register_coroutine_test(
     -- both requests up front.
     rest:close_connection()
     local puts = http.expect_request(rest, "PUT", LIGHT_PATH, { defer = true, times = 2 })
-    queue_command("switch", "on")
+    switch_on()
     local stale = puts:await()
     assert(stale.connection_index == first.connection_index,
       "expected the command to go out first on the connection the bridge had closed")

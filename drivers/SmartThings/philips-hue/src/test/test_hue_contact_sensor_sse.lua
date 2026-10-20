@@ -23,20 +23,19 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     tamper = "not_tampered",
     device_id = CONTACT_DEVICE_ID,
     power_rid = POWER_RID,
+    zigbee_rid = ZIGBEE_RID,
     tamper_rid = TAMPER_RID,
   })
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_sensor = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- Setup all contact sensor init expectations using device-specific helper
 local contact_config = fixtures.configs.contact[1]
-contact_config.zigbee_rid = ZIGBEE_RID
 hue_test_helpers.setup_contact_init_expectations(rest, sse, contact_config)
 
 -- Setup test init with scenario activation
@@ -45,7 +44,7 @@ hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 test.register_coroutine_test(
   "the bridge's event stream connects and the contact sensor's init requests are made",
   function()
-    hue_test_helpers.assert_event_stream_connected(scenario, mock_bridge)
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
   end
 )
 

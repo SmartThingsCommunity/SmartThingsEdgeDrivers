@@ -7,28 +7,53 @@
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
-local Fields = require "fields"
+local capabilities = require "st.capabilities"
 
 local LIGHT_RID = "11111111-1111-1111-1111-111111111111"
+
+-- The colour temperature, hue and saturation the driver reports for the light state below.
+local INIT_KELVIN, INIT_HUE, INIT_SATURATION = 2732, 65, 12
+
+local GAMUT = { red = { x = 0.7, y = 0.3 }, green = { x = 0.2, y = 0.7 }, blue = { x = 0.15, y = 0.05 } }
+
+--- The events a refresh of the light emits for its state below. The colour temperature range is
+--- only emitted when it changes, i.e. on the first refresh.
+local function refresh_events(first_refresh)
+  local events = {
+    capabilities["samsungim.hueSyncMode"].mode("normal"),
+    capabilities.switch.switch.on(),
+    capabilities.switchLevel.level(100),
+  }
+  if first_refresh then
+    table.insert(events, capabilities.colorTemperature.colorTemperatureRange({ minimum = 2000, maximum = 6500 }))
+  end
+  table.insert(events, capabilities.colorTemperature.colorTemperature(INIT_KELVIN))
+  table.insert(events, capabilities.colorControl.hue(INIT_HUE))
+  table.insert(events, capabilities.colorControl.saturation(INIT_SATURATION))
+  return events
+end
 
 local fixtures = hue_test_helpers.HueDeviceBuilder.new()
   :with_bridge()
   :with_light(LIGHT_RID, {
     on = { on = true },
     dimming = { brightness = 100 },
-    color = { xy = { x = 0.3, y = 0.3 }, gamut = { red = { x = 0.7, y = 0.3 }, green = { x = 0.2, y = 0.7 }, blue = { x = 0.15, y = 0.05 } } },
-    color_temperature = { mirek = 366, mirek_schema = { mirek_minimum = 153, mirek_maximum = 500 } },
+    color = { xy = { x = 0.3, y = 0.3 }, gamut = GAMUT, gamut_type = "other" },
+    color_temperature = { mirek = 366, mirek_valid = true, mirek_schema = { mirek_minimum = 153, mirek_maximum = 500 } },
     mode = "normal",
+    refresh_events = refresh_events,
   }, "white-and-color-ambiance.yml")
+  :expect_light_init_refreshes()
   :start()
 
-local mock_light = fixtures.devices[1]
+local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
--- Set up ConnectionScenario for PUT command testing
 local scenario, conns = hue_test_helpers.create_hue_scenario()
-local rest = conns.rest
+local rest, sse = conns.rest, conns.sse
 
--- Setup test init with scenario activation
+hue_test_helpers.setup_light_init_expectations(rest, fixtures.configs.light[1])
+hue_test_helpers.setup_sse_expectations(sse, rest)
+
 hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
 local LIGHT_PATH = "/clip/v2/resource/light/" .. LIGHT_RID
@@ -48,6 +73,16 @@ local function assert_xy_near(xy, x, y, what)
     string.format("expected %s near (%.4f, %.4f), got (%.4f, %.4f)", what, x, y, xy.x, xy.y))
 end
 
+--- Have the bridge report (over SSE) that the light's colour changed to its gamut's red corner:
+--- hue 0 at full saturation. (The light's init refresh left it at hue INIT_HUE, saturation
+--- INIT_SATURATION.)
+local function report_colour_red()
+  http.queue_sse_event(sse, { hue_test_helpers.light_event(LIGHT_RID, nil, nil, { color = { xy = { x = 0.7, y = 0.3 } } }) })
+  test.socket.capability:__expect_send(mock_light:generate_test_message("main", capabilities.colorControl.hue(0)))
+  test.socket.capability:__expect_send(mock_light:generate_test_message("main", capabilities.colorControl.saturation(100)))
+  test.wait_for_events()
+end
+
 
 -- NOTE: Profile compatibility is implicitly tested here. The white-and-color-ambiance profile
 -- supports all capabilities: switch, switchLevel, colorControl, and colorTemperature.
@@ -57,6 +92,7 @@ end
 test.register_coroutine_test(
   "switch on command sends a PUT to turn the light on",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     -- Test-specific expectation: PUT command with OK response
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
@@ -77,6 +113,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "switch off command sends a PUT to turn the light off",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
@@ -96,6 +133,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setLevel command sends a PUT with the requested brightness",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
@@ -115,6 +153,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setColorTemperature command sends a PUT with the mirek conversion of the requested Kelvin value",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
@@ -134,6 +173,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setColor command converts HSV to XY and sends PUT with color",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
@@ -154,40 +194,42 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setHue combines the new hue with the light's current saturation",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
     })
-    fixtures.driver_device(mock_light):set_field(Fields.COLOR_SATURATION, 100)
+    report_colour_red()
 
     test.socket.capability:__queue_receive({
       mock_light.id,
-      { capability = "colorControl", component = "main", command = "setHue", args = { 0 } },
+      { capability = "colorControl", component = "main", command = "setHue", args = { 100 / 3 } },
     })
     test.wait_for_events()
 
-    -- Hue 0 at full saturation is pure red: the red corner of the light's gamut.
-    assert_xy_near(sent_xy(), 0.7, 0.3, "fully saturated red")
+    -- A third of the way round at full saturation is pure green: the green corner of the gamut.
+    assert_xy_near(sent_xy(), GAMUT.green.x, GAMUT.green.y, "fully saturated green")
   end
 )
 
 test.register_coroutine_test(
   "setSaturation combines the new saturation with the light's current hue",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     http.expect_request_for_test(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, {
       status = 200,
       body = { data = { { rid = LIGHT_RID, rtype = "light" } } }
     })
-    fixtures.driver_device(mock_light):set_field(Fields.COLOR_HUE, 33)
+    report_colour_red()
 
     test.socket.capability:__queue_receive({
       mock_light.id,
-      { capability = "colorControl", component = "main", command = "setSaturation", args = { 0 } },
+      { capability = "colorControl", component = "main", command = "setSaturation", args = { 100 } },
     })
     test.wait_for_events()
 
-    -- No saturation is white whatever the hue: Hue's D65 white point.
-    assert_xy_near(sent_xy(), 0.3227, 0.3290, "white")
+    -- Hue 0 at full saturation is pure red: the red corner of the light's gamut.
+    assert_xy_near(sent_xy(), 0.7, 0.3, "fully saturated red")
   end
 )
 
@@ -203,6 +245,7 @@ end
 test.register_coroutine_test(
   "setLevel 0 is clamped to the minimum brightness of 1",
   function()
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
     expect_light_put()
     test.socket.capability:__queue_receive({
       mock_light.id,
@@ -221,6 +264,7 @@ for _, case in ipairs({
   test.register_coroutine_test(
     string.format("setColorTemperature %dK is clamped to the light's range (mirek %d)", case.kelvin, case.mirek),
     function()
+      hue_test_helpers.wait_for_init(scenario, mock_bridge)
       expect_light_put()
       test.socket.capability:__queue_receive({
         mock_light.id,

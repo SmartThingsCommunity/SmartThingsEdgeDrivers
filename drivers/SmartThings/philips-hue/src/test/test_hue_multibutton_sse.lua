@@ -23,21 +23,20 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     battery = 90,
     device_id = BUTTON_DEVICE_ID,
     power_rid = POWER_RID,
+    zigbee_rid = ZIGBEE_RID,
     button_rids = { BUTTON_RID_1, BUTTON_RID_2, BUTTON_RID_3, BUTTON_RID_4 },
     label = "Hue Dimmer Remote",
   }, "4-button-remote.yml")
-  :enable_sse()
   :start()
 
 local mock_remote = fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- Setup all button init expectations using device-specific helper
 local button_config = fixtures.configs.button[1]
-button_config.zigbee_rid = ZIGBEE_RID
 hue_test_helpers.setup_button_init_expectations(rest, sse, button_config)
 
 -- Setup test init with scenario activation

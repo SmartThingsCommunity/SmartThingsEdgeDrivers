@@ -1,10 +1,11 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+--- A refresh command reads the light's state from the bridge and emits it.
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local hue_test_helpers = require "test.hue_test_helpers"
-local http = require "integration_test.connection_scenario_http"
 
 local LIGHT_RID = "22222222-2222-2222-2222-222222222222"
 local HUE_DEVICE_ID = "device-uuid-1"
@@ -16,59 +17,47 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     on = { on = true },
     dimming = { brightness = 80 },
     hue_device_id = HUE_DEVICE_ID,
+    zigbee_rid = ZIGBEE_RID,
   }, "white-and-color-ambiance.yml")
+  :expect_light_init_refreshes()
   :start()
 
 local mock_bridge, mock_light = fixtures.bridge, fixtures.devices[1]
 
--- Set up ConnectionScenario for REST-only testing
 local scenario, conns = hue_test_helpers.create_hue_scenario()
-local rest = conns.rest
+local rest, sse = conns.rest, conns.sse
 
--- Setup test init with scenario activation
+-- The light's init refreshes and the event stream. A refresh queries the light's device (to find
+-- its zigbee_connectivity resource), then its connectivity, then its state; the device and
+-- connectivity expectations are reusable, so they answer the tests' refreshes too.
+hue_test_helpers.setup_light_init_expectations(rest, fixtures.configs.light[1])
+hue_test_helpers.setup_sse_expectations(sse, rest)
+
 hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 
--- Define refresh sequence expectations
--- During refresh, the driver queries device info (to get zigbee_connectivity RID),
--- then checks zigbee connectivity, then queries light state
+local function refresh_with_light_state(on, brightness)
+  hue_test_helpers.wait_for_init(scenario, mock_bridge)
+  hue_test_helpers.expect_resource(rest, "light", LIGHT_RID, {
+    owner = { rid = HUE_DEVICE_ID, rtype = "device" },
+    on = { on = on },
+    dimming = { brightness = brightness },
+  })
 
--- 1. GET device info to find zigbee_connectivity resource (reusable across tests)
-hue_test_helpers.expect_device_info(rest, HUE_DEVICE_ID,
-  {{ rtype = "zigbee_connectivity", rid = ZIGBEE_RID }},
-  { reusable = true }
-)
-
--- 2. GET zigbee connectivity status (reusable across tests)
-hue_test_helpers.expect_zigbee_connectivity(rest, ZIGBEE_RID,
-  { owner = HUE_DEVICE_ID, reusable = true }
-)
-
--- Note: Light state expectations are test-specific and defined in each test body
+  test.socket.capability:__queue_receive({
+    mock_light.id,
+    { capability = "refresh", component = "main", command = "refresh", args = {} },
+  })
+end
 
 test.register_coroutine_test(
   "refresh command reads light state over REST and emits switch/switchLevel events",
   function()
-    hue_test_helpers.mark_bridge_initialized(mock_bridge)
-
-    -- Test-specific expectation: light is on and bright
-    http.expect_request_for_test(rest, "GET", "/clip/v2/resource/light/" .. LIGHT_RID, {
-      status = 200,
-      body = {
-        errors = {},
-        data = {{ id = LIGHT_RID, on = { on = true }, dimming = { brightness = 80 } }}
-      }
-    })
-
-    test.socket.capability:__queue_receive({
-      mock_light.id,
-      { capability = "refresh", component = "main", command = "refresh", args = {} },
-    })
-
+    refresh_with_light_state(true, 60)
     test.socket.capability:__expect_send(
       mock_light:generate_test_message("main", capabilities.switch.switch.on())
     )
     test.socket.capability:__expect_send(
-      mock_light:generate_test_message("main", capabilities.switchLevel.level(80))
+      mock_light:generate_test_message("main", capabilities.switchLevel.level(60))
     )
     test.wait_for_events()
   end
@@ -77,22 +66,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "refresh command reflects an off/dimmed state from the REST response",
   function()
-    hue_test_helpers.mark_bridge_initialized(mock_bridge)
-
-    -- Test-specific expectation: light is off and dim
-    http.expect_request_for_test(rest, "GET", "/clip/v2/resource/light/" .. LIGHT_RID, {
-      status = 200,
-      body = {
-        errors = {},
-        data = {{ id = LIGHT_RID, on = { on = false }, dimming = { brightness = 15 } }}
-      }
-    })
-
-    test.socket.capability:__queue_receive({
-      mock_light.id,
-      { capability = "refresh", component = "main", command = "refresh", args = {} },
-    })
-
+    refresh_with_light_state(false, 15)
     test.socket.capability:__expect_send(
       mock_light:generate_test_message("main", capabilities.switch.switch.off())
     )

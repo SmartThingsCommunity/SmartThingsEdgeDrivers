@@ -23,21 +23,19 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     battery = 85,
     label = "Hue Button",
     device_id = BUTTON_DEVICE_ID,
-    power_rid = POWER_RID
+    power_rid = POWER_RID,
+    zigbee_rid = ZIGBEE_RID,
   })
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_button = fixtures.bridge, fixtures.devices[1]
 
 -- Create connection scenario with REST and SSE connections
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- Setup all button init expectations using device-specific helper
--- Override zigbee_rid since the builder uses a default pattern
 local button_config = fixtures.configs.button[1]
-button_config.zigbee_rid = ZIGBEE_RID
 hue_test_helpers.setup_button_init_expectations(rest, sse, button_config)
 
 -- Setup test init with scenario activation
@@ -46,7 +44,7 @@ hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 test.register_coroutine_test(
   "the bridge's event stream connects and the button's init requests are made",
   function()
-    hue_test_helpers.assert_event_stream_connected(scenario, mock_bridge)
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
   end
 )
 

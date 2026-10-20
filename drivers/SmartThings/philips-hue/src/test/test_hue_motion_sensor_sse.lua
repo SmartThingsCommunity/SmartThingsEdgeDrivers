@@ -24,21 +24,20 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
     light_level = 30000,  -- ~1000 lux
     device_id = MOTION_DEVICE_ID,
     power_rid = POWER_RID,
+    zigbee_rid = ZIGBEE_RID,
     temperature_rid = TEMP_RID,
     light_level_rid = LIGHT_RID,
   })
-  :enable_sse()
   :start()
 
 local mock_bridge, mock_sensor = fixtures.bridge, fixtures.devices[1]
 
 -- Set up ConnectionScenario for this host:port
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- Setup all motion sensor init expectations using device-specific helper
 local motion_config = fixtures.configs.motion[1]
-motion_config.zigbee_rid = ZIGBEE_RID
 hue_test_helpers.setup_motion_init_expectations(rest, sse, motion_config)
 
 -- Setup test init with scenario activation
@@ -47,7 +46,7 @@ hue_test_helpers.setup_scenario_test_init(fixtures.test_init, scenario)
 test.register_coroutine_test(
   "the bridge's event stream connects and the motion sensor's init requests are made",
   function()
-    hue_test_helpers.assert_event_stream_connected(scenario, mock_bridge)
+    hue_test_helpers.wait_for_init(scenario, mock_bridge)
   end
 )
 

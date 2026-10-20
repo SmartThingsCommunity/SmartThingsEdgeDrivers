@@ -13,10 +13,9 @@ local ROOM_PATH = "/clip/v2/resource/room"
 
 local fixtures = hue_test_helpers.HueDeviceBuilder.new()
   :with_bridge()
-  :enable_sse()
   :start()
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 http.expect_sse_handshake(sse, "/eventstream/clip/v2", true)

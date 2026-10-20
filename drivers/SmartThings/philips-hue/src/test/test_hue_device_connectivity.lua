@@ -38,13 +38,12 @@ local fixtures = hue_test_helpers.HueDeviceBuilder.new()
   }, "white-and-color-ambiance.yml")
   :with_light(OTHER_RID, { on = { on = true }, dimming = { brightness = 80 }, hue_device_id = OTHER_DEVICE_ID },
     "white.yml")
-  :enable_sse()
   :start()
 
 local mock_bridge = fixtures.bridge
 local mock_lamp, mock_other = fixtures.devices[1], fixtures.devices[2]
 
-local scenario, conns = hue_test_helpers.create_hue_scenario({ sse = true })
+local scenario, conns = hue_test_helpers.create_hue_scenario()
 local rest, sse = conns.rest, conns.sse
 
 -- The events emitted for the recorded lamp's light resource on a refresh. The colour temperature
@@ -84,8 +83,10 @@ http.expect_request(rest, "GET", "/clip/v2/resource/light/" .. LAMP_RID, {
 })
 hue_test_helpers.expect_device_info(rest, OTHER_DEVICE_ID,
   { { rtype = "zigbee_connectivity", rid = OTHER_ZIGBEE_RID } }, { reusable = true })
-hue_test_helpers.expect_zigbee_connectivity(rest, OTHER_ZIGBEE_RID, { owner = OTHER_DEVICE_ID, reusable = true })
-hue_test_helpers.expect_light_resource(rest, OTHER_RID, true, 80, { reusable = true })
+hue_test_helpers.expect_zigbee_connectivity(rest, OTHER_ZIGBEE_RID, OTHER_DEVICE_ID, { reusable = true })
+hue_test_helpers.expect_resource(rest, "light", OTHER_RID, {
+  owner = { rid = OTHER_DEVICE_ID, rtype = "device" }, on = { on = true }, dimming = { brightness = 80 },
+}, { reusable = true })
 
 http.expect_sse_handshake(sse, "/eventstream/clip/v2", true)
 
