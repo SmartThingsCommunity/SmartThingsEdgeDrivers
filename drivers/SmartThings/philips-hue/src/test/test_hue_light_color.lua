@@ -89,7 +89,6 @@ test.set_test_init_function(function()
     status = 200,
     body = { errors = {}, data = {} },
     reusable = true,
-    persistent = false,
   })
 
   test.socket.capability:__set_channel_ordering("relaxed")

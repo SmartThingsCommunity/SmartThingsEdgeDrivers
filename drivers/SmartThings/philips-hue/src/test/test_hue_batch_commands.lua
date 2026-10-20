@@ -79,14 +79,6 @@ local function assert_requests(method, path, expected)
     string.format("expected %d %s %s request(s), got %d", expected, method, path, actual))
 end
 
---- Register a test that also fails if any request it expected was never sent.
-local function register_batch_test(name, body)
-  test.register_coroutine_test(name, function()
-    body()
-    rest:assert_satisfied({ test_scoped_only = true })
-  end)
-end
-
 -- Let the lights finish initializing, then give the bridge its rooms.
 local function init_and_seed_groups()
   test.wait_for_events()
@@ -95,7 +87,7 @@ local function init_and_seed_groups()
     "expected 1 room with 2 light records, got " .. #groups .. " rooms")
 end
 
-register_batch_test(
+test.register_coroutine_test(
   "a batch of one command is sent as a single light request",
   function()
     init_and_seed_groups()
@@ -110,7 +102,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "a batch covering every light in a room is sent as one grouped_light request",
   function()
     init_and_seed_groups()
@@ -128,7 +120,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "lights outside the matched room are still sent individually",
   function()
     init_and_seed_groups()
@@ -148,7 +140,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "matching commands that don't cover a whole room are sent individually",
   function()
     init_and_seed_groups()
@@ -167,7 +159,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "commands with different arguments are not grouped",
   function()
     init_and_seed_groups()
@@ -188,7 +180,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "commands without a grouped handler are sent individually even for a whole room",
   function()
     init_and_seed_groups()
@@ -216,7 +208,7 @@ local function set_switch_state(mock_light, state)
   fixtures.driver_device(mock_light):set_field(Fields.SWITCH_STATE, state, { persist = true })
 end
 
-register_batch_test(
+test.register_coroutine_test(
   "a grouped setLevel for a room that is already on only sends the brightness",
   function()
     init_and_seed_groups()
@@ -237,7 +229,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "a grouped setLevel turns the room on first when one of its lights is off",
   function()
     init_and_seed_groups()
@@ -256,7 +248,7 @@ register_batch_test(
   end
 )
 
-register_batch_test(
+test.register_coroutine_test(
   "a grouped setLevel turns the room on first when a light's state is not known yet",
   function()
     init_and_seed_groups()
@@ -290,7 +282,7 @@ local function capture_logged_errors(fn)
   return messages
 end
 
-register_batch_test(
+test.register_coroutine_test(
   "errors the bridge returns for a grouped command are logged",
   function()
     init_and_seed_groups()

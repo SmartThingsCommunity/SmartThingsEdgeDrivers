@@ -91,12 +91,11 @@ http.expect_sse_handshake(sse, "/eventstream/clip/v2", true)
 
 test.set_test_init_function(function()
   scenario:activate()
-  -- Connectivity poll after the event stream opens.
+  -- Connectivity poll after the event stream opens (registered after activate(), so test-scoped).
   http.expect_request(rest, "GET", "/clip/v2/resource/zigbee_connectivity", {
     status = 200,
     body = { errors = {}, data = {} },
     reusable = true,
-    persistent = false,
   })
 
   test.socket.capability:__set_channel_ordering("relaxed")

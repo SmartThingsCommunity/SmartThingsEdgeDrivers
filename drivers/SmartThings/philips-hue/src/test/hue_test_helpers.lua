@@ -742,14 +742,15 @@ end
 ---
 --- @param base_test_init function The base test_init function returned by HueDeviceBuilder
 --- @param scenario table The ConnectionScenario instance
---- @param additional_setup function|nil Optional additional setup to run before scenario:activate()
+--- @param additional_setup function|nil Optional additional setup to run after scenario:activate()
+---   (so expectations it registers are test-scoped)
 function M.setup_scenario_test_init(base_test_init, scenario, additional_setup)
   local function test_init()
     base_test_init()
+    scenario:activate()
     if additional_setup then
       additional_setup()
     end
-    scenario:activate()
   end
   test.set_test_init_function(test_init)
 end

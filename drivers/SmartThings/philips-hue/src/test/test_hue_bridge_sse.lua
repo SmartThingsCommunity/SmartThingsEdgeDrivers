@@ -50,7 +50,7 @@ local function expect_switch_and_level_emit()
 end
 
 -- The light's refresh: its device, zigbee connectivity and light state. `opts` is passed to each
--- expectation (e.g. `times` or `persistent`).
+-- expectation (e.g. `times`).
 local function expect_light_refresh(opts)
   local function expect(path, data)
     local spec = { body = { errors = {}, data = data } }
@@ -238,7 +238,7 @@ test.register_coroutine_test(
       },
     })
     expect_switch_and_level_emit()
-    expect_light_refresh({ persistent = false })
+    expect_light_refresh()
 
     test.wait_for_events()
 

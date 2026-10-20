@@ -58,7 +58,6 @@ local function assert_next_command_sent()
     body = { errors = {}, data = { { rid = LIGHT_RID, rtype = "light" } } },
   })
   send_command("switch", "off")
-  scenario:assert_all_satisfied({ test_scoped_only = true })
 end
 
 test.register_coroutine_test(

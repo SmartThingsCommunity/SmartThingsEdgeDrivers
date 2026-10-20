@@ -69,7 +69,8 @@ http.expect_sse_handshake(sse, "/eventstream/clip/v2", true)
 
 test.set_test_init_function(function()
   scenario:activate()
-  -- The connectivity check after the event stream opens reports the lamp connected.
+  -- The connectivity check after the event stream opens reports the lamp connected (registered
+  -- after activate(), so it is this test's).
   http.expect_request(rest, "GET", "/clip/v2/resource/zigbee_connectivity", {
     status = 200,
     body = { errors = {}, data = { {
@@ -78,8 +79,6 @@ test.set_test_init_function(function()
       status = "connected",
       type = "zigbee_connectivity",
     } } },
-    reusable = false,
-    persistent = false,
   })
 
   fixtures.test_init() -- adds the devices; registers the lamp's init levelRange emit
@@ -111,8 +110,7 @@ test.register_coroutine_test(
     assert(mock_devices_api.__is_device_online(mock_lamp.id) == true, "expected the lamp to be online")
 
     -- One refresh: the device, connectivity and light GETs happen once each.
-    local sent = rest:get_sent_log()
-    local _, light_gets = sent:gsub("GET /clip/v2/resource/light/" .. hue_test_helpers.escape_uuid(ids.color_lamp_light), "")
+    local light_gets = http.count_requests(rest, "GET", "/clip/v2/resource/light/" .. ids.color_lamp_light)
     assert(light_gets == 1, string.format("expected 1 light refresh, got %d", light_gets))
   end
 )
