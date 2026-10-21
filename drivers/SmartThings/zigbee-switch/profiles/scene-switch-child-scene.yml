@@ -1,4 +1,4 @@
-name: ts0601-scene-switch-child-scene
+name: scene-switch-child-scene
 components:
   - id: main
     capabilities:

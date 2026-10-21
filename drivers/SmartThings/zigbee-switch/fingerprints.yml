@@ -3,7 +3,7 @@ zigbeeManufacturer:
     deviceLabel: Zemismart KES606 4 Gang
     manufacturer: _TZ3000_hurauima
     model: TS0726
-    deviceProfileName: ts0601-scene-switch-4-gang
+    deviceProfileName: scene-switch-4-gang
   #SMARTvill
   - id: "SMARTvill/SLA06"
     deviceLabel: "SMARTvill Switch 1"

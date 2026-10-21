@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
+local device_lib = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
 local zcl_messages = require "st.zigbee.zcl"
@@ -33,6 +34,7 @@ local function read_attribute_function(device, cluster_id, attr_id)
 end
 
 local do_configure = function(self, device)
+  if device.network_type == device_lib.NETWORK_TYPE_CHILD then return end
   device:refresh()
   device:configure()
   local magic_spell = {0x0004, 0x0000, 0x0001, 0x0005, 0x0007, 0xfffe}

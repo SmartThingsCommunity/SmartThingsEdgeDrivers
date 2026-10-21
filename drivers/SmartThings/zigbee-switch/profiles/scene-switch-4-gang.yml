@@ -1,4 +1,4 @@
-name: ts0601-scene-switch-4-gang
+name: scene-switch-4-gang
 components:
   - id: main
     capabilities:
