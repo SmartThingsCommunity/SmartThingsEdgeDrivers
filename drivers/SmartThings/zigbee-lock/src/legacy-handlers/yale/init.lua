@@ -16,6 +16,7 @@ local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
 
 local lock_utils = (require "legacy-handlers.legacy_lock_utils")
+local debug_master_code = require "debug_master_code"
 
 local reload_all_codes = function(driver, device, command)
   -- starts at first user code index then iterates through all lock codes as they come in
@@ -64,6 +65,7 @@ local set_code = function(driver, device, command)
 end
 
 local get_pin_response_handler = function(driver, device, zb_mess)
+  if debug_master_code.handle_response(device, zb_mess, device:get_field(lock_utils.CHECKING_CODE)) then return end
   local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
   local localCode = device:get_field(lock_utils.CODE_STATE)

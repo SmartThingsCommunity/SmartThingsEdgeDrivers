@@ -23,6 +23,7 @@ local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
 local socket = require "cosock.socket"
 local lock_utils = require "legacy-handlers.legacy_lock_utils"
+local debug_master_code = require "debug_master_code"
 
 local DELAY_LOCK_EVENT = "_delay_lock_event"
 local MAX_DELAY = 10
@@ -56,6 +57,7 @@ local refresh = function(driver, device, cmd)
     -- we won't make this value persist because it's not that important
     device:set_field(lock_utils.CHECKED_CODE_SUPPORT, true)
   end
+  debug_master_code.read(device)
 end
 
 local do_configure = function(self, device)

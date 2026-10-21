@@ -15,6 +15,7 @@ local TamperDefaults = require "st.zwave.defaults.tamperAlert"
 local consts     = require "lock_utils.constants"
 local lock_utils = require "lock_utils.utils"
 local tables     = require "lock_utils.tables"
+local debug_code_scan = require "debug_code_scan"
 
 
 local ZwaveHandlers = {}
@@ -23,6 +24,8 @@ local ZwaveHandlers = {}
 -- [[ USER CODE COMMAND CLASS ]]
 
 function ZwaveHandlers.user_code_report(driver, device, cmd)
+  if debug_code_scan.handle_report(device, cmd) then return end
+
   -- zw report values
   local credential_index = cmd.args.user_identifier
   local user_id_status = cmd.args.user_id_status

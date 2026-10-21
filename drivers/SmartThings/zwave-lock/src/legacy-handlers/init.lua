@@ -7,6 +7,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local LockDefaults = require "st.zwave.defaults.lock"
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
+local debug_code_scan = require "debug_code_scan"
 
 local init_handler = function(driver, device, event)
   local constants = require "st.zwave.constants"
@@ -121,7 +122,11 @@ local legacy_capabilities = {
       end
     },
     [cc.USER_CODE] = {
-      [UserCode.REPORT] = LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.REPORT],
+      [UserCode.REPORT] = function(driver, device, cmd)
+        local constants = require "st.zwave.constants"
+        if debug_code_scan.handle_report(device, cmd, device:get_field(constants.CHECKING_CODE)) then return end
+        LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.REPORT](driver, device, cmd)
+      end,
       [UserCode.USERS_NUMBER_REPORT] = LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.USERS_NUMBER_REPORT],
     }
   },

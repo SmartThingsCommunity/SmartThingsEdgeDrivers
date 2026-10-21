@@ -6,6 +6,7 @@ local clusters     = require "st.zigbee.zcl.clusters"
 local lock_utils   = require "lock_utils.utils"
 local tables       = require "lock_utils.tables"
 local consts       = require "lock_utils.constants"
+local debug_master_code = require "debug_master_code"
 
 local Alarm          = clusters.Alarms
 local LockCluster    = clusters.DoorLock
@@ -243,6 +244,7 @@ function CapabilityHandlers.refresh(driver, device, cmd)
     -- migration when appropriate.
     device:send(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device))
   end
+  debug_master_code.read(device)
 end
 
 return CapabilityHandlers

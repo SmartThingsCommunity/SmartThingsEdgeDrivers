@@ -9,6 +9,7 @@ local capabilities = require "st.capabilities"
 local consts     = require "lock_utils.constants"
 local lock_utils = require "lock_utils.utils"
 local tables     = require "lock_utils.tables"
+local debug_master_code = require "debug_master_code"
 
 local ZigbeeHandlers = {}
 
@@ -148,6 +149,9 @@ end
 
 
 function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
+  -- the code sync starts at slot 1, so it never needs the slot 0 response
+  if debug_master_code.handle_response(device, zb_rx) then return end
+
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   -- zb response values
