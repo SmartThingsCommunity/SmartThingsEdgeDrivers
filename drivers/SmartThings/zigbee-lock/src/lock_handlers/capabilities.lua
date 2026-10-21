@@ -131,7 +131,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  if tables.is_full(device, "credentials") then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end

@@ -147,6 +147,18 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
+-- Return true if the named table has reached its max_entries limit. An entry at index 0 (the
+-- Zigbee "Master Code" slot) is not one of the lock's user slots, so it does not count toward the limit.
+function table_utils.is_full(device, table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return true end
+  local count = 0
+  for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
+    if entry[def.match_key] ~= 0 then count = count + 1 end
+  end
+  return count >= table_utils.get_max_entries(device, table_name)
+end
+
 -- Add an entry to a named table. The entry must satisfy all required_keys for
 -- that table. An entry whose match_key value already exists in the
 -- table is skipped to prevent duplicates. If the table has a max_entries limit,
@@ -159,7 +171,7 @@ function table_utils.add_entry(device, table_name, entry)
   local t = table_utils.get_state(device, def)
   if not t then return COMMAND_RESULT.FAILURE end
 
-  if #t >= table_utils.get_max_entries(device, table_name) then
+  if entry[def.match_key] ~= 0 and table_utils.is_full(device, table_name) then
     device.log.warn(string.format(
       "table_helpers: cannot add entry to %q, max entries reached", table_name
     ))

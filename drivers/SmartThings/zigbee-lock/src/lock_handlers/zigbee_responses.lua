@@ -151,23 +151,24 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   -- zb response values
-  local user_id = tonumber(zb_rx.body.zcl_body.user_id.value)
+  local user_id = lock_utils.normalize_user_id(device, tonumber(zb_rx.body.zcl_body.user_id.value))
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
     local user_status = zb_rx.body.zcl_body.user_status.value
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
       -- If an entry already exists at this index, this will be a no-op.
+      local default_name = user_id == 0 and "Master Code" or ("Guest " .. user_id)
       tables.add_entry(device, "users", {
         userIndex = user_id,
-        userName = "Guest " .. user_id,
+        userName = default_name,
         userType = "guest",
       })
       tables.add_entry(device, "credentials", {
         userIndex = user_id,
         credentialIndex = user_id,
         credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. user_id,
+        credentialName = default_name,
       })
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
@@ -195,14 +196,8 @@ end
 
 function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
   -- zb response values
-  local user_id = tonumber(zb_rx.body.zcl_body.user_id.value)
+  local user_id = lock_utils.normalize_user_id(device, tonumber(zb_rx.body.zcl_body.user_id.value))
   local event_code = tonumber(zb_rx.body.zcl_body.program_event_code.value)
-
-  if device:get_manufacturer() == "ASSA ABLOY iRevo" or device:get_manufacturer() == "Yale" then
-    if user_id >= 256 then -- Index is incorrectly written on these devices. Attempt to shift it to get an actual value
-      user_id = user_id >> 8
-    end
-  end
 
   local ProgramEventCode = clusters.DoorLock.types.ProgramEventCode
   -- MASTER_CODE_CHANGED = 1
