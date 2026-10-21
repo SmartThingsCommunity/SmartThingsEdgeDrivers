@@ -155,10 +155,10 @@ zigbeeManufacturer:
     deviceProfileName: window-treatment-powerSource
 
   - id: "_TZE200_cirjrpxe/TS0301"
-    deviceLabel: Zemismart ZM25Z Roller Shade Motor
+    deviceLabel: Zemismart Roller Shade Motor
     manufacturer: _TZE200_cirjrpxe
     model: TS0301
-    deviceProfileName: window-treatment-profile
+    deviceProfileName: window-treatment-battery
 
 zigbeeGeneric:
   - id: "genericShade"

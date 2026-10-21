@@ -6,14 +6,13 @@ local t_utils = require "integration_test.utils"
 local z_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local confirmation = require "zemismart.position_confirmation"
+local path = require "path"
+local yaml = require "yaml"
 
 local helpers = {}
 local position = clusters.WindowCovering.attributes.CurrentPositionLiftPercentage
-local battery_profiles = {}
 
--- Exercise actual requested delays, including simultaneous response/total/lease timers.
--- The SDK's default unqueued mock timer never fires, which would hide expiry defects.
+-- Use the requested delays: unqueued SDK mock timers never fire and hide expiry bugs.
 local create_oneshot = test.timer.create_oneshot
 test.timer.create_oneshot = function(seconds)
   if #test.timer.__oneshot_timers == 0 then
@@ -27,9 +26,8 @@ local function target(device)
 end
 
 function helpers.create(profile)
-  local definition = t_utils.get_profile_definition(profile or "window-treatment-profile.yml")
   local device = test.mock_device.build_test_zigbee_device({
-    profile = definition,
+    profile = t_utils.get_profile_definition(profile or "window-treatment-profile.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1, manufacturer = "_TZE200_cirjrpxe", model = "TS0301",
@@ -38,13 +36,29 @@ function helpers.create(profile)
       },
     },
   })
-  for _, component in pairs(definition.components) do
-    for _, capability in pairs(component.capabilities) do
-      if capability.id == "battery" then battery_profiles[device] = true end
-    end
-  end
   helpers.device = helpers.device or device
   return device
+end
+
+-- Resolve the package's actual mapping; this checks packaging inputs, not cloud pairing.
+function helpers.create_from_fingerprint()
+  local caller_path = path.Path(debug.getinfo(1, "S").source:sub(2))
+  local src_path = caller_path:get_dir_pos("src") and caller_path:to_dir("src") or path.Path("")
+  local file = assert(io.open(src_path:parent():append("fingerprints.yml"):to_string()))
+  local contents = file:read("a")
+  file:close()
+  -- The SDK YAML reader stops at empty separator lines in this simple mapping file.
+  contents = contents:gsub("\n[ \t]*\n", "\n")
+  local fingerprints = yaml.eval(contents)
+  local selected
+  for _, fingerprint in ipairs(fingerprints.zigbeeManufacturer) do
+    if fingerprint.manufacturer == "_TZE200_cirjrpxe" and fingerprint.model == "TS0301" then
+      assert(selected == nil, "ambiguous manufacturer/model mapping")
+      selected = fingerprint
+    end
+  end
+  assert(selected, "shared Zemismart fingerprint missing from the package")
+  return helpers.create(selected.deviceProfileName .. ".yml"), selected
 end
 
 function helpers.expect_event(event, device)
@@ -57,6 +71,13 @@ function helpers.expect_read(device)
   test.socket.zigbee:__expect_send({ device.id, position:read(device) })
 end
 
+function helpers.expect_motion(command, argument, device)
+  device = target(device)
+  local message = argument ~= nil and clusters.WindowCovering.server.commands[command](device, argument)
+    or clusters.WindowCovering.server.commands[command](device)
+  test.socket.zigbee:__expect_send({ device.id, message })
+end
+
 function helpers.command(capability, name, args, device)
   device = target(device)
   test.socket.capability:__queue_receive({ device.id, {
@@ -64,22 +85,14 @@ function helpers.command(capability, name, args, device)
   } })
 end
 
-function helpers.response(level, sequence, endpoint, device)
+function helpers.response(level, device)
   device = target(device)
-  local message = position:build_test_read_attr_response(device, level)
-  if sequence ~= nil then message.body.zcl_header.seqno.value = sequence end
-  if endpoint ~= nil then message.address_header.src_endpoint.value = endpoint end
-  test.socket.zigbee:__queue_receive({ device.id, message })
-  return message
+  test.socket.zigbee:__queue_receive({ device.id, position:build_test_read_attr_response(device, level) })
 end
 
-function helpers.report(level, sequence, endpoint, device)
+function helpers.report(level, device)
   device = target(device)
-  local message = position:build_test_attr_report(device, level)
-  if sequence ~= nil then message.body.zcl_header.seqno.value = sequence end
-  if endpoint ~= nil then message.address_header.src_endpoint.value = endpoint end
-  test.socket.zigbee:__queue_receive({ device.id, message })
-  return message
+  test.socket.zigbee:__queue_receive({ device.id, position:build_test_attr_report(device, level) })
 end
 
 function helpers.expect_static(level, device)
@@ -97,10 +110,6 @@ function helpers.initialize_device(device)
     { "presetPosition", "setPresetPosition" }, { visibility = { displayed = false } }), device)
   helpers.expect_event(capabilities.windowShadePreset.position(
     50, { visibility = { displayed = false } }), device)
-  if not battery_profiles[device] then
-    helpers.expect_event(capabilities.windowShade.windowShade.unknown(), device)
-    helpers.expect_read(device)
-  end
 end
 
 function helpers.set_test_init(device)
@@ -116,24 +125,28 @@ function helpers.advance(seconds)
   test.wait_for_events()
 end
 
--- Trust is established solely through two successful protocol reads, never set_field.
--- These synthetic messages test acceptance policy, not on-air TSN correlation.
-function helpers.confirm(level, first_sequence, second_sequence, device)
-  device = target(device)
-  test.wait_for_events()
-  if not device:get_field("_zemismartPositionCheck") then
-    helpers.command("refresh", "refresh", nil, device)
-    helpers.expect_read(device)
-    test.wait_for_events()
-  end
-  helpers.response(level, first_sequence or 0x11, nil, device)
-  test.wait_for_events()
-  helpers.expect_read(device)
-  helpers.advance(2)
-  helpers.response(level, second_sequence or 0x12, nil, device)
+-- Establish state through a real protocol response, not an implementation-private field.
+function helpers.seed(level, device)
+  helpers.response(level, device)
   helpers.expect_static(level, device)
   test.wait_for_events()
-  assert(confirmation.position_is_known(device), "two real read responses must establish trust")
+end
+
+function helpers.step(step, level, device)
+  helpers.command("statelessWindowShadeLevelStep", "stepShadeLevel", { step }, device)
+  helpers.expect_motion("GoToLiftPercentage", level, device)
+  test.wait_for_events()
+end
+
+function helpers.capture_callbacks(device)
+  device = target(device)
+  local original = device.thread.call_with_delay
+  local callbacks = {}
+  device.thread.call_with_delay = function(thread, seconds, callback, ...)
+    callbacks[#callbacks + 1] = { seconds = seconds, callback = callback }
+    return original(thread, seconds, callback, ...)
+  end
+  return callbacks, function() device.thread.call_with_delay = original end
 end
 
 return helpers

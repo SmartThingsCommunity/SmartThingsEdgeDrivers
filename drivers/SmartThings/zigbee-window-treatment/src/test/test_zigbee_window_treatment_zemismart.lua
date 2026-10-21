@@ -2,388 +2,298 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
-local t_utils = require "integration_test.utils"
 local z_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local can_handle = require "zemismart.can_handle"
+local helpers = require "test.zemismart_feedback_test_utils"
 
-local function build_device(profile)
-  return test.mock_device.build_test_zigbee_device({
-    profile = t_utils.get_profile_definition(profile),
-    zigbee_endpoints = {
-      [1] = {
-        id = 1,
-        manufacturer = "_TZE200_cirjrpxe",
-        model = "TS0301",
-        server_clusters = { 0x0000, 0x0001, 0x0003, 0x0004, 0x0005, 0x0102, 0xEF00 },
-        client_clusters = { 0x0019 },
-      },
-    },
-  })
+local device = helpers.create()
+local battery_device = helpers.create("window-treatment-battery.yml")
+local fresh_device, fresh_fingerprint = helpers.create_from_fingerprint()
+local shade = capabilities.windowShade.windowShade
+helpers.set_test_init(device)
+
+local function expect_position(level, state)
+  helpers.expect_event(capabilities.windowShadeLevel.shadeLevel(level))
+  helpers.expect_event(state)
 end
 
-local mock_device = build_device("window-treatment-profile.yml")
-local battery_device = build_device("window-treatment-battery.yml")
-
-local function expect_event(device, event)
-  test.socket.capability:__expect_send(device:generate_test_message("main", event))
-end
-
-local function initialize_device(device)
-  test.mock_device.add_test_device(device)
-  expect_event(device, capabilities.windowShadePreset.supportedCommands(
-    { "presetPosition", "setPresetPosition" }, { visibility = { displayed = false } }))
-  expect_event(device, capabilities.windowShadePreset.position(
-    50, { visibility = { displayed = false } }))
-  if device == mock_device then
-    expect_event(device, capabilities.windowShade.windowShade.unknown())
-    test.socket.zigbee:__expect_send({ device.id,
-      clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:read(device) })
-  end
-end
-
-local function command(capability, name, args)
-  test.socket.capability:__queue_receive({ mock_device.id, {
-    capability = capability, component = "main", command = name, args = args or {},
-  } })
-end
-
-local function expect_position_read()
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
-end
-
-local sequence = 0
-local function read_response(level)
-  sequence = (sequence + 1) % 256
-  local message = clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:
-    build_test_read_attr_response(mock_device, level)
-  message.body.zcl_header.seqno.value = sequence
-  test.socket.zigbee:__queue_receive({ mock_device.id, message })
-end
-
-local function confirm_position(level)
-  assert(mock_device:get_field("_zemismartMotionContext") == nil)
-  if mock_device:get_field("_zemismartPositionCheck") == nil then
-    command("refresh", "refresh")
-    expect_position_read()
-    test.wait_for_events()
-  end
-  local was_trusted = (require "zemismart.position_confirmation").position_is_known(mock_device)
-  local previous = mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel")
-  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
-  read_response(level)
-  if was_trusted and previous ~= level then
-    expect_event(mock_device, capabilities.windowShade.windowShade.unknown())
-  end
+local function report_then_settle(level, movement)
+  helpers.report(level)
+  expect_position(level, movement)
   test.wait_for_events()
-  test.mock_time.advance_time(2)
-  expect_position_read()
-  test.wait_for_events()
-  read_response(level)
-  expect_event(mock_device, capabilities.windowShadeLevel.shadeLevel(level))
-  expect_event(mock_device, level == 0 and capabilities.windowShade.windowShade.closed()
-    or level == 100 and capabilities.windowShade.windowShade.open()
-    or capabilities.windowShade.windowShade.partially_open())
-  test.wait_for_events()
-  assert((require "zemismart.position_confirmation").position_is_known(mock_device))
+  helpers.expect_event(shade.partially_open())
+  helpers.advance(2)
 end
 
-local function report_level(level)
-  local motion = mock_device:get_field("_zemismartMotionContext")
-  if not motion then confirm_position(level); return end
-  test.socket.zigbee:__queue_receive({ mock_device.id,
-    clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(
-      mock_device, level) })
-  if level == motion.target then
-    expect_event(mock_device, capabilities.windowShade.windowShade.unknown())
-    expect_position_read()
-    test.wait_for_events()
-    confirm_position(level)
-  else
-    expect_event(mock_device, capabilities.windowShadeLevel.shadeLevel(level))
-    expect_event(mock_device, level > motion.last and capabilities.windowShade.windowShade.opening()
-      or capabilities.windowShade.windowShade.closing())
-    test.wait_for_events()
+test.register_coroutine_test("Shared fingerprint handles both existing profiles without matching unrelated devices", function()
+  assert(can_handle(nil, nil, device))
+  for _, pair in ipairs({ { "different", "TS0301" }, { "_TZE200_cirjrpxe", "different" } }) do
+    assert(not can_handle(nil, nil, {
+      get_manufacturer = function() return pair[1] end,
+      get_model = function() return pair[2] end,
+    }))
   end
-end
-
-local function step_and_expect(step, target)
-  local new_check = mock_device:get_field("_zemismartPositionCheck") == nil
-  command("statelessWindowShadeLevelStep", "stepShadeLevel", { step })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, target) })
-  if new_check then expect_position_read() end
-  test.wait_for_events()
-end
-
-z_utils.prepare_zigbee_env_info()
-test.set_test_init_function(function() initialize_device(mock_device) end)
-
-test.register_coroutine_test("Battery suppression is restricted to the non-battery target", function()
-  assert(can_handle(nil, nil, mock_device))
-  assert(not can_handle(nil, nil, {
-    get_manufacturer = function() return "_TZE200_cirjrpxe" end,
-    get_model = function() return "TS0301" end,
-    supports_capability_by_id = function(_, id) return id == capabilities.battery.ID end,
-  }))
-  assert(not can_handle(nil, nil, {
-    get_manufacturer = function() return "different_manufacturer" end,
-    get_model = function() return "TS0301" end,
-  }))
-  assert(not can_handle(nil, nil, {
-    get_manufacturer = function() return "_TZE200_cirjrpxe" end,
-    get_model = function() return "different_model" end,
-  }))
 end)
 
-test.register_coroutine_test("Target driver switch accepts the official non-battery profile", function()
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end)
+for _, entry in ipairs({ { "non-battery", device }, { "battery", battery_device } }) do
+  test.register_coroutine_test("Driver switch accepts the " .. entry[1] .. " profile", function()
+    assert(can_handle(nil, nil, entry[2]))
+    test.socket.device_lifecycle:__queue_receive({ entry[2].id, "driverSwitched" })
+    entry[2]:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end, { test_init = function() helpers.initialize_device(entry[2]) end })
+end
 
-test.register_coroutine_test("Unsolicited battery reports do not attempt unsupported events", function()
-  local original_emit = mock_device.emit_event_for_endpoint
-  mock_device.emit_event_for_endpoint = function(self, endpoint, event)
-    assert(event.capability.ID ~= capabilities.battery.ID, "Unexpected battery event attempt")
-    return original_emit(self, endpoint, event)
-  end
-  for _, attribute in ipairs({ clusters.PowerConfiguration.attributes.BatteryVoltage,
+test.register_coroutine_test("Non-battery profile ignores unsupported battery reports", function()
+  for _, attr in ipairs({ clusters.PowerConfiguration.attributes.BatteryVoltage,
       clusters.PowerConfiguration.attributes.BatteryPercentageRemaining }) do
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      attribute:build_test_attr_report(mock_device, 100) })
+    test.socket.zigbee:__queue_receive({ device.id, attr:build_test_attr_report(device, 100) })
     test.wait_for_events()
   end
-  assert(mock_device:get_latest_state("main", capabilities.battery.ID, "battery") == nil)
-  mock_device.emit_event_for_endpoint = original_emit
+  assert(device:get_latest_state("main", "battery", "battery") == nil)
 end)
 
-test.register_coroutine_test("Configuration and refresh read position without battery traffic", function()
-  confirm_position(50)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  test.socket.zigbee:__set_channel_ordering("relaxed")
-  expect_position_read()
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    z_utils.build_bind_request(mock_device, z_utils.mock_hub_eui, clusters.WindowCovering.ID) })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(
-      mock_device, 0, 600, 1) })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.wait_for_events()
-  command("refresh", "refresh") -- Coalesces with the configuration read already in flight.
-  test.wait_for_events()
-  confirm_position(50)
-  command("refresh", "refresh")
-  expect_position_read()
-end)
-
-test.register_coroutine_test("Target open close and pause retain standard commands", function()
-  confirm_position(50)
-  for i, pair in ipairs({ { "open", "UpOrOpen" }, { "close", "DownOrClose" },
-      { "pause", "Stop" } }) do
-    command("windowShade", pair[1])
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      clusters.WindowCovering.server.commands[pair[2]](mock_device) })
-    if i == 1 or i == 3 then expect_position_read() end
-    if i == 3 then expect_event(mock_device, capabilities.windowShade.windowShade.unknown()) end
-    test.wait_for_events()
-  end
-  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 50)
-end)
-
-test.register_coroutine_test("Target level control and actual position reports are unchanged", function()
-  confirm_position(43)
-  for _, level in ipairs({ 25, 75, 50, 0, 100 }) do
-    local previous = mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel")
-    command("windowShadeLevel", "setShadeLevel", { level })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, level) })
-    expect_position_read()
-    test.wait_for_events()
-    assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == previous)
-    report_level(math.floor((previous + level) / 2))
-    report_level(level)
-  end
-end)
-
-test.register_coroutine_test("Target preset retains standard commands without steps", function()
-  confirm_position(43)
-  command("windowShadePreset", "setPresetPosition", { 40 })
-  expect_event(mock_device, capabilities.windowShadePreset.position(40))
-  test.wait_for_events()
-  command("windowShadePreset", "presetPosition")
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 40) })
-  expect_position_read()
-  test.wait_for_events()
-  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
-  report_level(42)
-  report_level(40)
-  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 40)
-end)
-
--- The shared step helper's named-argument injection requires capability-aware API 15.
-test.register_coroutine_test("Target preset and relative step retain standard commands", function()
-  confirm_position(50)
-  command("windowShadePreset", "setPresetPosition", { 40 })
-  expect_event(mock_device, capabilities.windowShadePreset.position(40))
-  test.wait_for_events()
-  command("windowShadePreset", "presetPosition")
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 40) })
-  expect_position_read()
-  test.wait_for_events()
-  report_level(45)
-  report_level(40)
-  step_and_expect(10, 50)
-end, { min_api_version = 15 })
-
-test.register_coroutine_test("Existing battery profiles retain percentage and voltage reporting", function()
+test.register_coroutine_test("Battery profile retains standard percentage and voltage reports", function()
   test.socket.zigbee:__queue_receive({ battery_device.id,
-    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(
-      battery_device, 150) })
-  expect_event(battery_device, capabilities.battery.battery(75))
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(battery_device, 150) })
+  helpers.expect_event(capabilities.battery.battery(75), battery_device)
   test.wait_for_events()
   battery_device:set_field(battery_defaults.DEVICE_MIN_VOLTAGE_KEY, 2.0)
   battery_device:set_field(battery_defaults.DEVICE_MAX_VOLTAGE_KEY, 3.0)
   test.socket.zigbee:__queue_receive({ battery_device.id,
     clusters.PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(battery_device, 25) })
-  expect_event(battery_device, capabilities.battery.battery(50))
-end, { test_init = function() initialize_device(battery_device) end })
+  helpers.expect_event(capabilities.battery.battery(50), battery_device)
+end, { test_init = function() helpers.initialize_device(battery_device) end })
 
-test.register_coroutine_test("Absolute movement ends the previous relative-step sequence", function()
-  report_level(51)
-  step_and_expect(10, 61)
-  report_level(61)
-  command("windowShadeLevel", "setShadeLevel", { 50 })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50) })
-  expect_position_read()
+test.register_coroutine_test("Configuration and refresh preserve standard position reporting", function()
+  test.socket.device_lifecycle:__queue_receive({ device.id, "doConfigure" })
+  test.socket.zigbee:__set_channel_ordering("relaxed")
+  helpers.expect_read()
+  test.socket.zigbee:__expect_send({ device.id,
+    z_utils.build_bind_request(device, z_utils.mock_hub_eui, clusters.WindowCovering.ID) })
+  test.socket.zigbee:__expect_send({ device.id,
+    clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(device, 0, 600, 1) })
+  device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.wait_for_events()
-  report_level(50)
-  step_and_expect(-10, 40)
+  helpers.command("refresh", "refresh")
+  helpers.expect_read()
+end)
+
+test.register_coroutine_test("Added announces supported commands without manufacturing Unknown", function()
+  test.socket.device_lifecycle:__queue_receive({ device.id, "added" })
+  helpers.expect_event(capabilities.windowShade.supportedWindowShadeCommands(
+    { "open", "close", "pause" }, { visibility = { displayed = false } }))
+end)
+
+test.register_coroutine_test("Preset storage and movement retain standard semantics", function()
+  helpers.seed(43)
+  helpers.command("windowShadePreset", "setPresetPosition", { 40 })
+  helpers.expect_event(capabilities.windowShadePreset.position(40))
+  test.wait_for_events()
+  helpers.command("windowShadePreset", "presetPosition")
+  helpers.expect_motion("GoToLiftPercentage", 40)
+  test.wait_for_events()
+  assert(device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
+  report_then_settle(40, shade.closing())
+end)
+
+test.register_coroutine_test("Absolute control does not optimistically change reported position", function()
+  helpers.seed(43)
+  helpers.command("windowShadeLevel", "setShadeLevel", { 75 })
+  helpers.expect_motion("GoToLiftPercentage", 75)
+  test.wait_for_events()
+  assert(device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
+  report_then_settle(75, shade.opening())
+end)
+
+test.register_coroutine_test("Absolute movement ends the prior relative-step sequence", function()
+  helpers.seed(50)
+  helpers.step(10, 60)
+  report_then_settle(60, shade.opening())
+  helpers.command("windowShadeLevel", "setShadeLevel", { 50 })
+  helpers.expect_motion("GoToLiftPercentage", 50)
+  test.wait_for_events()
+  report_then_settle(50, shade.closing())
+  helpers.step(-10, 40)
 end, { min_api_version = 15 })
 
 test.register_coroutine_test("Rapid relative steps accumulate despite intermediate reports", function()
-  report_level(50)
-  step_and_expect(10, 60)
-  report_level(52)
-  step_and_expect(-5, 55)
-  step_and_expect(15, 70)
+  helpers.seed(50)
+  helpers.step(10, 60)
+  helpers.report(52)
+  expect_position(52, shade.opening())
+  test.wait_for_events()
+  helpers.step(-5, 55)
+  helpers.step(15, 70)
 end, { min_api_version = 15 })
 
-local motion_commands = {
-  { name = "open", capability = "windowShade", zigbee = "UpOrOpen", actual = 70 },
-  { name = "close", capability = "windowShade", zigbee = "DownOrClose", actual = 30 },
-  { name = "pause", capability = "windowShade", zigbee = "Stop", actual = 55 },
-  { name = "presetPosition", capability = "windowShadePreset",
-    zigbee = "GoToLiftPercentage", actual = 50, target = 50 },
-}
-
-for _, motion in ipairs(motion_commands) do
-  test.register_coroutine_test(motion.name .. " ends the previous relative-step sequence", function()
-    report_level(51)
-    step_and_expect(10, 61)
-    command(motion.capability, motion.name)
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      clusters.WindowCovering.server.commands[motion.zigbee](mock_device, motion.target) })
-    if motion.name == "pause" then
-      expect_position_read()
-      expect_event(mock_device, capabilities.windowShade.windowShade.unknown())
-    end
+for _, action in ipairs({
+  { "windowShade", "open", "UpOrOpen" },
+  { "windowShade", "close", "DownOrClose" },
+  { "windowShade", "pause", "Stop" },
+  { "windowShadePreset", "presetPosition", "GoToLiftPercentage", 50 },
+}) do
+  test.register_coroutine_test(action[2] .. " clears the previous step target without changing position", function()
+    helpers.seed(51)
+    helpers.step(10, 61)
+    helpers.command(action[1], action[2])
+    helpers.expect_motion(action[3], action[4])
     test.wait_for_events()
-    report_level(motion.actual)
-    step_and_expect(-10, motion.actual - 10)
+    helpers.step(-10, 41)
   end, { min_api_version = 15 })
 end
 
-test.register_coroutine_test("Refresh and preset configuration preserve relative-step accumulation",
-  function()
-    report_level(50)
-    step_and_expect(10, 60)
-    command("refresh", "refresh")
-    test.wait_for_events()
-    command("windowShadePreset", "setPresetPosition", { 40 })
-    expect_event(mock_device, capabilities.windowShadePreset.position(40))
-    test.wait_for_events()
-    step_and_expect(-5, 55)
-  end, { min_api_version = 15 })
-
-test.register_coroutine_test("Interrupted step timers cannot clear a later sequence", function()
-  report_level(50)
-  test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
-  step_and_expect(10, 60)
-  test.mock_time.advance_time(5)
+test.register_coroutine_test("Refresh and preset setting preserve rapid step accumulation", function()
+  helpers.seed(50)
+  helpers.step(10, 60)
+  helpers.command("refresh", "refresh")
+  helpers.expect_read()
   test.wait_for_events()
-  command("windowShade", "pause")
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.Stop(mock_device) })
-  expect_position_read()
-  expect_event(mock_device, capabilities.windowShade.windowShade.unknown())
+  helpers.command("windowShadePreset", "setPresetPosition", { 40 })
+  helpers.expect_event(capabilities.windowShadePreset.position(40))
   test.wait_for_events()
-  assert(mock_device:get_field("_latestTargetLevel") == nil)
-  assert(mock_device:get_field("_targetLevelTimeOut") == nil)
-  confirm_position(50)
-  test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
-  step_and_expect(-10, 40)
-  test.mock_time.advance_time(11)
-  test.wait_for_events()
-  assert(mock_device:get_field("_latestTargetLevel") == 40)
-  test.mock_time.advance_time(5)
-  test.wait_for_events()
-  assert(mock_device:get_field("_latestTargetLevel") == nil)
-  assert(mock_device:get_field("_targetLevelTimeOut") == nil)
-  command("windowShadeLevel", "setShadeLevel", { 45 })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 45) })
-  test.wait_for_events()
-  report_level(45)
-  step_and_expect(-5, 40)
+  helpers.step(-5, 55)
 end, { min_api_version = 15 })
 
-test.register_coroutine_test("Zero step sends nothing from a confirmed position", function()
-  confirm_position(43)
-  command("statelessWindowShadeLevelStep", "stepShadeLevel", { 0 })
+test.register_coroutine_test("Expired step accumulation starts from the latest real position", function()
+  helpers.seed(50)
+  helpers.step(10, 60)
+  helpers.advance(16)
+  helpers.step(-5, 45)
+end, { min_api_version = 15 })
+
+test.register_coroutine_test("Interrupted step timeout cannot clear a newer step sequence", function()
+  helpers.seed(50)
+  local callbacks, restore = helpers.capture_callbacks()
+  helpers.step(10, 60)
+  restore()
+  helpers.advance(5)
+  helpers.command("windowShade", "pause")
+  helpers.expect_motion("Stop")
   test.wait_for_events()
-  assert((require "zemismart.position_confirmation").position_is_known(mock_device))
-  assert(mock_device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
-  assert(mock_device:get_field("_zemismartPositionCheck") == nil)
-  assert(mock_device:get_field("_zemismartMotionContext") == nil)
-  assert(mock_device:get_field("_latestTargetLevel") == nil)
-  assert(mock_device:get_field("_zemismartStepDispatch") == nil)
-end)
+  helpers.step(-10, 40)
+  callbacks[1].callback()
+  test.wait_for_events()
+  helpers.advance(11)
+  helpers.step(5, 45)
+end, { min_api_version = 15 })
 
-test.register_coroutine_test("Zero relative steps preserve the sequence and clear the dispatch marker",
-  function()
-    report_level(50)
-    step_and_expect(10, 60)
-    command("statelessWindowShadeLevelStep", "stepShadeLevel", { 0 })
-    test.wait_for_events()
-    assert(mock_device:get_field("_latestTargetLevel") == 60)
-    assert(mock_device:get_field("_zemismartStepDispatch") == nil)
-    step_and_expect(-5, 55)
+for _, entry in ipairs({ { 95, 10, 100 }, { 5, -10, 0 } }) do
+  test.register_coroutine_test("Relative step clamps at endpoint " .. entry[3], function()
+    helpers.seed(entry[1])
+    helpers.step(entry[2], entry[3])
   end, { min_api_version = 15 })
+end
 
-test.register_coroutine_test("Failed internal step dispatch leaves no stale target or marker", function()
-  report_level(50)
-  local step_handler = (require "zemismart").capability_handlers[
-    capabilities.statelessWindowShadeLevelStep.ID][
-    capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME]
-  expect_event(mock_device, capabilities.windowShade.windowShade.unknown())
-  local ok, err = pcall(step_handler, {
-    inject_capability_command = function() error("simulated dispatch failure") end,
-  }, mock_device, { component = "main", args = { stepSize = 10 } })
-  assert(not ok and string.find(err, "simulated dispatch failure", 1, true))
-  assert(mock_device:get_field("_zemismartStepDispatch") == nil)
-  assert(mock_device:get_field("_latestTargetLevel") == nil)
-  assert(mock_device:get_field("_targetLevelTimeOut") == nil)
-  confirm_position(50)
-  command("windowShadeLevel", "setShadeLevel", { 30 })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 30) })
-  expect_position_read()
+test.register_coroutine_test("Zero step sends nothing from an ordinary static position", function()
+  helpers.seed(43)
+  helpers.command("statelessWindowShadeLevelStep", "stepShadeLevel", { 0 })
+  test.wait_for_events()
+  assert(device:get_latest_state("main", "windowShadeLevel", "shadeLevel") == 43)
 end)
+
+test.register_coroutine_test("Zero step leaves an active relative sequence intact", function()
+  helpers.seed(50)
+  helpers.step(10, 60)
+  helpers.command("statelessWindowShadeLevelStep", "stepShadeLevel", { 0 })
+  test.wait_for_events()
+  helpers.step(-5, 55)
+end, { min_api_version = 15 })
+
+test.register_coroutine_test("Failed step injection does not contaminate the next real command", function()
+  helpers.seed(50)
+  local handler = (require "zemismart").capability_handlers.statelessWindowShadeLevelStep.stepShadeLevel
+  local ok, err = pcall(handler, {
+    inject_capability_command = function() error("simulated dispatch failure") end,
+  }, device, { component = "main", args = { stepSize = 10 } })
+  assert(not ok and string.find(err, "simulated dispatch failure", 1, true))
+  helpers.step(-5, 45)
+end, { min_api_version = 15 })
+
+test.register_coroutine_test("Removed device cannot be touched by a queued step callback", function()
+  helpers.seed(50)
+  local callbacks, restore = helpers.capture_callbacks()
+  helpers.step(10, 60)
+  restore()
+  test.socket.device_lifecycle:__queue_receive({ device.id, "removed" })
+  test.wait_for_events()
+  for _, entry in ipairs(callbacks) do
+    local ok, err = pcall(entry.callback)
+    assert(ok, "callback touched deleted device: " .. tostring(err))
+  end
+  helpers.advance(16)
+end, { min_api_version = 15 })
+
+
+-- These devices come from the real package fingerprint, not a hard-coded test profile.
+-- Hub/cloud selection and physical onboarding remain separate acceptance checks.
+local function fresh_init()
+  helpers.initialize_device(fresh_device)
+end
+
+test.register_coroutine_test("Package fingerprint selects one compatible profile with all shade capabilities", function()
+  assert(fresh_fingerprint.deviceProfileName == "window-treatment-battery")
+  assert(not string.find(fresh_fingerprint.deviceLabel, "ZM25Z", 1, true), "shared identity must not claim a unique SKU")
+  assert(can_handle(nil, nil, fresh_device))
+  for _, id in ipairs({ "windowShade", "windowShadePreset", "windowShadeLevel", "statelessWindowShadeLevelStep",
+      "battery", "firmwareUpdate", "refresh" }) do
+    assert(fresh_device:supports_capability_by_id(id), "selected profile missing " .. id)
+  end
+end, { test_init = fresh_init })
+
+test.register_coroutine_test("Fingerprint-selected profile configures shade and battery reporting", function()
+  test.socket.device_lifecycle:__queue_receive({ fresh_device.id, "doConfigure" })
+  test.socket.zigbee:__set_channel_ordering("relaxed")
+  helpers.expect_read(fresh_device)
+  test.socket.zigbee:__expect_send({ fresh_device.id,
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(fresh_device) })
+  for _, cluster in ipairs({ clusters.WindowCovering, clusters.PowerConfiguration }) do
+    test.socket.zigbee:__expect_send({ fresh_device.id,
+      z_utils.build_bind_request(fresh_device, z_utils.mock_hub_eui, cluster.ID) })
+  end
+  test.socket.zigbee:__expect_send({ fresh_device.id,
+    clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(fresh_device, 0, 600, 1) })
+  test.socket.zigbee:__expect_send({ fresh_device.id,
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(fresh_device, 30, 21600, 1) })
+  fresh_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end, { test_init = fresh_init })
+
+test.register_coroutine_test("Fingerprint-selected refresh reads position and battery and preserves real responses", function()
+  helpers.command("refresh", "refresh", nil, fresh_device)
+  test.socket.zigbee:__set_channel_ordering("relaxed")
+  helpers.expect_read(fresh_device)
+  test.socket.zigbee:__expect_send({ fresh_device.id,
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(fresh_device) })
+  test.wait_for_events()
+  helpers.response(43, fresh_device)
+  helpers.expect_static(43, fresh_device)
+  test.wait_for_events()
+  test.socket.zigbee:__queue_receive({ fresh_device.id,
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_read_attr_response(fresh_device, 200) })
+  helpers.expect_event(capabilities.battery.battery(100), fresh_device)
+  test.wait_for_events()
+  test.socket.zigbee:__queue_receive({ fresh_device.id,
+    clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(fresh_device, 150) })
+  helpers.expect_event(capabilities.battery.battery(75), fresh_device)
+end, { test_init = fresh_init })
+
+test.register_coroutine_test("Fingerprint-selected profile keeps preset and relative control after Unknown", function()
+  helpers.seed(43, fresh_device)
+  helpers.report(0xFF, fresh_device)
+  helpers.expect_event(shade.unknown(), fresh_device)
+  test.wait_for_events()
+  helpers.command("windowShadePreset", "setPresetPosition", { 50 }, fresh_device)
+  helpers.expect_event(capabilities.windowShadePreset.position(50), fresh_device)
+  test.wait_for_events()
+  helpers.command("windowShadePreset", "presetPosition", nil, fresh_device)
+  helpers.expect_motion("GoToLiftPercentage", 50, fresh_device)
+  test.wait_for_events()
+  helpers.response(50, fresh_device)
+  helpers.expect_static(50, fresh_device)
+  test.wait_for_events()
+  helpers.step(-10, 40, fresh_device)
+end, { test_init = fresh_init, min_api_version = 15 })
 
 test.run_registered_tests()
