@@ -18,6 +18,7 @@ local MATTER_DEVICE_ID = "MATTER_DEVICE_ID"
 local PARENT_ID = "PARENT_ID"
 local BUTTON_EPS = "__button_eps"
 local MAIN_WC_EP = "__main_wc_ep"
+local ACTIVE_EPS = "__active_EPS"
 
 local function create_parent_device(product_id)
   return test.mock_device.build_test_matter_device({
@@ -509,6 +510,80 @@ local function create_hager_1g_relay(profile_name, parent)
   })
 end
 
+local function create_hager_rotary_dimmer(profile_name)
+  return test.mock_device.build_test_matter_device({
+    label = "Hager G2 Rotary Dimmer",
+    profile = t_utils.get_profile_definition(profile_name .. ".yml"),
+    type = "MATTER",
+    manufacturer_info = {
+      vendor_id = 0x1285,
+      product_id = 0x000C,
+    },
+    endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = { { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" } },
+        device_types = { { device_type_id = 0x0016, device_type_revision = 1 } }
+      },
+      {
+        endpoint_id = 1,
+        clusters = {
+          {
+            cluster_id = clusters.OnOff.ID,
+            cluster_type = "SERVER",
+            cluster_revision = 1,
+            attributes = {
+              [clusters.OnOff.attributes.OnOff.ID] = false
+            }
+          },
+          {
+            cluster_id = clusters.LevelControl.ID,
+            cluster_type = "SERVER",
+            cluster_revision = 1,
+            attributes = {
+              [clusters.LevelControl.attributes.CurrentLevel.ID] = 254
+            }
+          }
+        },
+        device_types = { { device_type_id = 0x0101, device_type_revision = 1 } }
+      },
+    }
+  })
+end
+
+local function create_hager_rotary_switch(profile_name)
+  return test.mock_device.build_test_matter_device({
+    label = "Hager G2 Rotary Switch",
+    profile = t_utils.get_profile_definition(profile_name .. ".yml"),
+    type = "MATTER",
+    manufacturer_info = {
+      vendor_id = 0x1285,
+      product_id = 0x000C,
+    },
+    endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = { { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" } },
+        device_types = { { device_type_id = 0x0016, device_type_revision = 1 } }
+      },
+      {
+        endpoint_id = 1,
+        clusters = {
+          {
+            cluster_id = clusters.OnOff.ID,
+            cluster_type = "SERVER",
+            cluster_revision = 1,
+            attributes = {
+              [clusters.OnOff.attributes.OnOff.ID] = false
+            }
+          }
+        },
+        device_types = { { device_type_id = 0x0100, device_type_revision = 1 } }
+      },
+    }
+  })
+end
+
 local function add_parent_device(parent)
   test.mock_device.add_test_device(parent)
   test.socket.device_lifecycle:__queue_receive({ parent.id, "added" })
@@ -591,7 +666,7 @@ local function configure_parent(device)
 end
 
 -- Create window covering child device on EP12 via PartsList and DeviceTypeList reports
-local function announce_window_covering_child(host, matter_device)
+local function announce_window_covering_child(host)
   test.socket.matter:__queue_receive({
     host.id,
     clusters.Descriptor.attributes.PartsList:build_test_report_data(host, 2, data_types.Array({
@@ -632,6 +707,19 @@ local function announce_window_covering_child(host, matter_device)
   })
   test.mock_device.add_test_device(child_wc)
   return child_wc
+end
+
+local function add_standalone_device(device, expected_profile_change)
+  test.mock_device.add_test_device(device)
+  test.socket.device_lifecycle:__queue_receive({ device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ device.id, "doConfigure" })
+  device:expect_metadata_update({ profile = expected_profile_change })
+  device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.device_lifecycle:__queue_receive({ device.id, "init" })
+  test.socket.matter:__expect_send({
+    device.id,
+    cluster_base.subscribe(device, nil, descriptor.ID, descriptor.attributes.PartsList.ID, nil)
+  })
 end
 
 local parent = create_parent_device(0x0006)  -- 2G button product
@@ -1683,7 +1771,7 @@ test.register_coroutine_test("Test: Host with Window Covering - 2-Button Profile
   })
 
   test.mock_device.add_test_device(child_wc)
-  initiate_info_changed(child_wc, "window-covering",parent)
+  initiate_info_changed(child_wc, "window-covering", parent)
 
   test.socket.matter:__expect_send({
     parent.id,
@@ -2111,6 +2199,88 @@ test.register_coroutine_test("Test: Window Covering - Unrecognised OperationalSt
   })
   test.socket.capability:__expect_send(child_wc:generate_test_message("main", capabilities.windowShade.windowShade.unknown()))
   test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
+test.register_coroutine_test("Test: Rotary Dimmer - Standalone Initialization Subscribes To PartsList And Sets light-level", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local rotary = create_hager_rotary_dimmer("light-level")
+  add_standalone_device(rotary, "light-level")
+  test.wait_for_events()
+
+  local button_eps = rotary:get_field(BUTTON_EPS)
+  assert(#button_eps == 0, "BUTTON_EPS is empty for a rotary dimmer")
+end,
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: Rotary Dimmer - EP1 Dimmable Device Type Sets light-level And Creates Child", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local rotary = create_hager_rotary_dimmer("light-level")
+  add_standalone_device(rotary, "light-level")
+  test.wait_for_events()
+
+  test.socket.matter:__queue_receive({
+    rotary.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(rotary, 0, data_types.Array({
+      data_types.Uint16(1),
+    }))
+  })
+  test.socket.matter:__expect_send({
+    rotary.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(rotary, 1)
+  })
+  test.wait_for_events()
+
+  local active_eps = rotary:get_field(ACTIVE_EPS)
+  assert(active_eps[1] == 1, "ACTIVE_EPS contains endpoint 1")
+
+  test.socket.matter:__queue_receive({
+    rotary.id,
+    clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(rotary, 1, data_types.Array {
+      {
+        device_type = data_types.Uint32(257),
+        revision = data_types.Uint16(1)
+      }
+    })
+  })
+  rotary:expect_metadata_update({ profile = "light-level" })
+  test.wait_for_events()
+end,
+  {
+    min_api_version = 15
+  })
+
+test.register_coroutine_test("Test: Rotary Dimmer - EP1 OnOff Device Type Sets light-binary And Creates Child", function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local rotary = create_hager_rotary_switch("light-level")
+  add_standalone_device(rotary, "light-level")
+  test.wait_for_events()
+
+  test.socket.matter:__queue_receive({
+    rotary.id,
+    clusters.Descriptor.attributes.PartsList:build_test_report_data(rotary, 0, data_types.Array({
+      data_types.Uint16(1),
+    }))
+  })
+  test.socket.matter:__expect_send({
+    rotary.id,
+    clusters.Descriptor.attributes.DeviceTypeList:subscribe(rotary, 1)
+  })
+  test.wait_for_events()
+
+  test.socket.matter:__queue_receive({
+    rotary.id,
+    clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(rotary, 1, data_types.Array {
+      {
+        device_type = data_types.Uint32(256),
+        revision = data_types.Uint16(1)
+      }
+    })
+  })
+  rotary:expect_metadata_update({ profile = "light-binary" })
 end,
   {
     min_api_version = 15
