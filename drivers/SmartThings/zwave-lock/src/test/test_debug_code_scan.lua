@@ -6,6 +6,9 @@
 local test         = require "integration_test"
 local t_utils      = require "integration_test.utils"
 local zw           = require "st.zwave"
+local zw_constants = require "st.zwave.constants"
+local capabilities = require "st.capabilities"
+local json         = require "st.json"
 local constants    = require "lock_utils.constants"
 
 --- @type st.zwave.CommandClass.Battery
@@ -42,6 +45,11 @@ local function test_init()
   mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
 end
 test.set_test_init_function(test_init)
+
+local function test_init_legacy()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+end
 
 local function refresh_and_expect_scan_start()
   test.socket.capability:__queue_receive({ mock_device.id,
@@ -105,6 +113,59 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field("debugScanCodeIndex") == nil, "scan state should be cleared")
   end
+)
+
+test.register_coroutine_test(
+  "legacy: an occupied slot is consumed without updating lockCodes",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    refresh_and_expect_scan_start()
+
+    test.socket.zwave:__queue_receive({ mock_device.id,
+      UserCode:Report({
+        user_identifier = 1,
+        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+        user_code       = "1234",
+      })
+    })
+    -- no lockCodes events are expected; the driver just requests the next slot
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 2 }):build_test_tx(mock_device.id))
+    test.wait_for_events()
+    assert(mock_device:get_field("debugScanCodeIndex") == 2, "scan should advance to slot 2")
+  end,
+  { test_init = test_init_legacy }
+)
+
+test.register_coroutine_test(
+  "legacy: a slot that a code reload is waiting on is also processed by the legacy handler",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.socket.zwave:__queue_receive({ mock_device.id, UserCode:UsersNumberReport({ supported_users = 30 }) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.maxCodes(30, { visibility = { displayed = false } })))
+    test.wait_for_events()
+    refresh_and_expect_scan_start()
+    mock_device:set_field(zw_constants.CHECKING_CODE, 1)
+
+    test.socket.zwave:__queue_receive({ mock_device.id,
+      UserCode:Report({
+        user_identifier = 1,
+        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+        user_code       = "1234",
+      })
+    })
+    -- the scan requests the next slot, then the legacy handler records the code and continues its reload
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 2 }):build_test_tx(mock_device.id))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.lockCodes(json.encode({ ["1"] = "Code 1" }), { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "Code 1" }, state_change = true })))
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 2 }):build_test_tx(mock_device.id))
+    test.wait_for_events()
+  end,
+  { test_init = test_init_legacy }
 )
 
 test.run_registered_tests()

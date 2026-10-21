@@ -87,8 +87,10 @@ function debug_code_scan.start(device)
   request_slot(device)
 end
 
--- Returns true if the report was for the slot currently being scanned and was consumed.
-function debug_code_scan.handle_report(device, cmd)
+-- Logs the report if it is for the slot currently being scanned. Returns true if the caller
+-- should not process the report further, which is the case unless the legacy code reload
+-- (scanning_slot) is also waiting on this slot.
+function debug_code_scan.handle_report(device, cmd, scanning_slot)
   local slot = device:get_field(SCAN_INDEX)
   if slot == nil or cmd.args.user_identifier ~= slot or lock_utils.is_device_busy(device) then
     return false
@@ -102,7 +104,7 @@ function debug_code_scan.handle_report(device, cmd)
     device:set_field(SCAN_FOUND, found)
   end
   advance(device)
-  return true
+  return scanning_slot ~= slot
 end
 
 return debug_code_scan
