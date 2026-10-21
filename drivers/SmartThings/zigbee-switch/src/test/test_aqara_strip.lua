@@ -324,6 +324,56 @@ test.register_coroutine_test(
   end
 )
 
+-- set_hue_handler (debounced; sat falls back to 0 when no previous state is known)
+test.register_coroutine_test(
+  "Set Hue handler test",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.capability:__queue_receive({mock_device.id,
+      { capability = "colorControl", component = "main", command = "setHue", args = { 75 } } })
+
+    test.wait_for_events()
+    test.mock_time.advance_time(0.2)
+
+    local x, y, _ = utils.safe_hsv_to_xy(75, 0)
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.server.commands.On(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      ColorControl.commands.MoveToColor(mock_device, x, y, 0x0000) })
+
+    test.wait_for_events()
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
+  end
+)
+
+-- set_saturation_handler (debounced; hue falls back to 0 when no previous state is known)
+test.register_coroutine_test(
+  "Set Saturation handler test",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.capability:__queue_receive({mock_device.id,
+      { capability = "colorControl", component = "main", command = "setSaturation", args = { 65 } } })
+
+    test.wait_for_events()
+    test.mock_time.advance_time(0.2)
+
+    local x, y, _ = utils.safe_hsv_to_xy(0, 65)
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.server.commands.On(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      ColorControl.commands.MoveToColor(mock_device, x, y, 0x0000) })
+
+    test.wait_for_events()
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
+  end
+)
+
 -- set_mode_handler
 test.register_coroutine_test(
   "Set Mode handler test - RGBW Mode",

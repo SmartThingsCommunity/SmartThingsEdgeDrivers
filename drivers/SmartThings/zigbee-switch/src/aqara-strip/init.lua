@@ -143,6 +143,59 @@ local function set_color_handler(driver, device, cmd)
   device.thread:call_with_delay(2, query_device(device))
 end
 
+-- The device only accepts MoveToColor (XY); it does not respond to MoveToHue / MoveToSaturation.
+-- setHue and setSaturation are therefore debounced: if both arrive within 200 ms (SmartThings
+-- color pickers typically emit them together), they are combined into one setColor; otherwise the
+-- missing value is filled from the latest known state and setColor is sent once the timer fires.
+local huesat_timer_callback = function(driver, device, cmd)
+  return function()
+    device:set_field(HUESAT_TIMER, nil)
+    local hue = device:get_field(TARGET_HUE)
+    local sat = device:get_field(TARGET_SAT)
+    hue = hue ~= nil and hue or device:get_latest_state(COMPONENT_MAIN, capabilities.colorControl.ID, capabilities.colorControl.hue.NAME)
+    sat = sat ~= nil and sat or device:get_latest_state(COMPONENT_MAIN, capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME)
+    cmd.args = {
+      color = {
+        hue = hue,
+        saturation = sat
+      }
+    }
+    set_color_handler(driver, device, cmd)
+  end
+end
+
+local function set_hue_sat_helper(driver, device, cmd, hue, sat)
+  local huesat_timer = device:get_field(HUESAT_TIMER)
+  if huesat_timer ~= nil then
+    device.thread:cancel_timer(huesat_timer)
+    device:set_field(HUESAT_TIMER, nil)
+  end
+  if hue ~= nil and sat ~= nil then
+    cmd.args = {
+      color = {
+        hue = hue,
+        saturation = sat
+      }
+    }
+    set_color_handler(driver, device, cmd)
+  else
+    if hue ~= nil then
+      device:set_field(TARGET_HUE, hue)
+    elseif sat ~= nil then
+      device:set_field(TARGET_SAT, sat)
+    end
+    device:set_field(HUESAT_TIMER, device.thread:call_with_delay(0.2, huesat_timer_callback(driver, device, cmd)))
+  end
+end
+
+local function set_hue_handler(driver, device, cmd)
+  set_hue_sat_helper(driver, device, cmd, cmd.args.hue, device:get_field(TARGET_SAT))
+end
+
+local function set_saturation_handler(driver, device, cmd)
+  set_hue_sat_helper(driver, device, cmd, device:get_field(TARGET_HUE), cmd.args.saturation)
+end
+
 local function onoff_handler(driver, device, value, zb_rx)
   local curMode = SUPPORTED_MODES[1]
   local srcEndpoint = zb_rx.address_header.src_endpoint.value
@@ -344,7 +397,9 @@ local aqara_lightstrip_driver_handler = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,
     },
     [capabilities.colorControl.ID] = {
-      [capabilities.colorControl.commands.setColor.NAME] = set_color_handler
+      [capabilities.colorControl.commands.setColor.NAME] = set_color_handler,
+      [capabilities.colorControl.commands.setHue.NAME] = set_hue_handler,
+      [capabilities.colorControl.commands.setSaturation.NAME] = set_saturation_handler
     },
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = set_mode_handler
