@@ -49,9 +49,16 @@ local mock_device = test.mock_device.build_test_zwave_device({
   zwave_endpoints = zwave_lock_endpoints,
 })
 
+local mock_device_yale = test.mock_device.build_test_zwave_device({
+  profile               = t_utils.get_profile_definition("base-lock.yml"),
+  zwave_endpoints       = zwave_lock_endpoints,
+  zwave_manufacturer_id = 0x0129,
+})
+
 local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_device_yale)
   mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
 end
 test.set_test_init_function(test_init)
@@ -417,6 +424,90 @@ test.register_coroutine_test(
         ))
     )
     test.wait_for_events()
+  end
+,
+    {
+      min_api_version = 15
+    })
+
+test.register_coroutine_test(
+  "user_code_report: Yale sync reads the master code slot (251) last when the regular sync ends",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 6, {})
+    mock_device_yale:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    test.socket.zwave:__queue_receive({
+      mock_device_yale.id,
+      UserCode:Report({ user_identifier = 6, user_id_status = UserCode.user_id_status.AVAILABLE }),
+    })
+    test.socket.zwave:__expect_send(
+      UserCode:Get({ user_identifier = 251 }):build_test_tx(mock_device_yale.id)
+    )
+    test.wait_for_events()
+  end
+,
+    {
+      min_api_version = 15
+    })
+
+test.register_coroutine_test(
+  "user_code_report: Yale master code (slot 251) is synced as credential 251 owned by the max-index admin user",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 251, {})
+
+    test.socket.zwave:__queue_receive({
+      mock_device_yale.id,
+      UserCode:Report({
+        user_identifier = 251,
+        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+        user_code       = "52963814",
+      }),
+    })
+    -- get_max_entries defaults to 20 when the attribute is missing
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 20, userName = "Master Code", userType = "adminMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 20, credentialIndex = 251, credentialType = "pin", credentialName = "Master Code" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+
+    assert(mock_device_yale:get_field(constants.SYNC.CODE_INDEX) == nil, "sync must end after the master code")
+    assert(mock_device_yale:get_field(constants.DRIVER_STATE.BUSY) == false, "BUSY must be false after sync completes")
+  end
+,
+    {
+      min_api_version = 15
+    })
+
+test.register_coroutine_test(
+  "user_code_report: non-Yale sync does not read slot 251 when it ends",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 6, {})
+    mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({ user_identifier = 6, user_id_status = UserCode.user_id_status.AVAILABLE }),
+    })
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil)
   end
 ,
     {

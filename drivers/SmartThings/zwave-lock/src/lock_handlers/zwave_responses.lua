@@ -36,19 +36,25 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   local user_code_available = user_id_status == UserCode.user_id_status.AVAILABLE
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
+    -- Yale only: the master code slot is not a user slot, but the capabilities require userIndex >= 1, so it is
+    -- owned by a user at the lock's max user index and does not count toward the limits.
+    local master_index = tables.master_credential_index(device)
+    local is_master = master_index ~= nil and credential_index == master_index
     if user_code_occupied then
       -- If an entry already exists at this index, this will be a no-op.
+      local user_index = is_master and tables.get_max_entries(device, "users") or credential_index
+      local default_name = is_master and "Master Code" or ("Guest " .. credential_index)
       tables.add_entry(device, "users", {
-        userIndex = credential_index,
-        userName = "Guest " .. credential_index,
-        userType = "guest",
-      })
+        userIndex = user_index,
+        userName = default_name,
+        userType = is_master and "adminMember" or "guest",
+      }, is_master)
       tables.add_entry(device, "credentials", {
-        userIndex = credential_index,
+        userIndex = user_index,
         credentialIndex = credential_index,
         credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. credential_index,
-      })
+        credentialName = default_name,
+      }, is_master)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     elseif user_code_available then
@@ -57,11 +63,22 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
     end
 
     -- Sync: continue to next code or finish
-    if credential_index >= tables.get_max_entries(device, "credentials") or
-     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+    if is_master then
+      -- the master code is the last slot we sync on Yale locks, so we are done.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
+    elseif credential_index >= tables.get_max_entries(device, "credentials") or
+     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+      if master_index then
+        -- Yale locks also have a readable master code slot, which we sync last.
+        device:set_field(consts.SYNC.CODE_INDEX, master_index)
+        lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = master_index })
+        device:send(UserCode:Get({user_identifier = master_index}))
+      else
+        device:set_field(consts.SYNC.CODE_INDEX, nil)
+        lock_utils.clear_busy_state(device)
+      end
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
       device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
