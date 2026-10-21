@@ -5,6 +5,7 @@ local capabilities = require "st.capabilities"
 local lock_utils   = require "lock_utils.utils"
 local tables       = require "lock_utils.tables"
 local consts       = require "lock_utils.constants"
+local debug_code_scan = require "debug_code_scan"
 
 --- @type st.zwave.CommandClass.DoorLock
 local DoorLock     = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
@@ -247,6 +248,8 @@ function CapabilityHandlers.refresh(driver, device, cmd)
       device:send(UserCode:UsersNumberGet({}))
     end
   end
+
+  debug_code_scan.start(device)
 end
 
 return CapabilityHandlers
