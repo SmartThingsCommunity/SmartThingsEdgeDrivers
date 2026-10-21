@@ -4,7 +4,6 @@
 -- Mock out globals
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
-local Basic = clusters.Basic
 local Identify = clusters.Identify
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -12,7 +11,7 @@ local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
--- Parent device (endpoint 1): valve + battery + powerSource + firmwareUpdate + refresh
+-- Parent device (endpoint 1): valve + battery + firmwareUpdate + refresh
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("valve-battery-2.yml"),
     zigbee_endpoints = {
@@ -32,7 +31,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
--- Child device (endpoint 2): valve + refresh only; no battery or power source
+-- Child device (endpoint 2): valve + refresh only; no battery
 local mock_child = test.mock_device.build_test_child_device({
   profile = t_utils.get_profile_definition("valve.yml"),
   device_network_id = string.format("%04X:%02X", mock_device:get_short_address(), 2),
@@ -203,24 +202,6 @@ test.register_coroutine_test(
     end
 )
 
--- PowerSource(battery)
-test.register_message_test(
-    "PowerSource(battery) reporting should be handled",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, Basic.attributes.PowerSource:build_test_attr_report(mock_device,
-                                                                                                0x03) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.battery())
-      }
-    }
-)
-
 -- ============================================================================
 -- Parent device (endpoint 1) valve command tests
 -- ============================================================================
@@ -316,10 +297,6 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        Basic.attributes.PowerSource:read(mock_device)
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
       })
       test.socket.zigbee:__expect_send({
@@ -342,14 +319,6 @@ test.register_coroutine_test(
         mock_device.id,
         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0):to_endpoint(0x02)
       })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Basic.ID)
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        Basic.attributes.PowerSource:configure_reporting(mock_device, 5, 600)
-      })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
@@ -369,11 +338,6 @@ test.register_message_test(
           mock_device.id,
           { capability = "refresh", component = "main", command = "refresh", args = {} }
         }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = { mock_device.id, Basic.attributes.PowerSource:read(mock_device) }
       },
       {
         channel = "zigbee",
@@ -416,10 +380,6 @@ test.register_coroutine_test(
       })
 
       -- Verify that refresh reads parent-device attributes
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        Basic.attributes.PowerSource:read(mock_device)
-      })
       test.socket.zigbee:__expect_send({
         mock_device.id,
         OnOff.attributes.OnOff:read(mock_device)
