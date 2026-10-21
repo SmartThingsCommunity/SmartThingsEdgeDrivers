@@ -147,14 +147,24 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
--- Return true if the named table has reached its max_entries limit. An entry at index 0 (the
--- Zigbee "Master Code" slot) is not one of the lock's user slots, so it does not count toward the limit.
+-- credentialIndex of the Zigbee "Master Code" slot.
+table_utils.MASTER_CREDENTIAL_INDEX = 0
+
+-- Return true if the named table has reached its max_entries limit. The master code credential, and
+-- the user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
 function table_utils.is_full(device, table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return true end
+  local master_cred = table_utils.find_entry(device, "credentials", table_utils.MASTER_CREDENTIAL_INDEX)
   local count = 0
   for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
-    if entry[def.match_key] ~= 0 then count = count + 1 end
+    local is_master
+    if table_name == "credentials" then
+      is_master = entry.credentialIndex == table_utils.MASTER_CREDENTIAL_INDEX
+    else
+      is_master = master_cred ~= nil and entry.userIndex == master_cred.userIndex
+    end
+    if not is_master then count = count + 1 end
   end
   return count >= table_utils.get_max_entries(device, table_name)
 end
@@ -162,8 +172,8 @@ end
 -- Add an entry to a named table. The entry must satisfy all required_keys for
 -- that table. An entry whose match_key value already exists in the
 -- table is skipped to prevent duplicates. If the table has a max_entries limit,
--- entries that exceed the limit are not added.
-function table_utils.add_entry(device, table_name, entry)
+-- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the master code).
+function table_utils.add_entry(device, table_name, entry, exempt_from_limit)
   device.log.debug("table_helpers: attempting to add entry " .. st_utils.stringify_table(entry) .. " to " .. table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return COMMAND_RESULT.FAILURE end
@@ -171,7 +181,7 @@ function table_utils.add_entry(device, table_name, entry)
   local t = table_utils.get_state(device, def)
   if not t then return COMMAND_RESULT.FAILURE end
 
-  if entry[def.match_key] ~= 0 and table_utils.is_full(device, table_name) then
+  if not exempt_from_limit and table_utils.is_full(device, table_name) then
     device.log.warn(string.format(
       "table_helpers: cannot add entry to %q, max entries reached", table_name
     ))

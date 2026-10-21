@@ -67,9 +67,9 @@ function lock_utils.sync_device_state(device)
 
   -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
   -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0, which
-  -- we only sync on Yale locks (where it is known to be readable for now)
+  -- is synced last, and only on Yale locks (where it is known to be readable and writable).
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, lock_utils.is_yale(device) and 0 or 1)
+    device:set_field(consts.SYNC.CODE_INDEX, 1)
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))

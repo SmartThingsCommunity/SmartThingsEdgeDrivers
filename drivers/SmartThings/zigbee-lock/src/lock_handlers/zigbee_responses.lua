@@ -158,18 +158,22 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
     local user_status = zb_rx.body.zcl_body.user_status.value
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
       -- If an entry already exists at this index, this will be a no-op.
-      local default_name = user_id == 0 and "Master Code" or ("Guest " .. user_id)
+      -- Yale only: the master code (slot 0) is not a user slot, but the capabilities require userIndex >= 1, so
+      -- it is owned by a user at the lock's max user index and does not count toward the limits.
+      local is_master = lock_utils.is_yale(device) and user_id == tables.MASTER_CREDENTIAL_INDEX
+      local user_index = is_master and tables.get_max_entries(device, "users") or user_id
+      local default_name = is_master and "Master Code" or ("Guest " .. user_id)
       tables.add_entry(device, "users", {
-        userIndex = user_id,
+        userIndex = user_index,
         userName = default_name,
-        userType = "guest",
-      })
+        userType = is_master and "adminMember" or "guest",
+      }, is_master)
       tables.add_entry(device, "credentials", {
-        userIndex = user_id,
+        userIndex = user_index,
         credentialIndex = user_id,
         credentialType = consts.CRED_TYPE_PIN,
         credentialName = default_name,
-      })
+      }, is_master)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     else
@@ -177,11 +181,22 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
     end
 
-    if user_id >= tables.get_max_entries(device, "credentials") or
-     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+    if lock_utils.is_yale(device) and user_id == tables.MASTER_CREDENTIAL_INDEX then
+      -- the master code is the last slot we sync on Yale locks, so we are done.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
+    elseif user_id >= tables.get_max_entries(device, "credentials") or
+     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+      if lock_utils.is_yale(device) then
+        -- Yale locks also have a readable master code in slot 0, which we sync last.
+        device:set_field(consts.SYNC.CODE_INDEX, tables.MASTER_CREDENTIAL_INDEX)
+        lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = tables.MASTER_CREDENTIAL_INDEX })
+        device:send(clusters.DoorLock.server.commands.GetPINCode(device, tables.MASTER_CREDENTIAL_INDEX))
+      else
+        device:set_field(consts.SYNC.CODE_INDEX, nil)
+        lock_utils.clear_busy_state(device)
+      end
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
       device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
