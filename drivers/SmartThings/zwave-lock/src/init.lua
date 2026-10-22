@@ -24,6 +24,13 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
+  -- TEMPORARY (Yale master code testing): onboard Yale locks as already migrated (as the Zigbee driver does), so they
+  -- use lockUsers/lockCredentials from the start and the master code read in init is handled by this driver.
+  if table_utils.master_credential_index(device) ~= nil and device:supports_capability(capabilities.lockCodes) and
+    device._provisioning_state == "TYPED" then
+    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  end
   if device:supports_capability(capabilities.tamperAlert) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end

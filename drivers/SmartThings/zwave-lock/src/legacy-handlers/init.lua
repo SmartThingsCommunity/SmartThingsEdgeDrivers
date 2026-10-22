@@ -93,6 +93,16 @@ local function migrate(driver, device, cmd)
   local consts = require("lock_utils.constants")
 
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
+
+  -- TEMPORARY (Yale master code testing): read the master code slot so it is added to lockUsers/lockCredentials.
+  -- The migrated flag is set, so the report is handled by the main (lockUsers/lockCredentials) driver.
+  local tables = require "lock_utils.tables"
+  local lock_utils = require "lock_utils.utils"
+  local master_index = tables.master_credential_index(device)
+  if master_index ~= nil and tables.find_entry(device, "credentials", master_index) == nil then
+    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = master_index })
+    device:send(UserCode:Get({ user_identifier = master_index }))
+  end
 end
 
 local legacy_capabilities = {
