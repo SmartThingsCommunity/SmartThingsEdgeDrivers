@@ -13,7 +13,7 @@ local t_utils = require "integration_test.utils"
 
 -- Parent device (endpoint 1): valve + battery + firmwareUpdate + refresh
 local mock_device = test.mock_device.build_test_zigbee_device(
-  { profile = t_utils.get_profile_definition("valve-battery-2.yml"),
+  { profile = t_utils.get_profile_definition("valve-battery.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -63,8 +63,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                                true) }
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device, true) }
       },
       {
         channel = "capability",
@@ -80,8 +79,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                                false) }
+        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device, false) }
       },
       {
         channel = "capability",
@@ -101,8 +99,10 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                  true):from_endpoint(0x02) }
+        message = {
+          mock_child.id,
+          OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02)
+        }
       },
       {
         channel = "capability",
@@ -118,8 +118,10 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                  false):from_endpoint(0x02) }
+        message = {
+          mock_child.id,
+          OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x02)
+        }
       },
       {
         channel = "capability",
@@ -135,8 +137,10 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                   true):from_endpoint(0x02) }
+        message = {
+          mock_device.id,
+          OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02)
+        }
       },
       {
         channel = "capability",
@@ -152,15 +156,17 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device,
-                                                                                   true):from_endpoint(0x02) }
+        message = {
+          mock_device.id,
+          OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02)
+        }
       }
     },
     { test_init = test_init_without_child }
 )
 
 -- ============================================================================
--- Parent device battery and power source tests
+-- Parent device battery tests
 -- ============================================================================
 
 -- Battery percentage

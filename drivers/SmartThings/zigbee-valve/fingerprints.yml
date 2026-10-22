@@ -63,9 +63,9 @@ zigbeeManufacturer :
     deviceLabel: SONOFF Water Valve 2
     manufacturer: SONOFF
     model: SWV-ZF2U
-    deviceProfileName: valve-battery-2
+    deviceProfileName: valve-battery
   - id: SONOFF/SWV-ZF2
     deviceLabel: SONOFF Water Valve 2
     manufacturer: SONOFF
     model: SWV-ZF2
-    deviceProfileName: valve-battery-2
+    deviceProfileName: valve-battery
