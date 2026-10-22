@@ -41,11 +41,29 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       nil
     )
     local hue_identifier_to_device_record = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
+    -- Whether the bridge's current outage has already been reported; the EventSource calls
+    -- `onerror` on every failed reconnect attempt.
+    local bridge_marked_offline = false
+    -- Counts the times the event stream has opened, so a connectivity scan started for an earlier
+    -- connection can tell it has been superseded.
+    local connection_count = 0
 
     eventsource.onopen = function(msg)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", bridge_device.label))
+      bridge_marked_offline = false
       bridge_device:online()
+      connection_count = connection_count + 1
+      local this_connection = connection_count
+      -- Whether this scan's connection is still the bridge's current one: the stream may have
+      -- reconnected (and started a new scan), been replaced after an IP change, or the bridge may
+      -- have been removed.
+      local function connection_is_current()
+        -- A removed device's fields all read as nil.
+        return this_connection == connection_count
+          and bridge_device.id ~= nil
+          and bridge_device:get_field(Fields.EVENT_SOURCE) == eventsource
+      end
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
       cosock.spawn(function()
@@ -71,18 +89,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         local scanned = false
-        local connectivity_status, rest_err
-
+        local backoff = utils.backoff_builder(30, 1, 0.5)
         while true do
-          if scanned then break end
-          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          local connectivity_status, rest_err = bridge_api:get_connectivity_status()
           if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
               bridge_device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
-            goto continue
-          end
-
-          if connectivity_status.errors and #connectivity_status.errors > 0 then
+          elseif connectivity_status.errors and #connectivity_status.errors > 0 then
             log.error(
               string.format(
                 "Hue Bridge %s replied with the following error message(s) " ..
@@ -93,10 +106,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             for idx, err in ipairs(connectivity_status.errors) do
               log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
             end
-            goto continue
-          end
-
-          if connectivity_status.data and #connectivity_status.data > 0 then
+          elseif connectivity_status.data then
+            -- A bridge with no Zigbee devices answers with no data; that is still a complete scan.
             scanned = true
             for _, status in ipairs(connectivity_status.data) do
               local hue_device_id = (status.owner and status.owner.rid) or ""
@@ -125,7 +136,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           end
 
-          ::continue::
+          if scanned then break end
+          cosock.socket.sleep(backoff())
+          if not connection_is_current() then
+            log.info(string.format("Stopping connectivity scan for %s, its event stream connection is gone",
+              tostring(bridge_device.label)))
+            return
+          end
         end
         grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
@@ -133,13 +150,19 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
     eventsource.onerror = function()
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", bridge_device.label))
-
+      -- Only report devices that aren't already offline. A child can come back online during the
+      -- outage (e.g. a refresh reaches it over REST), so it's checked again on every failure.
       for _, device_record in ipairs(bridge_device:get_child_list()) do
-        device_record:set_field(Fields.IS_ONLINE, false)
-        device_record:offline()
+        if device_record:get_field(Fields.IS_ONLINE) ~= false then
+          device_record:set_field(Fields.IS_ONLINE, false)
+          device_record:offline()
+        end
       end
 
-      bridge_device:offline()
+      if not bridge_marked_offline then
+        bridge_marked_offline = true
+        bridge_device:offline()
+      end
     end
 
     eventsource.onmessage = function(msg)
