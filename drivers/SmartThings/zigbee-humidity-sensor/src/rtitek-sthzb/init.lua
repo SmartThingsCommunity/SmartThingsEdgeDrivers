@@ -4,7 +4,6 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 local generic_body = require "st.zigbee.generic_body"
 local global_commands = require "st.zigbee.zcl.global_commands"
 local log = require "log"
@@ -48,6 +47,25 @@ local DEFAULT_RAW_VALUES = {
   temperatureAlarmLower = 2000,
   humidityAlarmUpper = 6000,
   humidityAlarmLower = 3000,
+}
+
+local STANDARD_CONFIGURATIONS = {
+  {
+    cluster = TemperatureMeasurement.ID,
+    attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
+    minimum_interval = 10,
+    maximum_interval = 300,
+    data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
+    reportable_change = 50,
+  },
+  {
+    cluster = RelativeHumidity.ID,
+    attribute = RelativeHumidity.attributes.MeasuredValue.ID,
+    minimum_interval = 10,
+    maximum_interval = 300,
+    data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
+    reportable_change = 100,
+  },
 }
 
 local PREFERENCE_FIELDS = {
@@ -239,19 +257,14 @@ local function do_refresh(driver, device)
 end
 
 local function do_configure(driver, device)
-  device:send(device_management.build_bind_request(
-    device, TemperatureMeasurement.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(
-    device, RelativeHumidity.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(
-    device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 10, 300, 50))
-  device:send(RelativeHumidity.attributes.MeasuredValue:configure_reporting(device, 10, 300, 100))
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 5))
+  device:configure()
   do_refresh(driver, device)
 end
 
 local function init(driver, device)
+  for _, configuration in ipairs(STANDARD_CONFIGURATIONS) do
+    device:add_configured_attribute(configuration)
+  end
   for name, value in pairs(DEFAULT_RAW_VALUES) do
     local setting = PREFERENCE_FIELDS[name]
     if device:get_field(setting.field) == nil then
@@ -346,7 +359,6 @@ local function write_preference(device, name, value, preferences)
   end
   device:set_field(setting.field, raw, { persist = true })
   send_private_write(device, setting.attr, setting.data_type, raw)
-  send_private_read(device, setting.attr)
 end
 
 local function info_changed(driver, device, event, args)
@@ -358,7 +370,6 @@ local function info_changed(driver, device, event, args)
     if unit == 0 or unit == 1 then
       device:set_field("rtitek_temperature_unit", unit, { persist = true })
       send_private_write(device, TEMPERATURE_UNIT_ATTR, data_types.Enum8, unit)
-      send_private_read(device, TEMPERATURE_UNIT_ATTR)
     end
   end
 

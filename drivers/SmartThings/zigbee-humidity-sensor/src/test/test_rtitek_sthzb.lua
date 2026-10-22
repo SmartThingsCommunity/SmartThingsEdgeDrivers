@@ -210,6 +210,63 @@ test.register_coroutine_test(
   { min_api_version = 14 }
 )
 
+test.register_coroutine_test(
+  "STHZB configures standard reporting through the framework lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(
+        mock_device, zigbee_test_utils.mock_hub_eui, TemperatureMeasurement.ID
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(
+        mock_device, zigbee_test_utils.mock_hub_eui, RelativeHumidity.ID
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(
+        mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 10, 300, 50),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      RelativeHumidity.attributes.MeasuredValue:configure_reporting(mock_device, 10, 300, 100),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(
+        mock_device, 30, 21600, 1
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id, RelativeHumidity.attributes.MeasuredValue:read(mock_device),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device),
+    })
+    for _, attr_id in ipairs({
+      UNIT, FAULT, TEMP_CAL, HUMIDITY_CAL, TEMP_HIGH,
+      TEMP_LOW, HUMIDITY_HIGH, HUMIDITY_LOW, TEMP_ALARM, HUMIDITY_ALARM,
+    }) do
+      test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(attr_id) })
+    end
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { min_api_version = 14 }
+)
+
 local function register_temperature_alarm_test(name, raw, event)
   test.register_message_test(
     name,
@@ -246,7 +303,7 @@ register_temperature_alarm_test(
 )
 
 test.register_coroutine_test(
-  "STHZB writes calibration and temperature unit preferences with device precision",
+  "STHZB writes calibration and temperature unit preferences without readback",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
       preferences = {
@@ -259,15 +316,12 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id, build_fd22_write(UNIT, data_types.Enum8, 1),
     })
-    test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(UNIT) })
     test.socket.zigbee:__expect_send({
       mock_device.id, build_fd22_write(TEMP_CAL, data_types.Int8, -41),
     })
-    test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(TEMP_CAL) })
     test.socket.zigbee:__expect_send({
       mock_device.id, build_fd22_write(HUMIDITY_CAL, data_types.Int8, 32),
     })
-    test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(HUMIDITY_CAL) })
     test.wait_for_events()
   end,
   { min_api_version = 14 }
@@ -291,11 +345,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id, build_fd22_write(TEMP_HIGH, data_types.Int16, 2010),
     })
-    test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(TEMP_HIGH) })
     test.socket.zigbee:__expect_send({
       mock_device.id, build_fd22_write(HUMIDITY_HIGH, data_types.Uint16, 3100),
     })
-    test.socket.zigbee:__expect_send({ mock_device.id, build_fd22_read(HUMIDITY_HIGH) })
     test.wait_for_events()
   end,
   { min_api_version = 14 }
