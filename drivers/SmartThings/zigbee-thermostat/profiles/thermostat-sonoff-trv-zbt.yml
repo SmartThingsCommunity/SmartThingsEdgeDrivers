@@ -1,0 +1,38 @@
+name: thermostat-sonoff-trv-zbt
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+      - key: "heatingSetpoint.value"
+        range: [5, 30]
+  - id: thermostatMode
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+- name: "childLock"
+  title: "Child lock"
+  description: "Enable or disable the child lock of the thermostat."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Unlock"
+      1: "Lock"
+    default: 0
+- name: "enterBluetoothPairing"
+  title: "Enter Bluetooth pairing"
+  description: "Enable to put the thermostat into Bluetooth pairing mode. The pairing window is controlled by the thermostat firmware."
+  required: false
+  preferenceType: boolean
+  definition:
+    default: false

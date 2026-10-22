@@ -41,6 +41,11 @@ local TARGET_TILT_PERCENT = {
 
 local TARGET_REACH_TOLERANCE = 0.5
 
+local function find_child(parent_device, ep_id)
+  local assigned_key = parent_device:get_field(string.format("%s_%d", ASSIGNED_CHILD_KEY, ep_id)) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
+end
+
 --- Gets the current window shade status based on the lift and tilt positions.
 ---@param device any a Matter device object
 ---@return any status the current window shade status
@@ -111,11 +116,9 @@ end
 local function try_emit_idle_window_shade_status(device, ep)
   if not device:get_field(TARGET_LIFT_PERCENT.STATE) and
    not device:get_field(TARGET_TILT_PERCENT.STATE) then
-    if ep then
-      device:emit_event_for_endpoint(ep, get_idle_window_shade_status(device))
-    else
-      device:emit_event(get_idle_window_shade_status(device))
-    end
+    --- gets child device if one exists for this endpoint
+    local status_device = ep and find_child(device, ep) or device
+    status_device:emit_event(get_idle_window_shade_status(status_device))
   end
 end
 
@@ -182,13 +185,8 @@ local function match_profile(device, battery_supported)
   device:try_update_metadata({profile = profile_name})
 end
 
-local function find_child(parent_device, ep_id)
-  local assigned_key = parent_device:get_field(string.format("%s_%d", ASSIGNED_CHILD_KEY, ep_id)) or ep_id
-  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
-end
-
 local function create_or_update_multi_devices(driver, device, wc_cluster_eps)
-  local default_endpoint_id = find_default_endpoint(device)
+  local default_endpoint_id = find_default_endpoint(device, clusters.WindowCovering.ID)
   table.sort(wc_cluster_eps)
   for device_num, ep_id in ipairs(wc_cluster_eps) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint

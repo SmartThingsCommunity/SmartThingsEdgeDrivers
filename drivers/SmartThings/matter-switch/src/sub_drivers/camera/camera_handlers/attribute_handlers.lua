@@ -18,8 +18,6 @@ CameraAttributeHandlers.enabled_state_factory = function(attribute)
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipHorizontal")
     elseif attribute == capabilities.imageControl.imageFlipVertical then
       camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageFlipVertical")
-    elseif attribute == capabilities.cameraPrivacyMode.hardPrivacyMode then
-      camera_utils.update_supported_attributes(device, ib, capabilities.cameraPrivacyMode, "hardPrivacyMode")
     end
   end
 end
@@ -59,10 +57,14 @@ end
 
 function CameraAttributeHandlers.volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
-  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MIN
   local limited_range = max_volume - min_volume
+  if limited_range <= 0 then
+    device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(0))
+    return
+  end
+  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local normalized_volume = utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
   device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(normalized_volume))
 end
@@ -70,23 +72,33 @@ end
 function CameraAttributeHandlers.max_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local max_volume = ib.data.value
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component)
-  if max_volume > camera_fields.ABS_VOL_MAX or (min_volume and max_volume <= min_volume) then
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component)
+  -- min == max is a valid (non-adjustable) range per the Matter spec, so only max < min is malformed;
+  -- an out-of-bounds value is clamped, but a malformed relationship is only logged and left as-is,
+  -- since volume_level_handler already guards against a non-positive range.
+  if max_volume > camera_fields.ABS_VOL_MAX then
     device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
     max_volume = camera_fields.ABS_VOL_MAX
+  elseif min_volume and max_volume < min_volume then
+    device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component, max_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component, max_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.min_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local min_volume = ib.data.value
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component)
-  if min_volume < camera_fields.ABS_VOL_MIN or (max_volume and min_volume >= max_volume) then
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component)
+  -- See max_volume_level_handler: min == max is valid, only min > max is malformed and only logged.
+  if min_volume < camera_fields.ABS_VOL_MIN then
     device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
     min_volume = camera_fields.ABS_VOL_MIN
+  elseif max_volume and min_volume > max_volume then
+    device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component, min_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component, min_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.status_light_enabled_handler(driver, device, ib, response)
@@ -292,6 +304,7 @@ function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, respon
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
   local ptz_map = camera_utils.get_ptz_map(device)
   local emit_event = function(idx, value)
     if value ~= ptz_map[idx].current then
@@ -300,13 +313,13 @@ function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, respon
       ))
     end
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+  if ib.data.elements.pan and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
     emit_event(camera_fields.PAN_IDX, ib.data.elements.pan.value)
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+  if ib.data.elements.tilt and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
     emit_event(camera_fields.TILT_IDX, ib.data.elements.tilt.value)
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+  if ib.data.elements.zoom and camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
     emit_event(camera_fields.ZOOM_IDX, ib.data.elements.zoom.value)
   end
 end
@@ -317,13 +330,13 @@ function CameraAttributeHandlers.ptz_presets_handler(driver, device, ib, respons
   for _, v in ipairs(ib.data.elements) do
     local preset = v.elements
     local pan, tilt, zoom = 0, 0, 1
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MPAN) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) then
       pan = preset.settings.elements.pan.value
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MTILT) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) then
       tilt = preset.settings.elements.tilt.value
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MZOOM) then
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID, clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
       zoom = preset.settings.elements.zoom.value
     end
     table.insert(presets, { id = preset.preset_id.value, label = preset.name.value, pan = pan, tilt = tilt, zoom = zoom })
@@ -449,7 +462,7 @@ end
 
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
   if not ib.data.elements then return end
-  local status_light_enabled_present, status_light_brightness_present = false, false
+  local status_light_enabled_present, status_light_brightness_present, hard_privacy_mode_present = false, false, false
   local attribute_ids = {}
   for _, attr in ipairs(ib.data.elements) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
@@ -458,6 +471,8 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+    elseif attr.value == clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn.ID then
+      hard_privacy_mode_present = true
     end
   end
   local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
@@ -468,6 +483,7 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
   }
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
   camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
+  camera_cfg.update_hard_privacy_mode_attribute_presence(device, hard_privacy_mode_present)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
