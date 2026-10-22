@@ -15,6 +15,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local capabilities = require "st.capabilities"
 
 local consts              = require "lock_utils.constants"
+local lock_utils          = require "lock_utils.utils"
 local table_utils         = require "lock_utils.tables"
 local zwave_handlers      = require "lock_handlers.zwave_responses"
 local capability_handlers = require "lock_handlers.capabilities"
@@ -23,6 +24,13 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
+  -- TEMPORARY (Yale master code testing): onboard Yale locks as already migrated (as the Zigbee driver does), so they
+  -- use lockUsers/lockCredentials from the start and the master code read in init is handled by this driver.
+  if table_utils.master_credential_index(device) ~= nil and device:supports_capability(capabilities.lockCodes) and
+    device._provisioning_state == "TYPED" then
+    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  end
   if device:supports_capability(capabilities.tamperAlert) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
@@ -49,6 +57,20 @@ function LockLifecycle.init(driver, device)
   if device:supports_capability(capabilities.tamperAlert) then
     -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
+
+  -- TEMPORARY (Yale master code testing): read the master code slot so it is added to lockUsers/lockCredentials.
+  local master_index = table_utils.master_credential_index(device)
+  if master_index ~= nil and device:supports_capability(capabilities.lockCredentials) and
+    table_utils.find_entry(device, "credentials", master_index) == nil then
+    -- the master code's user index is derived from the max users supported, so make sure we have it first
+    if device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME) == nil then
+      device:send(UserCode:UsersNumberGet({}))
+    end
+    device.thread:call_with_delay(5, function()
+      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = master_index })
+      device:send(UserCode:Get({ user_identifier = master_index }))
+    end)
   end
 end
 

@@ -430,6 +430,15 @@ local migrate = function(driver, device, command)
   device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
   device:set_field(post_migration_consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
+  -- TEMPORARY (Yale master code testing): read the master code slot so it is added to lockUsers/lockCredentials.
+  -- The migrated flag is set, so the response is handled by the main (lockUsers/lockCredentials) driver.
+  local tables = require "lock_utils.tables"
+  local master_index = tables.master_credential_index(device)
+  if master_index ~= nil and tables.find_entry(device, "credentials", master_index) == nil then
+    require("lock_utils.utils").set_busy_state(device, post_migration_consts.SYNC.CODES_FROM_LOCK, { checkingCode = master_index })
+    device:send(LockCluster.server.commands.GetPINCode(device, master_index))
+  end
+
   -- try to refresh all unstored state
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
