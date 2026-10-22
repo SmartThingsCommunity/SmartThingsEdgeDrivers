@@ -603,6 +603,43 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "get_pin_code_response: Yale master code correctly reported as user_id 0 is synced the same way",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 0, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device_yale.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device_yale,
+        0,
+        DoorLockUserStatus.OCCUPIED_ENABLED,
+        DoorLockUserType.UNRESTRICTED,
+        "52963814"
+      ),
+    })
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 21, userName = "Master Code", userType = "adminMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 21, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+    assert(mock_device_yale:get_field(constants.SYNC.CODE_INDEX) == nil)
+  end
+)
+
+test.register_coroutine_test(
   "get_pin_code_response: Yale sync reads the master code slot last",
   function()
     mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
