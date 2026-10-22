@@ -159,9 +159,10 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
       -- If an entry already exists at this index, this will be a no-op.
       -- Yale only: the master code (slot 0) is not a user slot, but the capabilities require userIndex >= 1, so
-      -- it is owned by a user at the lock's max user index and does not count toward the limits.
+      -- it is owned by a user just past the lock's max user index. That index never collides with a real slot's
+      -- user, and the master credential and its user do not count toward the limits.
       local is_master = lock_utils.is_yale(device) and user_id == tables.MASTER_CREDENTIAL_INDEX
-      local user_index = is_master and tables.get_max_entries(device, "users") or user_id
+      local user_index = is_master and (tables.get_max_entries(device, "users") + 1) or user_id
       local default_name = is_master and "Master Code" or ("Guest " .. user_id)
       tables.add_entry(device, "users", {
         userIndex = user_index,

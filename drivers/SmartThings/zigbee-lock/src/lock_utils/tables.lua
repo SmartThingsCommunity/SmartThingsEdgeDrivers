@@ -150,21 +150,48 @@ end
 -- credentialIndex of the Zigbee "Master Code" slot.
 table_utils.MASTER_CREDENTIAL_INDEX = 0
 
--- Return true if the named table has reached its max_entries limit. The master code credential, and
--- the user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
+-- Returns the credentialIndex of the device's master code slot, or nil if the device is not a Yale lock.
+function table_utils.master_credential_index(device)
+  if device:get_manufacturer() == "Yale" then
+    return table_utils.MASTER_CREDENTIAL_INDEX
+  end
+end
+
+-- Return the credential entry for the master code, if the device has one in its table (Yale only).
+local function find_master_credential(device)
+  local master_index = table_utils.master_credential_index(device)
+  return master_index ~= nil and table_utils.find_entry(device, "credentials", master_index) or nil
+end
+
+-- Return true if the entry is the master code credential, or the user that owns it.
+local function is_master_entry(device, table_name, entry, master_cred)
+  if table_name == "credentials" then
+    return entry.credentialIndex == table_utils.master_credential_index(device)
+  end
+  return master_cred ~= nil and entry.userIndex == master_cred.userIndex
+end
+
+-- Return true if the user index belongs to the user that owns the master code credential.
+function table_utils.is_master_user(device, user_index)
+  local master_cred = find_master_credential(device)
+  return master_cred ~= nil and master_cred.userIndex == user_index
+end
+
+-- Return true if the credential index is the master code credential (Yale only).
+function table_utils.is_master_credential(device, credential_index)
+  local master_index = table_utils.master_credential_index(device)
+  return master_index ~= nil and master_index == credential_index
+end
+
+-- Return true if the named table has reached its max_entries limit. The master code credential (Yale only),
+-- and the user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
 function table_utils.is_full(device, table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return true end
-  local master_cred = table_utils.find_entry(device, "credentials", table_utils.MASTER_CREDENTIAL_INDEX)
+  local master_cred = find_master_credential(device)
   local count = 0
   for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
-    local is_master
-    if table_name == "credentials" then
-      is_master = entry.credentialIndex == table_utils.MASTER_CREDENTIAL_INDEX
-    else
-      is_master = master_cred ~= nil and entry.userIndex == master_cred.userIndex
-    end
-    if not is_master then count = count + 1 end
+    if not is_master_entry(device, table_name, entry, master_cred) then count = count + 1 end
   end
   return count >= table_utils.get_max_entries(device, table_name)
 end
@@ -265,8 +292,14 @@ function table_utils.delete_all_entries(device, table_name)
   device.log.debug("table_helpers: attempting to delete all entries from " .. table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return COMMAND_RESULT.FAILURE end
-  device:emit_event(def.attribute({}, {visibility = {displayed = false}}))
-  persist_table(device, def, {})
+  -- The master code (Yale only) is not removed by a delete-all, so its entries are kept.
+  local master_cred = find_master_credential(device)
+  local remaining = {}
+  for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
+    if is_master_entry(device, table_name, entry, master_cred) then table.insert(remaining, entry) end
+  end
+  device:emit_event(def.attribute(remaining, {visibility = {displayed = false}}))
+  persist_table(device, def, remaining)
   return COMMAND_RESULT.SUCCESS
 end
 

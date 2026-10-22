@@ -66,6 +66,12 @@ function CapabilityHandlers.delete_user(driver, device, command)
     return
   end
 
+  -- Yale only: deleting the master code's owner would clear the master code on the lock.
+  if tables.is_master_user(device, command.args.userIndex) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   local associated_credentials = tables.find_all_entries_by(device, "credentials", "userIndex", command.args.userIndex)
   for _, associated_credential in ipairs(associated_credentials) do
     -- Set busy state with the full user+credential context BEFORE injecting.
@@ -114,6 +120,13 @@ end
 function CapabilityHandlers.add_credential(driver, device, command)
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.BUSY)
+    return
+  end
+
+  -- Yale only: user indexes past the max belong to the master code's owner. The PIN slot is derived from
+  -- userIndex, so this would attempt to write a slot that does not exist on the lock.
+  if tables.master_credential_index(device) ~= nil and command.args.userIndex > tables.get_max_entries(device, "users") then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
@@ -177,6 +190,11 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
   else
+    -- Yale only: the master code can be changed but not deleted.
+    if tables.is_master_credential(device, command.args.credentialIndex) then
+      lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+      return
+    end
     -- Standalone deleteCredential: look up the credential to obtain its associated userIndex.
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then
@@ -202,13 +220,16 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
     local credentials = tables.get_state(device, "credentials") or {}
     local delay = 0
     for _, credential in ipairs(credentials) do
-      device.thread:call_with_delay(delay, function()
-        device:send(UserCode:Set({
-          user_identifier = credential.credentialIndex,
-          user_id_status = UserCode.user_id_status.AVAILABLE
-        }))
-      end)
-      delay = delay + 2
+      -- Yale only: never clear the master code.
+      if not tables.is_master_credential(device, credential.credentialIndex) then
+        device.thread:call_with_delay(delay, function()
+          device:send(UserCode:Set({
+            user_identifier = credential.credentialIndex,
+            user_id_status = UserCode.user_id_status.AVAILABLE
+          }))
+        end)
+        delay = delay + 2
+      end
     end
     -- Delayed cleanup: ensure all tables are cleared after individual responses complete
     device.thread:call_with_delay(delay + 4, function()

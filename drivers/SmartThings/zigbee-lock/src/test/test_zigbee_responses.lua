@@ -582,18 +582,18 @@ test.register_coroutine_test(
       ),
     })
 
-    -- Master code is owned by a user at the max user index (default 20), and as the last slot synced it ends the sync
+    -- Master code is owned by a user at the index just past the default max (20), and as the last slot synced it ends the sync
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
         capabilities.lockUsers.users(
-          { { userIndex = 20, userName = "Master Code", userType = "adminMember" } },
+          { { userIndex = 21, userName = "Master Code", userType = "adminMember" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 20, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } },
+          { { userIndex = 21, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -643,6 +643,47 @@ test.register_coroutine_test(
 
     assert(not table_utils.is_full(mock_device_yale, "users"))
     assert(not table_utils.is_full(mock_device_yale, "credentials"))
+  end
+)
+
+test.register_coroutine_test(
+  "Yale master code: add/delete commands that would touch it are rejected as invalidCommand",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    -- seed the master code entries (credential 0, owned by user 21; default max users is 20)
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockUsers.users({ { userIndex = 21, userName = "Master Code", userType = "adminMember" } }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockCredentials.credentials({ { userIndex = 21, credentialIndex = 0, credentialType = "pin" } }, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device_yale, "users", { userIndex = 21, userName = "Master Code", userType = "adminMember" }, true)
+    table_utils.add_entry(mock_device_yale, "credentials", { userIndex = 21, credentialIndex = 0, credentialType = "pin" }, true)
+    test.wait_for_events()
+
+    local function expect_invalid(capability, command_name)
+      test.socket.capability:__expect_send(
+        mock_device_yale:generate_test_message("main",
+          capability.commandResult(
+            { commandName = command_name, statusCode = "invalidCommand" },
+            { state_change = true, visibility = { displayed = false } }
+          ))
+      )
+    end
+
+    -- addCredential for a user index past the max would target a slot that does not exist
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 21, "guest", "pin", "1234" } } })
+    expect_invalid(capabilities.lockCredentials, "addCredential")
+    test.wait_for_events()
+
+    -- deleting the master code's owner would clear the master code
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 21 } } })
+    expect_invalid(capabilities.lockUsers, "deleteUser")
+    test.wait_for_events()
+
+    -- the master credential can't be deleted directly
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 0, "pin" } } })
+    expect_invalid(capabilities.lockCredentials, "deleteCredential")
+    test.wait_for_events()
   end
 )
 
