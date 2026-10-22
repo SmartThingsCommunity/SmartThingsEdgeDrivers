@@ -158,6 +158,17 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
+-- The user index that owns the master code. This is offset from the lock's max users supported:
+-- 1 puts it just past the last real user slot (never colliding with a real user). 0 puts it on the last user slot,
+-- which stays within the supported range, but shares a user with a real credential in that slot if it is in use.
+-- TEMPORARY: set to 0 to test whether clients hide users with an index past totalUsersSupported.
+local MASTER_USER_INDEX_OFFSET = 0
+
+function table_utils.master_user_index(device)
+  return table_utils.get_max_entries(device, "users") + MASTER_USER_INDEX_OFFSET
+end
+
+
 -- Return the credential entry for the master code, if the device has one in its table (Yale only).
 local function find_master_credential(device)
   local master_index = table_utils.master_credential_index(device)

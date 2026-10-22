@@ -37,13 +37,13 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Yale only: the master code slot is not a user slot, but the capabilities require userIndex >= 1, so it is
-    -- owned by a user just past the lock's max user index. That index never collides with a real slot's user,
-    -- and the master credential and its user do not count toward the limits.
+    -- owned by a user at the index given by tables.master_user_index, and the master credential and its user do
+    -- not count toward the limits.
     local master_index = tables.master_credential_index(device)
     local is_master = master_index ~= nil and credential_index == master_index
     if user_code_occupied then
       -- If an entry already exists at this index, this will be a no-op.
-      local user_index = is_master and (tables.get_max_entries(device, "users") + 1) or credential_index
+      local user_index = is_master and tables.master_user_index(device) or credential_index
       local default_name = is_master and "Master Code" or ("Guest " .. credential_index)
       tables.add_entry(device, "users", {
         userIndex = user_index,
