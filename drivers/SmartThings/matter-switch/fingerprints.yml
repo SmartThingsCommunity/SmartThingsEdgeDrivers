@@ -4351,6 +4351,12 @@ matterManufacturer:
     vendorId: 0x1664
     productId: 0x0300
     deviceProfileName: light-color-level
+#EGLO Connect.z
+  - id: "4751/32929"
+    deviceLabel: YEBRA-Z LED
+    vendorId: 0x128F
+    productId: 0x80A1
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
