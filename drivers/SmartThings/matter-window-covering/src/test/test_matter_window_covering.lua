@@ -465,7 +465,7 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    assert(mock_device:get_field("__target_lift_percent") == 50)
+    assert(mock_device:get_field("__target_lift_percent_10") == 50)
   end,
   {
      min_api_version = 17
@@ -484,7 +484,7 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    assert(mock_device:get_field("__target_tilt_percent") == 50)
+    assert(mock_device:get_field("__target_tilt_percent_10") == 50)
   end,
   {
      min_api_version = 17
