@@ -32,6 +32,8 @@ function lifecycle_handler.init(driver, device)
     elseif devtype == config.ENUM.HEATER then
       local supported_thermostat_modes = {'heat', 'off'}
       device:emit_event(caps.thermostatMode.supportedThermostatModes(supported_thermostat_modes, { visibility = { displayed = false } }))
+    elseif devtype == config.ENUM.CURTAIN then
+      wisers.default_report(driver, device)
     end
     -------------------
     log.info('device '..device.parent_assigned_child_key..' in lifecycle init')

@@ -232,9 +232,9 @@ function Devices:get_dev_dpid_addr(dev_id, dpid)
           log.trace('add recv addr '..v.addr)
           feedback_list[v.addr] = v
         end
-        log.trace('sendlist count '..#send_list..' feedback_list count '..#feedback_list)
-        return send_list,feedback_list
       end
+      log.trace('sendlist count '..#send_list..' feedback_list count '..#feedback_list)
+      return send_list,feedback_list
     end
   end
   return nil,nil
