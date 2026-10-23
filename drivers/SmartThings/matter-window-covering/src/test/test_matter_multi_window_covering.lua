@@ -581,7 +581,7 @@ test.register_coroutine_test(
         }
       )
       test.wait_for_events()
-      assert(mock_child_device[i]:get_field("__target_lift_percent") == 50)
+      assert(mock_parent_device:get_field(string.format("__target_lift_percent_%d", CHILD_DEVICE_MAP[i].ep)) == 50)
     end
   end,
   {
@@ -602,7 +602,7 @@ test.register_coroutine_test(
         }
       )
       test.wait_for_events()
-      assert(mock_child_device[i]:get_field("__target_tilt_percent") == 50)
+      assert(mock_parent_device:get_field(string.format("__target_tilt_percent_%d", CHILD_DEVICE_MAP[i].ep)) == 50)
     end
   end,
   {
