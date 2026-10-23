@@ -109,28 +109,39 @@ configurations.reconfig_wrapper = function(orig_function)
   return new_init
 end
 
-configurations.get_device_configuration = function(zigbee_device)
+local function get_device_entry(zigbee_device)
   local devices = require "configurations.devices"
   for _, device in pairs(devices) do
     for _, fingerprint in pairs(device.FINGERPRINTS) do
       if zigbee_device:get_manufacturer() == fingerprint.mfr and zigbee_device:get_model() == fingerprint.model then
-        return device.CONFIGURATION
+        return device
       end
     end
   end
   return nil
 end
 
+configurations.get_device_configuration = function(zigbee_device)
+  local device = get_device_entry(zigbee_device)
+  return device and device.CONFIGURATION
+end
+
 configurations.get_ias_zone_config_method = function(zigbee_device)
-  local devices = require "configurations.devices"
-  for _, device in pairs(devices) do
-    for _, fingerprint in pairs(device.FINGERPRINTS) do
-      if zigbee_device:get_manufacturer() == fingerprint.mfr and zigbee_device:get_model() == fingerprint.model then
-        return device.IAS_ZONE_CONFIG_METHOD
-      end
+  local device = get_device_entry(zigbee_device)
+  return device and device.IAS_ZONE_CONFIG_METHOD
+end
+
+configurations.set_metering_fields = function(zigbee_device)
+  local device = get_device_entry(zigbee_device)
+  if device == nil then return end
+  for key, value in pairs(device.METERING_FIELDS or {}) do
+    zigbee_device:set_field(key, value, {persist = true})
+  end
+  for key, value in pairs(device.METERING_FIELDS_IF_UNSET or {}) do
+    if zigbee_device:get_field(key) == nil then
+      zigbee_device:set_field(key, value, {persist = true})
     end
   end
-  return nil
 end
 
 return configurations

@@ -6,7 +6,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local utils = require "st.utils"
-local configurations = require "configurations"
 
 local CHILD_ENDPOINT = 2
 
@@ -15,9 +14,7 @@ local function do_refresh(self, device)
   device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-end
+local find_child = require "lifecycle_handlers.find_child"
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and
@@ -38,12 +35,6 @@ local function device_added(driver, device, event)
   do_refresh(driver, device)
 end
 
-local function device_init(driver, device)
-  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
-    device:set_find_child(find_child)
-  end
-end
-
 local zigbee_dual_metering_switch = {
   NAME = "zigbee dual metering switch",
   capability_handlers = {
@@ -52,7 +43,6 @@ local zigbee_dual_metering_switch = {
     }
   },
   lifecycle_handlers = {
-    init = configurations.reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = require("zigbee-dual-metering-switch.can_handle"),

@@ -176,7 +176,6 @@ local function private_mode_handler(driver, device, value, zb_rx)
       device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
     end
     device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1)) -- minimal interval : 15min
-    device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, { persist = true })
     device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, { persist = true })
   end
 end
