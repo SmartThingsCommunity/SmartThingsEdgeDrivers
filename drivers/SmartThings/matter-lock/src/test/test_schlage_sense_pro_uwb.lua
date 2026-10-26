@@ -551,4 +551,106 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Handle driver update migration for existing lock-modular Schlage device",
+  function()
+    local mock_existing_schlage_device = test.mock_device.build_test_matter_device({
+      profile = t_utils.get_profile_definition("lock-modular.yml"),
+      manufacturer_info = {
+        vendor_id = constants.SCHLAGE_VENDOR_ID,
+        product_id = constants.SCHLAGE_SENSE_PRO_PRODUCT_ID,
+      },
+      endpoints = {
+        {
+          endpoint_id = 0,
+          clusters = {
+            { cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER" },
+          },
+          device_types = {
+            { device_type_id = 0x0016, device_type_revision = 1 }
+          }
+        },
+        {
+          endpoint_id = 1,
+          clusters = {
+            {
+              cluster_id = clusters.DoorLock.ID,
+              cluster_type = "SERVER",
+              cluster_revision = 1,
+              feature_map = 0,
+            },
+            {
+              cluster_id = constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
+              cluster_type = "SERVER",
+              cluster_revision = 1,
+            }
+          },
+          device_types = {
+            { device_type_id = 0x000A, device_type_revision = 1 }
+          }
+        }
+      }
+    })
+
+    test.socket.capability:__load_capability_definition(
+      constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
+      1,
+      constants.APPROACH_CAP_JSON
+    )
+    test.socket.capability:__load_capability_definition(
+      constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
+      1,
+      constants.MODE_CAP_JSON
+    )
+
+    local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_existing_schlage_device)
+    subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_existing_schlage_device))
+    subscribe_request:merge(cluster_base.subscribe(mock_existing_schlage_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+    subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_existing_schlage_device))
+    subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_existing_schlage_device))
+
+    test.mock_device.add_test_device(mock_existing_schlage_device)
+    test.socket.matter:__expect_send({ mock_existing_schlage_device.id, subscribe_request })
+
+    mock_existing_schlage_device:expect_metadata_update({
+      profile = "lock-modular-uwb-settings",
+      optional_component_capabilities = {
+        {
+          "main",
+          {
+            constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
+            constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
+          }
+        }
+      }
+    })
+    test.socket.matter:__expect_send({
+      mock_existing_schlage_device.id,
+      cluster_base.read(
+        mock_existing_schlage_device,
+        1,
+        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
+        constants.ATTR_FIELD_OF_VIEW_ID,
+        nil
+      )
+    })
+    test.socket.matter:__expect_send({
+      mock_existing_schlage_device.id,
+      cluster_base.read(
+        mock_existing_schlage_device,
+        1,
+        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
+        constants.ATTR_INTENT_MODE_ID,
+        nil
+      )
+    })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_existing_schlage_device.id, "init" })
+    test.wait_for_events()
+  end,
+  {
+    test_init = function() end
+  }
+)
+
 test.run_registered_tests()

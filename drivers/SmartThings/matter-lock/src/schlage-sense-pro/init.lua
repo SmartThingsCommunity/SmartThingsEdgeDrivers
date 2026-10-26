@@ -17,7 +17,7 @@
 --- Provides integration for:
 --- - lockUwbApproachSettings (Field of View: Front+Left+Right, Front+Left, Front+Right, Front only)
 --- - lockUwbModeSettings (Intent Mode: Unlock on Approach, Unlock on Arrival, Unlock on Lock Interaction)
---- - Profile management with lock-uwb-modular
+--- - Profile management with lock-modular-uwb-settings
 --- - Communication via Matter Manufacturer-Specific Cluster (to be detailed by Allegion)
 
 local capabilities = require "st.capabilities"
@@ -297,6 +297,16 @@ local function device_init(driver, device)
   -- Chain base driver initialization if available
   if driver.lifecycle_handlers and driver.lifecycle_handlers.init then
     driver.lifecycle_handlers.init(driver, device)
+  end
+
+  -- Automatically migrate previously onboarded devices (e.g. paired prior to driver update
+  -- under lock-modular) that do not yet have lockUwbApproachSettings to lock-modular-uwb-settings.
+  if not device:supports_capability_by_id(constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS) then
+    device.log.info("Migrating existing Schlage Sense Pro device profile to lock-modular-uwb-settings")
+    configure_profile(device)
+    emit_supported_values(device)
+    read_field_of_view(device)
+    read_intent_mode(device)
   end
 end
 

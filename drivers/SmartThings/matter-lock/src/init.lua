@@ -212,7 +212,8 @@ end
 local function match_profile_modular(driver, device)
   local enabled_optional_component_capability_pairs = {}
   local main_component_capabilities = {}
-  local is_uwb = (device.profile.id == "lock-modular-uwb-settings") or
+  local is_uwb = device:supports_capability_by_id("lockUwbApproachSettings") or
+                 (device.profile.id == "lock-modular-uwb-settings") or
                  (device.manufacturer_info and device.manufacturer_info.vendor_id == 0x1236 and device.manufacturer_info.product_id == 0x3800)
   local modular_profile_name = is_uwb and "lock-modular-uwb-settings" or "lock-modular"
   for _, device_ep in pairs(device.endpoints) do
