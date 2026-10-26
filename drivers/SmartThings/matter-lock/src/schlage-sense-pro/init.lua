@@ -14,10 +14,10 @@
 
 --- Subdriver for Allegion / Schlage Sense Pro UWB Door Lock
 ---
---- Provides integration for:
+--- Provides self-contained integration for:
 --- - lockUwbApproachSettings (Field of View: Front+Left+Right, Front+Left, Front+Right, Front only)
 --- - lockUwbModeSettings (Intent Mode: Unlock on Approach, Unlock on Arrival, Unlock on Lock Interaction)
---- - Profile management with lock-modular-uwb-settings
+--- - Self-contained profile management with lock-modular-uwb-settings
 --- - Communication via Matter Manufacturer-Specific Cluster (to be detailed by Allegion)
 
 local capabilities = require "st.capabilities"
@@ -28,6 +28,8 @@ local lock_utils = require "lock_utils"
 local constants = require "schlage-sense-pro.constants"
 
 local DoorLock = clusters.DoorLock
+local PowerSource = clusters.PowerSource
+local DoorLockFeatureMapAttr = { ID = 0xFFFC, cluster = DoorLock.ID }
 
 -- Resolve or build capability representations
 local lockUwbApproachSettings = constants.get_lock_uwb_approach_settings_capability()
@@ -239,7 +241,7 @@ local function handle_refresh(driver, device, command)
 end
 
 -------------------------------------------------------------------------------------
--- Device Lifecycle Handlers
+-- Device Profiling and Lifecycle Handlers (Self-Contained)
 -------------------------------------------------------------------------------------
 
 local function configure_profile(device)
@@ -292,6 +294,35 @@ local function configure_profile(device)
   })
 end
 
+--- Handles DoorLock FeatureMap attribute updates within the subdriver
+local function handle_door_lock_feature_map(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
+  if feature_map ~= ib.data.value then
+    lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
+    configure_profile(device)
+  end
+end
+
+--- Handles PowerSource AttributeList updates within the subdriver to prevent main driver profile overwrite
+local function handle_power_source_attribute_list(driver, device, ib, response)
+  local latest_battery_support = device:get_field("__BATTERY_SUPPORT")
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      device:set_field("__BATTERY_SUPPORT", "BATTERY_PERCENTAGE", { persist = true })
+      break
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
+      device:set_field("__BATTERY_SUPPORT", "BATTERY_LEVEL", { persist = true })
+    end
+  end
+  if latest_battery_support == nil and not device:get_field("__BATTERY_SUPPORT") then
+    device:set_field("__BATTERY_SUPPORT", "NO_BATTERY", { persist = true })
+  end
+  if latest_battery_support == nil or latest_battery_support ~= device:get_field("__BATTERY_SUPPORT") then
+    configure_profile(device)
+  end
+end
+
 local function device_init(driver, device)
   device.log.info("Schlage Sense Pro UWB subdriver device_init")
   -- Chain base driver initialization if available
@@ -304,7 +335,6 @@ local function device_init(driver, device)
   if not device:supports_capability_by_id(constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS) then
     device.log.info("Migrating existing Schlage Sense Pro device profile to lock-modular-uwb-settings")
     configure_profile(device)
-    emit_supported_values(device)
     read_field_of_view(device)
     read_intent_mode(device)
   end
@@ -321,6 +351,7 @@ local function device_added(driver, device)
   read_intent_mode(device)
 end
 
+--- Fully self-contained do_configure handler (prevents main driver generic match_profile)
 local function do_configure(driver, device)
   device.log.info("Schlage Sense Pro UWB subdriver do_configure")
   configure_profile(device)
@@ -329,9 +360,10 @@ local function do_configure(driver, device)
   read_field_of_view(device)
   read_intent_mode(device)
 
-  if driver.lifecycle_handlers and driver.lifecycle_handlers.doConfigure then
-    driver.lifecycle_handlers.doConfigure(driver, device)
-  end
+  device:emit_event(capabilities.lock.supportedLockValues({ "locked", "unlocked", "not fully locked" }, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.lock.supportedLockCommands({ "lock", "unlock" }, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.lockAlarm.alarm.clear({ state_change = true }))
+  device:emit_event(capabilities.lockAlarm.supportedAlarmValues({ "unableToLockTheDoor" }, { visibility = { displayed = false } }))
 end
 
 local function driver_switched(driver, device)
@@ -368,7 +400,13 @@ local schlage_sense_pro_subdriver = {
       [constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID] = {
         [constants.ATTR_FIELD_OF_VIEW_ID] = field_of_view_attr_handler,
         [constants.ATTR_INTENT_MODE_ID] = intent_mode_attr_handler,
-      }
+      },
+      [PowerSource.ID] = {
+        [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
+      },
+      [DoorLock.ID] = {
+        [DoorLockFeatureMapAttr.ID] = handle_door_lock_feature_map,
+      },
     },
   },
   capability_handlers = {

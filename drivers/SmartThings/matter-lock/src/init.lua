@@ -212,9 +212,7 @@ end
 local function match_profile_modular(driver, device)
   local enabled_optional_component_capability_pairs = {}
   local main_component_capabilities = {}
-  local is_uwb = (device.profile.id == "lock-modular-uwb-settings") or
-                 (device.manufacturer_info and device.manufacturer_info.vendor_id == 0x1236 and device.manufacturer_info.product_id == 0x3800)
-  local modular_profile_name = is_uwb and "lock-modular-uwb-settings" or "lock-modular"
+  local modular_profile_name = "lock-modular"
   for _, device_ep in pairs(device.endpoints) do
     for _, ep_cluster in pairs(device_ep.clusters) do
       if ep_cluster.cluster_id == DoorLock.ID then
@@ -238,9 +236,7 @@ local function match_profile_modular(driver, device)
         if clus_has_feature(DoorLock.types.Feature.UNBOLT) then
           device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
           device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
-          if not is_uwb then
-            modular_profile_name = "lock-modular-embedded-unlatch" -- use the embedded config specified in this profile for devices supporting "unlatch"
-          end
+          modular_profile_name = "lock-modular-embedded-unlatch" -- use the embedded config specified in this profile for devices supporting "unlatch"
         else
           device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
           device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
@@ -258,11 +254,6 @@ local function match_profile_modular(driver, device)
     table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
   elseif supported_battery_type == battery_support.BATTERY_PERCENTAGE then
     table.insert(main_component_capabilities, capabilities.battery.ID)
-  end
-
-  if is_uwb then
-    table.insert(main_component_capabilities, "lockUwbApproachSettings")
-    table.insert(main_component_capabilities, "lockUwbModeSettings")
   end
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})

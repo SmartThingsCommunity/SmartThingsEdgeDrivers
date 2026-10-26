@@ -490,6 +490,21 @@ test.register_coroutine_test(
         )
       )
     )
+    test.socket.capability:__expect_send(
+      mock_schlage_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.clear({ state_change = true })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_schlage_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.supportedAlarmValues(
+          { "unableToLockTheDoor" },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
     test.wait_for_events()
   end
 )
