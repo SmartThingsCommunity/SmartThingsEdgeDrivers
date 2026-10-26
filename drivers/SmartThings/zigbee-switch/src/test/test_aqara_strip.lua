@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2026 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -121,11 +121,6 @@ test.register_coroutine_test(
       ColorControl.attributes.CurrentHue:configure_reporting(mock_device, 1, 3600, 16):to_endpoint(0x01)
     })
 
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID, 0x01)
-    })
-
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x01) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device):to_endpoint(0x01) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device):to_endpoint(0x01) })
@@ -189,11 +184,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
-    })
-
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID, 0x01)
     })
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device):to_endpoint(0x01) })

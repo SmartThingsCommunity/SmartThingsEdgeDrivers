@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
@@ -6,7 +6,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local switch_defaults = require "st.zigbee.defaults.switch_defaults"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local OnOff = clusters.OnOff
@@ -129,8 +128,13 @@ local function set_color_handler(driver, device, cmd)
     device:set_field(HUESAT_TIMER, nil)
   end
 
-  local hue = (cmd.args.color.hue ~= nil and cmd.args.color.hue > 99) and 99 or cmd.args.color.hue
+  -- A caller may send only one of hue / saturation; fall back to the last known state for the
+  -- missing component so, e.g., a saturation-only setColor doesn't also reset the hue to zero.
+  local hue = cmd.args.color.hue
+    or device:get_latest_state(COMPONENT_MAIN, capabilities.colorControl.ID, capabilities.colorControl.hue.NAME)
   local sat = cmd.args.color.saturation
+    or device:get_latest_state(COMPONENT_MAIN, capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME)
+  if hue ~= nil and hue > 99 then hue = 99 end
 
   local x, y, Y = utils.safe_hsv_to_xy(hue, sat)
   store_xyY_values(device, x, y, Y)
@@ -297,8 +301,10 @@ local function do_refresh(driver, device)
   end
 end
 
+-- Deliberately empty: suppresses the default OnOff DefaultResponse handler, which would otherwise
+-- re-read the OnOff attribute. This device reports OnOff state via attribute reports on its own,
+-- so the re-read is unnecessary and causes extra Zigbee traffic.
 local function default_response_handler(driver, device, zb_rx)
-  -- no action
 end
 
 local function device_added(driver, device)
@@ -312,12 +318,16 @@ local function device_added(driver, device)
 end
 
 local function set_restore_powerState(device)
+  local pref = device.preferences["stse.restorePowerState"]
+  if pref == nil then return end
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRI_CLU, 0x0201, MFG_CODE, data_types.Boolean, device.preferences["stse.restorePowerState"]))
+    PRI_CLU, 0x0201, MFG_CODE, data_types.Boolean, pref))
 end
 
 local function set_light_fadeInTimeState(device)
-  local fadeInTime = device.preferences["stse.lightFadeInTimeInSec"] * 10
+  local pref = device.preferences["stse.lightFadeInTimeInSec"]
+  if pref == nil then return end
+  local fadeInTime = pref * 10
   device:send(clusters.Level.attributes.OnTransitionTime:write(device, fadeInTime):to_endpoint(0x01))
   if isCCTmode(device) then
     device:send(clusters.Level.attributes.OnTransitionTime:write(device, fadeInTime):to_endpoint(0x02))
@@ -325,7 +335,9 @@ local function set_light_fadeInTimeState(device)
 end
 
 local function set_light_fadeOutTimeState(device)
-  local fadeOutTime = device.preferences["stse.lightFadeOutTimeInSec"] * 10
+  local pref = device.preferences["stse.lightFadeOutTimeInSec"]
+  if pref == nil then return end
+  local fadeOutTime = pref * 10
   device:send(clusters.Level.attributes.OffTransitionTime:write(device, fadeOutTime):to_endpoint(0x01))
   if isCCTmode(device) then
     device:send(clusters.Level.attributes.OffTransitionTime:write(device, fadeOutTime):to_endpoint(0x02))
@@ -338,11 +350,14 @@ local function device_info_changed(driver, device, event, args)
     log.info_with({ hub_logs = true }, string.format("profile changed to mode=%s (model=%s)", mode, device:get_model()))
     -- The device auto-reboots (~5-8s) when its operating mode (RGB/CCT) changes.
     -- Delay these writes so they aren't lost during the reboot window.
+    -- The delayed writes already read the current preference values, so skip the per-preference
+    -- branch below to avoid sending duplicates (which would also be lost during the reboot window).
     device.thread:call_with_delay(MODE_CHANGE_STABILIZE_DELAY_SEC, function()
       set_restore_powerState(device)
       set_light_fadeInTimeState(device)
       set_light_fadeOutTimeState(device)
     end)
+    return
   end
   if device.preferences ~= nil then
     if device.preferences["stse.restorePowerState"] ~= nil and device.preferences["stse.restorePowerState"] ~= args.old_st_store.preferences["stse.restorePowerState"] then
@@ -364,7 +379,6 @@ local function do_configure(driver, device)
     do_refresh(driver, device)
   end)
   device:configure()
-  device:send(device_management.build_bind_request(device, OnOff.ID, driver.environment_info.hub_zigbee_eui))
   do_refresh(driver, device)
 end
 
