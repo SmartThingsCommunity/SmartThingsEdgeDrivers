@@ -202,7 +202,7 @@ matterManufacturer:
     deviceLabel: Schlage Sense Pro
     vendorId: 0x1236
     productId: 0x3800
-    deviceProfileName: lock-modular
+    deviceProfileName: lock-modular-uwb-settings
   #Lockly
   - id: "5212/2"
     deviceLabel: Lockly Smart Lock
