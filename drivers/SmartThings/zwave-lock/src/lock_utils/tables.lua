@@ -3,7 +3,8 @@
 
 local capabilities   = require "st.capabilities"
 local st_utils       = require "st.utils"
-local COMMAND_RESULT = require "lock_utils.constants".COMMAND_RESULT
+local consts         = require "lock_utils.constants"
+local COMMAND_RESULT = consts.COMMAND_RESULT
 
 local table_utils = {}
 
@@ -40,6 +41,14 @@ local DEFS = {
     persistent_field = "persistedCredentials",
   }
 }
+
+-- Returns the credentialIndex of the device's master code slot, or nil if the device does not have one.
+-- Only Yale locks have one.
+function table_utils.master_credential_index(device)
+  if device.zwave_manufacturer_id == consts.ADMIN.YALE_MANUFACTURER_ID then
+    return consts.ADMIN.YALE_SLOT
+  end
+end
 
 -- Resolve a table name to its definition. Logs an error and returns nil if unknown.
 local function resolve_table_def(device, table_name)
@@ -156,11 +165,31 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
+-- Return true if the named table has reached its max_entries limit. The master code credential, and the
+-- user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
+function table_utils.is_full(device, table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return true end
+  local master_index = table_utils.master_credential_index(device)
+  local master_cred = master_index and table_utils.find_entry(device, "credentials", master_index)
+  local count = 0
+  for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
+    local is_master
+    if table_name == "credentials" then
+      is_master = master_index ~= nil and entry.credentialIndex == master_index
+    else
+      is_master = master_cred ~= nil and entry.userIndex == master_cred.userIndex
+    end
+    if not is_master then count = count + 1 end
+  end
+  return count >= table_utils.get_max_entries(device, table_name)
+end
+
 -- Add an entry to a named table. The entry must satisfy all required_keys for
 -- that table. An entry whose match_key value already exists in the
 -- table is skipped to prevent duplicates. If the table has a max_entries limit,
--- entries that exceed the limit are not added.
-function table_utils.add_entry(device, table_name, entry)
+-- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the master code).
+function table_utils.add_entry(device, table_name, entry, exempt_from_limit)
   device.log.debug("table_helpers: attempting to add entry " .. st_utils.stringify_table(entry) .. " to " .. table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return COMMAND_RESULT.FAILURE end
@@ -168,7 +197,7 @@ function table_utils.add_entry(device, table_name, entry)
   local t = table_utils.get_state(device, def)
   if not t then return COMMAND_RESULT.FAILURE end
 
-  if #t >= table_utils.get_max_entries(device, table_name) then
+  if not exempt_from_limit and table_utils.is_full(device, table_name) then
     device.log.warn(string.format(
       "table_helpers: cannot add entry to %q, max entries reached", table_name
     ))
@@ -247,13 +276,20 @@ function table_utils.delete_entry(device, table_name, matcher)
   return COMMAND_RESULT.FAILURE
 end
 
--- Delete all entries from a table.
-function table_utils.delete_all_entries(device, table_name)
+-- Delete all entries from a table. If keep is given, entries for which keep(entry)
+-- returns true are retained.
+function table_utils.delete_all_entries(device, table_name, keep)
   device.log.debug("table_helpers: attempting to delete all entries from " .. table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return COMMAND_RESULT.FAILURE end
-  device:emit_event(def.attribute({}, {visibility = {displayed = false}}))
-  persist_table(device, def, {})
+  local kept = {}
+  if keep then
+    for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
+      if keep(entry) then table.insert(kept, entry) end
+    end
+  end
+  device:emit_event(def.attribute(kept, {visibility = {displayed = false}}))
+  persist_table(device, def, kept)
   return COMMAND_RESULT.SUCCESS
 end
 
