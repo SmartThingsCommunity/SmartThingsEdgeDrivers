@@ -4,5 +4,5 @@
 local lazy_load = require "lazy_load_subdriver"
 
 return {
-  lazy_load("zemismart-kes606"),
+  lazy_load("tuya-multi.zemismart-kes606"),
 }

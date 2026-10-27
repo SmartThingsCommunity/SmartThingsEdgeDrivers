@@ -4,7 +4,7 @@
 return function(_, _, device)
   if device ~= nil and device:get_manufacturer() == "_TZ3000_hurauima"
       and device:get_model() == "TS0726" then
-    return true, require("zemismart-kes606")
+    return true, require("tuya-multi.zemismart-kes606")
   end
   return false
 end

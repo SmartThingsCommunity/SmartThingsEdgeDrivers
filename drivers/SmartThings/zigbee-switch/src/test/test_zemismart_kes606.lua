@@ -139,7 +139,7 @@ end
 local function assert_nested_dispatch(dispatcher, device, message)
   local driver = test.driver_wrapper.driver_under_test
   local tuya_name = version.api >= 16 and "tuya-multi" or require("tuya-multi").NAME
-  local kes606_name = version.api >= 16 and "zemismart-kes606" or require("zemismart-kes606").NAME
+  local kes606_name = version.api >= 16 and "tuya-multi.zemismart-kes606" or require("tuya-multi.zemismart-kes606").NAME
   local tuya_dispatchers = dispatcher:find_child_dispatchers(driver, device, message)
   assert(#tuya_dispatchers == 1 and tuya_dispatchers[1].name == tuya_name)
   local nested = tuya_dispatchers[1]:find_child_dispatchers(driver, device, message)
@@ -148,7 +148,7 @@ local function assert_nested_dispatch(dispatcher, device, message)
 end
 
 test.register_coroutine_test("Only the exact four-gang fingerprint and its children use KES606", function()
-  local matches = require "zemismart-kes606.can_handle"
+  local matches = require "tuya-multi.zemismart-kes606.can_handle"
   assert(matches({}, nil, parent))
   for ep = 1, 4 do assert(matches({}, nil, children[ep])) end
   for _, fingerprint in ipairs({

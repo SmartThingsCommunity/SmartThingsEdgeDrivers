@@ -21,7 +21,7 @@ return function(opts, driver, device)
   end
   if parent == nil or parent.zigbee_endpoints == nil then return false end
   if device.network_type == device_lib.NETWORK_TYPE_CHILD
-      and not require("zemismart-kes606.can_handle")(opts, driver, device) then
+      and not require("tuya-multi.zemismart-kes606.can_handle")(opts, driver, device) then
     return false
   end
 

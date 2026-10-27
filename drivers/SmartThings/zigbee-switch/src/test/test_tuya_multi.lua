@@ -54,7 +54,7 @@ test.register_coroutine_test("Other Tuya switches retain their generic lifecycle
   assert(#dispatchers == 1 and dispatchers[1].name == tuya_name)
   assert(#dispatchers[1]:find_child_dispatchers(driver, mock_device, "doConfigure") == 0,
     "Generic Tuya devices must not enter the KES606 sub-driver")
-  assert(not require("zemismart-kes606.can_handle")({}, driver, mock_device))
+  assert(not require("tuya-multi.zemismart-kes606.can_handle")({}, driver, mock_device))
 end)
 
 test.register_message_test("Other Tuya switches retain standard switch commands and reports", {

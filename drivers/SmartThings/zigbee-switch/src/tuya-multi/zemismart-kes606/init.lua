@@ -280,5 +280,5 @@ return {
       },
     },
   },
-  can_handle = require("zemismart-kes606.can_handle"),
+  can_handle = require("tuya-multi.zemismart-kes606.can_handle"),
 }
