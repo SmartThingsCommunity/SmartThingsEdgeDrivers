@@ -15,6 +15,8 @@ local LockCodes                 = capabilities.lockCodes
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
 
+local YALE_MASTER_CODE_SLOT = (require "lock_utils.constants").YALE_MASTER_CODE_SLOT
+
 local lock_utils = (require "legacy-handlers.legacy_lock_utils")
 
 local reload_all_codes = function(driver, device, command)
@@ -42,7 +44,7 @@ local set_code = function(driver, device, command)
       args = {command.args.codeSlot, command.args.codeName}
     })
   else
-    local user_type = command.args.codeSlot == 0 and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED
+    local user_type = command.args.codeSlot == YALE_MASTER_CODE_SLOT and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED
     device:send(LockCluster.server.commands.SetPINCode(device,
             command.args.codeSlot,
             UserStatusEnum.OCCUPIED_ENABLED,
@@ -127,6 +129,10 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   end
 end
 
+local migrate = function(driver, device, command)
+  require("legacy-handlers.migrate")(driver, device, command, YALE_MASTER_CODE_SLOT)
+end
+
 local yale_door_lock_driver = {
   NAME = "Yale Door Lock",
   zigbee_handlers = {
@@ -139,7 +145,8 @@ local yale_door_lock_driver = {
   capability_handlers = {
     [LockCodes.ID] = {
       [LockCodes.commands.reloadAllCodes.NAME] = reload_all_codes,
-      [LockCodes.commands.setCode.NAME] = set_code
+      [LockCodes.commands.setCode.NAME] = set_code,
+      [LockCodes.commands.migrate.NAME] = migrate
     }
   },
   can_handle = require("legacy-handlers.yale.can_handle")

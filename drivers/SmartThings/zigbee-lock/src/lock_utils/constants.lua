@@ -41,6 +41,12 @@ lock_constants.LOCK_USERS = {
 }
 
 lock_constants.CRED_TYPE_PIN = "pin"
+-- STOPGAP: lockUsers has no master code userType yet, so master codes are represented as users with
+-- "controlOnlyMember", which is otherwise unused by this driver. Replace this once a dedicated type exists.
+lock_constants.USER_TYPE_MASTER = "controlOnlyMember"
+-- Yale (and ASSA ABLOY iRevo) locks hold their master code at credential index 0.
+lock_constants.YALE_MASTER_CODE_SLOT = 0
+lock_constants.MASTER_CODE_NAME = "Master Code"
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.MAX_DELAY = 10
 

@@ -52,6 +52,12 @@ function CapabilityHandlers.update_user(driver, device, command)
     return
   end
 
+  -- a user cannot be made a master code user, and a master code user cannot be changed to another type
+  if (command.args.userType == consts.USER_TYPE_MASTER) ~= lock_utils.is_master_user(device, command.args.userIndex) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   local result_status
   if not tables.find_entry(device, "users", command.args.userIndex) then
     result_status = tables.add_entry(device, "users", {
@@ -127,18 +133,34 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- A userIndex of 0 means "auto-assign the next available slot"
-  local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
+  -- addCredential has no credentialIndex argument, so its userIndex argument selects the credential slot. A value
+  -- of 0 means "auto-assign the next available slot". The user is always new, and takes the next available user slot.
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  local user_index = tables.next_index(device, "users")
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  local max_credentials = tables.get_max_entries(device, "credentials")
+  if #(tables.get_state(device, "credentials") or {}) >= max_credentials then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
+    return
+  end
+
+  -- a requested slot must be within the lock's credential slots, [minimum, minimum + pinUsersSupported)
+  local min_credential = tables.get_minimum(device, "credentials")
+  if cred_index < min_credential or cred_index >= min_credential + max_credentials then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
+  -- a requested slot must not already hold a credential (this also protects master codes)
+  if tables.find_entry(device, "credentials", cred_index) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.OCCUPIED)
     return
   end
 
   -- Set busy state and attempt to set the PIN on-device.
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
     userIndex       = user_index,
+    userType        = command.args.userType,
     credentialIndex = cred_index,
     credentialType  = command.args.credentialType,
     credentialName  = command.args.credentialName,
@@ -146,7 +168,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   device:send(LockCluster.server.commands.SetPINCode(device,
     cred_index,
     UserStatusEnum.OCCUPIED_ENABLED,
-    UserTypeEnum.UNRESTRICTED,
+    command.args.userType == consts.USER_TYPE_MASTER and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED,
     command.args.credentialData)
   )
 end
@@ -157,7 +179,8 @@ function CapabilityHandlers.update_credential(driver, device, command)
     return
   end
 
-  if not tables.find_entry(device, "credentials", command.args.credentialIndex) then
+  local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
+  if not found_cred then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.FAILURE)
     return
   end
@@ -171,7 +194,8 @@ function CapabilityHandlers.update_credential(driver, device, command)
   device:send(LockCluster.server.commands.SetPINCode(device,
     command.args.credentialIndex,
     UserStatusEnum.OCCUPIED_ENABLED,
-    UserTypeEnum.UNRESTRICTED,
+    -- the credential's stored owner decides its type, so a known master code stays a master code
+    lock_utils.is_master_user(device, found_cred.userIndex) and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED,
     command.args.credentialData)
   )
 end

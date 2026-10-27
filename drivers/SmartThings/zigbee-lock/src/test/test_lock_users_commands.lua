@@ -609,9 +609,9 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
 
-    -- Re-add a credential for the new user at slot 2.  The old credential at
-    -- credentialIndex 2 was cleanly removed, so add_entry must succeed without
-    -- returning OCCUPIED or any stale-state error.
+    -- Re-add a credential at the reclaimed slot 2.  The old credential at credentialIndex 2 was cleanly
+    -- removed, so add_entry must succeed without returning OCCUPIED or any stale-state error.
+    -- addCredential always creates a new user, which takes the next free user index, 4.
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
@@ -628,14 +628,25 @@ test.register_coroutine_test(
       mock_device.id,
       DoorLock.client.commands.SetPINCodeResponse.build_test_rx(mock_device, SetCodeStatus.SUCCESS),
     })
-    -- Credential is freshly added at index 2 alongside the retained entries at 1 and 3.
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 3, userName = "Carol", userType = "guest" },
+            { userIndex = 2, userName = "Dave",  userType = "guest" },
+            { userIndex = 4, userName = "Guest 4", userType = "guest" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 3, credentialIndex = 3, credentialType = "pin" },
-            { userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 2" },
+            { userIndex = 4, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 4" },
           },
           { visibility = { displayed = false } }
         ))
@@ -643,7 +654,98 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", userIndex = 2, credentialIndex = 2 },
+          { commandName = "addCredential", statusCode = "success", userIndex = 4, credentialIndex = 2 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+-- ============================================================================
+-- Master codes: the master userType cannot be set or cleared via addUser/updateUser
+-- ============================================================================
+
+local function expect_invalid(command_name)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.lockUsers.commandResult(
+        { commandName = command_name, statusCode = "invalidCommand" },
+        { state_change = true, visibility = { displayed = false } }
+      ))
+  )
+end
+
+test.register_coroutine_test(
+  "addUser: accepts the master userType",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Master Code", "controlOnlyMember" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Master Code", userType = "controlOnlyMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "addUser", statusCode = "success", userIndex = 1 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a guest to the master userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Guest 1", "controlOnlyMember" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a master code user to another userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Master Code", userType = "controlOnlyMember" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Master Code", "guest" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: allows renaming a master code user",
+  function()
+    seed_users({ { userIndex = 1, userName = "Master Code", userType = "controlOnlyMember" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Front Door", "controlOnlyMember" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Front Door", userType = "controlOnlyMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "updateUser", statusCode = "success", userIndex = 1 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

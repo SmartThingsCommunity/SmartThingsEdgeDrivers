@@ -42,13 +42,81 @@ function lock_utils.sync_device_state(device)
   -- Per spec, this attribute should be a boolean set to True if it is ok for the door lock server to send PINs over the air.
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 
-  -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
-  -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0.
+  -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet, so start the process from 0.
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, 1)
+    device:set_field(consts.SYNC.CODE_INDEX, 0)
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))
+end
+
+-- Yale locks hold a master code at credential index 0. Keep it represented locally at all times, so that the slot is
+-- never handed out as the next available credential index.
+function lock_utils.ensure_yale_master_code(device)
+  if lock_utils.is_yale(device) then
+    lock_utils.add_reported_credential(device, consts.YALE_MASTER_CODE_SLOT, true)
+  end
+end
+
+-- [[ CREDENTIAL TABLE MANAGEMENT ]] --
+
+-- Add a user and its credential together. Shared by the commanded and reported paths below. Existing entries at
+-- either index are left untouched by the underlying table add. Returns the result status of the credential add.
+function lock_utils.add_user_and_credential(device, args)
+  local tables = require "lock_utils.tables"
+  local user_type = args.userType or "guest"
+  local name = (user_type == consts.USER_TYPE_MASTER) and consts.MASTER_CODE_NAME or ("Guest " .. args.userIndex)
+  tables.add_entry(device, "users", {
+    userIndex = args.userIndex,
+    userName  = name,
+    userType  = user_type,
+  })
+  return tables.add_entry(device, "credentials", {
+    userIndex       = args.userIndex,
+    credentialIndex = args.credentialIndex,
+    credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
+    credentialName  = args.credentialName or name,
+  })
+end
+
+-- Per command: update the tables after the lock confirmed a set-credential command we sent.
+-- Returns the command result status, or nil for any other command.
+function lock_utils.add_commanded_credential(device, command_in_progress, credential_args)
+  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
+    return lock_utils.add_user_and_credential(device, credential_args)
+  elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    return consts.COMMAND_RESULT.SUCCESS
+  end
+end
+
+-- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
+-- from us (sync, or a programming event), unless a credential already exists there.
+function lock_utils.add_reported_credential(device, credential_index, is_master)
+  local tables = require "lock_utils.tables"
+  if tables.find_entry(device, "credentials", credential_index) then return end
+  local user_index = tables.next_index(device, "users")
+  if user_index > tables.get_max_entries(device, "users") then
+    device.log.warn(string.format("no free user slot for the code at credential index %d", credential_index))
+    return
+  end
+  lock_utils.add_user_and_credential(device, {
+    userIndex       = user_index,
+    credentialIndex = credential_index,
+    userType        = is_master and consts.USER_TYPE_MASTER or nil,
+  })
+end
+
+-- Whether this device is a Yale or ASSA ABLOY iRevo lock.
+function lock_utils.is_yale(device)
+  local manufacturer = device:get_manufacturer()
+  return manufacturer == "Yale" or manufacturer == "ASSA ABLOY iRevo"
+end
+
+-- Whether the user at `user_index` is a master code user.
+function lock_utils.is_master_user(device, user_index)
+  local tables = require "lock_utils.tables"
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.USER_TYPE_MASTER
 end
 
 

@@ -45,10 +45,10 @@ local function make_test_init(device)
 end
 
 -- Helper: expect the five zigbee messages produced by sync_device_state on a
--- freshly-started device (no cached capability state, CODE_INDEX starts at 1).
+-- freshly-started device (no cached capability state, CODE_INDEX starts at 0).
 local function expect_sync_device_state(device)
   test.socket.zigbee:__expect_send({ device.id, DoorLock.attributes.SendPINOverTheAir:write(device, true) })
-  test.socket.zigbee:__expect_send({ device.id, DoorLock.server.commands.GetPINCode(device, 1) })
+  test.socket.zigbee:__expect_send({ device.id, DoorLock.server.commands.GetPINCode(device, 0) })
 end
 
 -- Helper: expect the messages produced by the legacy reload_all_codes path after
@@ -219,7 +219,7 @@ test.register_coroutine_test(
     mock_device_base:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
 
-    -- Timer fires: sync_device_state is called (GetPINCode slot 1)
+    -- Timer fires: sync_device_state is called (GetPINCode slot 0)
     test.mock_time.advance_time(2)
     test.socket.zigbee:__set_channel_ordering("relaxed")
     expect_sync_device_state(mock_device_base)

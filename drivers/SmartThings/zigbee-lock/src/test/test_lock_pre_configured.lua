@@ -243,13 +243,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     test.socket.zigbee:__expect_send({
       mock_device.id,
       DoorLock.server.commands.SetPINCode(mock_device,
-        3, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin03"),
+        0, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin03"),
     })
     test.wait_for_events()
 
@@ -275,7 +275,7 @@ test.register_coroutine_test(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
-            { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
+            { userIndex = 3, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 3" },
           },
           { visibility = { displayed = false } }
         ))
@@ -283,7 +283,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", userIndex = 3, credentialIndex = 3 },
+          { commandName = "addCredential", statusCode = "success", userIndex = 3, credentialIndex = 0 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
@@ -299,13 +299,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin01" } },
+        args = { 0, "guest", "pin", "pin01" } },
     })
 
     test.socket.zigbee:__expect_send({
       mock_device.id,
       DoorLock.server.commands.SetPINCode(mock_device,
-        3, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin01"),
+        0, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin01"),
     })
     test.wait_for_events()
 
@@ -333,13 +333,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     test.socket.zigbee:__expect_send({
       mock_device.id,
       DoorLock.server.commands.SetPINCode(mock_device,
-        3, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin03"),
+        0, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "pin03"),
     })
     test.wait_for_events()
 

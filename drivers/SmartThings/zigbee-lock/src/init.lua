@@ -60,6 +60,8 @@ function LockLifecycle.do_configure(driver, device)
 
   if device:supports_capability(capabilities.lockCredentials) then
     -- ensure our user/credential state is accurate to the current device state
+    -- note: some locks (e.g. Yale) hold a master code at index 0 by default.
+    lock_utils.ensure_yale_master_code(device)
     device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
   end
 end
