@@ -231,6 +231,51 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x103E
     deviceProfileName: fan-modular
+  - id: "5014/4576"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E0
+    deviceProfileName: light-color-level
+  - id: "5014/4574"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11DE
+    deviceProfileName: light-color-level
+  - id: "5014/4224"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1080
+    deviceProfileName: light-color-level
+  - id: "5014/4223"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x107F
+    deviceProfileName: light-color-level
+  - id: "5014/4227"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1083
+    deviceProfileName: light-color-level
+  - id: "5014/4218"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107A
+    deviceProfileName: light-color-level
+  - id: "5014/4220"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107C
+    deviceProfileName: light-color-level
+  - id: "5014/4221"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x107D
+    deviceProfileName: light-color-level
+  - id: "5014/4713"
+    deviceLabel: Linkind Smart Outdoor Plug
+    vendorId: 0x1396
+    productId: 0x1269
+    deviceProfileName: plug-binary
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -948,6 +993,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x2A40
     deviceProfileName: light-color-level
+  - id: "4999/25168"
+    deviceLabel: Govee Christmas 2-in-1 String Lights
+    vendorId: 0x1387
+    productId: 0x6250
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
@@ -979,6 +1029,11 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x000A
     deviceProfileName: matter-bridge
+  - id: "4741/12"
+    deviceLabel: Hager Rotary Dimmer
+    vendorId: 0x1285
+    productId: 0x000C
+    deviceProfileName: light-level
 # HAOJAI
   - id: "5530/4113"
     deviceLabel: HAOJAI Smart Switch 3-key
@@ -4233,11 +4288,26 @@ matterManufacturer:
     vendorId: 0x100B
     productId: 0x0002
     deviceProfileName: matter-bridge
+  - id: "4107/3"
+    deviceLabel: Hue Bridge Pro
+    vendorId: 0x100B
+    productId: 0x0003
+    deviceProfileName: matter-bridge
   - id: "Switchbot/hub2"
     deviceLabel: Matter Bridge
     vendorId: 0x1397
     productId: 0x07E7
     deviceProfileName: matter-bridge
+  - id: "5015/2040"
+    deviceLabel: SwitchBot Color Lighting
+    vendorId: 0x1397
+    productId: 0x07F8
+    deviceProfileName: light-color-level
+  - id: "5015/2039"
+    deviceLabel: SwitchBot Floor Lamp
+    vendorId: 0x1397
+    productId: 0x07F7
+    deviceProfileName: light-color-level
   - id: "Nature/Bridge"
     deviceLabel: Matter Bridge
     vendorId: 0x138A
@@ -4269,6 +4339,28 @@ matterManufacturer:
     deviceLabel: Floor Lamp
     vendorId: 0x164B
     productId: 0x0001
+    deviceProfileName: light-color-level
+#Utilitech
+  - id: "5732/2"
+    deviceLabel: Lowes - Utilitech A19 Smart Bulb
+    vendorId: 0x1664
+    productId: 0x0002
+    deviceProfileName: light-color-level
+  - id: "5732/1536"
+    deviceLabel: Utilitech 17 Smart Flush Mount - Full Color
+    vendorId: 0x1664
+    productId: 0x0600
+    deviceProfileName: light-color-level
+  - id: "5732/768"
+    deviceLabel: Utilitech 1x4 Smart Panel  - Full Color
+    vendorId: 0x1664
+    productId: 0x0300
+    deviceProfileName: light-color-level
+#EGLO Connect.z
+  - id: "4751/32929"
+    deviceLabel: YEBRA-Z LED
+    vendorId: 0x128F
+    productId: 0x80A1
     deviceProfileName: light-color-level
 
 
