@@ -16,6 +16,15 @@ lock_constants.SYNC = {
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
 }
 
+lock_constants.ADMIN = {
+  -- Yale locks keep their master code in this user code slot.
+  YALE_SLOT = 251,
+  YALE_MANUFACTURER_ID = 0x0129,
+  -- Stopgap userType for the master code until the lockUsers capability has one for it.
+  USER_TYPE = "controlOnlyMember",
+  NAME = "Master Code",
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",
