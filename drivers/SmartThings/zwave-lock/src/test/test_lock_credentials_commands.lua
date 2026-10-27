@@ -52,6 +52,12 @@ end
 
 local function install_state_mocks()
   mock_latest_state = {}
+  -- tables.lua calls device.log.* unconditionally and get_state guards on
+  -- supports_capability; stub both for the pre-init seeding phase.
+  rawset(mock_device, "log", {
+    debug = function() end, info = function() end, warn = function() end, error = function() end,
+  })
+  rawset(mock_device, "supports_capability", function() return true end)
   mock_device.get_latest_state = function(_, component_id, capability_id, attribute_name, default_value)
     local value = mock_latest_state[mock_state_key(component_id, capability_id, attribute_name)]
     if value == nil then
@@ -83,8 +89,8 @@ end
 -- ── helpers ────────────────────────────────────────────────────────────────
 
 local function test_init()
-  mock_device.persistent_store = mock_device.persistent_store or {}
-  mock_device.transient_store = mock_device.transient_store or {}
+  mock_device.persistent_store = {}
+  mock_device.transient_store = {}
   install_state_mocks()
   mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
   test.mock_device.add_test_device(mock_device)
@@ -101,6 +107,15 @@ local function expect_set_pin_code(user_identifier, user_code)
   )
 end
 
+local function expect_clear_pin_code(user_identifier)
+  test.socket.zwave:__expect_send(
+    UserCode:Set({
+      user_identifier = user_identifier,
+      user_id_status = UserCode.user_id_status.AVAILABLE,
+    }):build_test_tx(mock_device.id)
+  )
+end
+
 local function queue_user_code_added(user_identifier)
   test.socket.zwave:__queue_receive({ mock_device.id, Notification:Report({
     notification_type = Notification.notification_type.ACCESS_CONTROL,
@@ -109,32 +124,27 @@ local function queue_user_code_added(user_identifier)
   }) })
 end
 
-local function seed_users(entries)
-  for _, entry in ipairs(entries) do
+-- Seed through table_utils.add_entry: it calls set_field(..., {persist = true}),
+-- which is copied to the real driver device when it is lazily created. Writing
+-- only to mock_latest_state / persistent_store never reaches the driver.
+local function seed_entries(table_name, capability_attr, key_name, entries)
+  for i, entry in ipairs(entries) do
     local so_far = {}
-    for _, e in ipairs(entries) do
-      table.insert(so_far, e)
-      if e == entry then break end
-    end
-    local event = capabilities.lockUsers.users(so_far, { visibility = { displayed = false } })
-    mock_latest_state[mock_state_key("main", event.capability.ID, event.attribute.NAME)] = event.value.value
+    for j = 1, i do table.insert(so_far, entries[j]) end
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capability_attr(so_far, { visibility = { displayed = false } })))
+    assert(table_utils.add_entry(mock_device, table_name, entry) == constants.COMMAND_RESULT.SUCCESS,
+      "seed " .. table_name .. ": add_entry failed for " .. key_name .. "=" .. tostring(entry[key_name]))
   end
-  mock_device.persistent_store.persistedUsers = entries
   test.wait_for_events()
 end
 
+local function seed_users(entries)
+  seed_entries("users", capabilities.lockUsers.users, "userIndex", entries)
+end
+
 local function seed_credentials(entries)
-  for _, entry in ipairs(entries) do
-    local so_far = {}
-    for _, e in ipairs(entries) do
-      table.insert(so_far, e)
-      if e == entry then break end
-    end
-    local event = capabilities.lockCredentials.credentials(so_far, { visibility = { displayed = false } })
-    mock_latest_state[mock_state_key("main", event.capability.ID, event.attribute.NAME)] = event.value.value
-  end
-  mock_device.persistent_store.persistedCredentials = entries
-  test.wait_for_events()
+  seed_entries("credentials", capabilities.lockCredentials.credentials, "credentialIndex", entries)
 end
 
 -- ============================================================================
@@ -437,10 +447,13 @@ test.register_coroutine_test(
       { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} },
     })
 
-    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
+    test.mock_time.advance_time(0)
+    expect_clear_pin_code(1)
     test.wait_for_events()
 
-    test.mock_time.advance_time(4)
+    test.mock_time.advance_time(6)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
