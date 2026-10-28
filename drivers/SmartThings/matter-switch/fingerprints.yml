@@ -4288,6 +4288,11 @@ matterManufacturer:
     vendorId: 0x100B
     productId: 0x0002
     deviceProfileName: matter-bridge
+  - id: "4107/3"
+    deviceLabel: Hue Bridge Pro
+    vendorId: 0x100B
+    productId: 0x0003
+    deviceProfileName: matter-bridge
   - id: "Switchbot/hub2"
     deviceLabel: Matter Bridge
     vendorId: 0x1397
@@ -4350,6 +4355,12 @@ matterManufacturer:
     deviceLabel: Utilitech 1x4 Smart Panel  - Full Color
     vendorId: 0x1664
     productId: 0x0300
+    deviceProfileName: light-color-level
+#EGLO Connect.z
+  - id: "4751/32929"
+    deviceLabel: YEBRA-Z LED
+    vendorId: 0x128F
+    productId: 0x80A1
     deviceProfileName: light-color-level
 
 

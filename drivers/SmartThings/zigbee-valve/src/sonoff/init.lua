@@ -3,47 +3,117 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local Identify = zcl_clusters.Identify
 local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
-local utils = require "st.utils"
+local st_device = require "st.device"
 
---- OnOff Property Reporting Handler → Valve Capability Point Event
---- SONOFF reports valve state through the OnOff cluster, so keep an explicit mapping
---- from OnOff reports to valve events while using the parent driver's default commands.
---- @param driver table Driver instance
---- @param device table Device instance
---- @param value table Zigbee attribute value
-local function onoff_attr_handler(driver, device, value)
-  local is_on = value.value ~= false and value.value ~= 0
-  if is_on then
-    device:emit_event(capabilities.valve.valve.open())
+local CONFIGURATION = {
+  {
+    cluster = PowerConfiguration.ID,
+    attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+    reportable_change = 1
+  },
+  {
+    cluster = OnOff.ID,
+    attribute = OnOff.attributes.OnOff.ID,
+    minimum_interval = 0,
+    maximum_interval = 600,
+    data_type = OnOff.attributes.OnOff.base_type
+  }
+}
+
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+end
+
+local function is_dual_channel(device)
+  local model = device:get_model()
+  return model == "SWV-ZF2U" or model == "SWV-ZF2"
+end
+
+--- Map OnOff reports to the corresponding valve.
+local function onoff_attr_handler(driver, device, value, zb_rx)
+  local ep = zb_rx.address_header.src_endpoint.value
+  local target = device
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and is_dual_channel(device) and ep == 0x02 then
+    target = find_child(device, 2)
+    if not target then return end
+  end
+  if value.value ~= false and value.value ~= 0 then
+    target:emit_event(capabilities.valve.valve.open())
   else
-    device:emit_event(capabilities.valve.valve.closed())
+    target:emit_event(capabilities.valve.valve.closed())
   end
 end
 
---- Battery Percentage Attribute Handler
---- Zigbee BatteryPercentageRemaining range 0-200 (0%-100%), needs to be divided by 2
---- @param driver table Driver instance
---- @param device table Device instance
---- @param value table Zigbee attribute value
-local function battery_percentage_handler(driver, device, value)
-  local raw = value.value
-  local percent = utils.round(raw / 2)
-  device:emit_event(capabilities.battery.battery(percent))
+local function device_init(driver, device)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+    if is_dual_channel(device) then
+      device:set_find_child(find_child)
+    end
+    for _, attribute in ipairs(CONFIGURATION) do
+      device:add_configured_attribute(attribute)
+    end
+  end
+end
+
+local function do_configure(driver, device)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+    device:refresh()
+    device:configure()
+  end
+end
+
+local function device_added(driver, device)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and is_dual_channel(device) then
+    if find_child(device, 2) == nil then
+      driver:try_create_device({
+        type = "EDGE_CHILD",
+        label = string.format("%s 2", device.label),
+        profile = "valve",
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%02X", 2),
+        vendor_provided_label = string.format("%s 2", device.label),
+      })
+    end
+  end
+  device:refresh()
+end
+
+local function driver_switched(driver, device)
+  device_added(driver, device)
+end
+
+--- A device button press prompts a refresh of both SWV2C channels.
+local function identify_handler(driver, device, zb_rx)
+  if not is_dual_channel(device) then return end
+  device.thread:call_with_delay(2, function()
+    device:send(OnOff.attributes.OnOff:read(device))
+    device:send(OnOff.attributes.OnOff:read(device):to_endpoint(0x02))
+  end)
 end
 
 local sonoff_valve_handler = {
   NAME = "SONOFF Water Valve Handler",
+  lifecycle_handlers = {
+    init = device_init,
+    added = device_added,
+    doConfigure = do_configure,
+    driverSwitched = driver_switched,
+  },
   zigbee_handlers = {
     attr = {
-      -- OnOff property reporting → valve event (to compensate for the defect of the parent driver's default mapping being skipped)
       [OnOff.ID] = {
         [OnOff.attributes.OnOff.ID] = onoff_attr_handler
-      },
-      -- Battery percentage attribute reporting → battery event
-      [PowerConfiguration.ID] = {
-        [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_percentage_handler
+      }
+    },
+    cluster = {
+      [Identify.ID] = {
+        [Identify.server.commands.Identify.ID] = identify_handler
       }
     }
   },
