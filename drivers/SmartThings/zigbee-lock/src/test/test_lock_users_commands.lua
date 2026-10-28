@@ -62,16 +62,6 @@ local function seed_credentials(entries)
   test.wait_for_events()
 end
 
--- Set totalUsersSupported on the mock device and consume the resulting event.
-local function set_total_users_supported(n)
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main",
-      capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  )
-  mock_device:emit_event(capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  test.wait_for_events()
-end
-
 -- ============================================================================
 -- addUser
 -- ============================================================================
@@ -162,31 +152,6 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        ))
-    )
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "addUser: returns resourceExhausted when totalUsersSupported has been reached",
-  function()
-    set_total_users_supported(2)
-    seed_users({
-      { userIndex = 1, userName = "Alice", userType = "guest" },
-      { userIndex = 2, userName = "Bob",   userType = "guest" },
-    })
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Carol", "guest" } },
-    })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "resourceExhausted" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

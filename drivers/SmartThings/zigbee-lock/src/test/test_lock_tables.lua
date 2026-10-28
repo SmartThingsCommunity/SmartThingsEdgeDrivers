@@ -108,16 +108,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "add_entry: returns RESOURCE_EXHAUSTED when table is at max capacity",
+  "add_entry: returns RESOURCE_EXHAUSTED when the credentials table is at max capacity",
   function()
     local entries = {}
-    for i = 1, 20 do
-      entries[i] = { userIndex = i, userType = "guest", userName = "User" .. i }
+    for i = 0, 19 do
+      entries[#entries + 1] = { userIndex = i + 1, credentialIndex = i, credentialType = "pin" }
     end
-    seed_users(entries)
+    seed_credentials(entries)
 
-    local overflow = { userIndex = 21, userType = "guest", userName = "Overflow" }
-    local result = table_utils.add_entry(mock_device, "users", overflow)
+    local overflow = { userIndex = 21, credentialIndex = 20, credentialType = "pin" }
+    local result = table_utils.add_entry(mock_device, "credentials", overflow)
     assert(result == constants.COMMAND_RESULT.RESOURCE_EXHAUSTED,
       "Expected RESOURCE_EXHAUSTED, got: " .. tostring(result))
   end
@@ -513,11 +513,11 @@ test.register_coroutine_test(
 -- ===========================================================================
 
 test.register_coroutine_test(
-  "get_max_entries: returns the default of 20 when the attribute is not set",
+  "get_max_entries: returns nil for the users table, which has no limit",
   function()
     local result = table_utils.get_max_entries(mock_device, "users")
-    assert(result == 20,
-      "Expected default max of 20, got: " .. tostring(result))
+    assert(result == nil,
+      "Expected no max, got: " .. tostring(result))
   end
 )
 

@@ -95,10 +95,6 @@ function lock_utils.add_reported_credential(device, credential_index, is_master)
   local tables = require "lock_utils.tables"
   if tables.find_entry(device, "credentials", credential_index) then return end
   local user_index = tables.next_index(device, "users")
-  if user_index > tables.get_max_entries(device, "users") then
-    device.log.warn(string.format("no free user slot for the code at credential index %d", credential_index))
-    return
-  end
   lock_utils.add_user_and_credential(device, {
     userIndex       = user_index,
     credentialIndex = credential_index,
