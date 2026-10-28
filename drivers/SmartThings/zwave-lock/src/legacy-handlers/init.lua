@@ -54,6 +54,7 @@ end
 --- @param cmd table
 local function migrate(driver, device, cmd)
   local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
+  local table_utils = require "lock_utils.tables"
   local get_lock_codes = LockCodesDefaults.get_lock_codes
   local lock_users = {}
   local lock_credentials = {}
@@ -65,10 +66,17 @@ local function migrate(driver, device, cmd)
   end
 
   table.sort(ordered_codes)
-  for index = 1, #ordered_codes do
-    local code_slot, code_name = ordered_codes[index], lock_codes[ ordered_codes[index] ]
-    table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
-    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
+  -- Slots that are not valid credential indices (e.g. 0, which means "all users" in Z-Wave, or non-numeric)
+  -- are dropped rather than migrated.
+  local min_credential = table_utils.get_minimum(device, "credentials")
+  for _, code_slot in ipairs(ordered_codes) do
+    local credential_index = tonumber(code_slot)
+    if math.type(credential_index) == "integer" and credential_index >= min_credential then
+      local code_name = lock_codes[code_slot]
+      local user_index = #lock_users + 1
+      table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = code_name})
+      table.insert(lock_credentials, {userIndex = user_index, credentialIndex = credential_index, credentialType = "pin"})
+    end
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))

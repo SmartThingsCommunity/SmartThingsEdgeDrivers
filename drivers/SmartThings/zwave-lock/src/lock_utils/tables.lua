@@ -146,6 +146,12 @@ function table_utils.next_index(device, table_name)
   return idx
 end
 
+function table_utils.get_minimum(device, table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return end
+  return def.minimum
+end
+
 function table_utils.get_max_entries(device, table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return end
