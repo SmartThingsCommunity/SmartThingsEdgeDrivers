@@ -17,19 +17,6 @@ local access_control_event = Notification.event.access_control
 
 test.disable_startup_messages()
 
-
-if table_utils.find_all_entries_by == nil then
-  function table_utils.find_all_entries_by(device, table_name, key, value)
-    local entries = table_utils.get_state(device, table_name) or {}
-    local matches = {}
-    for _, entry in ipairs(entries) do
-      if entry[key] == value then table.insert(matches, entry) end
-    end
-    return matches
-  end
-end
-
-
 local zwave_lock_endpoints = {
   {
     command_classes = {
@@ -57,7 +44,10 @@ local function install_state_mocks()
   rawset(mock_device, "log", {
     debug = function() end, info = function() end, warn = function() end, error = function() end,
   })
-  rawset(mock_device, "supports_capability", function() return true end)
+  rawset(mock_device, "supports_capability", function(_, capability)
+    local id = type(capability) == "table" and capability.ID or capability
+    return id == capabilities.lockUsers.ID or id == capabilities.lockCredentials.ID
+  end)
   mock_device.get_latest_state = function(_, component_id, capability_id, attribute_name, default_value)
     local value = mock_latest_state[mock_state_key(component_id, capability_id, attribute_name)]
     if value == nil then
@@ -447,10 +437,11 @@ test.register_coroutine_test(
       { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} },
     })
 
+    -- Per-credential clears fire at 2 * (i - 1) s; final cleanup at 2 * #credentials + 4 s.
     test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
     test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
-    test.mock_time.advance_time(0)
     expect_clear_pin_code(1)
+    test.mock_time.advance_time(0)
     test.wait_for_events()
 
     test.mock_time.advance_time(6)
@@ -500,8 +491,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "deleteAllCredentials: returns busy when another operation is already in progress",
   function()
-    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
-
     -- First deleteAllCredentials starts the z-wave flow (device is now busy)
     test.socket.capability:__queue_receive({
       mock_device.id,

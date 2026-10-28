@@ -19,17 +19,6 @@ local json              = require "st.json"
 
 
 test.disable_startup_messages()
-if table_utils.find_all_entries_by == nil then
-  function table_utils.find_all_entries_by(device, table_name, key, value)
-    local entries = table_utils.get_state(device, table_name) or {}
-    local matches = {}
-    for _, entry in ipairs(entries) do
-      if entry[key] == value then table.insert(matches, entry) end
-    end
-    return matches
-  end
-end
-
 
 -- ── Shared device ──────────────────────────────────────────────────────────
 
@@ -70,8 +59,11 @@ local function install_state_mocks()
     error = function() end,
   })
 
-  -- get_state guards with device:supports_capability; always return true here.
-  rawset(mock_device, "supports_capability", function() return true end)
+  -- get_state guards with device:supports_capability; only the seeded capabilities are supported.
+  rawset(mock_device, "supports_capability", function(_, capability)
+    local id = type(capability) == "table" and capability.ID or capability
+    return id == capabilities.lockUsers.ID or id == capabilities.lockCredentials.ID
+  end)
 
   -- get_state / get_max_entries use device:get_latest_state to read
   -- capability attribute values from the state cache.
