@@ -151,24 +151,30 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   -- zb response values
-  local user_id = tonumber(zb_rx.body.zcl_body.user_id.value)
+  local user_id = lock_utils.normalize_user_id(device, tonumber(zb_rx.body.zcl_body.user_id.value))
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
     local user_status = zb_rx.body.zcl_body.user_status.value
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
       -- If an entry already exists at this index, this will be a no-op.
+      -- Yale only: the master code (slot 0) is not a user slot, but the capabilities require userIndex >= 1, so
+      -- it is owned by a user at the index given by tables.master_user_index, and the master credential and its
+      -- user do not count toward the limits.
+      local is_master = lock_utils.is_yale(device) and user_id == tables.MASTER_CREDENTIAL_INDEX
+      local user_index = is_master and tables.master_user_index(device) or user_id
+      local default_name = is_master and "Master Code" or ("Guest " .. user_id)
       tables.add_entry(device, "users", {
-        userIndex = user_id,
-        userName = "Guest " .. user_id,
-        userType = "guest",
-      })
+        userIndex = user_index,
+        userName = default_name,
+        userType = is_master and "adminMember" or "guest",
+      }, is_master)
       tables.add_entry(device, "credentials", {
-        userIndex = user_id,
+        userIndex = user_index,
         credentialIndex = user_id,
         credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. user_id,
-      })
+        credentialName = default_name,
+      }, is_master)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     else
@@ -176,11 +182,22 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
     end
 
-    if user_id >= tables.get_max_entries(device, "credentials") or
-     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+    if lock_utils.is_yale(device) and user_id == tables.MASTER_CREDENTIAL_INDEX then
+      -- the master code is the last slot we sync on Yale locks, so we are done.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
+    elseif user_id >= tables.get_max_entries(device, "credentials") or
+     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+      if lock_utils.is_yale(device) then
+        -- Yale locks also have a readable master code in slot 0, which we sync last.
+        device:set_field(consts.SYNC.CODE_INDEX, tables.MASTER_CREDENTIAL_INDEX)
+        lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = tables.MASTER_CREDENTIAL_INDEX })
+        device:send(clusters.DoorLock.server.commands.GetPINCode(device, tables.MASTER_CREDENTIAL_INDEX))
+      else
+        device:set_field(consts.SYNC.CODE_INDEX, nil)
+        lock_utils.clear_busy_state(device)
+      end
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
       device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
@@ -195,14 +212,8 @@ end
 
 function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
   -- zb response values
-  local user_id = tonumber(zb_rx.body.zcl_body.user_id.value)
+  local user_id = lock_utils.normalize_user_id(device, tonumber(zb_rx.body.zcl_body.user_id.value))
   local event_code = tonumber(zb_rx.body.zcl_body.program_event_code.value)
-
-  if device:get_manufacturer() == "ASSA ABLOY iRevo" or device:get_manufacturer() == "Yale" then
-    if user_id >= 256 then -- Index is incorrectly written on these devices. Attempt to shift it to get an actual value
-      user_id = user_id >> 8
-    end
-  end
 
   local ProgramEventCode = clusters.DoorLock.types.ProgramEventCode
   -- MASTER_CODE_CHANGED = 1

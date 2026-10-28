@@ -563,4 +563,165 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "get_pin_code_response: Yale master code reported as 65518 is synced as credential 0 owned by an extra user",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 0, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device_yale.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device_yale,
+        65518,
+        DoorLockUserStatus.OCCUPIED_ENABLED,
+        DoorLockUserType.UNRESTRICTED,
+        "52963814"
+      ),
+    })
+
+    -- Master code is owned by a user at the default max index (20), and as the last slot synced it ends the sync
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 20, userName = "Master Code", userType = "adminMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 20, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+    assert(mock_device_yale:get_field(constants.SYNC.CODE_INDEX) == nil)
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: Yale master code correctly reported as user_id 0 is synced the same way",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 0, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device_yale.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device_yale,
+        0,
+        DoorLockUserStatus.OCCUPIED_ENABLED,
+        DoorLockUserType.UNRESTRICTED,
+        "52963814"
+      ),
+    })
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 20, userName = "Master Code", userType = "adminMember" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_yale:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 20, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+    assert(mock_device_yale:get_field(constants.SYNC.CODE_INDEX) == nil)
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: Yale sync reads the master code slot last",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device_yale:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device_yale:set_field(constants.SYNC.CODE_INDEX, 6, {})
+    mock_device_yale:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    -- Sixth consecutive unoccupied slot ends the regular sync, so the master code slot is requested
+    test.socket.zigbee:__queue_receive({
+      mock_device_yale.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device_yale, 6, DoorLockUserStatus.AVAILABLE, DoorLockUserType.UNRESTRICTED, ""),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_yale.id,
+      DoorLock.server.commands.GetPINCode(mock_device_yale, 0),
+    })
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "is_full: the master code credential and its user do not count toward the limits",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(1)))
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(1)))
+    mock_device_yale:emit_event(capabilities.lockUsers.totalUsersSupported(1))
+    mock_device_yale:emit_event(capabilities.lockCredentials.pinUsersSupported(1))
+    test.wait_for_events()
+
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockUsers.users({ { userIndex = 2, userName = "Master Code", userType = "guest" } }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockCredentials.credentials({ { userIndex = 2, credentialIndex = 0, credentialType = "pin" } }, { visibility = { displayed = false } })))
+    assert(table_utils.add_entry(mock_device_yale, "users", { userIndex = 2, userName = "Master Code", userType = "guest" }, true) == "success")
+    assert(table_utils.add_entry(mock_device_yale, "credentials", { userIndex = 2, credentialIndex = 0, credentialType = "pin" }, true) == "success")
+    test.wait_for_events()
+
+    assert(not table_utils.is_full(mock_device_yale, "users"))
+    assert(not table_utils.is_full(mock_device_yale, "credentials"))
+  end
+)
+
+test.register_coroutine_test(
+  "Yale master code: add/delete commands that would touch it are rejected as invalidCommand",
+  function()
+    mock_device_yale:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    -- seed the master code entries (credential 0, owned by user 20; default max users is 20)
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockUsers.users({ { userIndex = 20, userName = "Master Code", userType = "adminMember" } }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_yale:generate_test_message("main", capabilities.lockCredentials.credentials({ { userIndex = 20, credentialIndex = 0, credentialType = "pin" } }, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device_yale, "users", { userIndex = 20, userName = "Master Code", userType = "adminMember" }, true)
+    table_utils.add_entry(mock_device_yale, "credentials", { userIndex = 20, credentialIndex = 0, credentialType = "pin" }, true)
+    test.wait_for_events()
+
+    local function expect_invalid(capability, command_name)
+      test.socket.capability:__expect_send(
+        mock_device_yale:generate_test_message("main",
+          capability.commandResult(
+            { commandName = command_name, statusCode = "invalidCommand" },
+            { state_change = true, visibility = { displayed = false } }
+          ))
+      )
+    end
+
+    -- addCredential for a user index past the max would target a slot that does not exist
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 21, "guest", "pin", "1234" } } })
+    expect_invalid(capabilities.lockCredentials, "addCredential")
+    test.wait_for_events()
+
+    -- deleting the master code's owner would clear the master code
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 20 } } })
+    expect_invalid(capabilities.lockUsers, "deleteUser")
+    test.wait_for_events()
+
+    -- the master credential can't be deleted directly
+    test.socket.capability:__queue_receive({ mock_device_yale.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 0, "pin" } } })
+    expect_invalid(capabilities.lockCredentials, "deleteCredential")
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()

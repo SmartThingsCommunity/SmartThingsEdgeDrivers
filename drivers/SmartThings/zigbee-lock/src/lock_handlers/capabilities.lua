@@ -76,6 +76,12 @@ function CapabilityHandlers.delete_user(driver, device, command)
     return
   end
 
+  -- Yale only: deleting the master code's owner would clear the master code on the lock.
+  if tables.is_master_user(device, command.args.userIndex) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   local associated_credentials = tables.find_all_entries_by(device, "credentials", "userIndex", command.args.userIndex)
   for _, associated_credential in ipairs(associated_credentials) do
     -- Set busy state with the full user+credential context BEFORE injecting.
@@ -127,11 +133,18 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
+  -- Yale only: user indexes past the max belong to the master code's owner. The PIN slot is derived from
+  -- userIndex, so this would attempt to write a slot that does not exist on the lock.
+  if tables.master_credential_index(device) ~= nil and command.args.userIndex > tables.get_max_entries(device, "users") then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   -- A userIndex of 0 means "auto-assign the next available slot"
   local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  if tables.is_full(device, "credentials") then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
@@ -187,6 +200,11 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
   else
+    -- Yale only: the master code can be changed but not deleted.
+    if tables.is_master_credential(device, command.args.credentialIndex) then
+      lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+      return
+    end
     -- Standalone deleteCredential: look up the credential to obtain its associated userIndex.
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then

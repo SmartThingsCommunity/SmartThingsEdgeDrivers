@@ -35,6 +35,29 @@ function lock_utils.clear_busy_state(device)
 end
 
 
+-- [[ YALE INDEX HANDLING ]] --
+
+-- Yale/iRevo locks report the master code slot (index 0) as this user id.
+local YALE_MASTER_CODE_REPORTED_ID = 65518
+
+function lock_utils.is_yale(device)
+  return device:get_manufacturer() == "Yale"
+end
+
+-- Convert the user id reported by the lock to the actual slot index.
+function lock_utils.normalize_user_id(device, user_id)
+  if lock_utils.is_yale(device) and user_id == YALE_MASTER_CODE_REPORTED_ID then
+    return 0
+  end
+  local manufacturer = device:get_manufacturer()
+  if (manufacturer == "Yale" or manufacturer == "ASSA ABLOY iRevo") and user_id >= 256 then
+    -- Index is incorrectly written on these devices. Attempt to shift it to get an actual value
+    return user_id >> 8
+  end
+  return user_id
+end
+
+
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
@@ -43,7 +66,8 @@ function lock_utils.sync_device_state(device)
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 
   -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
-  -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0.
+  -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0, which
+  -- is synced last, and only on Yale locks (where it is known to be readable and writable).
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
     device:set_field(consts.SYNC.CODE_INDEX, 1)
   end
