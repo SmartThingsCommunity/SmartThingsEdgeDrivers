@@ -387,6 +387,83 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "deleteCredential: removes a credential whose userIndex maps to no user",
+  function()
+    seed_credentials({ { userIndex = 7, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential",
+        args = { 1, "pin" } },
+    })
+
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 1) })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ClearPINCodeResponse.build_test_rx(mock_device, ResponseStatus.PASS),
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 1, userIndex = 7 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "deleteCredential: removes a credential whose credentialIndex maps to no credential",
+  function()
+    -- the credential exists in state, but the lock has nothing stored in that slot
+    seed_users({ { userIndex = 3, userName = "Alice", userType = "guest" } })
+    seed_credentials({ { userIndex = 3, credentialIndex = 3, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential",
+        args = { 3, "pin" } },
+    })
+
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 3) })
+    test.wait_for_events()
+
+    -- clearing an empty slot succeeds on the lock, so the stale state entry should be removed
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ClearPINCodeResponse.build_test_rx(mock_device, ResponseStatus.PASS),
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 3, userIndex = 3 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
   "deleteCredential: emits failure when the lock returns FAIL",
   function()
     seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
