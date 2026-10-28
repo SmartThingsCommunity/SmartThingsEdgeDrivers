@@ -50,13 +50,6 @@ function lock_utils.sync_device_state(device)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))
 end
 
--- Yale locks hold a master code at credential index 0. Keep it represented locally at all times, so that the slot is
--- never handed out as the next available credential index.
-function lock_utils.ensure_yale_master_code(device)
-  if lock_utils.is_yale(device) then
-    lock_utils.add_reported_credential(device, consts.YALE_MASTER_CODE_SLOT, true)
-  end
-end
 
 -- [[ CREDENTIAL TABLE MANAGEMENT ]] --
 
