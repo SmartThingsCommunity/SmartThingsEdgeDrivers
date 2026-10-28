@@ -381,6 +381,7 @@ end
 
 local migrate = function(driver, device, command)
   local post_migration_consts = require "lock_utils.constants"
+  local table_utils = require "lock_utils.tables"
   local LockUsers = capabilities.lockUsers
   local LockCredentials = capabilities.lockCredentials
 
@@ -408,17 +409,32 @@ local migrate = function(driver, device, command)
   local users, credentials = {}, {}
   local cached_lock_codes = lock_utils.get_lock_codes(device)
   local ordered_code_slots = {}
+  local occupied_user_indices = {}
+  local min_user = table_utils.get_minimum(device, "users")
+  local min_credential = table_utils.get_minimum(device, "credentials")
   for code_slot_str, _ in pairs(cached_lock_codes) do
-    table.insert(ordered_code_slots, tonumber(code_slot_str))
+    local code_slot = tonumber(code_slot_str)
+    -- Slots that are not valid credential indices are dropped rather than migrated.
+    if math.type(code_slot) == "integer" and code_slot >= min_credential then
+      table.insert(ordered_code_slots, code_slot)
+      if code_slot >= min_user then occupied_user_indices[code_slot] = true end
+    end
   end
   table.sort(ordered_code_slots)
+  local next_free_user_index = min_user
   for _, code_slot in ipairs(ordered_code_slots) do
     local code_name = cached_lock_codes[tostring(code_slot)]
-    -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
-    if code_slot then
-      table.insert(users, { userIndex = code_slot, userType = "guest", userName = code_name })
-      table.insert(credentials, { userIndex = code_slot, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })
+    -- A valid credential slot (e.g. 0) may not be a valid userIndex. Its user takes the lowest unused userIndex
+    -- without displacing any slot whose number is already a valid userIndex.
+    local user_index = code_slot
+    if code_slot < min_user then
+      while occupied_user_indices[next_free_user_index] do next_free_user_index = next_free_user_index + 1 end
+      user_index = next_free_user_index
+      occupied_user_indices[user_index] = true
     end
+    -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
+    table.insert(users, { userIndex = user_index, userType = "guest", userName = code_name })
+    table.insert(credentials, { userIndex = user_index, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })
   end
   -- manually ensure user/cred state is persisted, then emit events to populate the new capabilities with the migrated data.
   device:set_field("persistedUsers", users, { persist = true })
