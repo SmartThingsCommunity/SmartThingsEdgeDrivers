@@ -1,16 +1,5 @@
 -- Copyright 2026 SmartThings, Inc.
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -36,7 +25,7 @@ local enabled_optional_capabilities = {
 
 local mock_schlage_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition(
-    "lock-modular-uwb-settings.yml",
+    "lock-modular.yml",
     { enabled_optional_capabilities = enabled_optional_capabilities }
   ),
   manufacturer_info = {
@@ -121,6 +110,21 @@ test.register_coroutine_test(
     })
     local other_matched = can_handle(nil, nil, other_device)
     assert(other_matched == false, "Expected can_handle to return false for non-Schlage device")
+
+    local cluster_device = {
+      manufacturer_info = {
+        vendor_id = constants.SCHLAGE_VENDOR_ID,
+        product_id = 0x0001,
+      },
+      get_endpoints = function(_, cluster_id)
+        if cluster_id == constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID then
+          return { 1 }
+        end
+        return {}
+      end,
+    }
+    local cluster_matched = can_handle(nil, nil, cluster_device)
+    assert(cluster_matched == true, "Expected can_handle to match Allegion vendor plus custom cluster")
   end
 )
 
@@ -422,56 +426,7 @@ test.register_message_test(
 test.register_coroutine_test(
   "Handle doConfigure lifecycle event for Schlage Sense Pro UWB lock",
   function()
-    mock_schlage_device:expect_metadata_update({
-      profile = "lock-modular-uwb-settings",
-      optional_component_capabilities = {
-        {
-          "main",
-          {
-            constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
-            constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
-          }
-        }
-      }
-    })
     mock_schlage_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.socket.device_lifecycle:__queue_receive({ mock_schlage_device.id, "doConfigure" })
-    test.socket.capability:__expect_send(
-      mock_schlage_device:generate_test_message(
-        "main",
-        lockUwbApproachSettings.supportedApproachDirections(
-          constants.SUPPORTED_APPROACH_DIRECTIONS, { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_schlage_device:generate_test_message(
-        "main",
-        lockUwbModeSettings.supportedIntentModes(
-          constants.SUPPORTED_INTENT_MODES, { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.matter:__expect_send({
-      mock_schlage_device.id,
-      cluster_base.read(
-        mock_schlage_device,
-        1,
-        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
-        constants.ATTR_FIELD_OF_VIEW_ID,
-        nil
-      )
-    })
-    test.socket.matter:__expect_send({
-      mock_schlage_device.id,
-      cluster_base.read(
-        mock_schlage_device,
-        1,
-        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
-        constants.ATTR_INTENT_MODE_ID,
-        nil
-      )
-    })
     test.socket.capability:__expect_send(
       mock_schlage_device:generate_test_message(
         "main",
@@ -493,18 +448,40 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_schlage_device:generate_test_message(
         "main",
-        capabilities.lockAlarm.alarm.clear({ state_change = true })
+        lockUwbApproachSettings.supportedApproachDirections(
+          constants.SUPPORTED_APPROACH_DIRECTIONS, { visibility = { displayed = false } }
+        )
       )
     )
     test.socket.capability:__expect_send(
       mock_schlage_device:generate_test_message(
         "main",
-        capabilities.lockAlarm.supportedAlarmValues(
-          { "unableToLockTheDoor" },
-          { visibility = { displayed = false } }
+        lockUwbModeSettings.supportedIntentModes(
+          constants.SUPPORTED_INTENT_MODES, { visibility = { displayed = false } }
         )
       )
     )
+    test.socket.matter:__expect_send({
+      mock_schlage_device.id,
+      cluster_base.read(
+        mock_schlage_device,
+        1,
+        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
+        constants.ATTR_FIELD_OF_VIEW_ID,
+        nil
+      )
+    })
+    test.socket.matter:__expect_send({
+      mock_schlage_device.id,
+      cluster_base.read(
+        mock_schlage_device,
+        1,
+        constants.SCHLAGE_UWB_CUSTOM_CLUSTER_ID,
+        constants.ATTR_INTENT_MODE_ID,
+        nil
+      )
+    })
+    test.socket.device_lifecycle:__queue_receive({ mock_schlage_device.id, "doConfigure" })
     test.wait_for_events()
   end
 )
@@ -512,20 +489,25 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle driverSwitched lifecycle event for Schlage Sense Pro UWB lock",
   function()
-    mock_schlage_device:expect_metadata_update({
-      profile = "lock-modular-uwb-settings",
-      optional_component_capabilities = {
-        {
-          "main",
-          {
-            constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
-            constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
-          }
-        }
-      }
-    })
     mock_schlage_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.socket.device_lifecycle:__queue_receive({ mock_schlage_device.id, "driverSwitched" })
+    test.socket.capability:__expect_send(
+      mock_schlage_device:generate_test_message(
+        "main",
+        capabilities.lock.supportedLockValues(
+          { "locked", "unlocked", "not fully locked" },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_schlage_device:generate_test_message(
+        "main",
+        capabilities.lock.supportedLockCommands(
+          { "lock", "unlock" },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
     test.socket.capability:__expect_send(
       mock_schlage_device:generate_test_message(
         "main",
@@ -562,6 +544,7 @@ test.register_coroutine_test(
         nil
       )
     })
+    test.socket.device_lifecycle:__queue_receive({ mock_schlage_device.id, "driverSwitched" })
     test.wait_for_events()
   end
 )
@@ -628,7 +611,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({ mock_existing_schlage_device.id, subscribe_request })
 
     mock_existing_schlage_device:expect_metadata_update({
-      profile = "lock-modular-uwb-settings",
+      profile = "lock-modular",
       optional_component_capabilities = {
         {
           "main",
@@ -639,6 +622,24 @@ test.register_coroutine_test(
         }
       }
     })
+    test.socket.capability:__expect_send(
+      mock_existing_schlage_device:generate_test_message(
+        "main",
+        capabilities.lock.supportedLockValues(
+          { "locked", "unlocked", "not fully locked" },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_existing_schlage_device:generate_test_message(
+        "main",
+        capabilities.lock.supportedLockCommands(
+          { "lock", "unlock" },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
     test.socket.matter:__expect_send({
       mock_existing_schlage_device.id,
       cluster_base.read(
@@ -661,6 +662,46 @@ test.register_coroutine_test(
     })
 
     test.socket.device_lifecycle:__queue_receive({ mock_existing_schlage_device.id, "init" })
+    test.wait_for_events()
+  end,
+  {
+    test_init = function() end
+  }
+)
+
+test.register_coroutine_test(
+  "setApproachDirection does not write when no UWB endpoint exists",
+  function()
+    local device = test.mock_device.build_test_matter_device({
+      profile = t_utils.get_profile_definition(
+        "lock-modular.yml",
+        { enabled_optional_capabilities = enabled_optional_capabilities }
+      ),
+      manufacturer_info = {
+        vendor_id = constants.SCHLAGE_VENDOR_ID,
+        product_id = constants.SCHLAGE_SENSE_PRO_PRODUCT_ID,
+      },
+      endpoints = {
+        {
+          endpoint_id = 0,
+          clusters = {
+            { cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER" },
+          },
+        }
+      }
+    })
+
+    test.mock_device.add_test_device(device)
+    test.socket.device_lifecycle:__queue_receive({ device.id, "init" })
+    test.socket.capability:__queue_receive({
+      device.id,
+      {
+        capability = constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
+        component = "main",
+        command = "setApproachDirection",
+        args = { "frontOnly" }
+      }
+    })
     test.wait_for_events()
   end,
   {
