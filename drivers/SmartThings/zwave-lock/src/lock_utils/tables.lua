@@ -136,8 +136,7 @@ end
 -- Return the lowest integer, starting at the table's minimum, not yet used as the
 -- match_key in the named table. Used to auto-assign the next available slot for a new entry.
 function table_utils.next_index(device, table_name)
-  local def = resolve_table_def(device, table_name)
-  if not def then return 1 end
+  local def = assert(DEFS[table_name], string.format("table_helpers: unknown table %q", table_name))
   local t = table_utils.get_state(device, def) or {}
   local occupied = {}
   for _, entry in ipairs(t) do occupied[entry[def.match_key]] = true end
@@ -147,8 +146,7 @@ function table_utils.next_index(device, table_name)
 end
 
 function table_utils.get_minimum(device, table_name)
-  local def = resolve_table_def(device, table_name)
-  if not def then return end
+  local def = assert(DEFS[table_name], string.format("table_helpers: unknown table %q", table_name))
   return def.minimum
 end
 

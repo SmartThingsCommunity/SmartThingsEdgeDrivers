@@ -61,22 +61,23 @@ local function migrate(driver, device, cmd)
   local lock_codes = get_lock_codes(device)
   local ordered_codes = {}
 
-  for code in pairs(lock_codes) do
-    table.insert(ordered_codes, code)
-  end
-
-  table.sort(ordered_codes)
   -- Slots that are not valid credential indices (e.g. 0, which means "all users" in Z-Wave, or non-numeric)
   -- are dropped rather than migrated.
   local min_credential = table_utils.get_minimum(device, "credentials")
-  for _, code_slot in ipairs(ordered_codes) do
+  for code_slot in pairs(lock_codes) do
     local credential_index = tonumber(code_slot)
     if math.type(credential_index) == "integer" and credential_index >= min_credential then
-      local code_name = lock_codes[code_slot]
-      local user_index = #lock_users + 1
-      table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = code_name})
-      table.insert(lock_credentials, {userIndex = user_index, credentialIndex = credential_index, credentialType = "pin"})
+      table.insert(ordered_codes, {slot = code_slot, index = credential_index})
+    else
+      device.log.warn(string.format("Dropping lock code slot %q during migration: not a valid credential index", tostring(code_slot)))
     end
+  end
+
+  table.sort(ordered_codes, function(a, b) return a.index < b.index end)
+  for _, code in ipairs(ordered_codes) do
+    local user_index = #lock_users + 1
+    table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = lock_codes[code.slot]})
+    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin"})
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
