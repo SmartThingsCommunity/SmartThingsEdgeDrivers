@@ -151,7 +151,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- a requested slot must not already hold a credential (this also protects master codes)
+  -- a requested slot must not already hold a credential
   if tables.find_entry(device, "credentials", cred_index) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.OCCUPIED)
     return
