@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities          = require "st.capabilities"
+local utils                 = require "st.utils"
 local lock_utils            = require "legacy-handlers.legacy_lock_utils"
 local post_migration_consts = require "lock_utils.constants"
 local table_utils           = require "lock_utils.tables"
@@ -37,7 +38,7 @@ return function(driver, device, command, master_code_slot)
 
   -- migrate stored lock codes slots and user names
   local users, credentials = {}, {}
-  local cached_lock_codes = lock_utils.get_lock_codes(device)
+  local cached_lock_codes = utils.deep_copy(lock_utils.get_lock_codes(device))
   local ordered_code_slots = {}
   local occupied_user_indices = {}
   local min_user = table_utils.get_minimum(device, "users")
@@ -45,10 +46,19 @@ return function(driver, device, command, master_code_slot)
   for code_slot_str, _ in pairs(cached_lock_codes) do
     local code_slot = tonumber(code_slot_str)
     -- Slots that are not valid credential indices are dropped rather than migrated.
-    if math.type(code_slot) == "integer" and code_slot >= min_credential then
+    if code_slot and math.type(code_slot) == "integer" and code_slot >= min_credential then
       table.insert(ordered_code_slots, code_slot)
       if code_slot >= min_user then occupied_user_indices[code_slot] = true end
+    else
+      device.log.warn(string.format("migrate: dropping lockCodes slot %q, not a valid credential index", tostring(code_slot_str)))
     end
+  end
+  -- The master code slot should always be migrated, even if it is not among the known codes.
+  if math.type(master_code_slot) == "integer" and master_code_slot >= min_credential
+    and cached_lock_codes[tostring(master_code_slot)] == nil then
+    cached_lock_codes[tostring(master_code_slot)] = post_migration_consts.MASTER_CODE_NAME
+    table.insert(ordered_code_slots, master_code_slot)
+    if master_code_slot >= min_user then occupied_user_indices[master_code_slot] = true end
   end
   table.sort(ordered_code_slots)
   local next_free_user_index = min_user
