@@ -123,6 +123,10 @@ local camera_handler = {
         [clusters.ZoneManagement.attributes.Sensitivity.ID] = attribute_handlers.sensitivity_handler,
         [camera_fields.ZoneManagementFeatureMapAttr.ID] = attribute_handlers.camera_feature_map_handler
       },
+      [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeState.ID] = attribute_handlers.bat_charge_state_handler
+      },
       [clusters.Chime.ID] = {
         [clusters.Chime.attributes.InstalledChimeSounds.ID] = attribute_handlers.installed_chime_sounds_handler,
         [clusters.Chime.attributes.SelectedChime.ID] = attribute_handlers.selected_chime_handler

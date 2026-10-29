@@ -17,6 +17,15 @@ CameraFields.DPTZ_VIEWPORTS = "__dptz_viewports"
 CameraFields.STATUS_LIGHT_ENABLED_PRESENT = "__status_light_enabled_present"
 CameraFields.STATUS_LIGHT_BRIGHTNESS_PRESENT = "__status_light_brightness_present"
 CameraFields.HARD_PRIVACY_MODE_PRESENT = "__hard_privacy_mode_present"
+-- table keyed by endpoint id of { percent = bool, level = bool },
+-- recording which battery attributes each PowerSource endpoint supports
+CameraFields.BATTERY_SUPPORT_BY_ENDPOINT = "__battery_support_by_endpoint"
+
+CameraFields.BAT_CHARGE_STATE_MAP = {
+  [clusters.PowerSource.types.BatChargeStateEnum.IS_CHARGING] = "charging",
+  [clusters.PowerSource.types.BatChargeStateEnum.IS_AT_FULL_CHARGE] = "fullyCharged",
+  [clusters.PowerSource.types.BatChargeStateEnum.IS_NOT_CHARGING] = "stopped",
+}
 
 CameraFields.CameraAVSMFeatureMapAttr = { ID = 0xFFFC, cluster = clusters.CameraAvStreamManagement.ID }
 CameraFields.CameraAVSULMFeatureMapAttr = { ID = 0xFFFC, cluster = clusters.CameraAvSettingsUserLevelManagement.ID }
