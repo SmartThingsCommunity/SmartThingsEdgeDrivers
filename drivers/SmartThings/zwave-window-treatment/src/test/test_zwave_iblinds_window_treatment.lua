@@ -135,7 +135,7 @@ test.register_coroutine_test(
         mock_blind:generate_test_message("main", capabilities.windowShade.windowShade.closed())
       )
       test.socket.capability:__expect_send(
-        mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(99))
+        mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       )
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -205,7 +205,7 @@ test.register_coroutine_test(
         mock_blind:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.socket.capability:__expect_send(
-        mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(66))
+        mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(33))
       )
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(

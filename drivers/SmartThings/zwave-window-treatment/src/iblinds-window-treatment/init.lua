@@ -16,32 +16,38 @@ local window_preset_defaults = require "window_preset_defaults"
 
 local capability_handlers = {}
 
+-- The device receives the reversed level when reverse is set; state always holds the level the user asked for
+local function device_level(device, value)
+  return device.preferences.reverse and 99 - value or value
+end
+
+local function send_shade_level(device, value)
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(value))
+  device:send(SwitchMultilevel:Set({value = device_level(device, value)}))
+end
+
 function capability_handlers.open(driver, device)
   local value = device.preferences.defaultOnValue or 50
   device:emit_event(capabilities.windowShade.windowShade.open())
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(value))
-  device:send(SwitchMultilevel:Set({value = value}))
+  send_shade_level(device, value)
 end
 
 function capability_handlers.close(driver, device)
-  local value = device.preferences.reverse and 99 or 0
   device:emit_event(capabilities.windowShade.windowShade.closed())
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(value))
-  device:send(SwitchMultilevel:Set({value = value}))
+  send_shade_level(device, 0)
 end
 
 local function set_shade_level_helper(driver, device, value)
   value = math.max(math.min(value, 99), 0)
-  value = device.preferences.reverse and 99 - value or value
-  if value == 0 or value == 99 then
+  local device_value = device_level(device, value)
+  if device_value == 0 or device_value == 99 then
     device:emit_event(capabilities.windowShade.windowShade.closed())
-  elseif value == 50 then
+  elseif device_value == 50 then
     device:emit_event(capabilities.windowShade.windowShade.open())
   else
     device:emit_event(capabilities.windowShade.windowShade.partially_open())
   end
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(value))
-  device:send(SwitchMultilevel:Set({value = value}))
+  send_shade_level(device, value)
 end
 
 function capability_handlers.set_shade_level(driver, device, command)
