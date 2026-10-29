@@ -242,7 +242,9 @@ local function device_init(driver, device)
     local preset_position = device.preferences.presetPosition or DEFAULT_PRESET_LEVEL
     device:emit_event(capabilities.windowShadePreset.position(preset_position, {visibility = {displayed = false}}))
   end
-  device:subscribe()
+  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+    device:subscribe()
+  end
 end
 
 local function do_configure(driver, device)
@@ -298,8 +300,7 @@ local function handle_preset(driver, device, cmd)
 end
 
 local function handle_set_preset(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  device:emit_event_for_endpoint(endpoint_id, capabilities.windowShadePreset.position(cmd.args.position))
+  device:emit_event(capabilities.windowShadePreset.position(cmd.args.position))
 end
 
 local function handle_close(driver, device, cmd)
@@ -399,7 +400,8 @@ end
 local function target_position_lift_percent_100ths_handler(driver, device, ib, response)
   if type(ib.data.value) == "number" then
     local target_lift_percent = 100 - math.floor(ib.data.value / 100)
-    local latest_lift_percentage = device:get_latest_state(
+    local state_device = find_child(device, ib.endpoint_id) or device
+    local latest_lift_percentage = state_device:get_latest_state(
       "main",
       capabilities.windowShadeLevel.ID,
       capabilities.windowShadeLevel.shadeLevel.NAME
@@ -416,7 +418,8 @@ end
 local function target_position_tilt_percent_100ths_handler(driver, device, ib, response)
   if type(ib.data.value) == "number" then
     local target_tilt_percent = 100 - math.floor(ib.data.value / 100)
-    local latest_tilt_percent = device:get_latest_state(
+    local state_device = find_child(device, ib.endpoint_id) or device
+    local latest_tilt_percent = state_device:get_latest_state(
       "main",
       capabilities.windowShadeTiltLevel.ID,
       capabilities.windowShadeTiltLevel.shadeTiltLevel.NAME
@@ -434,7 +437,7 @@ end
 local function operational_status_handler(driver, device, ib, response)
   if not ib.data.value then return end
   local global_op_status = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
-  local reverse = device.preferences.reverse
+  local reverse = (find_child(device, ib.endpoint_id) or device).preferences.reverse
   local windowShade = capabilities.windowShade.windowShade
   local status_event
   if global_op_status == OP_STATUS_BITMAP.idle then
