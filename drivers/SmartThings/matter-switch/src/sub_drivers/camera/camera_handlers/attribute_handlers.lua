@@ -487,6 +487,32 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
+function CameraAttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
+  local percent_present, level_present = false, false
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      percent_present = true
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
+      level_present = true
+    end
+  end
+  if (device:get_field(camera_fields.BAT_PERCENT_REMAINING_PRESENT) or false) ~= percent_present or
+    (device:get_field(camera_fields.BAT_CHARGE_LEVEL_PRESENT) or false) ~= level_present then
+    device:set_field(camera_fields.BAT_PERCENT_REMAINING_PRESENT, percent_present, {persist = true})
+    device:set_field(camera_fields.BAT_CHARGE_LEVEL_PRESENT, level_present, {persist = true})
+    camera_cfg.reconcile_profile_and_capabilities(device)
+  end
+end
+
+function CameraAttributeHandlers.bat_charge_state_handler(driver, device, ib, response)
+  local state = camera_fields.BAT_CHARGE_STATE_MAP[ib.data.value]
+  if state then
+    device:emit_event_for_endpoint(ib, capabilities.chargingState.chargingState[state]())
+  else
+    device:emit_event_for_endpoint(ib, capabilities.chargingState.chargingState.error())
+  end
+end
+
 function CameraAttributeHandlers.camera_feature_map_handler(driver, device, ib, response)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
