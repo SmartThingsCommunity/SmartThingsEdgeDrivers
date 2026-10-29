@@ -4017,8 +4017,9 @@ test.register_coroutine_test(
 -- (like the volume range tests above) so that PowerSource combinations can be varied freely.
 local function build_fake_power_source_device(opts)
   local fields_store = {}
-  if opts.percent ~= nil then fields_store[camera_fields.BAT_PERCENT_REMAINING_PRESENT] = opts.percent end
-  if opts.level ~= nil then fields_store[camera_fields.BAT_CHARGE_LEVEL_PRESENT] = opts.level end
+  if opts.percent ~= nil or opts.level ~= nil then
+    fields_store[camera_fields.BATTERY_SUPPORT_BY_ENDPOINT] = { ["0"] = { percent = opts.percent, level = opts.level } }
+  end
   return {
     profile = { components = {} },
     endpoints = {},
@@ -4038,10 +4039,10 @@ local function build_fake_power_source_device(opts)
   }
 end
 
-local function power_source_attribute_list_ib(attribute_ids)
+local function power_source_attribute_list_ib(attribute_ids, endpoint_id)
   local elements = {}
   for _, id in ipairs(attribute_ids) do table.insert(elements, { value = id }) end
-  return { endpoint_id = 0, data = { elements = elements } }
+  return { endpoint_id = endpoint_id or 0, data = { elements = elements } }
 end
 
 local BAT_PERCENT_ID = clusters.PowerSource.attributes.BatPercentRemaining.ID
@@ -4097,8 +4098,9 @@ for _, case in ipairs(attribute_list_cases) do
 
       attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib(case.ids))
 
-      assert((fake_device:get_field(camera_fields.BAT_PERCENT_REMAINING_PRESENT) or false) == case.percent, "unexpected percentage support")
-      assert((fake_device:get_field(camera_fields.BAT_CHARGE_LEVEL_PRESENT) or false) == case.level, "unexpected level support")
+      local stored = (fake_device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT) or {})["0"] or {}
+      assert((stored.percent or false) == case.percent, "unexpected percentage support")
+      assert((stored.level or false) == case.level, "unexpected level support")
       if case.percent or case.level then
         local main_capabilities = component_capabilities(fake_device.updated_metadata, "main")
         assert(list_contains(main_capabilities, capabilities.battery.ID) == case.percent, "battery should follow percentage support")
@@ -4120,6 +4122,56 @@ test.register_coroutine_test(
     attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ BAT_PERCENT_ID }))
 
     assert(fake_device.updated_metadata == nil, "no profile update expected when support is unchanged")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+local multi_endpoint_cases = {
+  { name = "battery endpoint reports before wired endpoint", order = { 2, 1 } },
+  { name = "wired endpoint reports before battery endpoint", order = { 1, 2 } },
+}
+
+for _, case in ipairs(multi_endpoint_cases) do
+  test.register_coroutine_test(
+    "PowerSource AttributeList reports from multiple endpoints should not overwrite each other: " .. case.name,
+    function()
+      local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+      local fake_device = build_fake_power_source_device({})
+      local reports = {
+        [1] = power_source_attribute_list_ib({ 0x00, 0x01 }, 1), -- wired: no battery attributes
+        [2] = power_source_attribute_list_ib({ 0x00, BAT_LEVEL_ID, BAT_PERCENT_ID }, 2), -- battery
+      }
+
+      for _, ep in ipairs(case.order) do
+        attribute_handlers.power_source_attribute_list_handler({}, fake_device, reports[ep])
+      end
+
+      -- re-evaluate the profile from the stored state, as any later reconcile would
+      fake_device.updated_metadata = nil
+      require("sub_drivers.camera.camera_utils.device_configuration").match_profile(fake_device)
+      local main_capabilities = component_capabilities(fake_device.updated_metadata, "main")
+      assert(list_contains(main_capabilities, capabilities.battery.ID), "battery should be supported regardless of report order")
+      assert(not list_contains(main_capabilities, capabilities.batteryLevel.ID), "batteryLevel should not be used when percentage is supported")
+    end,
+    {
+      min_api_version = 14
+    }
+  )
+end
+
+test.register_coroutine_test(
+  "PowerSource AttributeList should clear support when the same endpoint later drops the attributes",
+  function()
+    local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+    local fake_device = build_fake_power_source_device({})
+
+    attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ BAT_PERCENT_ID }, 2))
+    attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ 0x00 }, 2))
+
+    local stored = fake_device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT)["2"]
+    assert(stored.percent == false and stored.level == false, "support should be cleared for that endpoint")
   end,
   {
     min_api_version = 14

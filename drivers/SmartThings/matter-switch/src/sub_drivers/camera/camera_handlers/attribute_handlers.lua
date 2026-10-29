@@ -496,10 +496,14 @@ function CameraAttributeHandlers.power_source_attribute_list_handler(driver, dev
       level_present = true
     end
   end
-  if (device:get_field(camera_fields.BAT_PERCENT_REMAINING_PRESENT) or false) ~= percent_present or
-    (device:get_field(camera_fields.BAT_CHARGE_LEVEL_PRESENT) or false) ~= level_present then
-    device:set_field(camera_fields.BAT_PERCENT_REMAINING_PRESENT, percent_present, {persist = true})
-    device:set_field(camera_fields.BAT_CHARGE_LEVEL_PRESENT, level_present, {persist = true})
+  -- store support per endpoint so that a report from one PowerSource endpoint (e.g. wired) cannot
+  -- overwrite what another endpoint (e.g. battery) reported
+  local support_by_ep = device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT) or {}
+  local ep_key = tostring(ib.endpoint_id)
+  local previous = support_by_ep[ep_key] or {}
+  if (previous.percent or false) ~= percent_present or (previous.level or false) ~= level_present then
+    support_by_ep[ep_key] = { percent = percent_present, level = level_present }
+    device:set_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT, support_by_ep, {persist = true})
     camera_cfg.reconcile_profile_and_capabilities(device)
   end
 end
