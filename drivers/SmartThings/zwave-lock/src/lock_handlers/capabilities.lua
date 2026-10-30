@@ -141,6 +141,12 @@ function CapabilityHandlers.add_credential(driver, device, command)
 end
 
 function CapabilityHandlers.update_credential(driver, device, command)
+  -- Index 0 is the Z-Wave "all users" wildcard and is never a valid credential to update.
+  if command.args.credentialIndex == 0 then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.BUSY)
     return
@@ -165,6 +171,12 @@ function CapabilityHandlers.update_credential(driver, device, command)
 end
 
 function CapabilityHandlers.delete_credential(driver, device, command)
+  -- Index 0 is the Z-Wave "all users" wildcard; clearing everything must go through deleteAllCredentials.
+  if command.args.credentialIndex == 0 then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   if cmd_in_progress == consts.LOCK_USERS.DELETE then
@@ -199,19 +211,13 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    local credentials = tables.get_state(device, "credentials") or {}
-    local delay = 0
-    for _, credential in ipairs(credentials) do
-      device.thread:call_with_delay(delay, function()
-        device:send(UserCode:Set({
-          user_identifier = credential.credentialIndex,
-          user_id_status = UserCode.user_id_status.AVAILABLE
-        }))
-      end)
-      delay = delay + 2
-    end
-    -- Delayed cleanup: ensure all tables are cleared after individual responses complete
-    device.thread:call_with_delay(delay + 4, function()
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot
+    device:send(UserCode:Set({
+      user_identifier = 0,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    }))
+    -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
+    device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
         tables.delete_all_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
