@@ -2,12 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local log = require "log"
 local stDevice = require "st.device"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local configurations = require "configurations"
 
 local Scenes = zcl_clusters.Scenes
 local PRIVATE_CLUSTER_ID = 0x0006
@@ -23,9 +21,7 @@ local function get_children_info(device)
   end
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-end
+local find_child = require "lifecycle_handlers.find_child"
 
 local function create_child_devices(driver, device)
   local switch_amount, button_amount = get_children_info(device)
@@ -88,12 +84,7 @@ local function device_info_changed(driver, device, event, args)
   end
 end
 
-local function device_init(driver, device, event)
-  device:set_find_child(find_child)
-end
-
 local function scenes_cluster_handler(driver, device, zb_rx)
-  log.info("Enter scenes_cluster_handler")
   device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
     capabilities.button.button.pushed({ state_change = true }))
 end
@@ -102,7 +93,6 @@ local wallheroswitch = {
   NAME = "Zigbee Wall Hero Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = configurations.reconfig_wrapper(device_init),
     infoChanged = device_info_changed
   },
   zigbee_handlers = {

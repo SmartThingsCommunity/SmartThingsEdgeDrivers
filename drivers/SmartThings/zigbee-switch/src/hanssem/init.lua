@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local stDevice = require "st.device"
-local configurations = require "configurations"
 
 local function get_children_amount(device)
   local FINGERPRINTS = require "hanssem.fingerprints"
@@ -13,9 +12,7 @@ local function get_children_amount(device)
   end
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-end
+local find_child = require "lifecycle_handlers.find_child"
 
 local function create_child_devices(driver, device)
   local children_amount = get_children_amount(device)
@@ -42,15 +39,10 @@ local function device_added(driver, device)
   end
 end
 
-local function device_init(driver, device, event)
-  device:set_find_child(find_child)
-end
-
 local HanssemSwitch = {
   NAME = "Zigbee Hanssem Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = configurations.reconfig_wrapper(device_init)
   },
   can_handle = require("hanssem.can_handle"),
 }

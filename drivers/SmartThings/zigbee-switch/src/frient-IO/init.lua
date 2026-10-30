@@ -102,11 +102,7 @@ local ZIGBEE_MFG_ATTRIBUTES = {
       ID = 0x8001,
       data_type = data_types.Uint16
     }
-  },
-  server = { IASActivation = {
-    ID = 0x8000,
-    data_type = data_types.Uint16
-  } }
+  }
 }
 
 local function write_client_manufacturer_specific_attribute(device, cluster_id, attr_id, mfg_specific_code, data_type,
@@ -143,10 +139,6 @@ local function ensure_child_devices(driver, device)
         label = string.format("%s %s", device.label, info.label_suffix),
         vendor_provided_label = info.label_suffix
       })
-      child = device:get_child_by_parent_assigned_key(info.key)
-    end
-    if child then
-      child:set_field("endpoint", info.endpoint, { persist = true })
     end
   end
 end
@@ -459,7 +451,6 @@ local frient_bridge_handler = {
         [zcl_global_commands.DEFAULT_RESPONSE_ID] = on_off_default_response_handler
       }
     },
-    cluster = {},
     attr = {
       [BasicInput.ID] = {
         [BasicInput.attributes.PresentValue.ID] = present_value_attr_handler
@@ -467,8 +458,7 @@ local frient_bridge_handler = {
       [OnOff.ID] = {
         [OnOff.attributes.OnOff.ID] = on_off_attr_handler
       }
-    },
-    zdo = {}
+    }
   },
   capability_handlers = {
     [Switch.ID] = {
