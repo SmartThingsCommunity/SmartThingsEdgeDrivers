@@ -37,6 +37,25 @@ function lock_utils.clear_busy_state(device)
 end
 
 
+-- True if a deleteCredential or deleteUser of the credential at credential_index is waiting on the lock.
+function lock_utils.is_delete_in_progress(device, credential_index)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return (command_in_progress == consts.LOCK_CREDENTIALS.DELETE or command_in_progress == consts.LOCK_USERS.DELETE) and
+    credential_args.credentialIndex == credential_index
+end
+
+-- Report a delete the lock refused, leaving the user and credential in place.
+function lock_utils.emit_delete_failure(device)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  if command_in_progress == consts.LOCK_USERS.DELETE then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+  lock_utils.clear_busy_state(device)
+end
+
+
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)

@@ -74,6 +74,9 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
       device:send(UserCode:Get({user_identifier = synced_code_index}))
     end
     return
+  elseif user_code_occupied and lock_utils.is_delete_in_progress(device, credential_index) then
+    -- the code is still on the lock after a delete, so the lock refused it
+    lock_utils.emit_delete_failure(device)
   elseif user_code_occupied then
       -- Code slot is now occupied: add or update credential and associated user
       lock_utils.set_credential_report_helper(device, credential_index)
