@@ -12,7 +12,7 @@ local OPTIONS_MASK = 0x01
 local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("switch-color-level.yml"),
+  profile = t_utils.get_profile_definition("light-color-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -76,7 +76,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "doConfigure properly sets Extended Color Light and does not attempt to switch profiles",
+  "doConfigure properly sets Extended Color Light and switches to the default light-color-level profile",
   function()
     mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
     mock_device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
@@ -90,6 +90,7 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.ColorControl.attributes.Options:write(mock_device, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
     })
+    mock_device:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
@@ -1177,10 +1178,10 @@ local function test_init_color_temp()
 end
 
 test.register_coroutine_test(
-  "doConfigure properly sets Color Temperature Light and does not attempt to switch profiles",
+  "doConfigure properly sets Color Temperature Light and switches to the default light-level-colorTemperature profile",
   function()
-    mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
-    mock_device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    mock_device_color_temp:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
+    mock_device_color_temp:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "doConfigure" })
     test.socket.matter:__expect_send({
@@ -1191,6 +1192,7 @@ test.register_coroutine_test(
       mock_device_color_temp.id,
       clusters.ColorControl.attributes.Options:write(mock_device_color_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
     })
+    mock_device_color_temp:expect_metadata_update({ profile = "light-level-colorTemperature" })
     mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
