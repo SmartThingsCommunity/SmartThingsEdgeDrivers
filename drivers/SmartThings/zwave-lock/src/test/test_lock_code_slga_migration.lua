@@ -99,6 +99,39 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Migrate drops slots with invalid credential indices",
+  function()
+    init_code_slot(0, "Invalid", mock_device)
+    init_code_slot(1, "Zach", mock_device)
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    -- slot 0 is below the minimum credentialIndex for Z-Wave (1), so it is dropped
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Migrate compacts userIndex over gaps and sorts slots numerically",
+  function()
+    init_code_slot(0, "Invalid", mock_device)
+    init_code_slot(2, "Zach", mock_device)
+    init_code_slot(5, "Steven", mock_device)
+    init_code_slot(10, "Alex", mock_device)
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=2, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}, {credentialIndex=10, credentialType="pin", userIndex=3}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}, {userIndex=3, userName="Alex", userType="guest"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
     "Schlage-Lock device called 'migrate' command, validate codeLength is being properly set",
     function()
       init_code_slot(1, "Zach", schlage_mock_device)
