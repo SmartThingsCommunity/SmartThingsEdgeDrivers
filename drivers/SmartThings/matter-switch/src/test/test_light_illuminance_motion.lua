@@ -10,8 +10,8 @@ local clusters = require "st.matter.clusters"
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("light-color-level-illuminance-motion.yml"),
   manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
+    vendor_id = 0x1407, -- ThirdReality, in color_motion_profile_vendor_overrides
+    product_id = 0x1401,
   },
   endpoints = {
     {
@@ -69,13 +69,14 @@ test.set_test_init_function(test_init)
 local switch_fields = require "switch_utils.fields"
 
 test.register_coroutine_test(
-  "doConfigure lifecycle event should not re-configure the device profile",
+  "doConfigure lifecycle event should switch to the light-color-level-illuminance-motion profile",
   function ()
     mock_device:set_field(switch_fields.profiling_data.BATTERY_SUPPORT, false, {persist = true})
     mock_device:set_field(switch_fields.profiling_data.POWER_TOPOLOGY, false, {persist = true})
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
     test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+    mock_device:expect_metadata_update({ profile = "light-color-level-illuminance-motion" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 ,
