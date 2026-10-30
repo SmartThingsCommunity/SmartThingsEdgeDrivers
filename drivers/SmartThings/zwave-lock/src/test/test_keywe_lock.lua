@@ -45,6 +45,7 @@ test.set_test_init_function(test_init)
 local function added()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send(
     DoorLock:OperationGet({}):build_test_tx(mock_device.id)
   )

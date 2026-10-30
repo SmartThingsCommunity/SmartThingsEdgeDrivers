@@ -45,6 +45,16 @@ local schlage_mock_device = test.mock_device.build_test_zwave_device(
   }
 )
 
+local yale_mock_device = test.mock_device.build_test_zwave_device(
+  {
+    profile = t_utils.get_profile_definition("base-lock.yml"),
+    zwave_endpoints = zwave_lock_endpoints,
+    zwave_manufacturer_id = 0x0129,
+    zwave_product_type = 0x0002,
+    zwave_product_id = 0x0000
+  }
+)
+
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
 local function init_code_slot(slot_number, name, device)
@@ -59,6 +69,7 @@ end
 local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(schlage_mock_device)
+  test.mock_device.add_test_device(yale_mock_device)
 end
 test.set_test_init_function(test_init)
 
@@ -155,6 +166,21 @@ test.register_coroutine_test(
       test.wait_for_events()
       assert(schlage_mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
     end
+)
+
+test.register_coroutine_test(
+  "Migrate maps the Yale master code slot 251 to a controlOnlyMember user with userIndex 251",
+  function()
+    init_code_slot(1, "Zach", yale_mock_device)
+    init_code_slot(251, "Master", yale_mock_device)
+    test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Master", userType="controlOnlyMember"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(yale_mock_device.id))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()

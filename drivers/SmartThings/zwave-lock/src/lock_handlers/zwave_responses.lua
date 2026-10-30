@@ -37,18 +37,23 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     if user_code_occupied then
-      -- If an entry already exists at this index, this will be a no-op.
-      tables.add_entry(device, "users", {
-        userIndex = credential_index,
-        userName = "Guest " .. credential_index,
-        userType = "guest",
-      })
-      tables.add_entry(device, "credentials", {
-        userIndex = credential_index,
-        credentialIndex = credential_index,
-        credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. credential_index,
-      })
+      -- If a credential already exists at this index, this will be a no-op.
+      if not tables.find_entry(device, "credentials", credential_index) then
+        -- Prefer the matching userIndex, but never attach this credential to a different, existing user.
+        local user_index = tables.find_entry(device, "users", credential_index) and
+          tables.next_index(device, "users") or credential_index
+        tables.add_entry(device, "users", {
+          userIndex = user_index,
+          userName = "Guest " .. user_index,
+          userType = "guest",
+        })
+        tables.add_entry(device, "credentials", {
+          userIndex = user_index,
+          credentialIndex = credential_index,
+          credentialType = consts.CRED_TYPE_PIN,
+          credentialName = "Guest " .. user_index,
+        })
+      end
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     elseif user_code_available then
@@ -69,6 +74,9 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
       device:send(UserCode:Get({user_identifier = synced_code_index}))
     end
     return
+  elseif user_code_occupied and lock_utils.is_delete_in_progress(device, credential_index) then
+    -- the code is still on the lock after a delete, so the lock refused it
+    lock_utils.emit_delete_failure(device)
   elseif user_code_occupied then
       -- Code slot is now occupied: add or update credential and associated user
       lock_utils.set_credential_report_helper(device, credential_index)
@@ -108,8 +116,9 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
   local access_control_event = Notification.event.access_control
 
   if event == access_control_event.ALL_USER_CODES_DELETED then
-    tables.delete_all_entries(device, "credentials")
-    tables.delete_all_entries(device, "users")
+    -- Deleting all user codes does not affect the master code.
+    lock_utils.delete_all_non_master_entries(device, "credentials")
+    lock_utils.delete_all_non_master_entries(device, "users")
 
   elseif event == access_control_event.SINGLE_USER_CODE_DELETED then
     lock_utils.delete_credential_report_helper(device, credential_index)
@@ -118,8 +127,13 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
     lock_utils.set_credential_report_helper(device, credential_index)
 
   elseif event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
-    -- aka "master code" changed
-    if command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    -- aka "master code" changed. Locks that keep it in a user code slot (Yale) send this instead of
+    -- NEW_USER_CODE_ADDED when the slot is written, so it completes the command in progress.
+    local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+    if command_in_progress == consts.LOCK_CREDENTIALS.ADD and
+       lock_utils.is_master_credential(device, credential_args.credentialIndex) then
+      lock_utils.set_credential_report_helper(device, credential_args.credentialIndex)
+    elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
       lock_utils.emit_command_result(device, capabilities.lockCredentials,
         consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)

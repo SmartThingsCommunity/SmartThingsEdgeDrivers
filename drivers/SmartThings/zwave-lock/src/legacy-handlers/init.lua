@@ -55,6 +55,7 @@ end
 local function migrate(driver, device, cmd)
   local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
   local table_utils = require "lock_utils.tables"
+  local consts = require("lock_utils.constants")
   local get_lock_codes = LockCodesDefaults.get_lock_codes
   local lock_users = {}
   local lock_credentials = {}
@@ -74,10 +75,23 @@ local function migrate(driver, device, cmd)
   end
 
   table.sort(ordered_codes, function(a, b) return a.index < b.index end)
+  local master_index = table_utils.master_credential_index(device)
+  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the master code's
+  -- user takes the master code slot as its index.
+  local user_index = 0
   for _, code in ipairs(ordered_codes) do
-    local user_index = #lock_users + 1
-    table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = lock_codes[code.slot]})
-    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin"})
+    local is_master = code.index == master_index
+    if not is_master then
+      user_index = user_index + 1
+      if user_index == master_index then user_index = user_index + 1 end
+    end
+    local owner_index = is_master and code.index or user_index
+    table.insert(lock_users, {
+      userIndex = owner_index,
+      userType = is_master and consts.ADMIN.USER_TYPE or "guest",
+      userName = lock_codes[code.slot],
+    })
+    table.insert(lock_credentials, {userIndex = owner_index, credentialIndex = code.index, credentialType = "pin"})
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
@@ -99,7 +113,6 @@ local function migrate(driver, device, cmd)
 
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-  local consts = require("lock_utils.constants")
 
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
 end
