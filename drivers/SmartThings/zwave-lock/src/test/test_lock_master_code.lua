@@ -3,8 +3,9 @@
 --
 -- Integration tests for the Yale master code, which is kept in user code slot 251:
 --   it is set with a plain User Code Set and confirmed by the "master code changed" notification,
---   it is exposed as a controlOnlyMember user whose index matches the slot, and it is protected from
---   deletion and from delete-all. User identifier 0 (all users) is never sent for a single credential.
+--   it is exposed as a controlOnlyMember user whose index matches the slot, a delete is left to the lock and
+--   reported as it confirms or refuses it, and delete-all keeps it. User identifier 0 (all users) is never
+--   sent for a single credential.
 
 local test              = require "integration_test"
 local t_utils           = require "integration_test.utils"
@@ -230,30 +231,118 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- protection of the master code
+-- deleting the master code: the lock decides, and the driver reports what it did
 -- ============================================================================
 
+local DELETE_CONFIRM_DELAY = 4.2
+
+local function expect_delete_set(device, slot)
+  test.socket.zwave:__expect_send(UserCode:Set({
+    user_identifier = slot,
+    user_id_status = UserCode.user_id_status.AVAILABLE,
+  }):build_test_tx(device.id))
+end
+
+local function queue_delete_master_credential(device)
+  test.socket.capability:__queue_receive({ device.id,
+    { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 251, "pin" } } })
+end
+
+local function read_back_after_delay(device, slot)
+  test.mock_time.advance_time(DELETE_CONFIRM_DELAY)
+  test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = slot }):build_test_tx(device.id))
+  test.wait_for_events()
+end
+
 test.register_coroutine_test(
-  "deleteCredential: the Yale master code in slot 251 is rejected",
+  "deleteCredential: the Yale master code is deleted when the lock confirms it",
   function()
     seed(yale_mock_device, { MASTER_USER }, { MASTER_CREDENTIAL })
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 251, "pin" } } })
-    expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "invalidCommand" })
+    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
+    queue_delete_master_credential(yale_mock_device)
+    expect_delete_set(yale_mock_device, 251)
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, Notification:Report({
+      notification_type = Notification.notification_type.ACCESS_CONTROL,
+      event = access_control_event.SINGLE_USER_CODE_DELETED,
+      v1_alarm_level = 251,
+    }) })
+    expect_credentials(yale_mock_device, {})
+    expect_credential_result(yale_mock_device,
+      { commandName = "deleteCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
+    test.wait_for_events()
+
+    -- the delete is already confirmed, so the slot is not read back
+    test.mock_time.advance_time(DELETE_CONFIRM_DELAY)
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
-  "deleteUser: the user holding the Yale master code is rejected",
+  "deleteCredential: an unconfirmed delete is read back and succeeds when the slot is empty",
   function()
     seed(yale_mock_device, { MASTER_USER }, { MASTER_CREDENTIAL })
+    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
+    queue_delete_master_credential(yale_mock_device)
+    expect_delete_set(yale_mock_device, 251)
+    test.wait_for_events()
+    read_back_after_delay(yale_mock_device, 251)
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status = UserCode.user_id_status.AVAILABLE,
+    }) })
+    expect_credentials(yale_mock_device, {})
+    expect_credential_result(yale_mock_device,
+      { commandName = "deleteCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "deleteCredential: a delete the lock refuses is reported as a failure and the master code is kept",
+  function()
+    seed(yale_mock_device, { MASTER_USER }, { MASTER_CREDENTIAL })
+    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
+    queue_delete_master_credential(yale_mock_device)
+    expect_delete_set(yale_mock_device, 251)
+    test.wait_for_events()
+    read_back_after_delay(yale_mock_device, 251)
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+      user_code = "199111",
+    }) })
+    expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "failure" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "deleteUser: a delete of the master code user the lock refuses fails for both capabilities",
+  function()
+    seed(yale_mock_device, { MASTER_USER }, { MASTER_CREDENTIAL })
+    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 251 } } })
+    expect_delete_set(yale_mock_device, 251)
+    test.wait_for_events()
+    read_back_after_delay(yale_mock_device, 251)
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+      user_code = "199111",
+    }) })
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
-      capabilities.lockUsers.commandResult({ commandName = "deleteUser", statusCode = "invalidCommand" },
+      capabilities.lockUsers.commandResult({ commandName = "deleteUser", statusCode = "failure" },
         { state_change = true, visibility = { displayed = false } })))
+    expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "failure" })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }

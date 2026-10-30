@@ -14,6 +14,9 @@ local Battery      = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local UserCode     = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
 
+-- Seconds to wait for a delete to be confirmed before reading the slot back
+local DELETE_CONFIRM_DELAY = 4.2
+
 local CapabilityHandlers = {}
 
 
@@ -67,13 +70,6 @@ function CapabilityHandlers.delete_user(driver, device, command)
   end
 
   local associated_credentials = tables.find_all_entries_by(device, "credentials", "userIndex", command.args.userIndex)
-  for _, associated_credential in ipairs(associated_credentials) do
-    if lock_utils.is_master_credential(device, associated_credential.credentialIndex) then
-      -- this user holds the master code, which cannot be removed
-      lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
-      return
-    end
-  end
   for _, associated_credential in ipairs(associated_credentials) do
     -- Set busy state with the full user+credential context BEFORE injecting.
     -- Injected capability commands are schema-validated, so extra args like userIndex
@@ -194,6 +190,13 @@ local function send_credential_delete(device, credential_index)
       user_identifier = credential_index,
       user_id_status = UserCode.user_id_status.AVAILABLE
     }))
+    -- A lock that refuses the delete (e.g. a Yale master code) ignores the Set and sends nothing, so read the
+    -- slot back if the delete has not completed. The report tells us whether the code is still there.
+    device.thread:call_with_delay(DELETE_CONFIRM_DELAY, function()
+      if lock_utils.is_delete_in_progress(device, credential_index) then
+        device:send(UserCode:Get({ user_identifier = credential_index }))
+      end
+    end)
   end
 end
 
@@ -211,10 +214,6 @@ function CapabilityHandlers.delete_credential(driver, device, command)
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
-      return
-    elseif lock_utils.is_master_credential(device, command.args.credentialIndex) then
-      -- the master code cannot be removed
-      lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
       return
     end
     lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.DELETE, {
