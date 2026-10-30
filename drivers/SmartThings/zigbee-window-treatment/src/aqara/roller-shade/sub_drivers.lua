@@ -3,6 +3,6 @@
 
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
-   lazy_load_if_possible("aqara.roller-shade.t1s"),
+  lazy_load_if_possible("aqara.roller-shade.t1s"),
 }
 return sub_drivers

@@ -18,7 +18,6 @@ local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local reverseRollerShadeDir = capabilities["stse.reverseRollerShadeDir"]
 local shadeRotateState = capabilities["stse.shadeRotateState"]
 local setRotateStateCommandName = "setRotateState"
-local directionReversal = "directionReversal"
 
 local MULTISTATE_CLUSTER_ID = 0x0013
 local MULTISTATE_ATTRIBUTE_ID = 0x0055
@@ -32,19 +31,11 @@ local SHADE_STATE_OPEN = 1
 local SHADE_STATE_CLOSE = 0
 local SHADE_STATE_BLOCKED = 4
 
-local INIT_STATE_REPORTED = "initStateReported"
-
 local function is_not_init(device)
-  if not device:get_field(INIT_STATE_REPORTED) then return false end
-
-  -- True if uninitialized; false if already initialized
-  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
-    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
-  local ret = true
-  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then ret = false end
-  return ret
+  -- True until the device reports that its travel points have been initialized
+  return device:get_latest_state("main", initializedStateWithGuide.ID, initializedStateWithGuide.initializedStateWithGuide.NAME) ~=
+    initializedStateWithGuide.initializedStateWithGuide.initialized.NAME
 end
-
 
 local function window_shade_level_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
@@ -91,9 +82,8 @@ local function do_refresh(driver, device)
 end
 
 local function init_state_handler(driver, device, value, zb_rx)
-  device:set_field(INIT_STATE_REPORTED, true, { persist = true })
   local state = value.value == 0x02 and initializedStateWithGuide.initializedStateWithGuide.initialized() or
-  initializedStateWithGuide.initializedStateWithGuide.notInitialized()
+    initializedStateWithGuide.initializedStateWithGuide.notInitialized()
   device:emit_event(state)
 end
 
@@ -113,7 +103,13 @@ end
 -- cluster, where 0 is fully closed and 100 is fully open. The lift percentage of the window
 -- covering cluster is reported with the opposite polarity (100% = fully closed), so it is
 -- ignored here to keep the parent Aqara handler from emitting an inverted shade level.
+-- The device does not report the init state when its travel points have been set, so it is
+-- re-read whenever the shade moves while the device is still not initialized.
 local function current_position_lift_percentage_handler(driver, device, value, zb_rx)
+  if is_not_init(device) then
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+      INIT_STATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE))
+  end
 end
 
 local function shade_state_report_handler(driver, device, value, zb_rx)
@@ -134,7 +130,7 @@ local function device_info_changed(driver, device, event, args)
     local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
     if reverseRollerShadeDirPrefValue ~= nil and
       reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir.ID] then
-      local raw_value = reverseRollerShadeDirPrefValue and true or false
+      local raw_value = reverseRollerShadeDirPrefValue
       device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
         DIRECTION_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, raw_value))
     end
@@ -154,6 +150,11 @@ local function device_added(driver, device)
   device:emit_event(shadeRotateState.rotateState.idle({ visibility = { displayed = false } }))
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
     aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
+
+  -- The direction is stored on the device and survives a re-pairing, so sync it with the preference
+  local reverse = device.preferences ~= nil and device.preferences[reverseRollerShadeDir.ID] == true
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    DIRECTION_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, reverse))
 end
 
 local function do_configure(self, device)
@@ -175,8 +176,7 @@ local aqara_roller_shade_t1s_handler = {
     },
     [capabilities.windowShade.ID] = {
       [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
-      [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
-      -- [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd,
+      [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd
     },
     [shadeRotateState.ID] = {
       [setRotateStateCommandName] = set_rotate_command_handler
@@ -192,6 +192,9 @@ local aqara_roller_shade_t1s_handler = {
       },
       [AnalogOutput.ID] = {
         [AnalogOutput.attributes.PresentValue.ID] = shade_level_report_handler
+      },
+      [WindowCovering.ID] = {
+        [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = current_position_lift_percentage_handler
       },
       [MULTISTATE_CLUSTER_ID] = {
         [MULTISTATE_ATTRIBUTE_ID] = shade_state_report_handler

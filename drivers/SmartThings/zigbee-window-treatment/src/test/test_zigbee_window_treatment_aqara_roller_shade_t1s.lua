@@ -128,6 +128,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, DIRECTION_ATTRIBUTE_ID, MFG_CODE,
+        data_types.Boolean, false) })
 
     -- After a driver switch-over the added lifecycle is re-triggered. The stateful events
     -- (shadeLevel, windowShade, initializedStateWithGuide) must not be re-emitted so that the
@@ -143,6 +146,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, DIRECTION_ATTRIBUTE_ID, MFG_CODE,
+        data_types.Boolean, false) })
   end,
   {
     min_api_version = 14
@@ -273,6 +279,54 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "CurrentPositionLiftPercentage report should be ignored",
+  function()
+    set_initialized()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+      }
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "CurrentPositionLiftPercentage report should read the init state when the device is not initialized",
+  function()
+    set_not_initialized()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { INIT_STATE_ATTRIBUTE_ID }, MFG_CODE)
+    })
+    test.wait_for_events()
+
+    -- Once the device reports that it is initialized, the init state is not read anymore
+    set_initialized()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+      }
+    )
+    test.wait_for_events()
   end,
   {
     min_api_version = 14
@@ -443,19 +497,21 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Window shade commands should be allowed before the init state has been reported",
+  "Window shade commands should be ignored before the init state has been reported",
   function()
-    -- A device that has not answered the travel point read must remain controllable
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
         { capability = "windowShade", component = "main", command = "open", args = {} }
       }
     )
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
-    })
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 30 } }
+      }
+    )
+    -- No zigbee message and no shadeLevel event is expected
   end,
   {
     min_api_version = 14
