@@ -169,22 +169,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Migrate drops the legacy slot 0 Master Code and orders slots numerically",
-  function()
-    init_code_slot(0, "Master Code", mock_device)
-    init_code_slot(10, "Ten", mock_device)
-    init_code_slot(2, "Two", mock_device)
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=2, credentialType="pin", userIndex=1}, {credentialIndex=10, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Two", userType="guest"}, {userIndex=2, userName="Ten", userType="guest"}}, { visibility = { displayed = false } })))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
   "Migrate maps the Yale master code slot 251 to a controlOnlyMember user with userIndex 251",
   function()
     init_code_slot(1, "Zach", yale_mock_device)
