@@ -104,6 +104,9 @@ local function save_current_sensor_channel(device, sensor_value)
   switch_profile(device, profile_name)
 
   device:send_to_component(SensorMultilevel:Get({}), channel_and_component.component)
+  if i_sensor_value == 5 then
+    device:send(Configuration:Get({parameter_number = 25}))
+  end
 end
 
 --- Return the persisted sensor channel. If unknown, request parameter 2 from
@@ -176,6 +179,11 @@ local function configuration_report_handler(self, device, cmd)
   if (cmd.args.parameter_number == 2) then
     -- Sensor setting
     save_current_sensor_channel(device, cmd.args.configuration_value)
+  elseif cmd.args.parameter_number == 25 then
+    local value = cmd.args.configuration_value
+    if device:supports_capability(capabilities.level, "main") and value >= 1 and value <= 10 then
+      device:emit_event(capabilities.level.level(value * 10))
+    end
   elseif (cmd.args.parameter_number == 27) then
     local modes = {
       [0] = ThermostatMode.mode.OFF,
@@ -189,6 +197,18 @@ local function configuration_report_handler(self, device, cmd)
       device:send(ThermostatOperatingState:Get({}))
     end
   end
+end
+
+local function set_regulator_level(driver, device, command)
+  local level = command.args.level
+  if not device:supports_capability(capabilities.level, "main")
+      or type(level) ~= "number" or level < 10 or level > 100 then
+    return
+  end
+
+  local regulator_value = math.floor((level + 5) / 10)
+  device:send(Configuration:Set({parameter_number = 25, size = 1, configuration_value = regulator_value}))
+  device:send(Configuration:Get({parameter_number = 25}))
 end
 
 local function set_thermostat_mode(driver, device, command)
@@ -255,6 +275,9 @@ end
 local function do_refresh(self, device)
   device:send(ThermostatMode:Get({}))
   device:send(ThermostatOperatingState:Get({}))
+  if device:supports_capability(capabilities.level, "main") then
+    device:send(Configuration:Get({parameter_number = 25}))
+  end
 
   device:send_to_component(SensorMultilevel:Get({}), "roomTemperature")
   device:send_to_component(SensorMultilevel:Get({}), "roomTemperatureExternal")
@@ -465,6 +488,9 @@ local heatit_ztrm6_thermostat = {
     },
   },
   capability_handlers = {
+    [capabilities.level.ID] = {
+      [capabilities.level.commands.setLevel.NAME] = set_regulator_level
+    },
     [capabilities.thermostatMode.ID] = {
       [capabilities.thermostatMode.commands.setThermostatMode.NAME] = set_thermostat_mode,
     },

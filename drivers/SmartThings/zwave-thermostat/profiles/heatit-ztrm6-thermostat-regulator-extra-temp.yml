@@ -8,6 +8,16 @@ components:
     version: 1
   - id: thermostatMode
     version: 1
+  - id: level
+    version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [10, 100]
+          step: 10
+        - key: "setLevel"
+          range: [10, 100]
+          step: 10
   - id: powerMeter
     version: 1
   - id: energyMeter
@@ -289,16 +299,6 @@ preferences:
       minimum: 50
       maximum: 400
       default: 180
-# 25
-  - name: "regulatorLevel"
-    title: "Power level for Regulator"
-    description: "Setting for regulator in percent 1 = 10%  (Default 2 = 20%)"
-    required: false
-    preferenceType: integer
-    definition:
-      minimum: 1
-      maximum: 10
-      default: 2
 # 26
   - name: "updateInterval"
     title: "Thermostat update interval"

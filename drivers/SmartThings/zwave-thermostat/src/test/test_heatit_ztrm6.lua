@@ -55,14 +55,26 @@ local mock_device_extra_temp = test.mock_device.build_test_zwave_device(
   }
 )
 
+local mock_device_regulator = test.mock_device.build_test_zwave_device(
+  {
+    profile = t_utils.get_profile_definition("heatit-ztrm6-thermostat-regulator.yml"),
+    zwave_endpoints = thermostat_endpoints,
+    zwave_manufacturer_id = 0x019B,
+    zwave_product_type = 0x0030,
+    zwave_product_id = 0x3001,
+  }
+)
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_device_extra_temp)
+  test.mock_device.add_test_device(mock_device_regulator)
 end
 test.set_test_init_function(test_init)
 
 local CURRENT_THERMOSTAT_HEATING_MODE = "current_mode"
 local CURRENT_SENSOR_CHANNEL = "current_channel"
+local CURRENT_SENSOR_MODE = "current_sensor_mode"
 
 -- ----- L I F E   C Y C L E   T e s t s -----
 
@@ -108,6 +120,21 @@ test.register_coroutine_test(
 
     test.socket.zwave:__expect_send( zw_test_utilities.zwave_test_build_send_command( mock_device, Configuration:Set({ parameter_number = paramNumber, configuration_value = paramValue, size = paramSize }) ))
     test.socket.zwave:__expect_send( zw_test_utilities.zwave_test_build_send_command( mock_device, Configuration:Get({ parameter_number = paramNumber }) ))
+  end
+)
+
+test.register_coroutine_test(
+  "Temperature report hysteresis preference writes configuration parameter 19",
+  function()
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({
+      preferences = {tempReportHysteresis = 11}
+    }))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Set({parameter_number = 19, size = 1, configuration_value = 11})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Get({parameter_number = 19})
+    ))
   end
 )
 
@@ -756,6 +783,172 @@ test.register_message_test(
     {
       inner_block_ordering = "relaxed"
     }
+)
+
+test.register_coroutine_test(
+  "PWER level command maps 30 percent to parameter 25 even before a mode report",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "level", command = "setLevel", component = "main", args = {30}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Set({parameter_number = 25, size = 1, configuration_value = 3})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Get({parameter_number = 25})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "PWER level command maps 100 percent to configuration parameter 25 value 10",
+  function()
+    mock_device_regulator:set_field(CURRENT_SENSOR_MODE, 5)
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "level", command = "setLevel", component = "main", args = {100}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Set({parameter_number = 25, size = 1, configuration_value = 10})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Get({parameter_number = 25})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "Legacy PWER setting still writes parameter 25",
+  function()
+    test.socket.device_lifecycle():__queue_receive(mock_device_regulator:generate_info_changed({
+      preferences = {regulatorLevel = 3}
+    }))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Set({parameter_number = 25, size = 1, configuration_value = 3})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Get({parameter_number = 25})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "Entering PWER switches profile and requests current regulator level",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 2, size = 1, configuration_value = 5
+      }))
+    })
+    mock_device:expect_metadata_update({profile = "heatit-ztrm6-thermostat-regulator"})
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, SensorMultilevel:Get({}, {dst_channels = {2}})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Get({parameter_number = 25})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "PWER refresh requests current regulator level",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "refresh", command = "refresh", component = "main", args = {}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, ThermostatMode:Get({})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, ThermostatOperatingState:Get({})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Get({parameter_number = 25})
+    ))
+    for _, endpoint in ipairs({2, 3, 4}) do
+      test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+        mock_device_regulator, SensorMultilevel:Get({}, {dst_channels = {endpoint}})
+      ))
+    end
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Meter:Get({scale = Meter.scale.electric_meter.WATTS})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "PWER level command rounds to supported ten-percent increments",
+  function()
+    mock_device_regulator:set_field(CURRENT_SENSOR_MODE, 5)
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "level", command = "setLevel", component = "main", args = {36}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Set({parameter_number = 25, size = 1, configuration_value = 4})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device_regulator, Configuration:Get({parameter_number = 25})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "PWER level command rejects unsupported values and non-PWER modes",
+  function()
+    mock_device_regulator:set_field(CURRENT_SENSOR_MODE, 5)
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "level", command = "setLevel", component = "main", args = {0}}
+    })
+    test.socket.capability:__queue_receive({
+      mock_device_regulator.id, {capability = "level", command = "setLevel", component = "main", args = {9}}
+    })
+    mock_device:set_field(CURRENT_SENSOR_MODE, 1)
+    test.socket.capability:__queue_receive({
+      mock_device.id, {capability = "level", command = "setLevel", component = "main", args = {30}}
+    })
+    test.wait_for_events()
+  end
+)
+
+test.register_message_test(
+  "PWER parameter 25 report tracks local power level changes",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device_regulator.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 25, size = 1, configuration_value = 3
+      }))
+    }},
+    {channel = "capability", direction = "send", message =
+      mock_device_regulator:generate_test_message("main", capabilities.level.level(30))
+    }
+  }
+)
+
+test.register_message_test(
+  "PWER parameter 25 report ignores invalid device values",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device_regulator.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 25, size = 1, configuration_value = 0
+      }))
+    }}
+  }
+)
+
+test.register_message_test(
+  "Parameter 25 report does not emit level for normal thermostat profile",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 25, size = 1, configuration_value = 3
+      }))
+    }}
+  }
 )
 
 test.run_registered_tests()
