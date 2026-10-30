@@ -505,7 +505,7 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "deleteAllCredentials: sends ClearAllPINCodes and emits success when the lock returns PASS",
+  "deleteAllCredentials: sends a single UserCode Set for identifier 0 and emits success",
   function()
     seed_users({
       { userIndex = 1, userName = "Alice", userType = "guest" },
@@ -519,14 +519,12 @@ test.register_coroutine_test(
       { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} },
     })
 
-    -- Per-credential clears fire at 2 * (i - 1) s; final cleanup at 2 * #credentials + 4 s.
-    test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
-    expect_clear_pin_code(1)
-    test.mock_time.advance_time(0)
+    -- A single wildcard clear (identifier 0) is sent immediately; final cleanup fires at 4 s.
+    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    expect_clear_pin_code(0)
     test.wait_for_events()
 
-    test.mock_time.advance_time(6)
+    test.mock_time.advance_time(4)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
@@ -578,7 +576,8 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} },
     })
-    -- deleteAllCredentials sends individual UserCode:Set AVAILABLE commands
+    -- deleteAllCredentials sends a single UserCode:Set (identifier 0) AVAILABLE command
+    expect_clear_pin_code(0)
     test.wait_for_events()
 
     -- Second deleteAllCredentials while first is pending → busy
@@ -590,6 +589,50 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
           { commandName = "deleteAllCredentials", statusCode = "busy" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "deleteCredential: rejects credentialIndex 0 with invalidCommand and sends no z-wave command",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential",
+        args = { 0, "pin" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "deleteCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "updateCredential: rejects credentialIndex 0 with invalidCommand and sends no z-wave command",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "updateCredential",
+        args = { 1, 0, "pin", "1234" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "updateCredential", statusCode = "invalidCommand" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
