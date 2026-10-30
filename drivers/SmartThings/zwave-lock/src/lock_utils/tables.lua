@@ -15,6 +15,7 @@ local table_utils = {}
 --   match_key         Key used to identify entries in flat tables
 --   required_keys     Keys that must be non-nil when adding an entry
 --   persistent_field  device:set_field key used to back up the table across restarts
+--   minimum           Lowest valid match_key value; next_index() begins its search here
 --
 
 local DEFS = {
@@ -22,6 +23,7 @@ local DEFS = {
     capability       = capabilities.lockUsers,
     attribute        = capabilities.lockUsers.users,
     max_entries      = capabilities.lockUsers.totalUsersSupported,
+    minimum          = 1,
     match_key        = "userIndex",
     required_keys    = {"userIndex", "userType"},
     persistent_field = "persistedUsers",
@@ -30,6 +32,9 @@ local DEFS = {
     capability       = capabilities.lockCredentials,
     attribute        = capabilities.lockCredentials.credentials,
     max_entries      = capabilities.lockCredentials.pinUsersSupported,
+    -- Z-Wave User Identifiers are a sequence starting at 1; 0 is reserved to mean "all users".
+    -- This differs from the lockCredentials capability, which allows a credentialIndex of 0.
+    minimum          = 1,
     match_key        = "credentialIndex",
     required_keys    = {"userIndex", "credentialIndex", "credentialType"},
     persistent_field = "persistedCredentials",
@@ -128,17 +133,21 @@ function table_utils.find_all_entries_by(device, table_name, key, value)
   return matches
 end
 
--- Return the lowest positive integer not yet used as the match_key in the named table.
--- Used to auto-assign the next available slot for a new entry.
+-- Return the lowest integer, starting at the table's minimum, not yet used as the
+-- match_key in the named table. Used to auto-assign the next available slot for a new entry.
 function table_utils.next_index(device, table_name)
-  local def = resolve_table_def(device, table_name)
-  if not def then return 1 end
+  local def = assert(DEFS[table_name], string.format("table_helpers: unknown table %q", table_name))
   local t = table_utils.get_state(device, def) or {}
   local occupied = {}
   for _, entry in ipairs(t) do occupied[entry[def.match_key]] = true end
-  local idx = 1
+  local idx = def.minimum
   while occupied[idx] do idx = idx + 1 end
   return idx
+end
+
+function table_utils.get_minimum(device, table_name)
+  local def = assert(DEFS[table_name], string.format("table_helpers: unknown table %q", table_name))
+  return def.minimum
 end
 
 function table_utils.get_max_entries(device, table_name)
