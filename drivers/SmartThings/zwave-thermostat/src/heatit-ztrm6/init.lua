@@ -27,6 +27,15 @@ local CURRENT_THERMOSTAT_HEATING_MODE = "current_mode"
 local CURRENT_SENSOR_CHANNEL = "current_channel"
 local CURRENT_SENSOR_MODE = "current_sensor_mode"
 
+local function setpoint_type_for_mode(mode)
+  if mode == ThermostatMode.mode.ENERGY_SAVE_HEAT then
+    return ThermostatSetpoint.setpoint_type.ENERGY_SAVE_HEATING
+  elseif mode == ThermostatMode.mode.COOL then
+    return ThermostatSetpoint.setpoint_type.COOLING_1
+  end
+  return ThermostatSetpoint.setpoint_type.HEATING_1
+end
+
 --- Determine the correct profile name based on sensor mode and floor-temp visibility.
 --- @param sensor_mode number Configuration parameter 2 value (0-5)
 --- @param show_floor_temp string|number The showFloorTemp preference value
@@ -129,7 +138,7 @@ local function setpoint_report_handler(self, device, cmd)
   local current_thermostat_heating_mode = device:get_field(CURRENT_THERMOSTAT_HEATING_MODE)
   if (current_thermostat_heating_mode == nil) then
     device:send(ThermostatMode:Get({}))
-  else
+  elseif cmd.args.setpoint_type == setpoint_type_for_mode(current_thermostat_heating_mode) then
     device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = cmd.args.value, unit = "C"}))
   end
 end
@@ -168,18 +177,16 @@ local function configuration_report_handler(self, device, cmd)
     -- Sensor setting
     save_current_sensor_channel(device, cmd.args.configuration_value)
   elseif (cmd.args.parameter_number == 27) then
-    local event = nil
-    if cmd.args.configuration_value == ThermostatOperatingState.operating_state.IDLE then
-      event = capabilities.thermostatOperatingState.thermostatOperatingState.idle()
-    elseif cmd.args.configuration_value == ThermostatOperatingState.operating_state.HEATING then
-      event = capabilities.thermostatOperatingState.thermostatOperatingState.heating()
-    elseif cmd.args.configuration_value == ThermostatOperatingState.operating_state.COOLING then
-      event = capabilities.thermostatOperatingState.thermostatOperatingState.cooling()
-    elseif cmd.args.configuration_value == ThermostatOperatingState.operating_state.ENERGY_SAVE_HEATING then
-      event = capabilities.thermostatOperatingState.thermostatOperatingState.heating()
-    end
-    if (event ~= nil) then
-      device:emit_event(event)
+    local modes = {
+      [0] = ThermostatMode.mode.OFF,
+      [1] = ThermostatMode.mode.HEAT,
+      [2] = ThermostatMode.mode.COOL,
+      [3] = ThermostatMode.mode.ENERGY_SAVE_HEAT
+    }
+    local mode = modes[cmd.args.configuration_value]
+    if mode ~= nil then
+      thermostat_mode_report_handler(self, device, {args = {mode = mode}})
+      device:send(ThermostatOperatingState:Get({}))
     end
   end
 end
@@ -200,8 +207,10 @@ local function set_thermostat_mode(driver, device, command)
     modeValue = ThermostatMode.mode.ENERGY_SAVE_HEAT
   end
 
-  device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, modeValue)
   if (modeValue ~= nil) then
+    if modeValue ~= ThermostatMode.mode.OFF then
+      device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, modeValue)
+    end
     device:send(ThermostatMode:Set({mode = modeValue}))
 
     local follow_up_poll = function()
@@ -225,21 +234,21 @@ local function set_setpoint_factory(setpoint_type)
   return function(driver, device, cmd)
     local scale = device:get_field(constants.TEMPERATURE_SCALE)
     local value = convert_to_device_temp(cmd.args.setpoint, scale)
-    local current_thermostat_heating_mode = device:get_field(CURRENT_THERMOSTAT_HEATING_MODE)
+    local current_mode = device:get_field(CURRENT_THERMOSTAT_HEATING_MODE)
+    local current_setpoint_type = current_mode and setpoint_type_for_mode(current_mode) or setpoint_type
 
-    if (current_thermostat_heating_mode == nil) then
+    if current_mode == nil then
+      -- With no prior mode (for example after startup while OFF), use HEAT until the device reports its mode.
+      device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, ThermostatMode.mode.HEAT)
       device:send(ThermostatMode:Get({}))
-    else
-      device:send(ThermostatSetpoint:Set({value = value, setpoint_type = current_thermostat_heating_mode, size = 2}))
-
-      local follow_up_poll = function()
-        device:send(ThermostatSetpoint:Get({setpoint_type = current_thermostat_heating_mode}))
-        -- For Air temperature, shown temperature is settemp
-        -- Just as well to always refresh temperature
-        device:send(SensorMultilevel:Get({}))
-      end
-      device.thread:call_with_delay(1, follow_up_poll)
     end
+    device:send(ThermostatSetpoint:Set({value = value, setpoint_type = current_setpoint_type, size = 2}))
+
+    local follow_up_poll = function()
+      device:send(ThermostatSetpoint:Get({setpoint_type = current_setpoint_type}))
+      device:send(SensorMultilevel:Get({}))
+    end
+    device.thread:call_with_delay(1, follow_up_poll)
   end
 end
 
@@ -413,6 +422,10 @@ local function info_changed(driver, device, event, args)
       elseif parameter_number >= 202 then
         info_changed_associations(driver, device, parameter_number, value)
       else
+        if param.size == 2 and new_parameter_value >= 0x8000 then
+          -- Configuration v1 writes signed integers; the same 16 bits represent the unsigned device value.
+          new_parameter_value = new_parameter_value - 0x10000
+        end
         device:send(Configuration:Set({parameter_number = parameter_number, size = param.size, configuration_value = new_parameter_value}))
         device:send(Configuration:Get({parameter_number = parameter_number}))
 

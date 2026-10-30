@@ -112,6 +112,36 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "1.3.1a Lifecycle: two-byte update interval accepts its default above 32767",
+  function()
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({
+      preferences = { updateInterval = 43200 }
+    }))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Set({parameter_number = 26, size = 2, configuration_value = -22336})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Get({parameter_number = 26})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "1.3.1b Lifecycle: two-byte update interval accepts 65535",
+  function()
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({
+      preferences = { updateInterval = 65535 }
+    }))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Set({parameter_number = 26, size = 2, configuration_value = -1})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, Configuration:Get({parameter_number = 26})
+    ))
+  end
+)
+
+test.register_coroutine_test(
   "1.3.2 Lifecycle: info_changed - Show floor temperature and back to default",
   function()
     local paramValue = 1
@@ -307,6 +337,62 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "2.2.2 Capability: setting a setpoint while OFF uses the last active COOL setpoint",
+  function()
+    mock_device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, ThermostatMode.mode.COOL)
+    test.socket.capability:__queue_receive({
+      mock_device.id, {capability = "thermostatMode", command = "setThermostatMode", args = {"off"}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatMode:Set({mode = ThermostatMode.mode.OFF})
+    ))
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id, {capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = {21.5}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatSetpoint:Set({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1, value = 21.5, size = 2})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "2.2.3 Capability: setting a setpoint after startup in OFF mode defaults to HEAT",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(
+        ThermostatMode:Report({mode = ThermostatMode.mode.OFF})
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.off())
+    )
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id, {capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = {21.5}}
+    })
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatMode:Get({})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatSetpoint:Set({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1, value = 21.5, size = 2})
+    ))
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(ThermostatSetpoint:Report({
+        setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1, value = 21.5
+      }))
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.5, unit = "C"}))
+    )
+  end
+)
+
+test.register_coroutine_test(
   "2.3  Capability: do_refresh",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
@@ -428,12 +514,130 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     mock_device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, ThermostatMode.mode.HEAT, { persist = true })
 
-    test.socket.zwave:__queue_receive({mock_device.id, ThermostatSetpoint:Report({ value = 235 }) })
+    test.socket.zwave:__queue_receive({mock_device.id, ThermostatSetpoint:Report({
+      setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1, value = 235
+    }) })
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 235, unit = "C"}))
     )
   end
+)
+
+test.register_coroutine_test(
+  "3.2.2 Z-wave receive: inactive ECO setpoint must not replace the displayed HEAT setpoint",
+  function()
+    mock_device:set_field(CURRENT_THERMOSTAT_HEATING_MODE, ThermostatMode.mode.HEAT)
+    test.socket.zwave:__queue_receive({
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(ThermostatSetpoint:Report({
+        setpoint_type = ThermostatSetpoint.setpoint_type.ENERGY_SAVE_HEATING, value = 18
+      }))
+    })
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(ThermostatSetpoint:Report({
+        setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1, value = 21
+      }))
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21, unit = "C"}))
+    )
+  end
+)
+
+test.register_message_test(
+  "3.3.1 Configuration 27 selects HEAT mode without assuming the relay is heating",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 27, size = 1, configuration_value = 1
+      }))
+    }},
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
+    )},
+    {channel = "capability", direction = "send", message =
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+    },
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatOperatingState:Get({})
+    )}
+  },
+  {inner_block_ordering = "relaxed"}
+)
+
+test.register_message_test(
+  "3.3.2 Configuration 27 selects ECO mode without assuming the relay is heating",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 27, size = 1, configuration_value = 3
+      }))
+    }},
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.ENERGY_SAVE_HEATING})
+    )},
+    {channel = "capability", direction = "send", message =
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.eco())
+    },
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatOperatingState:Get({})
+    )}
+  },
+  {inner_block_ordering = "relaxed"}
+)
+
+test.register_message_test(
+  "3.3.3 Operating state reports actual idle instead of assuming the selected HEAT mode is heating",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(ThermostatOperatingState:Report({
+        operating_state = ThermostatOperatingState.operating_state.IDLE
+      }))
+    }},
+    {channel = "capability", direction = "send", message =
+      mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.idle())
+    }
+  }
+)
+
+test.register_message_test(
+  "3.3.4 Configuration 27 selects OFF without emitting an operating state",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 27, size = 1, configuration_value = 0
+      }))
+    }},
+    {channel = "capability", direction = "send", message =
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.off())
+    },
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatOperatingState:Get({})
+    )}
+  },
+  {inner_block_ordering = "relaxed"}
+)
+
+test.register_message_test(
+  "3.3.5 Configuration 27 selects COOL without emitting an operating state",
+  {
+    {channel = "zwave", direction = "receive", message = {
+      mock_device.id, zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({
+        parameter_number = 27, size = 1, configuration_value = 2
+      }))
+    }},
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
+    )},
+    {channel = "capability", direction = "send", message =
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
+    },
+    {channel = "zwave", direction = "send", message = zw_test_utilities.zwave_test_build_send_command(
+      mock_device, ThermostatOperatingState:Get({})
+    )}
+  },
+  {inner_block_ordering = "relaxed"}
 )
 
 -- ----- A d d i t i o n a l   Z - w a v e   r e c e i v e   t e s t s -----
