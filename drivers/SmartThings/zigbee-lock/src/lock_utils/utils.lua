@@ -42,13 +42,84 @@ function lock_utils.sync_device_state(device)
   -- Per spec, this attribute should be a boolean set to True if it is ok for the door lock server to send PINs over the air.
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 
-  -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
-  -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0.
+  -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet, so start the process from 0.
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, 1)
+    device:set_field(consts.SYNC.CODE_INDEX, 0)
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))
+end
+
+
+-- [[ CREDENTIAL TABLE MANAGEMENT ]] --
+
+-- Add a user and its credential together. Shared by the commanded and reported paths below. Existing entries at
+-- either index are left untouched by the underlying table add. Returns the result status of the credential add.
+-- Only creates a user if the credential create succeeded, or if the credential already existed
+function lock_utils.add_user_and_credential(device, args)
+  local tables = require "lock_utils.tables"
+  local user_type = args.userType or "guest"
+  local name = (user_type == consts.USER_TYPE_MASTER) and consts.MASTER_CODE_NAME or ("Guest " .. args.userIndex)
+  local credential_status = tables.add_entry(device, "credentials", {
+    userIndex       = args.userIndex,
+    credentialIndex = args.credentialIndex,
+    credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
+    credentialName  = args.credentialName or name,
+  })
+  if credential_status == consts.COMMAND_RESULT.SUCCESS or credential_status == consts.COMMAND_RESULT.OCCUPIED then
+    tables.add_entry(device, "users", {
+      userIndex = args.userIndex,
+      userName  = name,
+      userType  = user_type,
+    })
+  end
+  return credential_status
+end
+
+-- Per command: update the tables after the lock confirmed a set-credential command we sent.
+-- Returns the command result status, or nil for any other command.
+function lock_utils.add_commanded_credential(device, command_in_progress, credential_args)
+  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
+    return lock_utils.add_user_and_credential(device, credential_args)
+  elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    return consts.COMMAND_RESULT.SUCCESS
+  end
+end
+
+-- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
+-- from us (sync, or a programming event), unless a credential already exists there.
+function lock_utils.add_reported_credential(device, credential_index, is_master)
+  local tables = require "lock_utils.tables"
+  if tables.find_entry(device, "credentials", credential_index) then return end
+  local user_index = tables.next_index(device, "users")
+  lock_utils.add_user_and_credential(device, {
+    userIndex       = user_index,
+    credentialIndex = credential_index,
+    userType        = is_master and consts.USER_TYPE_MASTER or nil,
+  })
+end
+
+-- Whether the user at `user_index` is a master code user.
+function lock_utils.is_master_user(device, user_index)
+  local tables = require "lock_utils.tables"
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.USER_TYPE_MASTER
+end
+
+-- Delete every credential whose user is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_credentials(device)
+  local tables = require "lock_utils.tables"
+  return tables.delete_entries_except(device, "credentials", function(cred)
+    return lock_utils.is_master_user(device, cred.userIndex)
+  end)
+end
+
+-- Delete every user that is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_users(device)
+  local tables = require "lock_utils.tables"
+  return tables.delete_entries_except(device, "users", function(user)
+    return user.userType == consts.USER_TYPE_MASTER
+  end)
 end
 
 

@@ -75,15 +75,6 @@ test.register_coroutine_test(
     -- Route events to the new capabilities handler, not the legacy lockCodes handler.
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
-    -- Users table receives the new entry
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
-          { visibility = { displayed = false } }
-        )
-      )
-    )
     -- Credentials table receives the new entry
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -93,7 +84,16 @@ test.register_coroutine_test(
         )
       )
     )
-    test.wait_for_events()
+-- Users table receives the new entry
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+          { visibility = { displayed = false } }
+        )
+      )
+    )
+        test.wait_for_events()
   end
 )
 
@@ -105,16 +105,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         )
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         )
       )
@@ -168,16 +168,16 @@ test.register_coroutine_test(
     -- Failsafe path: notification handled as command success, user and credential added, commandResult emitted.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         )
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         )
       )
@@ -227,16 +227,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         )
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         )
       )
@@ -295,16 +295,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 2))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         )
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         )
       )
@@ -322,16 +322,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 2))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         )
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         )
       )
@@ -377,12 +377,12 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 1, "guest", "pin", "1234" } },
+        args = { 0, "guest", "pin", "1234" } },
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       DoorLock.server.commands.SetPINCode(mock_device,
-        1, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "1234"),
+        0, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "1234"),
     })
     test.wait_for_events()
 
@@ -393,6 +393,13 @@ test.register_coroutine_test(
     -- User and credential added; commandResult emitted; busy state cleared.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockUsers.users(
           { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
@@ -400,15 +407,8 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
-          { visibility = { displayed = false } }
-        ))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 },
+          { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 0 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
@@ -417,7 +417,7 @@ test.register_coroutine_test(
     -- Late ProgrammingEventNotification PIN_CODE_ADDED for the same slot arrives after busy ends.
     -- The credential is already in the table → find_entry returns it → handler exits early.
     -- Both user and credential already exist, so no events are emitted.
-    test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
+    test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 0))
     test.wait_for_events()
   end
 )
@@ -431,15 +431,15 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -460,15 +460,15 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -522,15 +522,15 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(build_programming_event(ProgrammingEventCode.PIN_CODE_ADDED, 1))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
