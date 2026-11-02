@@ -10,103 +10,6 @@ local data_types = require "st.matter.data_types"
 local constants = require "schlage-sense-pro.constants"
 local can_handle = require "schlage-sense-pro.can_handle"
 
-local APPROACH_CAP_JSON = [[{
-  "name": "Lock UWB Approach Settings",
-  "id": "lockUwbApproachSettings",
-  "version": 1,
-  "attributes": {
-    "approachDirection": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "enum": ["frontLeftRight", "frontLeft", "frontRight", "frontOnly"]
-          }
-        },
-        "required": ["value"]
-      }
-    },
-    "supportedApproachDirections": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "array",
-            "items": { "type": "string" }
-          }
-        },
-        "required": ["value"]
-      }
-    }
-  },
-  "commands": {
-    "setApproachDirection": {
-      "name": "setApproachDirection",
-      "arguments": [
-        {
-          "name": "approachDirection",
-          "schema": {
-            "type": "string",
-            "enum": ["frontLeftRight", "frontLeft", "frontRight", "frontOnly"]
-          },
-          "optional": false
-        }
-      ]
-    }
-  }
-}]]
-
-local MODE_CAP_JSON = [[{
-  "name": "Lock UWB Mode Settings",
-  "id": "lockUwbModeSettings",
-  "version": 1,
-  "attributes": {
-    "intentMode": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "enum": ["unlockOnApproach", "unlockOnArrival", "unlockOnInteraction"]
-          }
-        },
-        "required": ["value"]
-      }
-    },
-    "supportedIntentModes": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "array",
-            "items": { "type": "string" }
-          }
-        },
-        "required": ["value"]
-      }
-    }
-  },
-  "commands": {
-    "setIntentMode": {
-      "name": "setIntentMode",
-      "arguments": [
-        {
-          "name": "intentMode",
-          "schema": {
-            "type": "string",
-            "enum": ["unlockOnApproach", "unlockOnArrival", "unlockOnInteraction"]
-          },
-          "optional": false
-        }
-      ]
-    }
-  }
-}]]
-
-test.socket.capability:__load_capability_definition("lockUwbApproachSettings", 1, APPROACH_CAP_JSON)
-test.socket.capability:__load_capability_definition("lockUwbModeSettings", 1, MODE_CAP_JSON)
-
 local lockUwbApproachSettings = capabilities.lockUwbApproachSettings
 local lockUwbModeSettings = capabilities.lockUwbModeSettings
 
@@ -164,17 +67,6 @@ local mock_schlage_device = test.mock_device.build_test_matter_device({
 local DoorLockFeatureMapAttr = { ID = 0xFFFC, cluster = clusters.DoorLock.ID }
 
 local function test_init()
-  test.socket.capability:__load_capability_definition(
-    constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
-    1,
-    APPROACH_CAP_JSON
-  )
-  test.socket.capability:__load_capability_definition(
-    constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
-    1,
-    MODE_CAP_JSON
-  )
-
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_schlage_device)
   subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_schlage_device))
   subscribe_request:merge(cluster_base.subscribe(mock_schlage_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
@@ -686,17 +578,6 @@ test.register_coroutine_test(
         }
       }
     })
-
-    test.socket.capability:__load_capability_definition(
-      constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS,
-      1,
-      APPROACH_CAP_JSON
-    )
-    test.socket.capability:__load_capability_definition(
-      constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS,
-      1,
-      MODE_CAP_JSON
-    )
 
     local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_existing_schlage_device)
     subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_existing_schlage_device))
