@@ -59,7 +59,6 @@ utils.step_shade_level_handler = function(driver, device, command)
   end
   local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
     device:set_field(LATEST_TARGET_LEVEL, nil)
-    -- A completed timer cannot be cancelled, so drop the reference as well
     device:set_field(TARGET_LEVEL_TIME_OUT, nil)
   end)
   device:set_field(TARGET_LEVEL_TIME_OUT, timer)
