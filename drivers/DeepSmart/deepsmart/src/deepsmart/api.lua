@@ -25,7 +25,7 @@ function Api.client(wiser_index_code, ip)
   local ret = setmetatable({
     wiser_index_code = wiser_index_code,
     ip = ip,
-    client = RestClient.new("https://"..ip, utils.labeled_socket_builder(wiser_index_code, SSL_CONFIG))
+    client = nil
   }, Api)
 
   return ret
@@ -51,23 +51,20 @@ end
 
 function Api:do_get(url)
   -- get url
-  local client = self.client
+  local client = RestClient.new("https://"..self.ip, utils.labeled_socket_builder(self.wiser_index_code, SSL_CONFIG))
   if (client == nil) then
     log.warn('do_get url '..url..' client is nil')
     return nil,'client nil',404
   end
   log.debug('do_get '..url)
   local response,err,partial = client:get(url, ADDITIONAL_HEADERS, retry_fn(3))
-  if (err ~= nil) then
-    client:shutdown()
-    self.client = RestClient.new("https://"..self.ip, utils.labeled_socket_builder(self.wiser_index_code, SSL_CONFIG))
-  end
+  client:shutdown()
   return process_rest_response(response,err,partial)
 end
 
 function Api:do_post(url, content)
   -- get url
-  local client = self.client
+  local client = RestClient.new("https://"..self.ip, utils.labeled_socket_builder(self.wiser_index_code, SSL_CONFIG))
   if (client == nil) then
     log.warn('do_post url '..url..' client is nil')
     return nil,'client nil',404
@@ -76,8 +73,6 @@ function Api:do_post(url, content)
   local response,err,partial = client:post(url, content, ADDITIONAL_HEADERS, retry_fn(3))
   if (err ~= nil) then
     log.warn('post url '..url..' content '..content..' error '..err)
-    client:shutdown()
-    self.client = RestClient.new("https://"..self.ip, utils.labeled_socket_builder(self.wiser_index_code, SSL_CONFIG))
   else
     if (response == nil or response:get_body() == nil) then
       log.warn('post url '..url..' content '..content..' res nil')
@@ -85,6 +80,7 @@ function Api:do_post(url, content)
       log.trace('post url '..url..' content '..content..' res '..response:get_body())
     end
   end
+  client:shutdown()
   return process_rest_response(response,err,partial)
 end
 
