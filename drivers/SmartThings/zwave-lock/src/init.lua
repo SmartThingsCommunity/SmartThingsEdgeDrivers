@@ -15,7 +15,8 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local capabilities = require "st.capabilities"
 
 local consts              = require "lock_utils.constants"
-local table_utils         = require "lock_utils.tables"
+local lock_utils          = require "lock_utils.utils"
+local table_utils        = require "lock_utils.tables"
 local zwave_handlers      = require "lock_handlers.zwave_responses"
 local capability_handlers = require "lock_handlers.capabilities"
 
@@ -39,6 +40,11 @@ function LockLifecycle.device_added(driver, device)
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
+  if device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED) == true and
+     device:supports_capability(capabilities.lockCredentials) then
+    -- ensure our user/credential state is accurate to the current device state
+    device.thread:call_with_delay(5, function() lock_utils.sync_device_state(device) end)
+  end
 end
 
 function LockLifecycle.init(driver, device)
@@ -83,6 +89,7 @@ local driver_template = {
     [cc.USER_CODE] = {
       [UserCode.REPORT] = zwave_handlers.user_code_report,
       [UserCode.USERS_NUMBER_REPORT] = zwave_handlers.users_number_report,
+      [UserCode.MASTER_CODE_REPORT] = zwave_handlers.master_code_report,
     }
   },
   capability_handlers = {

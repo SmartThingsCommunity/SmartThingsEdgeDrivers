@@ -85,6 +85,43 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "added: TYPED device syncs the codes already on the lock 5 seconds after joining",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_typed.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device_typed:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    )
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device_typed.id))
+    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device_typed.id))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device_typed.id))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(5)
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device_typed.id))
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_typed) }
+)
+
+test.register_coroutine_test(
+  "added: non-TYPED device does not sync codes",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "added" })
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device_base.id))
+    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device_base.id))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device_base.id))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(5)
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
   "added: non-TYPED (PROVISIONED) device with lockCodes does NOT emit migrated but still injects refresh",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "added" })

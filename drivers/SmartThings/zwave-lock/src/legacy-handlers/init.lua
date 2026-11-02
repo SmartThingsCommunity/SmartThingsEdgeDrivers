@@ -115,6 +115,16 @@ local function migrate(driver, device, cmd)
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
 
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
+
+  -- lockCodes only holds the master code if SmartThings set it and the lock confirmed it as a user code. A factory
+  -- master code, or one a Yale ZW3 confirmed with the "master code changed" notification, is read back instead.
+  local master_migrated = false
+  for _, code in ipairs(ordered_codes) do
+    if code.index == master_index then master_migrated = true end
+  end
+  if not master_migrated then
+    require("lock_utils.utils").read_master_code(device)
+  end
 end
 
 local legacy_capabilities = {

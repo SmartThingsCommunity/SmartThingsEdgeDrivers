@@ -32,6 +32,8 @@ local DoorLock     = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local UserCode     = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+--- @type st.zwave.CommandClass.UserCode
+local UserCodeV2   = (require "st.zwave.CommandClass.UserCode")({ version = 2 })
 
 local zwave_lock_endpoints = {
   {
@@ -47,6 +49,14 @@ local zwave_lock_endpoints = {
 local mock_device = test.mock_device.build_test_zwave_device({
   profile         = t_utils.get_profile_definition("base-lock.yml"),
   zwave_endpoints = zwave_lock_endpoints,
+})
+
+local yale_mock_device = test.mock_device.build_test_zwave_device({
+  profile               = t_utils.get_profile_definition("base-lock.yml"),
+  zwave_endpoints       = zwave_lock_endpoints,
+  zwave_manufacturer_id = constants.ADMIN.YALE_MANUFACTURER_ID,
+  zwave_product_type    = 0x0002,
+  zwave_product_id      = 0x0000,
 })
 
 local function test_init()
@@ -147,6 +157,50 @@ test.register_coroutine_test(
     {
       min_api_version = 15
     })
+
+test.register_coroutine_test(
+  "user_code_report: sync on a Yale reads the master code slot and Admin Code when it completes",
+  function()
+    yale_mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    yale_mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    yale_mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    yale_mock_device:set_field(constants.SYNC.CODE_INDEX, 20, {})
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 20,
+      user_id_status  = UserCode.user_id_status.AVAILABLE,
+    }) })
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 251 }):build_test_tx(yale_mock_device.id))
+    test.socket.zwave:__expect_send(UserCodeV2:MasterCodeGet({}):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    -- a ZW2 module answers the slot read; the master code is added at 251
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+      user_code       = "199111",
+    }) })
+    test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
+      capabilities.lockUsers.users({ { userIndex = 251, userName = "Master Code", userType = "controlOnlyMember" } },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
+      capabilities.lockCredentials.credentials(
+        { { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Master Code" } },
+        { visibility = { displayed = false } })))
+    test.wait_for_events()
+
+    -- the Admin Code report that follows finds the entry already there and adds nothing
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCodeV2:MasterCodeReport({ master_code = "199111" }) })
+    test.wait_for_events()
+  end,
+  {
+    test_init = function()
+      test.disable_startup_messages()
+      test.mock_device.add_test_device(yale_mock_device)
+    end,
+    min_api_version = 15
+  }
+)
 
 test.register_coroutine_test(
   "user_code_report: out-of-band ENABLED code creates user and credential entries",
