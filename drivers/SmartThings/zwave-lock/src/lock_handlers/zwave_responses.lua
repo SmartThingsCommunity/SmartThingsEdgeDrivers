@@ -67,6 +67,8 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
       -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
+      -- the master code slot is outside the lock's user code slots, so it is read separately
+      lock_utils.read_master_code(device)
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
       device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
@@ -88,6 +90,19 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
     elseif command_in_progress == consts.LOCK_CREDENTIALS.DELETE or tables.find_entry(device, "credentials", credential_index) then
       lock_utils.delete_credential_report_helper(device, credential_index)
     end
+  end
+end
+
+-- Only the Admin Code read sent at migration is handled. The unrequested report that follows every master
+-- code change is ignored, since the notification for the change already updated the master code entries.
+function ZwaveHandlers.master_code_report(driver, device, cmd)
+  if not device:get_field(consts.DRIVER_STATE.MASTER_CODE_READ) then return end
+  device:set_field(consts.DRIVER_STATE.MASTER_CODE_READ, nil)
+
+  local master_index = tables.master_credential_index(device)
+  local master_code = cmd.args.master_code or ""
+  if master_index ~= nil and master_code ~= "" and not tables.find_entry(device, "credentials", master_index) then
+    lock_utils.add_master_entries(device, master_index)
   end
 end
 

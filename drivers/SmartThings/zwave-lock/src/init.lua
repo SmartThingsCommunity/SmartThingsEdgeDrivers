@@ -86,6 +86,7 @@ local driver_template = {
     [cc.USER_CODE] = {
       [UserCode.REPORT] = zwave_handlers.user_code_report,
       [UserCode.USERS_NUMBER_REPORT] = zwave_handlers.users_number_report,
+      [UserCode.MASTER_CODE_REPORT] = zwave_handlers.master_code_report,
     }
   },
   capability_handlers = {

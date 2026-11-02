@@ -7,6 +7,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+local UserCodeV2 = (require "st.zwave.CommandClass.UserCode")({ version = 2 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local t_utils = require "integration_test.utils"
 --- @type st.zwave.constants
@@ -179,6 +180,69 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(yale_mock_device.id))
     test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Migrate reads the Yale master code when lockCodes has none, and adds it at slot 251 from the Admin Code report",
+  function()
+    init_code_slot(1, "Zach", yale_mock_device)
+    test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(yale_mock_device.id))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 251 }):build_test_tx(yale_mock_device.id))
+    test.socket.zwave:__expect_send(UserCodeV2:MasterCodeGet({}):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCodeV2:MasterCodeReport({ master_code = "199111" }) })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Master Code", userType="controlOnlyMember"}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Master Code"}}, { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Migrate adds no Yale master code when the Admin Code read reports no code",
+  function()
+    init_code_slot(1, "Zach", yale_mock_device)
+    test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(yale_mock_device.id))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 251 }):build_test_tx(yale_mock_device.id))
+    test.socket.zwave:__expect_send(UserCodeV2:MasterCodeGet({}):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    -- an empty Admin Code means the lock has no master code set
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCodeV2:MasterCodeReport({ master_code = "" }) })
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Migrate adds the Yale master code at slot 251 when the lock answers the slot read",
+  function()
+    init_code_slot(1, "Zach", yale_mock_device)
+    test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(yale_mock_device.id))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 251 }):build_test_tx(yale_mock_device.id))
+    test.socket.zwave:__expect_send(UserCodeV2:MasterCodeGet({}):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS, user_code = "199111" }) })
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Master Code", userType="controlOnlyMember"}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Master Code"}}, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )

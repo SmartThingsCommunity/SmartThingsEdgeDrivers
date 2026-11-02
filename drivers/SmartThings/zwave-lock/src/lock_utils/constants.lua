@@ -8,6 +8,7 @@ lock_constants.DRIVER_STATE = {
   COMMAND_IN_PROGRESS = "commandInProgress",
   CREDENTIAL_ARGS_IN_USE = "currentCredential",
   SLGA_MIGRATED = "slgaMigrated",
+  MASTER_CODE_READ = "masterCodeRead",
 }
 
 lock_constants.SYNC = {
