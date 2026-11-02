@@ -369,6 +369,88 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "deleteCredential: removes a credential whose userIndex maps to no user",
+  function()
+    -- seed via the persistent store, which the driver falls back to when the capability state cache is empty
+    mock_device:set_field("persistedCredentials",
+      { { userIndex = 7, credentialIndex = 1, credentialType = "pin" } }, { persist = true })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential",
+        args = { 1, "pin" } },
+    })
+    test.socket.zwave:__expect_send(
+      UserCode:Set({ user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE }):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({ user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE }),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 1, userIndex = 7 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "deleteCredential: removes a credential whose credentialIndex maps to no credential",
+  function()
+    -- the credential exists in state, but the lock has nothing stored in that slot.
+    -- seed via the persistent store, which the driver falls back to when the capability state cache is empty
+    mock_device:set_field("persistedUsers",
+      { { userIndex = 3, userName = "Alice", userType = "guest" } }, { persist = true })
+    mock_device:set_field("persistedCredentials",
+      { { userIndex = 3, credentialIndex = 3, credentialType = "pin" } }, { persist = true })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential",
+        args = { 3, "pin" } },
+    })
+    test.socket.zwave:__expect_send(
+      UserCode:Set({ user_identifier = 3, user_id_status = UserCode.user_id_status.AVAILABLE }):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+
+    -- the lock reports the slot as available, so the stale credential entry should be removed (the user is kept)
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({ user_identifier = 3, user_id_status = UserCode.user_id_status.AVAILABLE }),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 3, userIndex = 3 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
   "deleteCredential: returns failure immediately when the credentialIndex does not exist in the table",
   function()
     -- No credentials seeded — index 5 is unknown
