@@ -102,17 +102,13 @@ function lock_utils.add_master_entries(device, credential_index, name)
   }, true)
 end
 
--- Read the master code back from the lock, so it is recorded even if it was set outside SmartThings. ZW2 modules
--- answer the read of the master code slot and ZW3 modules answer the User Code v2 Admin Code read; a lock ignores
--- the one it does not support. The slot is read first, so its report cannot remove an entry the Admin Code adds.
+-- Read the master code slot back from the lock, so the master code is recorded even if it was set outside
+-- SmartThings. The report is handled like any other user code report.
 function lock_utils.read_master_code(device)
   local master_index = tables.master_credential_index(device)
   if master_index == nil then return end
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-  local UserCodeV2 = (require "st.zwave.CommandClass.UserCode")({ version = 2 })
   device:send(UserCode:Get({ user_identifier = master_index }))
-  device:set_field(consts.DRIVER_STATE.MASTER_CODE_READ, true)
-  device:send(UserCodeV2:MasterCodeGet({}))
 end
 
 -- Clear every entry of the "users" or "credentials" table except the master code credential and its user.
