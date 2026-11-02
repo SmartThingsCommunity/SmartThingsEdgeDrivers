@@ -93,19 +93,6 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   end
 end
 
--- Only the Admin Code read sent at migration is handled. The unrequested report that follows every master
--- code change is ignored, since the notification for the change already updated the master code entries.
-function ZwaveHandlers.master_code_report(driver, device, cmd)
-  if not device:get_field(consts.DRIVER_STATE.MASTER_CODE_READ) then return end
-  device:set_field(consts.DRIVER_STATE.MASTER_CODE_READ, nil)
-
-  local master_index = tables.master_credential_index(device)
-  local master_code = cmd.args.master_code or ""
-  if master_index ~= nil and master_code ~= "" and not tables.find_entry(device, "credentials", master_index) then
-    lock_utils.add_master_entries(device, master_index)
-  end
-end
-
 function ZwaveHandlers.users_number_report(driver, device, cmd)
   device:emit_event(capabilities.lockUsers.totalUsersSupported(
     cmd.args.supported_users, { state_change = true, visibility = { displayed = false } }))
