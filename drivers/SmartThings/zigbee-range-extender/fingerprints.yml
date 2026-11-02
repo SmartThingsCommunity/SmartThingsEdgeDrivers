@@ -38,4 +38,4 @@ zigbeeManufacturer:
     deviceLabel: "SONOFF Zigbee Range Extender"
     manufacturer: "SONOFF"
     model: "Dongle-LMG21"
-    deviceProfileName: range-extender
+    deviceProfileName: range-extender-signal

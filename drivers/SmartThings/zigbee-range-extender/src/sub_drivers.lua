@@ -4,5 +4,6 @@
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
    lazy_load_if_possible("frient"),
+   lazy_load_if_possible("range-extender-signal"),
 }
 return sub_drivers
