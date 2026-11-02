@@ -15,8 +15,8 @@ local constants = require "schlage-sense-pro.constants"
 local schlage_utils = require "schlage-sense-pro.schlage_utils"
 
 local DoorLock = clusters.DoorLock
-local lockUwbApproachSettings = constants.get_lock_uwb_approach_settings_capability()
-local lockUwbModeSettings = constants.get_lock_uwb_mode_settings_capability()
+local lockUwbApproachSettings = capabilities.lockUwbApproachSettings
+local lockUwbModeSettings = capabilities.lockUwbModeSettings
 
 device_configuration.register_optional_capabilities(function(device)
   local matched = require("schlage-sense-pro.can_handle")(nil, nil, device)

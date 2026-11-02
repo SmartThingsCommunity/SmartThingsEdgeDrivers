@@ -97,6 +97,7 @@ function device_configuration.match_profile_modular(driver, device)
     end
   end
 
+  -- Subdriver registrations, including Schlage UWB settings, are applied on every profile match.
   for _, cap_id in ipairs(extra_optional_capabilities(device)) do
     table.insert(main_component_capabilities, cap_id)
   end

@@ -1,33 +1,11 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
---- Constants and Specification Scaffolding for Allegion / Schlage Sense Pro UWB Door Lock
+--- Constants for the Schlage Sense Pro UWB door lock.
 ---
---- Reference Specifications:
---- 1. Confluence: "Schlage Sense Pro (Aliro) - UWB Configuration and Feature Support" (Page 5350097136)
---- 2. Confluence: "Action plan for Schlage UWB configuration" (Page 5392597723)
----
---- Feature Overview:
---- 1. Field of View (Detection Area):
----    Allowed values per Allegion spec:
----      0: Front + Left + Right (all directions)
----      1: Front + Left
----      2: Front + Right
----      3: Front only
----    SmartThings Capability: lockUwbApproachSettings
----
---- 2. Intent Mode (Unlock Behavior):
----    Allowed values per Allegion spec:
----      0: Unlock on Approach
----      1: Unlock on Arrival
----      2: Unlock on Lock Interaction
----    SmartThings Capability: lockUwbModeSettings
----
---- NOTE FOR ALLEGION ENGINEERS:
---- Update the manufacturer-specific Matter cluster ID, attribute IDs, command IDs,
---- and data types below to match your final Matter cluster specification.
-
-local capabilities = require "st.capabilities"
+--- Field of view values: 0 front+left+right, 1 front+left, 2 front+right, 3 front only.
+--- Intent mode values: 0 unlock on approach, 1 unlock on arrival, 2 unlock on lock interaction.
+--- Cluster and attribute IDs below are provisional until the manufacturer cluster is finalized.
 
 local constants = {}
 
@@ -73,10 +51,8 @@ constants.CMD_SET_INTENT_MODE_ID = 0x0002
 constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS = "lockUwbApproachSettings"
 constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS = "lockUwbModeSettings"
 
---- Field of View (lockUwbApproachSettings) mappings
---- [PLACEHOLDER / VERIFY]: Update this mapping table if the device's raw attribute values differ from the defaults below.
---- Default per Confluence 5350097136 / 5392597723:
----   0: Front+Left+Right, 1: Front+Left, 2: Front+Right, 3: Front only
+--- Field of view (lockUwbApproachSettings) mappings.
+--- 0: front+left+right, 1: front+left, 2: front+right, 3: front only.
 constants.APPROACH_DIRECTION = {
   FRONT_LEFT_RIGHT = "frontLeftRight",
   FRONT_LEFT = "frontLeft",
@@ -105,10 +81,8 @@ constants.SUPPORTED_APPROACH_DIRECTIONS = {
   constants.APPROACH_DIRECTION.FRONT_ONLY,
 }
 
---- Intent Mode (lockUwbModeSettings) mappings
---- [PLACEHOLDER / VERIFY]: Update this mapping table if the device's raw attribute values differ from the defaults below.
---- Default per Confluence 5350097136 / 5392597723:
----   0: Unlock on Approach, 1: Unlock on Arrival, 2: Unlock on Lock Interaction
+--- Intent mode (lockUwbModeSettings) mappings.
+--- 0: unlock on approach, 1: unlock on arrival, 2: unlock on lock interaction.
 constants.INTENT_MODE = {
   UNLOCK_ON_APPROACH = "unlockOnApproach",
   UNLOCK_ON_ARRIVAL = "unlockOnArrival",
@@ -132,119 +106,5 @@ constants.SUPPORTED_INTENT_MODES = {
   constants.INTENT_MODE.UNLOCK_ON_ARRIVAL,
   constants.INTENT_MODE.UNLOCK_ON_INTERACTION,
 }
-
--------------------------------------------------------------------------------------
--- Fallback Capability Builders (Pre-27R1 Compatibility)
--------------------------------------------------------------------------------------
-
-constants.APPROACH_CAP_JSON = [[{
-  "name": "Lock UWB Approach Settings",
-  "id": "lockUwbApproachSettings",
-  "version": 1,
-  "attributes": {
-    "approachDirection": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "enum": ["frontLeftRight", "frontLeft", "frontRight", "frontOnly"]
-          }
-        },
-        "required": ["value"]
-      }
-    },
-    "supportedApproachDirections": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "array",
-            "items": { "type": "string" }
-          }
-        },
-        "required": ["value"]
-      }
-    }
-  },
-  "commands": {
-    "setApproachDirection": {
-      "name": "setApproachDirection",
-      "arguments": [
-        {
-          "name": "approachDirection",
-          "schema": {
-            "type": "string",
-            "enum": ["frontLeftRight", "frontLeft", "frontRight", "frontOnly"]
-          },
-          "optional": false
-        }
-      ]
-    }
-  }
-}]]
-
-constants.MODE_CAP_JSON = [[{
-  "name": "Lock UWB Mode Settings",
-  "id": "lockUwbModeSettings",
-  "version": 1,
-  "attributes": {
-    "intentMode": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "enum": ["unlockOnApproach", "unlockOnArrival", "unlockOnInteraction"]
-          }
-        },
-        "required": ["value"]
-      }
-    },
-    "supportedIntentModes": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "array",
-            "items": { "type": "string" }
-          }
-        },
-        "required": ["value"]
-      }
-    }
-  },
-  "commands": {
-    "setIntentMode": {
-      "name": "setIntentMode",
-      "arguments": [
-        {
-          "name": "intentMode",
-          "schema": {
-            "type": "string",
-            "enum": ["unlockOnApproach", "unlockOnArrival", "unlockOnInteraction"]
-          },
-          "optional": false
-        }
-      ]
-    }
-  }
-}]]
-
-local function load_or_build(cap_id, cap_json)
-  local status, cap = pcall(function() return capabilities[cap_id] end)
-  if status and cap and pcall(function() return cap.commands end) and cap.commands ~= nil then
-    return cap
-  end
-  return capabilities.build_cap_from_json_string(cap_json)
-end
-
-function constants.get_lock_uwb_approach_settings_capability()
-  return load_or_build(constants.CAPABILITY_LOCK_UWB_APPROACH_SETTINGS, constants.APPROACH_CAP_JSON)
-end
-
-function constants.get_lock_uwb_mode_settings_capability()
-  return load_or_build(constants.CAPABILITY_LOCK_UWB_MODE_SETTINGS, constants.MODE_CAP_JSON)
-end
 
 return constants

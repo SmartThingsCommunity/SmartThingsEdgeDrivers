@@ -294,12 +294,8 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-local function match_profile(driver, device, ignore_static_profiling)
-  device_configuration.match_profile(driver, device, ignore_static_profiling)
-end
-
 local function do_configure(driver, device)
-  match_profile(driver, device, false)
+  device_configuration.match_profile(driver, device, false)
   device.thread:call_with_delay(5, function()
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
@@ -307,7 +303,7 @@ local function do_configure(driver, device)
 end
 
 local function driver_switched(driver, device)
-  match_profile(driver, device, false)
+  device_configuration.match_profile(driver, device, false)
   device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
@@ -531,7 +527,7 @@ local function door_lock_feature_map_handler(driver, device, ib, response)
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
   if feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
-    match_profile(driver, device, true)
+    device_configuration.match_profile(driver, device, true)
   end
 end
 
@@ -550,7 +546,7 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
     device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist=true})
   end
   if latest_battery_support == nil or latest_battery_support ~= device:get_field(profiling_data.BATTERY_SUPPORT) then
-    match_profile(driver, device, false)
+    device_configuration.match_profile(driver, device, false)
   end
 end
 
@@ -2342,7 +2338,7 @@ local function handle_refresh(driver, device, command)
     else
       device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
     end
-    match_profile(driver, device, true)
+    device_configuration.match_profile(driver, device, true)
   else
     device:send(DoorLock.attributes.LockState:read(device))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})

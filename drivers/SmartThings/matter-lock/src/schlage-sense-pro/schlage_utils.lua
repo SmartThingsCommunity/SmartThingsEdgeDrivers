@@ -1,14 +1,15 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local constants = require "schlage-sense-pro.constants"
 
 local DoorLock = clusters.DoorLock
-local lockUwbApproachSettings = constants.get_lock_uwb_approach_settings_capability()
-local lockUwbModeSettings = constants.get_lock_uwb_mode_settings_capability()
+local lockUwbApproachSettings = capabilities.lockUwbApproachSettings
+local lockUwbModeSettings = capabilities.lockUwbModeSettings
 
 local schlage_utils = {}
 
