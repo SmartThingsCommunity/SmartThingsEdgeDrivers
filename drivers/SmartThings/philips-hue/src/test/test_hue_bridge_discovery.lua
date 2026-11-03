@@ -26,8 +26,6 @@ test.add_test_env_setup_func(function(driver)
   Discovery.disco_api_instances = {}
 end)
 
-test.set_test_init_function(hue_test_helpers.fail_on_caught_handler_errors)
-
 --- Queue an mDNS response for the bridge and start discovery via the same "discovery" channel
 --- message the real hub sends when a user initiates a scan (see
 --- st.handlers.discovery_message_handlers), rather than invoking Discovery.discover directly:

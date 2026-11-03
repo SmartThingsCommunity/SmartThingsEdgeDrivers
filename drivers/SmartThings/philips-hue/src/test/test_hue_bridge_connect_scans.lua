@@ -36,9 +36,14 @@ local FAILED = { errors = { { description = "internal error" } } }
 -- fails the test.
 local scans
 
+-- The longest the driver waits before a retry: its backoff grows to 30s, plus up to 0.5s of jitter.
+local RETRY_WITHIN = 60
+-- The group scan starts once 45s pass with no further scan queued.
+local GROUP_SCAN_WITHIN = 120
+
 --- Wait for the driver's next scan request, answer it, and return the mock time it was made at.
 local function answer_next(response)
-  local req = scans:await({ max_turns = 500 })
+  local req = scans:await({ within = RETRY_WITHIN })
   local made_at = os.time()
   req:respond(response)
   return made_at
@@ -91,7 +96,7 @@ test.register_coroutine_test(
   "a connectivity scan reporting no devices is complete: it isn't repeated, and the room scan follows",
   function()
     -- The connectivity scan is answered once (a second one would be an unexpected request).
-    http.await_request(rest, "GET", ROOM_PATH, { max_turns = 500 }):respond({ body = EMPTY })
+    http.await_request(rest, "GET", ROOM_PATH, { within = GROUP_SCAN_WITHIN }):respond({ body = EMPTY })
   end,
   {
     min_api_version = 23,
@@ -102,12 +107,6 @@ test.register_coroutine_test(
   }
 )
 
---- Let mock time run on for `seconds`, well past the driver's longest backoff.
-local function let_time_pass(seconds)
-  local until_time = os.time() + seconds
-  test.wait_until(function() return os.time() >= until_time end,
-    { max_turns = 500, message = string.format("%ds of mock time passing", seconds) })
-end
 
 local function remove_bridge()
   test.socket.device_lifecycle:__queue_receive({ fixtures.bridge.id, "removed" })
@@ -121,7 +120,8 @@ test.register_coroutine_test(
     answer_next({ status = 500, body = FAILED })
     remove_bridge()
     -- Another attempt would be an unexpected request.
-    let_time_pass(120)
+    -- Well past the driver's longest backoff.
+    test.let_time_pass(120)
   end,
   { min_api_version = 23, test_init = answer_connectivity_scans(2) }
 )
@@ -132,7 +132,8 @@ test.register_coroutine_test(
     answer_next({ status = 500, body = FAILED })
     answer_next({ status = 500, body = FAILED })
     remove_bridge()
-    let_time_pass(120)
+    -- Well past the driver's longest backoff.
+    test.let_time_pass(120)
   end,
   { min_api_version = 23, test_init = answer_room_scans(2) }
 )
@@ -145,9 +146,10 @@ test.register_coroutine_test(
     -- The stream drops and reconnects; the new connection's scan succeeds, and the room scan follows.
     sse:close_connection()
     answer_next({ body = CONNECTED })
-    http.await_request(rest, "GET", ROOM_PATH, { max_turns = 500 }):respond({ body = EMPTY })
+    http.await_request(rest, "GET", ROOM_PATH, { within = GROUP_SCAN_WITHIN }):respond({ body = EMPTY })
     -- A further attempt by the earlier connection's scan would be an unexpected request.
-    let_time_pass(120)
+    -- Well past the driver's longest backoff.
+    test.let_time_pass(120)
   end,
   { min_api_version = 23, test_init = answer_connectivity_scans(3) }
 )

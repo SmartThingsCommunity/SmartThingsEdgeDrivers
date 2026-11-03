@@ -111,7 +111,7 @@ local function init_and_scan_groups()
   local bridge = fixtures.driver_device(mock_bridge)
   test.wait_until(function()
     return http.count_requests(rest, "GET", "/clip/v2/resource/zone") >= 1 and bridge:get_field(Fields.GROUPS) ~= nil
-  end, { max_turns = 500, message = "the room and zone scan" })
+  end, { within = 120, message = "the room and zone scan" })  -- the scan waits 45s for more devices
   assert(http.count_requests(rest, "GET", "/clip/v2/resource/room") >= 1, "expected the room scan")
   -- Back to strict ordering for the events of the test itself.
   test.socket.capability:__set_channel_ordering("strict")
