@@ -381,18 +381,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteCredential: a stale credentialIndex 0 is removed locally without sending user identifier 0",
+  "deleteCredential: credentialIndex 0 is rejected without sending user identifier 0",
   function()
     seed(mock_device, { { userIndex = 1, userName = "Master Code", userType = "guest" } },
          { { userIndex = 1, credentialIndex = 0, credentialType = "pin" } })
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 0, "pin" } } })
-    expect_credentials(mock_device, {})
-    expect_credential_result(mock_device,
-      { commandName = "deleteCredential", statusCode = "success", userIndex = 1, credentialIndex = 0 })
+    expect_credential_result(mock_device, { commandName = "deleteCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device) }
+)
+
+test.register_coroutine_test(
+  "deleteAllCredentials: sends a single user identifier 0 clear and keeps the master code in state",
+  function()
+    seed(yale_mock_device, { MASTER_USER, GUEST_USER }, { MASTER_CREDENTIAL, GUEST_CREDENTIAL })
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} } })
+    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    test.socket.zwave:__expect_send(UserCode:Set({
+      user_identifier = 0,
+      user_id_status = UserCode.user_id_status.AVAILABLE,
+    }):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(4)
+    expect_credentials(yale_mock_device, { MASTER_CREDENTIAL })
+    expect_credential_result(yale_mock_device, { commandName = "deleteAllCredentials", statusCode = "success" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
 )
 
 test.run_registered_tests()

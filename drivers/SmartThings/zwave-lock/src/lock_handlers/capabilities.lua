@@ -241,33 +241,14 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    local delay_total = 0
-    if tables.master_credential_index(device) == nil then
-      -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot
-      device:send(UserCode:Set({
-        user_identifier = 0,
-        user_id_status = UserCode.user_id_status.AVAILABLE
-      }))
-    else
-      -- User Identifier 0 would also clear the master code, so clear each non-master slot individually.
-      local credentials = tables.get_state(device, "credentials") or {}
-      local delay = 0
-      for _, credential in ipairs(credentials) do
-        if not lock_utils.is_master_credential(device, credential.credentialIndex) and
-           credential.credentialIndex ~= 0 then
-          device.thread:call_with_delay(delay, function()
-            device:send(UserCode:Set({
-              user_identifier = credential.credentialIndex,
-              user_id_status = UserCode.user_id_status.AVAILABLE
-            }))
-          end)
-          delay = delay + 2
-        end
-      end
-      delay_total = delay
-    end
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with a
+    -- master code (Yale) keeps it, so the master entries are kept in state below.
+    device:send(UserCode:Set({
+      user_identifier = 0,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    }))
     -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
-    device.thread:call_with_delay(delay_total + 4, function()
+    device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
         lock_utils.delete_all_non_master_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
