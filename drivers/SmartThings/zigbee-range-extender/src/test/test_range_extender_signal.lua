@@ -16,8 +16,8 @@ local function build_device(profile, manufacturer, model)
     zigbee_endpoints = {
       [0x01] = {
         id = 0x01,
-        manufacturer = manufacturer or "Generic manufacturer",
-        model = model or "Range Extender",
+        manufacturer = manufacturer or "SONOFF",
+        model = model or "Dongle-LMG21",
         server_clusters = { Basic.ID },
       },
     },
@@ -27,7 +27,7 @@ end
 local mock_device = build_device("range-extender-signal.yml")
 local base_device = build_device("range-extender.yml")
 local other_manufacturer = build_device("range-extender-signal.yml", "Other manufacturer")
-local other_model = build_device("range-extender-signal.yml", "Another manufacturer", "Other model")
+local other_model = build_device("range-extender-signal.yml", "SONOFF", "Other model")
 
 local function read_response(device, lqi, rssi)
   local message = Basic.attributes.ZCLVersion:build_test_read_attr_response(device, 3)
@@ -64,7 +64,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__queue_receive({ mock_device.id, read_response(mock_device, 203, -67) })
     expect_signal_strength(mock_device, 203, -67)
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 test.register_coroutine_test(
@@ -77,7 +80,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__queue_receive({ mock_device.id, read_response(mock_device, 169, -74) })
     expect_signal_strength(mock_device, 169, -74)
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 test.register_coroutine_test(
@@ -98,6 +104,7 @@ test.register_coroutine_test(
     expect_signal_strength(mock_device, 83, -91)
   end,
   {
+    min_api_version = 17,
     test_init = function()
       test.mock_device.add_test_device(mock_device)
       test.timer.__create_and_queue_test_time_advance_timer(300, "interval", 2)
@@ -110,7 +117,10 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, read_response(mock_device, 0, 0) })
     expect_signal_strength(mock_device, 0, 0)
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 test.register_coroutine_test(
@@ -118,7 +128,10 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, read_response(mock_device, 255, -128) })
     expect_signal_strength(mock_device, 255, -128)
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 test.register_coroutine_test(
@@ -129,7 +142,10 @@ test.register_coroutine_test(
     report.rssi = data_types.Int8(-82)
     test.socket.zigbee:__queue_receive({ mock_device.id, report })
     expect_signal_strength(mock_device, 127, -82)
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 test.register_coroutine_test(
@@ -138,6 +154,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
+    min_api_version = 17,
     test_init = base_test_init,
   }
 )
@@ -148,6 +165,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ base_device.id, read_response(base_device, 196, -70) })
   end,
   {
+    min_api_version = 17,
     test_init = base_test_init,
   }
 )
@@ -165,6 +183,7 @@ test.register_coroutine_test(
     expect_signal_strength(base_device, 184, -72)
   end,
   {
+    min_api_version = 17,
     test_init = base_test_init,
   }
 )
@@ -175,21 +194,24 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ preferences = {} }))
-  end
+  end,
+  {
+    min_api_version = 17,
+  }
 )
 
 for _, case in ipairs({
-  { name = "another manufacturer", device = other_manufacturer },
-  { name = "another model", device = other_model },
+  { name = "a different manufacturer with the supported model", device = other_manufacturer },
+  { name = "a different model with the supported manufacturer", device = other_model },
 }) do
   local device = case.device
   test.register_coroutine_test(
-    "Signal strength capability is supported for " .. case.name,
+    "Signal strength subdriver rejects " .. case.name,
     function()
       test.socket.zigbee:__queue_receive({ device.id, read_response(device, 196, -70) })
-      expect_signal_strength(device, 196, -70)
     end,
     {
+      min_api_version = 17,
       test_init = function()
         test.mock_device.add_test_device(device)
       end,

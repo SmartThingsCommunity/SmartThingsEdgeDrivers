@@ -1,11 +1,12 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
-
-local function can_handle(opts, driver, device, ...)
-  if device:supports_capability(capabilities.signalStrength, "main") then
-    return true, require("range-extender-signal")
+local function can_handle(opts, driver, device)
+  local FINGERPRINTS = require("range-extender-signal.fingerprints")
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true, require("range-extender-signal")
+    end
   end
   return false
 end
