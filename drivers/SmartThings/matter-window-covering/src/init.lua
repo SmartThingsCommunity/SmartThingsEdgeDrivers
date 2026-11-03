@@ -42,25 +42,14 @@ local TARGET_TILT_PERCENT = {
 
 local TARGET_REACH_TOLERANCE = 0.5
 
-local function get_field_for_endpoint(device, field, endpoint)
-  local field_device = device
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    field_device = device:get_parent_device()
-  end
-  return field_device:get_field(string.format("%s_%d", field, endpoint))
-end
-
-local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
-  local field_device = device
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    field_device = device:get_parent_device()
-  end
-  field_device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
-end
-
 local function find_child(parent_device, ep_id)
   local assigned_key = parent_device:get_field(string.format("%s_%d", ASSIGNED_CHILD_KEY, ep_id)) or ep_id
   return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
+end
+
+--- Resolves the device that owns the given endpoint: the child device if one exists, otherwise the device itself.
+local function resolve_device_for_endpoint(device, ep_id)
+  return find_child(device, ep_id) or device
 end
 
 --- Gets the current window shade status based on the lift and tilt positions.
@@ -119,23 +108,21 @@ end
 --- Clears the cached target percentage and cancels any associated timeout.
 --- @param device any a Matter device object
 --- @param op_fields table a table containing operational field constants used for caching target percentages and timeouts.
-local function clear_cached_data(device, op_fields, ep)
-  local current_timer = get_field_for_endpoint(device, op_fields.TIMEOUT, ep)
+local function clear_cached_data(device, op_fields)
+  local current_timer = device:get_field(op_fields.TIMEOUT)
   if current_timer then
     device.thread:cancel_timer(current_timer)
   end
-  set_field_for_endpoint(device, op_fields.STATE, ep, nil)
-  set_field_for_endpoint(device, op_fields.TIMEOUT, ep, nil)
+  device:set_field(op_fields.STATE, nil)
+  device:set_field(op_fields.TIMEOUT, nil)
 end
 
 --- Tries to emit the idle window shade status if no target percentages are set.
 --- @param device any a Matter device object
-local function try_emit_idle_window_shade_status(device, ep)
-  if not get_field_for_endpoint(device, TARGET_LIFT_PERCENT.STATE, ep) and
-   not get_field_for_endpoint(device, TARGET_TILT_PERCENT.STATE, ep) then
-    --- gets child device if one exists for this endpoint
-    local status_device = find_child(device, ep) or device
-    status_device:emit_event(get_idle_window_shade_status(status_device))
+local function try_emit_idle_window_shade_status(device)
+  if not device:get_field(TARGET_LIFT_PERCENT.STATE) and
+   not device:get_field(TARGET_TILT_PERCENT.STATE) then
+    device:emit_event(get_idle_window_shade_status(device))
   end
 end
 
@@ -143,18 +130,18 @@ end
 --- @param device any a Matter device object
 --- @param data number the target percentage to cache
 --- @param op_fields table a table containing operational field constants used for caching target percentages and timeouts.
-local function cache_data_with_timeout(device, data, op_fields, ep)
-  set_field_for_endpoint(device, op_fields.STATE, ep, data)
-  local previous_timer = get_field_for_endpoint(device, op_fields.TIMEOUT, ep)
+local function cache_data_with_timeout(device, data, op_fields)
+  device:set_field(op_fields.STATE, data)
+  local previous_timer = device:get_field(op_fields.TIMEOUT)
   if previous_timer then
     device.thread:cancel_timer(previous_timer)
   end
   local new_timer = device.thread:call_with_delay(op_fields.TIMEOUT_DELAY_S, function()
-    set_field_for_endpoint(device, op_fields.STATE, ep, nil)
-    set_field_for_endpoint(device, op_fields.TIMEOUT, ep, nil)
-    try_emit_idle_window_shade_status(device, ep)
+    device:set_field(op_fields.STATE, nil)
+    device:set_field(op_fields.TIMEOUT, nil)
+    try_emit_idle_window_shade_status(device)
   end)
-  set_field_for_endpoint(device, op_fields.TIMEOUT, ep, new_timer)
+  device:set_field(op_fields.TIMEOUT, new_timer)
 end
 
 local function is_target_value_reached(current_value, target_value)
@@ -285,31 +272,32 @@ end
 
 -- capability handlers
 local function handle_preset(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
   local preset_target_percent = device:get_latest_state(
     "main",
     capabilities.windowShadePreset.ID,
     capabilities.windowShadePreset.position.NAME,
     DEFAULT_PRESET_LEVEL
   )
-  cache_data_with_timeout(device, preset_target_percent, TARGET_LIFT_PERCENT, endpoint_id)
+  cache_data_with_timeout(device, preset_target_percent, TARGET_LIFT_PERCENT)
   local hundredths_lift_percent = (100 - preset_target_percent) * 100
+  local endpoint_id = device:component_to_endpoint(cmd.component)
   device:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(
     device, endpoint_id, hundredths_lift_percent
   ))
 end
 
 local function handle_set_preset(driver, device, cmd)
-  device:emit_event(capabilities.windowShadePreset.position(cmd.args.position))
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:emit_event_for_endpoint(endpoint_id, capabilities.windowShadePreset.position(cmd.args.position))
 end
 
 local function handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) > 0 then
-    cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_LIFT_PERCENT, endpoint_id)
+    cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_LIFT_PERCENT)
   end
   if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
-    cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_TILT_PERCENT, endpoint_id)
+    cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_TILT_PERCENT)
   end
   device:send(device.preferences.reverse and
     clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id) or
@@ -320,10 +308,10 @@ end
 local function handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) > 0 then
-    cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_LIFT_PERCENT, endpoint_id)
+    cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_LIFT_PERCENT)
   end
   if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
-    cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_TILT_PERCENT, endpoint_id)
+    cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_TILT_PERCENT)
   end
   device:send(device.preferences.reverse and
     clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id) or
@@ -340,14 +328,13 @@ end
 local function handle_shade_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local hundredths_lift_percentage = (100 - cmd.args.shadeLevel) * 100
-  cache_data_with_timeout(device, cmd.args.shadeLevel, TARGET_LIFT_PERCENT, endpoint_id)
+  cache_data_with_timeout(device, cmd.args.shadeLevel, TARGET_LIFT_PERCENT)
   device:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(
     device, endpoint_id, hundredths_lift_percentage
   ))
 end
 
 local function handle_step_shade_level(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
   local step = cmd.args.stepSize
   local latest_lift_percentage = device:get_latest_state(
     "main",
@@ -355,9 +342,9 @@ local function handle_step_shade_level(driver, device, cmd)
     capabilities.windowShadeLevel.shadeLevel.NAME,
     0
   )
-  local target_lift_percent = get_field_for_endpoint(device, TARGET_LIFT_PERCENT.STATE, endpoint_id) or latest_lift_percentage
+  local target_lift_percent = device:get_field(TARGET_LIFT_PERCENT.STATE) or latest_lift_percentage
   local updated_target_lift = utils.clamp_value(target_lift_percent + step, 0, 100)
-  cache_data_with_timeout(device, updated_target_lift, TARGET_LIFT_PERCENT, endpoint_id)
+  cache_data_with_timeout(device, updated_target_lift, TARGET_LIFT_PERCENT)
   driver:inject_capability_command(device, {
     capability = capabilities.windowShadeLevel.ID,
     component = cmd.component,
@@ -370,7 +357,7 @@ end
 local function handle_shade_tilt_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local hundredths_tilt_percentage = (100 - cmd.args.level) * 100
-  cache_data_with_timeout(device, cmd.args.level, TARGET_TILT_PERCENT, endpoint_id)
+  cache_data_with_timeout(device, cmd.args.level, TARGET_TILT_PERCENT)
   device:send(clusters.WindowCovering.server.commands.GoToTiltPercentage(
     device, endpoint_id, hundredths_tilt_percentage
   ))
@@ -378,70 +365,73 @@ end
 
 -- attribute handlers
 local function current_position_lift_percent_100ths_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if not ib.data.value then return end
   local lift_percent = 100 - math.floor(ib.data.value / 100)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(lift_percent))
-  if is_target_value_reached(lift_percent, get_field_for_endpoint(device, TARGET_LIFT_PERCENT.STATE, ib.endpoint_id)) then
-    clear_cached_data(device, TARGET_LIFT_PERCENT, ib.endpoint_id)
-    try_emit_idle_window_shade_status(device, ib.endpoint_id)
+  if is_target_value_reached(lift_percent, device:get_field(TARGET_LIFT_PERCENT.STATE)) then
+    clear_cached_data(device, TARGET_LIFT_PERCENT)
+    try_emit_idle_window_shade_status(device)
   end
 end
 
 local function current_position_tilt_percent_100ths_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if not ib.data.value then return end
   local tilt_percent = 100 - math.floor(ib.data.value / 100)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeTiltLevel.shadeTiltLevel(tilt_percent))
-  if is_target_value_reached(tilt_percent, get_field_for_endpoint(device, TARGET_TILT_PERCENT.STATE, ib.endpoint_id)) then
-    clear_cached_data(device, TARGET_TILT_PERCENT, ib.endpoint_id)
-    try_emit_idle_window_shade_status(device, ib.endpoint_id)
+  if is_target_value_reached(tilt_percent, device:get_field(TARGET_TILT_PERCENT.STATE)) then
+    clear_cached_data(device, TARGET_TILT_PERCENT)
+    try_emit_idle_window_shade_status(device)
   end
 end
 
 local function target_position_lift_percent_100ths_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if type(ib.data.value) == "number" then
     local target_lift_percent = 100 - math.floor(ib.data.value / 100)
-    local state_device = find_child(device, ib.endpoint_id) or device
-    local latest_lift_percentage = state_device:get_latest_state(
+    local latest_lift_percentage = device:get_latest_state(
       "main",
       capabilities.windowShadeLevel.ID,
       capabilities.windowShadeLevel.shadeLevel.NAME
     )
     if latest_lift_percentage and is_target_value_reached(latest_lift_percentage, target_lift_percent) then
-      clear_cached_data(device, TARGET_LIFT_PERCENT, ib.endpoint_id)
-      try_emit_idle_window_shade_status(device, ib.endpoint_id)
+      clear_cached_data(device, TARGET_LIFT_PERCENT)
+      try_emit_idle_window_shade_status(device)
     else
-      cache_data_with_timeout(device, target_lift_percent, TARGET_LIFT_PERCENT, ib.endpoint_id)
+      cache_data_with_timeout(device, target_lift_percent, TARGET_LIFT_PERCENT)
     end
   end
 end
 
 local function target_position_tilt_percent_100ths_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if type(ib.data.value) == "number" then
     local target_tilt_percent = 100 - math.floor(ib.data.value / 100)
-    local state_device = find_child(device, ib.endpoint_id) or device
-    local latest_tilt_percent = state_device:get_latest_state(
+    local latest_tilt_percent = device:get_latest_state(
       "main",
       capabilities.windowShadeTiltLevel.ID,
       capabilities.windowShadeTiltLevel.shadeTiltLevel.NAME
     )
     if latest_tilt_percent and is_target_value_reached(latest_tilt_percent, target_tilt_percent) then
-      clear_cached_data(device, TARGET_TILT_PERCENT, ib.endpoint_id)
-      try_emit_idle_window_shade_status(device, ib.endpoint_id)
+      clear_cached_data(device, TARGET_TILT_PERCENT)
+      try_emit_idle_window_shade_status(device)
     else
-      cache_data_with_timeout(device, target_tilt_percent, TARGET_TILT_PERCENT, ib.endpoint_id)
+      cache_data_with_timeout(device, target_tilt_percent, TARGET_TILT_PERCENT)
     end
   end
 end
 
 -- checks the current position of the shade
 local function operational_status_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if not ib.data.value then return end
   local global_op_status = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
-  local reverse = (find_child(device, ib.endpoint_id) or device).preferences.reverse
+  local reverse = device.preferences.reverse
   local windowShade = capabilities.windowShade.windowShade
   local status_event
   if global_op_status == OP_STATUS_BITMAP.idle then
-    try_emit_idle_window_shade_status(device, ib.endpoint_id)
+    try_emit_idle_window_shade_status(device)
   elseif global_op_status == OP_STATUS_BITMAP.opening then
     status_event = reverse and windowShade.closing() or windowShade.opening()
   elseif global_op_status == OP_STATUS_BITMAP.closing then
