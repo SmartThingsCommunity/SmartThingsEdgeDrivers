@@ -254,7 +254,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -267,7 +267,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0),
         }
       )
@@ -289,7 +289,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 10000
           ),
@@ -302,7 +302,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0),
         }
       )
@@ -324,7 +324,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -337,7 +337,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0),
         }
       )
@@ -360,7 +360,7 @@ test.register_coroutine_test(
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 15) *100)
           ),
@@ -373,7 +373,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0),
         }
       )
@@ -395,7 +395,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 99),
         }
       )
@@ -417,7 +417,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 2),
         }
       )
@@ -439,7 +439,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 1),
         }
       )
@@ -461,7 +461,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 10000
           ),
@@ -474,7 +474,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -487,7 +487,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 25) *100)
           ),
@@ -511,7 +511,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 10000
           ),
@@ -524,7 +524,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -537,7 +537,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 15) *100)
           ),
@@ -550,7 +550,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 65) *100)
           ),
@@ -574,7 +574,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.TargetPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -595,7 +595,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.TargetPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -616,7 +616,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 65) *100)
           ),
@@ -629,7 +629,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -653,7 +653,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, ((100 - 65) *100)
           ),
@@ -666,7 +666,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -750,7 +750,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 50 * 100
           ),
@@ -763,7 +763,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -807,7 +807,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -820,7 +820,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -848,7 +848,7 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -861,7 +861,7 @@ test.register_coroutine_test(
       )
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.OperationalStatus:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
           ),
@@ -928,7 +928,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 150
           ),
@@ -980,7 +980,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, {uint32(12)})
         }
       )
@@ -998,7 +998,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_child_device[i], CHILD_DEVICE_MAP[i].ep, {uint32(10)})
         }
       )
@@ -1016,7 +1016,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_child_device[i]:generate_info_changed({ preferences = { reverse = "true" } }))
       test.wait_for_events()
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 100 * 100
         )
@@ -1028,7 +1028,7 @@ test.register_coroutine_test(
       )
       test.wait_for_events()
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
@@ -1040,7 +1040,7 @@ test.register_coroutine_test(
       )
       test.wait_for_events()
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
@@ -1052,7 +1052,7 @@ test.register_coroutine_test(
       )
       test.wait_for_events()
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
@@ -1091,7 +1091,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_child_device[i]:generate_info_changed({ preferences = { reverse = "true" } }))
       test.wait_for_events()
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 100 * 100
         )
@@ -1102,7 +1102,7 @@ test.register_coroutine_test(
         )
       )
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
@@ -1113,13 +1113,13 @@ test.register_coroutine_test(
         )
       )
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
       })
       test.socket.matter:__queue_receive({
-        mock_child_device[i].id,
+        mock_parent_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(
           mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 0
         )
@@ -1184,7 +1184,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -1218,7 +1218,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 7000
           ),
@@ -1262,7 +1262,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 5000
           ),
@@ -1286,7 +1286,7 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 4000
           ),
@@ -1315,7 +1315,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 500
           ),
@@ -1349,7 +1349,7 @@ test.register_coroutine_test(
     for i = 1, #mock_child_device do
       test.socket.matter:__queue_receive(
         {
-          mock_child_device[i].id,
+          mock_parent_device.id,
           WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
             mock_child_device[i], CHILD_DEVICE_MAP[i].ep, 9500
           ),

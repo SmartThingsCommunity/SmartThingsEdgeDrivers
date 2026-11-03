@@ -445,12 +445,14 @@ local function operational_status_handler(driver, device, ib, response)
 end
 
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
   end
 end
 
 local function battery_charge_level_attr_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
     device:emit_event(capabilities.batteryLevel.battery.normal())
   elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
@@ -461,6 +463,7 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
+  device = resolve_device_for_endpoint(device, ib.endpoint_id)
   for _, attr in ipairs(ib.data.elements or {}) do
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
     if attr.value == 0x0C then
