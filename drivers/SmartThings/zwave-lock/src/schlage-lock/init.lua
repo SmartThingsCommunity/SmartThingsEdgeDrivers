@@ -11,6 +11,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
+local consts          = require "lock_utils.constants"
 local tables          = require "lock_utils.tables"
 local zwave_handlers  = require "lock_handlers.zwave_responses"
 local cap_handlers    = require "lock_handlers.capabilities"
@@ -58,6 +59,10 @@ local function is_user_code_report_mfr_specific(device, cmd)
 end
 
 local function user_code_report_handler(self, device, cmd)
+  if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.SYNC.CODES_FROM_LOCK then
+    zwave_handlers.user_code_report(self, device, cmd)
+    return
+  end
   local credential_index = cmd.args.user_identifier
   if is_user_code_report_mfr_specific(device, cmd) then
     local reported_user_id_status = cmd.args.user_id_status
