@@ -87,7 +87,8 @@ test.register_coroutine_test(
 
     http.queue_sse_event(conn, capture_payloads.get("color_lamp_added"))
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -108,7 +109,8 @@ test.register_coroutine_test(
     assert(mock_devices_api.__is_device_online(mock_bridge.id) == true, "expected the bridge to stay online")
     assert(mock_devices_api.__is_device_online(mock_plug.id) == true, "expected the plug to stay online")
     assert(not mock_devices_api.__is_device_deleted(mock_plug.id), "expected the plug not to be deleted")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -120,7 +122,8 @@ test.register_coroutine_test(
     http.queue_sse_event(conn, capture_payloads.get("plug_deleted"))
     test.wait_until(function() return mock_devices_api.__is_device_deleted(mock_plug.id) end,
       { message = "the plug being deleted after the bridge reported its light resource deleted" })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

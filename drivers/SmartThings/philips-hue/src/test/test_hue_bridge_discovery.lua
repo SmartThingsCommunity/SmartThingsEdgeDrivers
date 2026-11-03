@@ -95,7 +95,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_bridge_queried(bridge, api)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -126,7 +127,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_bridge_queried(bridge, api)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -171,7 +173,8 @@ test.register_coroutine_test(
 
     assert_bridge_queried(paired, paired_api)
     assert_bridge_queried(unpaired, unpaired_api)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

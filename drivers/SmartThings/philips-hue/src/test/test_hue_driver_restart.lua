@@ -119,7 +119,8 @@ test.register_coroutine_test(
     -- One refresh: the device, connectivity and light GETs happen once each.
     local light_gets = http.count_requests(rest, "GET", "/clip/v2/resource/light/" .. ids.color_lamp_light)
     assert(light_gets == 1, string.format("expected 1 light refresh, got %d", light_gets))
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

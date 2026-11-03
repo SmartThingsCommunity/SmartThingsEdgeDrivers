@@ -45,7 +45,8 @@ test.register_coroutine_test(
   "the bridge's event stream connects and the button's init requests are made",
   function()
     hue_test_helpers.wait_for_init(scenario, mock_bridge)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -60,7 +61,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse_conn, { hue_test_helpers.button_event(BUTTON_RID, "short_release") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -75,7 +77,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse_conn, { hue_test_helpers.button_event(BUTTON_RID, "long_press") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -100,7 +103,8 @@ test.register_coroutine_test(
     ) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

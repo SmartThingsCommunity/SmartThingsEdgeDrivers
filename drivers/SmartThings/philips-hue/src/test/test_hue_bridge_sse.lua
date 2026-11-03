@@ -106,7 +106,8 @@ test.register_coroutine_test(
   "SSE connect marks the bridge online",
   function()
     connect_sse()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -124,7 +125,8 @@ test.register_coroutine_test(
       mock_light:generate_test_message("main", capabilities.switchLevel.level(42))
     )
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -140,7 +142,8 @@ test.register_coroutine_test(
       mock_light:generate_test_message("main", capabilities.switchLevel.level(42))
     )
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -197,7 +200,8 @@ test.register_coroutine_test(
     })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -212,7 +216,8 @@ test.register_coroutine_test(
 
     assert(mock_devices_api.__is_device_deleted(mock_light.id) == true,
       "expected the light to be deleted after an SSE delete event for its resource id")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -245,7 +250,8 @@ test.register_coroutine_test(
       "expected the bridge to be marked online again after the SSE connection reconnected")
     assert(mock_devices_api.__is_device_online(mock_light.id) == true,
       "expected the light to be marked online when connectivity status reports it as connected")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

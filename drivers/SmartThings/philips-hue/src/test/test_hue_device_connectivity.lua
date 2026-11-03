@@ -168,7 +168,8 @@ test.register_coroutine_test(
     assert_online(mock_lamp, false, "the lamp")
     assert_online(mock_other, true, "the other light")
     assert_online(mock_bridge, true, "the bridge")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -185,7 +186,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_online(mock_lamp, true, "the lamp")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -217,7 +219,8 @@ test.register_coroutine_test(
     wait_until(function() return is_online(mock_bridge) == true end)
     wait_until(function() return is_online(mock_lamp) and is_online(mock_other) end)
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -248,7 +251,8 @@ test.register_coroutine_test(
     assert(mock_devices_api.__count_device_status_calls(mock_bridge.id, false) == 1,
       "expected the bridge to be reported offline once for the outage")
     wait_until(function() return is_online(mock_bridge) == true end)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -268,7 +272,8 @@ test.register_coroutine_test(
     -- The third reconnect is answered by the file's handshake, and the stream is back.
     wait_until(function() return is_online(mock_bridge) == true end)
     assert_offline_calls(1)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

@@ -36,7 +36,8 @@ test.register_coroutine_test(
     assert(button:get_field(Fields._ADDED) == true, "expected the button to have been added")
     assert(button:get_field(Fields.DEVICE_TYPE) == "button", "expected the button's device type")
     assert(button:get_field(Fields.HUE_DEVICE_ID) == BUTTON_DEVICE_ID, "expected the button's Hue device id")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

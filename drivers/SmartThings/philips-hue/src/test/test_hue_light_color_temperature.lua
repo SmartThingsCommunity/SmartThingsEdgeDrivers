@@ -87,7 +87,8 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_light:generate_test_message("main", capabilities.colorTemperature.colorTemperature(4000)))
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

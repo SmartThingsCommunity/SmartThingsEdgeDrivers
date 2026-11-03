@@ -52,7 +52,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.button_event(BUTTON_RID_1, "short_release") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -65,7 +66,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.button_event(BUTTON_RID_2, "long_press") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -78,7 +80,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.button_event(BUTTON_RID_3, "short_release") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -91,7 +94,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.button_event(BUTTON_RID_4, "long_press") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

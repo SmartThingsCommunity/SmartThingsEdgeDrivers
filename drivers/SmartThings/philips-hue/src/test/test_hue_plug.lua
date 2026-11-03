@@ -68,7 +68,8 @@ test.register_coroutine_test(
     refresh()
     test.socket.capability:__expect_send(mock_plug:generate_test_message("main", capabilities.switch.switch.on()))
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -83,7 +84,8 @@ test.register_coroutine_test(
     refresh()
     test.socket.capability:__expect_send(mock_plug:generate_test_message("main", capabilities.switch.switch.off()))
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 for _, command in ipairs({ "on", "off" }) do
@@ -103,7 +105,8 @@ for _, command in ipairs({ "on", "off" }) do
       test.wait_for_events()
 
       http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. PLUG_RID, { on = { on = command == "on" } })
-    end
+    end,
+  { min_api_version = 23 }
   )
 end
 

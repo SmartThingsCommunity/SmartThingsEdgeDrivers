@@ -129,7 +129,8 @@ test.register_coroutine_test(
     assert_requests("PUT", LIGHT_PATH .. LIGHT_1_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
     http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { on = { on = true } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -147,7 +148,8 @@ test.register_coroutine_test(
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
     assert_requests("PUT", LIGHT_PATH, 0)
     http.assert_sent_json(rest, "PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, { on = { on = true } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -167,7 +169,8 @@ test.register_coroutine_test(
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 1)
     assert_requests("PUT", LIGHT_PATH .. LIGHT_3_RID, 1)
     assert_requests("PUT", LIGHT_PATH, 1)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -186,7 +189,8 @@ test.register_coroutine_test(
     assert_requests("PUT", LIGHT_PATH .. LIGHT_1_RID, 1)
     assert_requests("PUT", LIGHT_PATH .. LIGHT_3_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -207,7 +211,8 @@ test.register_coroutine_test(
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
     http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { on = { on = true } })
     http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_2_RID, { on = { on = false } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -227,7 +232,8 @@ test.register_coroutine_test(
     assert_requests("PUT", LIGHT_PATH .. LIGHT_2_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
     http.assert_sent_json(rest, "PUT", LIGHT_PATH .. LIGHT_1_RID, { dimming_delta = { action = "up", brightness_delta = 10 } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 local function set_level_cmd(level)
@@ -251,7 +257,8 @@ test.register_coroutine_test(
     for _, request in ipairs(http.find_requests(rest, "PUT", GROUPED_LIGHT_PATH, { prefix = true })) do
       assert(request.json.on == nil, "expected no on/off request for a room that is already on")
     end
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -273,7 +280,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 2)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -294,7 +302,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. GROUPED_LIGHT_RID, 2)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -311,7 +320,8 @@ test.register_coroutine_test(
 
     assert_requests("PUT", GROUPED_LIGHT_PATH .. ZONE_GROUPED_LIGHT_RID, 1)
     assert_requests("PUT", LIGHT_PATH, 0)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -327,7 +337,8 @@ test.register_coroutine_test(
 
     assert_requests("PUT", LIGHT_PATH .. LIGHT_3_RID, 1)
     assert_requests("PUT", GROUPED_LIGHT_PATH, 0)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 --- Run `fn`, returning the messages logged with `log.error_with` while it ran.
@@ -368,7 +379,8 @@ test.register_coroutine_test(
       if message:find("bridge is busy", 1, true) then logged = true end
     end
     assert(logged, "expected the bridge's error to be logged, got: " .. table.concat(messages, " | "))
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

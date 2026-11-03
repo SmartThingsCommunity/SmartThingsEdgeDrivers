@@ -121,7 +121,8 @@ test.register_coroutine_test(
     test.wait_for_events()
     http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID,
       { color = { xy = { x = 0.2151, y = 0.7106 } } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

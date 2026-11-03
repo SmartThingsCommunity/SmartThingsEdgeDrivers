@@ -72,7 +72,7 @@ test.register_coroutine_test(
     assert(third > first, string.format(
       "expected the driver to back off between attempts, but all three were made at t=%s", first))
   end,
-  { test_init = answer_connectivity_scans(3) }
+  { min_api_version = 23, test_init = answer_connectivity_scans(3) }
 )
 
 test.register_coroutine_test(
@@ -84,7 +84,7 @@ test.register_coroutine_test(
     assert(third > first, string.format(
       "expected the driver to back off between attempts, but all three were made at t=%s", first))
   end,
-  { test_init = answer_room_scans(3) }
+  { min_api_version = 23, test_init = answer_room_scans(3) }
 )
 
 test.register_coroutine_test(
@@ -94,6 +94,7 @@ test.register_coroutine_test(
     http.await_request(rest, "GET", ROOM_PATH, { max_turns = 500 }):respond({ body = EMPTY })
   end,
   {
+    min_api_version = 23,
     test_init = function()
       base_test_init()
       http.expect_request(rest, "GET", CONNECTIVITY_PATH, { body = EMPTY })
@@ -122,7 +123,7 @@ test.register_coroutine_test(
     -- Another attempt would be an unexpected request.
     let_time_pass(120)
   end,
-  { test_init = answer_connectivity_scans(2) }
+  { min_api_version = 23, test_init = answer_connectivity_scans(2) }
 )
 
 test.register_coroutine_test(
@@ -133,7 +134,7 @@ test.register_coroutine_test(
     remove_bridge()
     let_time_pass(120)
   end,
-  { test_init = answer_room_scans(2) }
+  { min_api_version = 23, test_init = answer_room_scans(2) }
 )
 
 test.register_coroutine_test(
@@ -148,7 +149,7 @@ test.register_coroutine_test(
     -- A further attempt by the earlier connection's scan would be an unexpected request.
     let_time_pass(120)
   end,
-  { test_init = answer_connectivity_scans(3) }
+  { min_api_version = 23, test_init = answer_connectivity_scans(3) }
 )
 
 test.run_registered_tests()

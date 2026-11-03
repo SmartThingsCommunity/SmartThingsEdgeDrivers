@@ -60,7 +60,8 @@ test.register_coroutine_test(
       mock_light:generate_test_message("main", capabilities.switchLevel.level(60))
     )
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -74,7 +75,8 @@ test.register_coroutine_test(
       mock_light:generate_test_message("main", capabilities.switchLevel.level(15))
     )
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

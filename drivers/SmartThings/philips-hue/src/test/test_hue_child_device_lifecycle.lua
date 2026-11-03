@@ -78,7 +78,8 @@ test.register_coroutine_test(
     local cached = fixtures.driver_device(mock_cached_light)
     assert(cached:get_field(Fields._ADDED) == true and cached:get_field(Fields.DEVICE_TYPE) == "light",
       "expected the cached light to have been onboarded")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

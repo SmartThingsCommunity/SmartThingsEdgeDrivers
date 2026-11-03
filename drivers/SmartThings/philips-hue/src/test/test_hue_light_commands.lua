@@ -107,7 +107,8 @@ test.register_coroutine_test(
 
     -- Verify the request body contains the expected on=true
     http.assert_sent_json(rest, "PUT", LIGHT_PATH, { on = { on = true } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -127,7 +128,8 @@ test.register_coroutine_test(
 
     -- Verify the request body contains the expected on=false
     http.assert_sent_json(rest, "PUT", LIGHT_PATH, { on = { on = false } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -147,7 +149,8 @@ test.register_coroutine_test(
 
     -- Verify the request body contains the expected brightness
     http.assert_sent_json(rest, "PUT", LIGHT_PATH, { dimming = { brightness = 42 } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -167,7 +170,8 @@ test.register_coroutine_test(
 
     -- Verify the request body contains the expected mirek value (3000K = 333 mirek)
     http.assert_sent_json(rest, "PUT", LIGHT_PATH, { color_temperature = { mirek = 333 }, on = { on = true } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -188,7 +192,8 @@ test.register_coroutine_test(
     -- Hue 0 at full saturation is pure red: the red corner of the light's gamut.
     assert_xy_near(sent_xy(), 0.7, 0.3, "fully saturated red")
     http.assert_sent_json(rest, "PUT", LIGHT_PATH, { on = { on = true } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -209,7 +214,8 @@ test.register_coroutine_test(
 
     -- A third of the way round at full saturation is pure green: the green corner of the gamut.
     assert_xy_near(sent_xy(), GAMUT.green.x, GAMUT.green.y, "fully saturated green")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -230,7 +236,8 @@ test.register_coroutine_test(
 
     -- Hue 0 at full saturation is pure red: the red corner of the light's gamut.
     assert_xy_near(sent_xy(), 0.7, 0.3, "fully saturated red")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 -- Out-of-range values sent from the SmartThings API during physical testing (scenario 15), and the
@@ -254,7 +261,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID, { dimming = { brightness = 1 } })
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 for _, case in ipairs({
@@ -274,7 +282,8 @@ for _, case in ipairs({
 
       http.assert_sent_json(rest, "PUT", "/clip/v2/resource/light/" .. LIGHT_RID,
         { color_temperature = { mirek = case.mirek }, on = { on = true } })
-    end
+    end,
+  { min_api_version = 23 }
   )
 end
 

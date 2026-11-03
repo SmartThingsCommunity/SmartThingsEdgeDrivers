@@ -47,7 +47,8 @@ test.register_coroutine_test(
   "the bridge's event stream connects and the motion sensor's init requests are made",
   function()
     hue_test_helpers.wait_for_init(scenario, mock_bridge)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -60,7 +61,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.motion_event(MOTION_RID, true) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -73,7 +75,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.motion_event(MOTION_RID, false) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -86,7 +89,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.temperature_event(TEMP_RID, 22.5) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -101,7 +105,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.light_level_event(LIGHT_RID, 27000) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -129,7 +134,8 @@ test.register_coroutine_test(
     ) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

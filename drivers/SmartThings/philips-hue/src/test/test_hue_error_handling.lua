@@ -69,7 +69,8 @@ test.register_coroutine_test(
     })
     send_command("switch", "on")
     assert_next_command_sent()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -83,7 +84,8 @@ test.register_coroutine_test(
     })
     send_command("switchLevel", "setLevel", { 50 })
     assert_next_command_sent()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -96,7 +98,8 @@ test.register_coroutine_test(
     })
     send_command("switch", "on")
     assert_next_command_sent()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 local CONNECTIVITY_PATH = "/clip/v2/resource/zigbee_connectivity"
@@ -133,7 +136,8 @@ test.register_coroutine_test(
         data = { { id = LIGHT_DEVICE_ID, type = "device", services = { { rtype = "light", rid = LIGHT_RID } } } },
       },
     }, "without a zigbee_connectivity service")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -143,7 +147,8 @@ test.register_coroutine_test(
       status = 404,
       body = hue_error("Device not found", "resource_not_found"),
     }, "for a device the bridge doesn't have")
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -158,7 +163,8 @@ test.register_coroutine_test(
     })
     send_command("switch", "on")
     assert_next_command_sent()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -173,7 +179,8 @@ test.register_coroutine_test(
     })
     send_command("switchLevel", "setLevel", { 25 })
     assert_next_command_sent()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -208,7 +215,8 @@ test.register_coroutine_test(
       "expected the command to be resent on a new connection")
     resent:respond(OK)
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()

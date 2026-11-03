@@ -45,7 +45,8 @@ test.register_coroutine_test(
   "the bridge's event stream connects and the contact sensor's init requests are made",
   function()
     hue_test_helpers.wait_for_init(scenario, mock_bridge)
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -58,7 +59,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.contact_event(CONTACT_RID, "no_contact") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -71,7 +73,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.contact_event(CONTACT_RID, "contact") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -84,7 +87,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.tamper_event(TAMPER_RID, "tampered") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -97,7 +101,8 @@ test.register_coroutine_test(
     http.queue_sse_event(sse, { hue_test_helpers.tamper_event(TAMPER_RID, "not_tampered") })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.register_coroutine_test(
@@ -119,7 +124,8 @@ test.register_coroutine_test(
     ) })
 
     test.wait_for_events()
-  end
+  end,
+  { min_api_version = 23 }
 )
 
 test.run_registered_tests()
