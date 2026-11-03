@@ -46,6 +46,13 @@ function LockLifecycle.init(driver, device)
     -- We should check its PIN users if it should be re-profiled.
     device:send(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device))
   end
+
+  -- In case of some kind of interruption, retry on each driver init until a sync has run to completion.
+  if device:supports_capability(capabilities.lockCredentials) and
+    device:get_field(consts.SYNC.CODES_SYNCED) ~= true and
+    device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
+    lock_utils.sync_device_state(device)
+  end
 end
 
 function LockLifecycle.do_configure(driver, device)

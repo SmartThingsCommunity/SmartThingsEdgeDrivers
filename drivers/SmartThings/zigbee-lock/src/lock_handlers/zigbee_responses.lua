@@ -162,6 +162,7 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
      (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
       -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
+      device:set_field(consts.SYNC.CODES_SYNCED, true, { persist = true })
       lock_utils.clear_busy_state(device)
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1

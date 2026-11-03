@@ -87,10 +87,26 @@ function lock_utils.add_commanded_credential(device, command_in_progress, creden
 end
 
 -- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
--- from us (sync, or a programming event), unless a credential already exists there.
+-- from us (sync, or a programming event). If a credential already exists there it is left in place, except that a
+-- master report promotes its user to a master code user (we may have previously assumed it was a guest).
 function lock_utils.add_reported_credential(device, credential_index, is_master)
   local tables = require "lock_utils.tables"
-  if tables.find_entry(device, "credentials", credential_index) then return end
+  local existing = tables.find_entry(device, "credentials", credential_index)
+  if existing then
+    -- update the user_type from guest to master as needed
+    if is_master then
+      local user = tables.find_entry(device, "users", existing.userIndex)
+      if user and user.userType ~= consts.USER_TYPE_MASTER then
+        local updates = { userType = consts.USER_TYPE_MASTER }
+        -- only replace the name if it is still the auto-generated guest name, not one the user chose
+        if user.userName == "Guest " .. user.userIndex then
+          updates.userName = consts.MASTER_CODE_NAME
+        end
+        tables.update_entry(device, "users", existing.userIndex, updates)
+      end
+    end
+    return
+  end
   local user_index = tables.next_index(device, "users")
   lock_utils.add_user_and_credential(device, {
     userIndex       = user_index,

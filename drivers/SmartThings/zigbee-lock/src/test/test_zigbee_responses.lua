@@ -201,6 +201,7 @@ test.register_coroutine_test(
 
     assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil)
     assert(mock_device:get_field(constants.DRIVER_STATE.BUSY) == false)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == true)
 
     -- A code beyond what the device supports is not added (no orphan user either), and nothing further is requested
     receive_occupied(3)
@@ -622,6 +623,34 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(
       build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
     )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "programming_event_notification: MASTER_CODE_CHANGED promotes a known guest credential's user to a master user",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    local guest_users = { { userIndex = 1, userName = "Guest 1", userType = "guest" } }
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(guest_users, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "users", guest_users[1])
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "credentials",
+      { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive(
+      build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )

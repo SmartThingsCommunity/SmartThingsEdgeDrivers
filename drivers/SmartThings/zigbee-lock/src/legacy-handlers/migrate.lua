@@ -6,6 +6,7 @@ local utils                 = require "st.utils"
 local lock_utils            = require "legacy-handlers.legacy_lock_utils"
 local post_migration_consts = require "lock_utils.constants"
 local table_utils           = require "lock_utils.tables"
+local sync_utils            = require "lock_utils.utils"
 
 local LockCodes       = capabilities.lockCodes
 local LockUsers       = capabilities.lockUsers
@@ -94,4 +95,7 @@ return function(driver, device, command, master_code_slot)
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
+
+  -- ensure our user/credential state is accurate to the current device state
+  device.thread:call_with_delay(15, function() sync_utils.sync_device_state(device) end)
 end

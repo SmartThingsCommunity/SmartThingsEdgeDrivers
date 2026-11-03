@@ -395,7 +395,27 @@ test.register_coroutine_test(
       mock_device_base:generate_test_message("main",
         capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
     )
+    expect_sync_device_state(mock_device_base)
     test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "init: migrated device whose codes have already synced does not sync again",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, true, { persist = true })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    test.wait_for_events()
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, nil, { persist = true })
   end,
   { test_init = make_test_init(mock_device_base) }
 )
