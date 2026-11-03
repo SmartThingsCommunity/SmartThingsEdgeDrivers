@@ -5,6 +5,10 @@
 --- hardware (see test/fixtures/capture_payloads.lua): a colour lamp being added to the bridge, the
 --- smart plug being removed from it, and resource events the driver has no use for.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local mock_devices_api = require "integration_test.mock_devices_api"

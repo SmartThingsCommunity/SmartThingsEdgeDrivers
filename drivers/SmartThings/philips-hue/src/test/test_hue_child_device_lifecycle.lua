@@ -5,6 +5,10 @@
 --- it isn't onboarded (no REST state fetch, no device fields set) until the bridge reports it.
 --- Here the bridge, scanned for it once the bridge initializes, doesn't have it.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local hue_test_helpers = require "test.hue_test_helpers"

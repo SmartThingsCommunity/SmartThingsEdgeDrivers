@@ -4,6 +4,10 @@
 --- The scans the driver makes once the bridge's event stream connects: the Zigbee connectivity of
 --- its devices, followed by a (debounced) scan of its rooms and zones.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"

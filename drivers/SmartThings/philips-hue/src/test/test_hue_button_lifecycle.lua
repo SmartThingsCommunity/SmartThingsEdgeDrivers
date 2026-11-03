@@ -4,6 +4,10 @@
 --- A button whose state is in the discovery cache is added and initialized from it, then
 --- refreshed from the bridge once the bridge has initialized.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local Fields = require "fields"

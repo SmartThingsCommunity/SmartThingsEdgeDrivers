@@ -4,6 +4,10 @@
 --- Tests for an on/off Hue smart plug (LOM010), built from payloads recorded on real hardware
 --- (see test/fixtures/capture_payloads.lua). The plug is a `light` resource with no `dimming`.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local hue_test_helpers = require "test.hue_test_helpers"

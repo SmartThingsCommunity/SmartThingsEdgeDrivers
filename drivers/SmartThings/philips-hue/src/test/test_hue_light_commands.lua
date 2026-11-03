@@ -4,6 +4,10 @@
 --- Test for Hue light command handling (switch, level, color, temperature).
 --- Uses ConnectionScenario 2.0 for PUT command testing.
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"

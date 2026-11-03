@@ -1,6 +1,10 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 -- Sets the file-level test modes every Hue test runs with (LAN driver tests need test coroutine
 -- priority: discovery rescans every second until stopped).

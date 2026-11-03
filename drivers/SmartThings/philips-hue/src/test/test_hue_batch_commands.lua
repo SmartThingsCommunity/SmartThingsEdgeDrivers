@@ -7,6 +7,10 @@
 --- bridge, which it runs (debounced) once the lights are added and the event stream connects.
 
 -- Batched receives are turned on for every Hue test file by test.hue_test_helpers.
+-- These tests use the integration test framework's LAN support, new in lua_libs API version 23.
+-- With older lua_libs, skip the file rather than fail loading it.
+if require("version").api < 23 then return end
+
 local test = require "integration_test"
 local hue_test_helpers = require "test.hue_test_helpers"
 local http = require "integration_test.connection_scenario_http"
