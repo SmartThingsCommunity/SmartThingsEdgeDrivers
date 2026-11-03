@@ -40,9 +40,7 @@ end
 local function window_shade_level_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
   if is_not_init(device) then return end
-  local level = command.args.shadeLevel > 100 and 100 or utils.round(command.args.shadeLevel)
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
+  aqara_utils.shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
@@ -88,8 +86,8 @@ local function init_state_handler(driver, device, value, zb_rx)
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
-  local level = value.value > 100 and 100 or utils.round(value.value)
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
+  aqara_utils.emit_shade_level_event(device, value)
+  local level = utils.round(value.value)
   if level >= 100 then
     device:emit_event(capabilities.windowShade.windowShade.open())
   elseif level <= 0 then
@@ -130,9 +128,8 @@ local function device_info_changed(driver, device, event, args)
     local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
     if reverseRollerShadeDirPrefValue ~= nil and
       reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir.ID] then
-      local raw_value = reverseRollerShadeDirPrefValue
       device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
-        DIRECTION_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, raw_value))
+        DIRECTION_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, reverseRollerShadeDirPrefValue))
     end
   end
 end
