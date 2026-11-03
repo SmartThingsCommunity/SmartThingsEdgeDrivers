@@ -142,12 +142,18 @@ deviceConfig:
     - component: main
       capability: motionSensor
       version: 1
+    - component: main
+      capability: cameraPrivacyMode
+      version: 1
     actions:
     - component: main
       capability: videoCapture2
       version: 1
     - component: main
       capability: imageCapture
+      version: 1
+    - component: main
+      capability: cameraPrivacyMode
       version: 1
   dpInfo:
     - os: ios
