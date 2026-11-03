@@ -1377,4 +1377,62 @@ test.register_coroutine_test(
   }
 )
 
+test.register_coroutine_test(
+  "Cached targets are isolated between the parent and each child device",
+  function()
+    local parent_ep = 5
+    local child_1, child_2 = mock_child_device[1], mock_child_device[2]
+    local ep_1, ep_2 = CHILD_DEVICE_MAP[1].ep, CHILD_DEVICE_MAP[2].ep
+
+    -- each device gets a different target, all reported to the parent
+    test.socket.matter:__queue_receive({
+      mock_parent_device.id,
+      WindowCovering.attributes.TargetPositionLiftPercent100ths:build_test_report_data(mock_parent_device, parent_ep, 8000)
+    })
+    test.socket.matter:__queue_receive({
+      mock_parent_device.id,
+      WindowCovering.attributes.TargetPositionLiftPercent100ths:build_test_report_data(mock_parent_device, ep_1, 5000)
+    })
+    test.socket.matter:__queue_receive({
+      mock_parent_device.id,
+      WindowCovering.attributes.TargetPositionLiftPercent100ths:build_test_report_data(mock_parent_device, ep_2, 3000)
+    })
+    test.wait_for_events()
+    assert(mock_parent_device:get_field("__target_lift_percent") == 20)
+    assert(child_1:get_field("__target_lift_percent") == 50)
+    assert(child_2:get_field("__target_lift_percent") == 70)
+
+    -- child 1 reaches its target: only child 1's cache is cleared and only child 1 emits
+    test.socket.matter:__queue_receive({
+      mock_parent_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(mock_parent_device, ep_1, 5000)
+    })
+    test.socket.capability:__expect_send(
+      child_1:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+    test.socket.capability:__expect_send(
+      child_1:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.wait_for_events()
+    assert(child_1:get_field("__target_lift_percent") == nil)
+    assert(child_2:get_field("__target_lift_percent") == 70)
+    assert(mock_parent_device:get_field("__target_lift_percent") == 20)
+
+    -- child 2's position moves but has not reached its target: its cache is kept, no status is emitted
+    test.socket.matter:__queue_receive({
+      mock_parent_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(mock_parent_device, ep_2, 5000)
+    })
+    test.socket.capability:__expect_send(
+      child_2:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+    test.wait_for_events()
+    assert(child_2:get_field("__target_lift_percent") == 70)
+    assert(mock_parent_device:get_field("__target_lift_percent") == 20)
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
 test.run_registered_tests()
