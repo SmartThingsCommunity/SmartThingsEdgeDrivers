@@ -59,19 +59,25 @@ end
 -- by the underlying table add. Returns the result status of the credential add.
 -- Only creates a user if the credential create succeeded, or if the credential already existed
 function lock_utils.add_user_and_credential(device, args)
-  local name = "Guest " .. args.userIndex
-  local user_type = "guest"
+  local default_type = "guest"
+  local default_name = "Guest " .. args.userIndex
+  if args.userType == consts.MASTER.USER_TYPE then
+    default_name = consts.MASTER.DEFAULT_NAME
+  elseif args.userType == "admin" then
+    default_name = "Admin " .. args.userIndex
+  end
+
   local credential_status = tables.add_entry(device, "credentials", {
     userIndex       = args.userIndex,
     credentialIndex = args.credentialIndex,
     credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
-    credentialName  = args.credentialName or name,
+    credentialName  = args.credentialName or default_name,
   })
   if credential_status == consts.COMMAND_RESULT.SUCCESS or credential_status == consts.COMMAND_RESULT.OCCUPIED then
     tables.add_entry(device, "users", {
       userIndex = args.userIndex,
-      userName  = name,
-      userType  = user_type,
+      userName  = args.userName or default_name,
+      userType  = args.userType or default_type,
     })
   end
   return credential_status
@@ -88,15 +94,55 @@ function lock_utils.add_commanded_credential(device, command_in_progress, creden
 end
 
 -- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
--- from us (sync, or a programming event). If a credential already exists there it is left in place.
-function lock_utils.add_reported_credential(device, credential_index)
+-- from us (sync, or a programming event). If a credential already exists there it is left in place, except that a
+-- master report promotes its user to a master code user (we may have previously assumed it was a guest).
+function lock_utils.add_reported_credential(device, credential_index, is_master)
   local found_cred = tables.find_entry(device, "credentials", credential_index)
   if found_cred then return end
   local user_index = tables.next_index(device, "users")
   lock_utils.add_user_and_credential(device, {
     userIndex       = user_index,
     credentialIndex = credential_index,
+    userType        = is_master and consts.MASTER.USER_TYPE or nil,
   })
+end
+
+-- Whether the user at `user_index` is a master code user.
+function lock_utils.is_master_user(device, user_index)
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.MASTER.USER_TYPE
+end
+
+function lock_utils.update_entries_to_master(device, credential)
+  local user = tables.find_entry(device, "users", credential.userIndex)
+  if not user or user.userType ~= "guest" then return end
+
+  -- update userType
+  local user_updates = { userType = consts.MASTER.USER_TYPE }
+  -- If the user name is the default guest name, update it to the master code name as well.
+  if user.userName == "Guest " .. user.userIndex then
+    user_updates.userName = consts.MASTER.DEFAULT_NAME
+  end
+  tables.update_entry(device, "users", user.userIndex, user_updates)
+
+  -- If the credential name is the default guest name, update it to the default master code name.
+  if credential.credentialName == "Guest " .. credential.credentialIndex then
+    tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
+  end
+end
+
+-- Delete every credential whose user is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_credentials(device)
+  return tables.delete_entries_except(device, "credentials", function(cred)
+    return lock_utils.is_master_user(device, cred.userIndex)
+  end)
+end
+
+-- Delete every user that is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_users(device)
+  return tables.delete_entries_except(device, "users", function(user)
+    return user.userType == consts.MASTER.USER_TYPE
+  end)
 end
 
 

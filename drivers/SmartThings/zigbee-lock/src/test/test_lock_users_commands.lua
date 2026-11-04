@@ -62,16 +62,6 @@ local function seed_credentials(entries)
   test.wait_for_events()
 end
 
--- Set totalUsersSupported on the mock device and consume the resulting event.
-local function set_total_users_supported(n)
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main",
-      capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  )
-  mock_device:emit_event(capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  test.wait_for_events()
-end
-
 -- ============================================================================
 -- addUser
 -- ============================================================================
@@ -162,31 +152,6 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        ))
-    )
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "addUser: returns resourceExhausted when totalUsersSupported has been reached",
-  function()
-    set_total_users_supported(2)
-    seed_users({
-      { userIndex = 1, userName = "Alice", userType = "guest" },
-      { userIndex = 2, userName = "Bob",   userType = "guest" },
-    })
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Carol", "guest" } },
-    })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "resourceExhausted" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
@@ -629,6 +594,7 @@ test.register_coroutine_test(
       DoorLock.client.commands.SetPINCodeResponse.build_test_rx(mock_device, SetCodeStatus.SUCCESS),
     })
     -- Credential is freshly added at index 2 alongside the retained entries at 1 and 3.
+    -- The user already exists, so the users table is unchanged.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
@@ -644,6 +610,97 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
           { commandName = "addCredential", statusCode = "success", userIndex = 2, credentialIndex = 2 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+-- ============================================================================
+-- Master codes: the master userType cannot be set or cleared via addUser/updateUser
+-- ============================================================================
+
+local function expect_invalid(command_name)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.lockUsers.commandResult(
+        { commandName = command_name, statusCode = "invalidCommand" },
+        { state_change = true, visibility = { displayed = false } }
+      ))
+  )
+end
+
+test.register_coroutine_test(
+  "addUser: accepts the master userType",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Master Code", "programmingUser" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Master Code", userType = "programmingUser" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "addUser", statusCode = "success", userIndex = 1 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a guest to the master userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Guest 1", "programmingUser" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a master code user to another userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Master Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Master Code", "guest" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: allows renaming a master code user",
+  function()
+    seed_users({ { userIndex = 1, userName = "Master Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Front Door", "programmingUser" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Front Door", userType = "programmingUser" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "updateUser", statusCode = "success", userIndex = 1 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

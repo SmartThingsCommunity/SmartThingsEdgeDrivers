@@ -12,7 +12,9 @@ local LockUsers       = capabilities.lockUsers
 local LockCredentials = capabilities.lockCredentials
 
 -- Migrate lockCodes state to lockUsers/lockCredentials.
-return function(driver, device, command)
+-- `master_code_slot` is the user_id, if any, known to hold a master code on this device. It is migrated
+-- as a master code user rather than a guest.
+return function(driver, device, command, master_code_slot)
   -- set supported credentials
   device:emit_event(LockCredentials.supportedCredentials({ post_migration_consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
 
@@ -43,7 +45,7 @@ return function(driver, device, command)
   for code_slot_str, _ in pairs(cached_lock_codes) do
     local code_slot = tonumber(code_slot_str)
     -- Slots that are not valid credential indices are dropped rather than migrated.
-    if math.type(code_slot) == "integer" and code_slot >= min_credential then
+    if code_slot and math.type(code_slot) == "integer" and code_slot >= min_credential then
       table.insert(ordered_code_slots, code_slot)
       if code_slot >= min_user then occupied_user_indices[code_slot] = true end
     else
@@ -51,6 +53,13 @@ return function(driver, device, command)
     end
   end
 
+  -- A passed-in master code slot should always be migrated, even if it is not among the known codes.
+  if math.type(master_code_slot) == "integer" and master_code_slot >= min_credential
+    and cached_lock_codes[tostring(master_code_slot)] == nil then
+    cached_lock_codes[tostring(master_code_slot)] = post_migration_consts.MASTER.DEFAULT_NAME
+    table.insert(ordered_code_slots, master_code_slot)
+    if master_code_slot >= min_user then occupied_user_indices[master_code_slot] = true end
+  end
   table.sort(ordered_code_slots)
   local next_free_user_index = min_user
   for _, code_slot in ipairs(ordered_code_slots) do
@@ -64,7 +73,8 @@ return function(driver, device, command)
       occupied_user_indices[user_index] = true
     end
     -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
-    table.insert(users, { userIndex = user_index, userType = "guest", userName = code_name })
+    local user_type = code_slot == master_code_slot and post_migration_consts.MASTER.USER_TYPE or "guest"
+    table.insert(users, { userIndex = user_index, userType = user_type, userName = code_name })
     table.insert(credentials, { userIndex = user_index, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })
   end
   -- manually ensure user/cred state is persisted, then emit events to populate the new capabilities with the migrated data.
