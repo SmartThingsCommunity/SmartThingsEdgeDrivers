@@ -118,19 +118,19 @@ test.register_coroutine_test(
       ),
     })
 
-    -- Should add user entry
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
-          { visibility = { displayed = false } }
-        ))
-    )
     -- Should add credential entry
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
           { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    -- Should add user entry
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -169,15 +169,15 @@ test.register_coroutine_test(
     -- Should add entries
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 20, userName = "Guest 20", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 20, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 20, credentialIndex = 20, credentialType = "pin", credentialName = "Guest 20" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -207,15 +207,15 @@ test.register_coroutine_test(
     -- After shifting 256 >> 8 = 1, should add entries for user_id 1
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )

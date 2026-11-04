@@ -157,18 +157,7 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
     -- Only add entries for slots that are actually occupied on the lock.
     local user_status = zb_rx.body.zcl_body.user_status.value
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
-      -- If an entry already exists at this index, this will be a no-op.
-      tables.add_entry(device, "users", {
-        userIndex = user_id,
-        userName = "Guest " .. user_id,
-        userType = "guest",
-      })
-      tables.add_entry(device, "credentials", {
-        userIndex = user_id,
-        credentialIndex = user_id,
-        credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. user_id,
-      })
+      lock_utils.add_reported_credential(device, user_id)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     else
@@ -269,25 +258,8 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
 
   -- handle the case where we receive a programming event notification for a code we've just deleted,
   if event_code == ProgramEventCode.PIN_CODE_ADDED then
-    -- if no "addCredential" command is in progress, check if the credential is already stored locally.
-    local credential = tables.find_entry(device, "credentials", user_id)
-    if not credential then
-      -- check what user slot we have to associate this with and add a default user
-      local next_index = tables.next_index(device, "users")
-      if next_index and next_index <= tables.get_max_entries(device, "users") then
-        tables.add_entry(device, "users", {
-          userIndex = next_index,
-          userName = "Guest " .. next_index,
-          userType = "guest",
-        })
-        tables.add_entry(device, "credentials", {
-          userIndex = next_index,
-          credentialIndex = user_id,
-          credentialType = consts.CRED_TYPE_PIN,
-          credentialName = "Guest " .. next_index,
-        })
-      end
-    end
+    -- if no "addCredential" command is in progress, ensure the credential is represented locally
+    lock_utils.add_reported_credential(device, user_id)
   elseif event_code == ProgramEventCode.PIN_CODE_DELETED then
     -- check if a credential exists locally for this user id, then
     -- try to delete the entries in our tables corresponding to this code.
