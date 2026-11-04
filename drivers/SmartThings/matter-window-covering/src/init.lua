@@ -287,8 +287,7 @@ local function handle_preset(driver, device, cmd)
 end
 
 local function handle_set_preset(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  device:emit_event_for_endpoint(endpoint_id, capabilities.windowShadePreset.position(cmd.args.position))
+  device:emit_event(capabilities.windowShadePreset.position(cmd.args.position))
 end
 
 local function handle_close(driver, device, cmd)
@@ -368,7 +367,7 @@ local function current_position_lift_percent_100ths_handler(driver, device, ib, 
   device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if not ib.data.value then return end
   local lift_percent = 100 - math.floor(ib.data.value / 100)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(lift_percent))
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(lift_percent))
   if is_target_value_reached(lift_percent, device:get_field(TARGET_LIFT_PERCENT.STATE)) then
     clear_cached_data(device, TARGET_LIFT_PERCENT)
     try_emit_idle_window_shade_status(device)
@@ -379,7 +378,7 @@ local function current_position_tilt_percent_100ths_handler(driver, device, ib, 
   device = resolve_device_for_endpoint(device, ib.endpoint_id)
   if not ib.data.value then return end
   local tilt_percent = 100 - math.floor(ib.data.value / 100)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeTiltLevel.shadeTiltLevel(tilt_percent))
+  device:emit_event(capabilities.windowShadeTiltLevel.shadeTiltLevel(tilt_percent))
   if is_target_value_reached(tilt_percent, device:get_field(TARGET_TILT_PERCENT.STATE)) then
     clear_cached_data(device, TARGET_TILT_PERCENT)
     try_emit_idle_window_shade_status(device)
@@ -440,7 +439,7 @@ local function operational_status_handler(driver, device, ib, response)
     status_event = windowShade.unknown()
   end
   if status_event then
-    device:emit_event_for_endpoint(ib.endpoint_id, status_event)
+    device:emit_event(status_event)
   end
 end
 

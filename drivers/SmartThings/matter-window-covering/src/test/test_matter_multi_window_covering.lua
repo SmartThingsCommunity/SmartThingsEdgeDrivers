@@ -11,10 +11,6 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
-local matter_child = require "st.matter.child"
-local matter_device = require "st.matter.device"
-matter_child.MatterChildDevice.endpoint_to_component = matter_device.MatterDevice.endpoint_to_component
-
 local WindowCovering = clusters.WindowCovering
 
 test.disable_startup_messages()
