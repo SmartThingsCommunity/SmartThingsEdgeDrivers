@@ -72,13 +72,13 @@ end
 -- `occupied` is true only when the lock reported an occupied slot at that index.
 -- `default_response` is true when the step was resolved by a Default Response: that is not treated as a
 -- failure, but it is not an occupied slot either, so it does not count toward the consecutive unoccupied codes.
-function lock_utils.continue_code_sync(device, occupied, default_response)
+function lock_utils.continue_code_sync(device, occupied, default_response, is_master)
   local clusters = require "st.zigbee.zcl.clusters"
   local code_index = device:get_field(consts.SYNC.CODE_INDEX)
   if code_index == nil then return end
 
   if occupied then
-    lock_utils.add_reported_credential(device, code_index)
+    lock_utils.add_reported_credential(device, code_index, is_master)
     -- reset the consecutive unoccupied codes counter since we found an occupied code
     device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
   elseif not default_response then
@@ -110,18 +110,24 @@ end
 -- The credential is added first; the user is only added if that succeeded, so a failed or
 -- colliding credential add leaves no user behind. Returns the result status of the credential add.
 function lock_utils.add_credential_and_user(device, args, add_user)
-  local name = "Guest " .. args.userIndex
+  local default_name = "Guest " .. args.userIndex
+  if args.userType == consts.MASTER.USER_TYPE then
+    default_name = consts.MASTER.DEFAULT_NAME
+  elseif args.userType == "admin" then
+    default_name = "Admin " .. args.userIndex
+  end
+
   local credential_status = tables.add_entry(device, "credentials", {
     userIndex       = args.userIndex,
     credentialIndex = args.credentialIndex,
     credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
-    credentialName  = args.credentialName or name,
+    credentialName  = args.credentialName or default_name,
   })
   if add_user and credential_status == consts.COMMAND_RESULT.SUCCESS then
     tables.add_entry(device, "users", {
       userIndex = args.userIndex,
-      userName  = args.credentialName or name,
-      userType  = "guest",
+      userName  = args.userName or args.credentialName or default_name,
+      userType  = args.userType or "guest",
     })
   end
   return credential_status
@@ -163,13 +169,52 @@ end
 
 -- Per report: ensure a user and PIN credential exist for a code the lock reports at `credential_index`
 -- without any command from us (sync, or a programming event). If a credential already exists there it
--- is left in place
-function lock_utils.add_reported_credential(device, credential_index)
+-- is left in place. A master report creates a master code user.
+function lock_utils.add_reported_credential(device, credential_index, is_master)
   if tables.find_entry(device, "credentials", credential_index) then return end
   return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
+    userType        = is_master and consts.MASTER.USER_TYPE or nil,
   }, true)
+end
+
+-- Whether the user at `user_index` is a master code user.
+function lock_utils.is_master_user(device, user_index)
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.MASTER.USER_TYPE
+end
+
+function lock_utils.update_entries_to_master(device, credential)
+  local user = tables.find_entry(device, "users", credential.userIndex)
+  if not user or user.userType ~= "guest" then return end
+
+  -- update userType
+  local user_updates = { userType = consts.MASTER.USER_TYPE }
+  -- If the user name is the default guest name, update it to the master code name as well.
+  if user.userName == "Guest " .. user.userIndex then
+    user_updates.userName = consts.MASTER.DEFAULT_NAME
+  end
+  tables.update_entry(device, "users", user.userIndex, user_updates)
+
+  -- If the credential name is the default guest name, update it to the default master code name.
+  if credential.credentialName == "Guest " .. credential.credentialIndex then
+    tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
+  end
+end
+
+-- Delete every credential whose user is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_credentials(device)
+  return tables.delete_entries_except(device, "credentials", function(cred)
+    return lock_utils.is_master_user(device, cred.userIndex)
+  end)
+end
+
+-- Delete every user that is not a master code user. Returns the command result status.
+function lock_utils.delete_all_non_master_users(device)
+  return tables.delete_entries_except(device, "users", function(user)
+    return user.userType == consts.MASTER.USER_TYPE
+  end)
 end
 
 

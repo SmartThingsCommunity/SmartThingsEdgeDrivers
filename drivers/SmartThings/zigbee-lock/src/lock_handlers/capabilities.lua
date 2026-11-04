@@ -52,6 +52,12 @@ function CapabilityHandlers.update_user(driver, device, command)
     return
   end
 
+  -- a user cannot be made a master code user, and a master code user cannot be changed to another type
+  if (command.args.userType == consts.MASTER.USER_TYPE) ~= lock_utils.is_master_user(device, command.args.userIndex) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   local result_status
   if not tables.find_entry(device, "users", command.args.userIndex) then
     result_status = tables.add_entry(device, "users", {
@@ -190,9 +196,21 @@ function CapabilityHandlers.update_credential(driver, device, command)
   device:send(LockCluster.server.commands.SetPINCode(device,
     command.args.credentialIndex,
     UserStatusEnum.OCCUPIED_ENABLED,
-    UserTypeEnum.UNRESTRICTED,
+    -- the credential's stored owner decides its type, so a known master code stays a master code
+    lock_utils.is_master_user(device, existing.userIndex) and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED,
     command.args.credentialData)
   )
+end
+
+-- Some locks report a successful ClearPINCode for a master code but do not actually delete it,
+-- so refuse rather than dropping the credential from our tables.
+local function refuse_master_credential_delete(device, injected_by_delete_user)
+  device.log.warn("ignoring deleteCredential for a master code, it cannot be deleted")
+  if injected_by_delete_user then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+    lock_utils.clear_busy_state(device)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
 end
 
 function CapabilityHandlers.delete_credential(driver, device, command)
@@ -201,6 +219,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   if cmd_in_progress == consts.LOCK_USERS.DELETE then
     -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+    if lock_utils.is_master_user(device, credential_args.userIndex) then
+      refuse_master_credential_delete(device, true)
+      return
+    end
     device:send(LockCluster.attributes.SendPINOverTheAir:write(device, true))
     device:send(LockCluster.server.commands.ClearPINCode(device, credential_args.credentialIndex))
   elseif lock_utils.is_device_busy(device) then
@@ -210,6 +232,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+      return
+    end
+    if lock_utils.is_master_user(device, found_cred.userIndex) then
+      refuse_master_credential_delete(device, false)
       return
     end
     lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.DELETE, {

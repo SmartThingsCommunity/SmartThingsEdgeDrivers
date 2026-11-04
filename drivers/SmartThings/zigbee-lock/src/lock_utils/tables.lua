@@ -136,7 +136,7 @@ end
 -- An optional `start` overrides the table's minimum, e.g. to skip a reserved slot.
 function table_utils.next_index(device, table_name, start)
   local def = resolve_table_def(device, table_name)
-  if not def then return 1 end
+  assert(def, string.format("table_helpers: unknown table %q", tostring(table_name)))
   local t = table_utils.get_state(device, def) or {}
   local occupied = {}
   for _, entry in ipairs(t) do occupied[entry[def.match_key]] = true end
@@ -255,6 +255,23 @@ function table_utils.delete_all_entries(device, table_name)
   if not def then return COMMAND_RESULT.FAILURE end
   device:emit_event(def.attribute({}, {visibility = {displayed = false}}))
   persist_table(device, def, {})
+  return COMMAND_RESULT.SUCCESS
+end
+
+-- Delete every entry of a table for which `keep(entry)` is false, emitting a single update.
+function table_utils.delete_entries_except(device, table_name, keep)
+  device.log.debug("table_helpers: attempting to delete all non-kept entries from " .. table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return COMMAND_RESULT.FAILURE end
+  local t = table_utils.get_state(device, def)
+  if not t then return COMMAND_RESULT.FAILURE end
+
+  local kept = {}
+  for _, entry in ipairs(t) do
+    if keep(entry) then table.insert(kept, entry) end
+  end
+  device:emit_event(def.attribute(kept, {visibility = {displayed = false}}))
+  persist_table(device, def, kept)
   return COMMAND_RESULT.SUCCESS
 end
 
