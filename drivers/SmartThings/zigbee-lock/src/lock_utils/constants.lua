@@ -16,6 +16,11 @@ lock_constants.SYNC = {
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
 }
 
+lock_constants.MASTER = {
+  USER_TYPE = "programmingUser",
+  DEFAULT_NAME = "Master Code"
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",
