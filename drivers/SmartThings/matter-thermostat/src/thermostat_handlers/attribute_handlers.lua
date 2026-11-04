@@ -177,7 +177,8 @@ function AttributeHandlers.abs_heat_setpoint_limit_factory(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- heating setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
+          local setpoint_step = thermostat_utils.get_product_override_field(device, "setpoint_step") or 0.1
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max, step = setpoint_step }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
@@ -201,7 +202,8 @@ function AttributeHandlers.abs_cool_setpoint_limit_factory(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- cooling setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
+          local setpoint_step = thermostat_utils.get_product_override_field(device, "setpoint_step") or 0.1
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max, step = setpoint_step }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
@@ -228,7 +230,7 @@ function AttributeHandlers.temperature_handler_factory(attribute)
         local range = {
           minimum = device:get_field(fields.setpoint_limit_device_field.MIN_COOL) or fields.THERMOSTAT_MIN_TEMP_IN_C,
           maximum = device:get_field(fields.setpoint_limit_device_field.MAX_COOL) or fields.THERMOSTAT_MAX_TEMP_IN_C,
-          step = 0.1
+          step = thermostat_utils.get_product_override_field(device, "setpoint_step") or 0.1
         }
         event = capabilities.thermostatCoolingSetpoint.coolingSetpointRange({value = range, unit = unit})
         device:emit_event_for_endpoint(ib.endpoint_id, event)
@@ -244,7 +246,7 @@ function AttributeHandlers.temperature_handler_factory(attribute)
         local range = {
           minimum = device:get_field(fields.setpoint_limit_device_field.MIN_HEAT) or MIN_TEMP_IN_C,
           maximum = device:get_field(fields.setpoint_limit_device_field.MAX_HEAT) or MAX_TEMP_IN_C,
-          step = 0.1
+          step = thermostat_utils.get_product_override_field(device, "setpoint_step") or 0.1
         }
         event = capabilities.thermostatHeatingSetpoint.heatingSetpointRange({value = range, unit = unit})
         device:emit_event_for_endpoint(ib.endpoint_id, event)
