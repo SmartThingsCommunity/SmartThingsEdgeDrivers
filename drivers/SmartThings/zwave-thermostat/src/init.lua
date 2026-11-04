@@ -15,6 +15,7 @@ local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({v
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({version=2})
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
+local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=3})
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
@@ -26,6 +27,14 @@ local function device_added(driver, device)
   if device:supports_capability_by_id(capabilities.thermostatFanMode.ID) and
     device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
     device:send(ThermostatFanMode:SupportedGet({}))
+  end
+  if device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
+    if device:supports_capability_by_id(capabilities.thermostatCoolingSetpoint.ID) then
+      device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    end
+    if device:supports_capability_by_id(capabilities.thermostatHeatingSetpoint.ID) then
+      device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    end
   end
   device:refresh()
 end
@@ -80,6 +89,33 @@ local function set_setpoint_factory(setpoint_type)
   end
 end
 
+local function setpoint_capabilites_report(driver, device, cmd)
+  local args = cmd.args
+  local min_temp = args.min_value
+  local max_temp = args.max_value
+
+  local scale = 'C'
+  if args.scale1 == ThermostatSetpoint.scale.FAHRENHEIT then
+    scale = 'F'
+  end
+
+  local capability_constructor = nil
+  if args.setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 then
+    capability_constructor = capabilities.thermostatHeatingSetpoint.heatingSetpointRange
+  elseif args.setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1 then
+    capability_constructor = capabilities.thermostatCoolingSetpoint.coolingSetpointRange
+  end
+
+  if capability_constructor then
+    device:emit_event_for_endpoint(cmd.src_channel, capability_constructor(
+      {
+        unit = scale,
+        value = {minimum = min_temp, maximum = max_temp}
+      }
+    ))
+  end
+end
+
 local driver_template = {
   supported_capabilities = {
     capabilities.temperatureAlarm,
@@ -100,6 +136,11 @@ local driver_template = {
     },
     [capabilities.thermostatHeatingSetpoint.ID] = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.HEATING_1)
+    }
+  },
+  zwave_handlers = {
+    [cc.THERMOSTAT_SETPOINT] = {
+      [ThermostatSetpoint.CAPABILITIES_REPORT] = setpoint_capabilites_report
     }
   },
   lifecycle_handlers = {
