@@ -34,4 +34,4 @@ zwaveManufacturer:
     manufacturerId: 0x001D
     productType: 0x0038
     productId: 0x0002
-    deviceProfileName: fan-4speed
+    deviceProfileName: leviton-fan-4speed
