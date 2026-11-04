@@ -124,15 +124,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
 
-  -- The master code is added with its own slot as the userIndex and the master code userType.
-  local is_master = lock_utils.is_master_credential(device, cred_index)
-  if is_master and command.args.userType ~= consts.ADMIN.USER_TYPE then
-    -- only a master code credential may be written to the master code slot
-    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
-    return
-  end
-
-  if not is_master and tables.is_full(device, "credentials") then
+  if tables.is_full(device, "credentials") then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end

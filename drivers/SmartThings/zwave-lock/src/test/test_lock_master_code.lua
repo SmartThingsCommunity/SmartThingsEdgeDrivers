@@ -414,4 +414,83 @@ test.register_coroutine_test(
   { test_init = make_test_init(yale_mock_device) }
 )
 
+-- ============================================================================
+-- master code confirmed or reported in other ways
+-- ============================================================================
+
+local function queue_new_user_code_added(device, slot)
+  test.socket.zwave:__queue_receive({ device.id, Notification:Report({
+    notification_type = Notification.notification_type.ACCESS_CONTROL,
+    event = access_control_event.NEW_USER_CODE_ADDED,
+    event_parameter = string.char(slot),
+  }) })
+end
+
+test.register_coroutine_test(
+  "addCredential: Yale master code is added when the lock confirms the write with a new user code event",
+  function()
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 251, "controlOnlyMember", "pin", "199111" } } })
+    test.socket.zwave:__expect_send(UserCode:Set({
+      user_identifier = 251,
+      user_code = "199111",
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+    }):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    queue_new_user_code_added(yale_mock_device, 251)
+    expect_users(yale_mock_device, { MASTER_USER })
+    expect_credentials(yale_mock_device, { MASTER_CREDENTIAL })
+    expect_credential_result(yale_mock_device,
+      { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "new user code event at the Yale master slot with no command in progress adds the master code",
+  function()
+    queue_new_user_code_added(yale_mock_device, 251)
+    expect_users(yale_mock_device, { MASTER_USER })
+    expect_credentials(yale_mock_device, { MASTER_CREDENTIAL })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "master code report during an addCredential for another slot records the master code and leaves the add alone",
+  function()
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 5, "guest", "pin", "5555" } } })
+    test.socket.zwave:__expect_send(UserCode:Set({
+      user_identifier = 5,
+      user_code = "5555",
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+    }):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+      user_code = "1234",
+    }) })
+    expect_users(yale_mock_device, { MASTER_USER })
+    expect_credentials(yale_mock_device, { MASTER_CREDENTIAL })
+    test.wait_for_events()
+
+    -- the guest add still completes when the lock confirms it
+    queue_new_user_code_added(yale_mock_device, 5)
+    expect_credentials(yale_mock_device, { MASTER_CREDENTIAL,
+      { userIndex = 5, credentialIndex = 5, credentialType = "pin" } })
+    expect_credential_result(yale_mock_device,
+      { commandName = "addCredential", statusCode = "success", userIndex = 5, credentialIndex = 5 })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
 test.run_registered_tests()

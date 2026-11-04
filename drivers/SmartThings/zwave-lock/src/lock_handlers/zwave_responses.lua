@@ -67,8 +67,6 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
       -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
-      -- the master code slot is outside the lock's user code slots, so it is read separately
-      lock_utils.read_master_code(device)
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
       device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
@@ -129,13 +127,8 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
     lock_utils.set_credential_report_helper(device, credential_index)
 
   elseif event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
-    -- aka "master code" changed. Locks that keep it in a user code slot (Yale) send this instead of
-    -- NEW_USER_CODE_ADDED when the slot is written, so it completes the command in progress.
-    local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-    if command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-       lock_utils.is_master_credential(device, credential_args.credentialIndex) then
-      lock_utils.set_credential_report_helper(device, credential_args.credentialIndex)
-    elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    -- aka "master code" changed
+    if command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
       lock_utils.emit_command_result(device, capabilities.lockCredentials,
         consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)
