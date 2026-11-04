@@ -16,6 +16,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
+local utils = require "st.utils"
 
 --- Map component to end_points(channels)
 ---
@@ -63,7 +64,7 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value }))
+      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = utils.unsigned_to_signed(new_parameter_value, preferences[id].size) }))
     end
   end
 end
@@ -76,7 +77,7 @@ local function do_configure(driver, device)
   local configuration = configurationsMap.get_device_configuration(device)
   if configuration ~= nil then
     for _, value in ipairs(configuration) do
-      device:send(Configuration:Set({ parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value }))
+      device:send(Configuration:Set({ parameter_number = value.parameter_number, size = value.size, configuration_value = utils.unsigned_to_signed(value.configuration_value, value.size) }))
     end
   end
 end

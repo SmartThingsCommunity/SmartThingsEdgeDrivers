@@ -10,6 +10,7 @@ local cc = require "st.zwave.CommandClass"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
 local preferencesMap = require "preferences"
+local utils = require "st.utils"
 
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
@@ -79,7 +80,7 @@ local function info_changed(driver, device, event, args)
       device:send(Configuration:Set({
         parameter_number = preferences[id].parameter_number,
         size = preferences[id].size,
-        configuration_value = new_parameter_value
+        configuration_value = utils.unsigned_to_signed(new_parameter_value, preferences[id].size)
       }))
     end
   end
