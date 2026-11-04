@@ -193,6 +193,8 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device) or {}
   hue_id_to_device[device_light_resource_id] = device
 
+  device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
+
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
@@ -228,7 +230,6 @@ function LightLifecycleHandlers.init(driver, device)
     svc_rids_for_device[device_light_resource_id] = HueDeviceTypes.LIGHT
   end
   device:set_field(Fields._INIT, true, { persist = false })
-  device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
 
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     driver:inject_capability_command(device, {
