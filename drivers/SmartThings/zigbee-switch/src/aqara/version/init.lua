@@ -12,7 +12,6 @@ local POWER_METER_ENDPOINT = 0x15
 local ENERGY_METER_ENDPOINT = 0x1F
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
-local PRIVATE_MODE = "PRIVATE_MODE"
 
 local function on_off_handler(driver, device, value, zb_rx)
   device:emit_event_for_endpoint(
@@ -59,10 +58,6 @@ local function round(num)
 end
 
 local function present_value_handler(driver, device, value, zb_rx)
-  -- ignore unexpected event when the device is not private mode
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode == 0 then return end
-
   local src_endpoint = zb_rx.address_header.src_endpoint.value
   if src_endpoint == POWER_METER_ENDPOINT then
     -- power meter

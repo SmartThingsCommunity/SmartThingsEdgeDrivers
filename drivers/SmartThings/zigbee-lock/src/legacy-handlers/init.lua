@@ -380,62 +380,7 @@ local function unlock(driver, device, command)
 end
 
 local migrate = function(driver, device, command)
-  local post_migration_consts = require "lock_utils.constants"
-  local LockUsers = capabilities.lockUsers
-  local LockCredentials = capabilities.lockCredentials
-
-  -- set supported credentials
-  device:emit_event(LockCredentials.supportedCredentials({ post_migration_consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
-
-  -- migrate max/min credential length
-  local cached_min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME)
-  local cached_max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME)
-  if cached_min_code_len then
-    device:emit_event(LockCredentials.minPinCodeLen(cached_min_code_len, { visibility = { displayed = false } }))
-  end
-  if cached_max_code_len then
-    device:emit_event(LockCredentials.maxPinCodeLen(cached_max_code_len, { visibility = { displayed = false } }))
-  end
-
-  -- migrate total codes supported
-  local cached_max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
-  if cached_max_codes then
-    device:emit_event(LockCredentials.pinUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
-    device:emit_event(LockUsers.totalUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
-  end
-
-  -- migrate stored lock codes slots and user names
-  local users, credentials = {}, {}
-  local cached_lock_codes = lock_utils.get_lock_codes(device)
-  local ordered_code_slots = {}
-  for code_slot_str, _ in pairs(cached_lock_codes) do
-    table.insert(ordered_code_slots, tonumber(code_slot_str))
-  end
-  table.sort(ordered_code_slots)
-  for _, code_slot in ipairs(ordered_code_slots) do
-    local code_name = cached_lock_codes[tostring(code_slot)]
-    -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
-    if code_slot then
-      table.insert(users, { userIndex = code_slot, userType = "guest", userName = code_name })
-      table.insert(credentials, { userIndex = code_slot, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })
-    end
-  end
-  -- manually ensure user/cred state is persisted, then emit events to populate the new capabilities with the migrated data.
-  device:set_field("persistedUsers", users, { persist = true })
-  device:set_field("persistedCredentials", credentials, { persist = true })
-  device:emit_event(LockUsers.users(users, { visibility = { displayed = false } }))
-  device:emit_event(LockCredentials.credentials(credentials, { visibility = { displayed = false } }))
-
-  -- set and persist the migration complete flag and emit migrated event. Legacy subdriver will not be used again after this.
-  device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
-  device:set_field(post_migration_consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-
-  -- try to refresh all unstored state
-  driver:inject_capability_command(device, {
-    capability = capabilities.refresh.ID,
-    command = capabilities.refresh.commands.refresh.NAME,
-    args = {}
-  })
+  require("legacy-handlers.migrate")(driver, device, command)
 end
 
 local legacy_capabilities_driver = {
