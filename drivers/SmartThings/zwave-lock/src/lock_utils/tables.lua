@@ -42,9 +42,9 @@ local DEFS = {
   }
 }
 
--- Returns the credentialIndex of the device's master code slot, or nil if the device does not have one.
+-- Returns the credentialIndex of the device's admin code slot, or nil if the device does not have one.
 -- Only Yale locks have one.
-function table_utils.master_credential_index(device)
+function table_utils.admin_credential_index(device)
   if device.zwave_manufacturer_id == consts.ADMIN.YALE_MANUFACTURER_ID then
     return consts.ADMIN.YALE_SLOT
   end
@@ -165,22 +165,22 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
--- Return true if the named table has reached its max_entries limit. The master code credential, and the
+-- Return true if the named table has reached its max_entries limit. The admin code credential, and the
 -- user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
 function table_utils.is_full(device, table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return true end
-  local master_index = table_utils.master_credential_index(device)
-  local master_cred = master_index and table_utils.find_entry(device, "credentials", master_index)
+  local admin_index = table_utils.admin_credential_index(device)
+  local admin_cred = admin_index and table_utils.find_entry(device, "credentials", admin_index)
   local count = 0
   for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
-    local is_master
+    local is_admin
     if table_name == "credentials" then
-      is_master = master_index ~= nil and entry.credentialIndex == master_index
+      is_admin = admin_index ~= nil and entry.credentialIndex == admin_index
     else
-      is_master = master_cred ~= nil and entry.userIndex == master_cred.userIndex
+      is_admin = admin_cred ~= nil and entry.userIndex == admin_cred.userIndex
     end
-    if not is_master then count = count + 1 end
+    if not is_admin then count = count + 1 end
   end
   return count >= table_utils.get_max_entries(device, table_name)
 end
@@ -188,7 +188,7 @@ end
 -- Add an entry to a named table. The entry must satisfy all required_keys for
 -- that table. An entry whose match_key value already exists in the
 -- table is skipped to prevent duplicates. If the table has a max_entries limit,
--- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the master code).
+-- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the admin code).
 function table_utils.add_entry(device, table_name, entry, exempt_from_limit)
   device.log.debug("table_helpers: attempting to add entry " .. st_utils.stringify_table(entry) .. " to " .. table_name)
   local def = resolve_table_def(device, table_name)

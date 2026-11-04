@@ -169,7 +169,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Migrate maps the Yale master code slot 251 to a controlOnlyMember user with userIndex 251",
+  "Migrate maps the Yale admin code slot 251 to a controlOnlyMember user with userIndex 251",
   function()
     init_code_slot(1, "Zach", yale_mock_device)
     init_code_slot(251, "Master", yale_mock_device)
@@ -184,7 +184,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Migrate adds the Yale master code at slot 251 when the lock answers the slot read",
+  "Migrate adds the Yale admin code at slot 251 when the lock answers the slot read",
   function()
     init_code_slot(1, "Zach", yale_mock_device)
     test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })

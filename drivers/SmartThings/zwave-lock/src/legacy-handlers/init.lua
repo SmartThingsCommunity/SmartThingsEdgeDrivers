@@ -75,20 +75,20 @@ local function migrate(driver, device, cmd)
   end
 
   table.sort(ordered_codes, function(a, b) return a.index < b.index end)
-  local master_index = table_utils.master_credential_index(device)
-  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the master code's
-  -- user takes the master code slot as its index.
+  local admin_index = table_utils.admin_credential_index(device)
+  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the admin code's
+  -- user takes the admin code slot as its index.
   local user_index = 0
   for _, code in ipairs(ordered_codes) do
-    local is_master = code.index == master_index
-    if not is_master then
+    local is_admin = code.index == admin_index
+    if not is_admin then
       user_index = user_index + 1
-      if user_index == master_index then user_index = user_index + 1 end
+      if user_index == admin_index then user_index = user_index + 1 end
     end
-    local owner_index = is_master and code.index or user_index
+    local owner_index = is_admin and code.index or user_index
     table.insert(lock_users, {
       userIndex = owner_index,
-      userType = is_master and consts.ADMIN.USER_TYPE or "guest",
+      userType = is_admin and consts.ADMIN.USER_TYPE or "guest",
       userName = lock_codes[code.slot],
     })
     table.insert(lock_credentials, {userIndex = owner_index, credentialIndex = code.index, credentialType = "pin"})
@@ -116,14 +116,14 @@ local function migrate(driver, device, cmd)
 
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
 
-  -- lockCodes only holds the master code if SmartThings set it and the lock confirmed it as a user code. A factory
-  -- master code, or one a Yale ZW3 confirmed with the "master code changed" notification, is read back instead.
-  local master_migrated = false
+  -- lockCodes only holds the admin code if SmartThings set it and the lock confirmed it as a user code. A factory
+  -- admin code, or one a Yale ZW3 confirmed with the "master code changed" notification, is read back instead.
+  local admin_migrated = false
   for _, code in ipairs(ordered_codes) do
-    if code.index == master_index then master_migrated = true end
+    if code.index == admin_index then admin_migrated = true end
   end
-  if not master_migrated then
-    require("lock_utils.utils").read_master_code(device)
+  if not admin_migrated then
+    require("lock_utils.utils").read_admin_code(device)
   end
 end
 

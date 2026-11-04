@@ -69,32 +69,32 @@ function lock_utils.sync_device_state(device)
 end
 
 
--- [[ MASTER CODE MANAGEMENT ]] --
+-- [[ ADMIN CODE MANAGEMENT ]] --
 --
--- Yale locks keep their master code in a user code slot (see consts.ADMIN.YALE_SLOT) that is not one of the
+-- Yale locks keep their admin code in a user code slot (see consts.ADMIN.YALE_SLOT) that is not one of the
 -- lock's user slots. It is exposed like any other credential, owned by a user with the same index. The
 -- runtime handling lives in the yale-lock sub-driver; these helpers are shared with the lockCodes migration.
 
-function lock_utils.get_master_credential(device)
-  local master_index = tables.master_credential_index(device)
-  return master_index ~= nil and tables.find_entry(device, "credentials", master_index) or nil
+function lock_utils.get_admin_credential(device)
+  local admin_index = tables.admin_credential_index(device)
+  return admin_index ~= nil and tables.find_entry(device, "credentials", admin_index) or nil
 end
 
--- Read the master code slot back from the lock, so the master code is recorded even if it was set outside
+-- Read the admin code slot back from the lock, so the admin code is recorded even if it was set outside
 -- SmartThings. The report is handled like any other user code report.
-function lock_utils.read_master_code(device)
-  local master_index = tables.master_credential_index(device)
-  if master_index == nil then return end
+function lock_utils.read_admin_code(device)
+  local admin_index = tables.admin_credential_index(device)
+  if admin_index == nil then return end
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-  device:send(UserCode:Get({ user_identifier = master_index }))
+  device:send(UserCode:Get({ user_identifier = admin_index }))
 end
 
--- Clear every entry of the "users" or "credentials" table except the master code credential and its user.
-function lock_utils.delete_all_non_master_entries(device, table_name)
-  local master = lock_utils.get_master_credential(device)
+-- Clear every entry of the "users" or "credentials" table except the admin code credential and its user.
+function lock_utils.delete_all_non_admin_entries(device, table_name)
+  local admin = lock_utils.get_admin_credential(device)
   local match_key = table_name == "users" and "userIndex" or "credentialIndex"
   tables.delete_all_entries(device, table_name, function(entry)
-    return master ~= nil and entry[match_key] == master[match_key]
+    return admin ~= nil and entry[match_key] == admin[match_key]
   end)
 end
 
