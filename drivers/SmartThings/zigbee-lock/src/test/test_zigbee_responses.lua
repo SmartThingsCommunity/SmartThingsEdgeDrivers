@@ -187,6 +187,7 @@ test.register_coroutine_test(
     -- Verify sync state is cleared (clear_busy_state sets BUSY to false, not nil)
     assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil)
     assert(mock_device:get_field(constants.DRIVER_STATE.BUSY) == false)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == true)
   end
 )
 

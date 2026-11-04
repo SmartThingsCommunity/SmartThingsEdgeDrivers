@@ -14,6 +14,7 @@ lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
   CODE_INDEX = "syncCodeIndex",
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
+  CODES_SYNCED = "codesSynced", -- persisted; true once a code sync has run to completion
 }
 
 lock_constants.COMMAND_RESULT = {
