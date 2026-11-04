@@ -15,6 +15,7 @@ local table_utils = {}
 --   match_key         Key used to identify entries in flat tables
 --   required_keys     Keys that must be non-nil when adding an entry
 --   persistent_field  device:set_field key used to back up the table across restarts
+--   minimum           Lowest valid match_key value
 --
 
 local DEFS = {
@@ -22,6 +23,7 @@ local DEFS = {
     capability       = capabilities.lockUsers,
     attribute        = capabilities.lockUsers.users,
     max_entries      = capabilities.lockUsers.totalUsersSupported,
+    minimum          = 1,
     match_key        = "userIndex",
     required_keys    = {"userIndex", "userType"},
     persistent_field = "persistedUsers",
@@ -30,6 +32,7 @@ local DEFS = {
     capability       = capabilities.lockCredentials,
     attribute        = capabilities.lockCredentials.credentials,
     max_entries      = capabilities.lockCredentials.pinUsersSupported,
+    minimum          = 0,
     match_key        = "credentialIndex",
     required_keys    = {"userIndex", "credentialIndex", "credentialType"},
     persistent_field = "persistedCredentials",
@@ -139,6 +142,12 @@ function table_utils.next_index(device, table_name)
   local idx = 1
   while occupied[idx] do idx = idx + 1 end
   return idx
+end
+
+function table_utils.get_minimum(device, table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return end
+  return def.minimum
 end
 
 function table_utils.get_max_entries(device, table_name)
