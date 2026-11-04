@@ -14,9 +14,6 @@ local Battery      = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local UserCode     = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
 
--- Seconds to wait for a delete to be confirmed before reading the slot back
-local DELETE_CONFIRM_DELAY = 4.2
-
 local CapabilityHandlers = {}
 
 
@@ -190,7 +187,7 @@ local function send_credential_delete(device, credential_index)
     }))
     -- A lock that refuses the delete (e.g. a Yale master code) ignores the Set and sends nothing, so read the
     -- slot back if the delete has not completed. The report tells us whether the code is still there.
-    device.thread:call_with_delay(DELETE_CONFIRM_DELAY, function()
+    device.thread:call_with_delay(consts.DELETE_CONFIRM_DELAY, function()
       if lock_utils.is_delete_in_progress(device, credential_index) then
         device:send(UserCode:Get({ user_identifier = credential_index }))
       end

@@ -234,7 +234,7 @@ test.register_coroutine_test(
 -- deleting the master code: the lock decides, and the driver reports what it did
 -- ============================================================================
 
-local DELETE_CONFIRM_DELAY = 4.2
+local DELETE_CONFIRM_DELAY = constants.DELETE_CONFIRM_DELAY
 
 local function expect_delete_set(device, slot)
   test.socket.zwave:__expect_send(UserCode:Set({
