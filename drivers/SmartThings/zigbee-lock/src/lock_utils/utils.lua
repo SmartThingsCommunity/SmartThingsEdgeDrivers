@@ -1,6 +1,7 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local tables = require "lock_utils.tables"
 local consts = require "lock_utils.constants"
 
 local lock_utils = {}
@@ -49,6 +50,43 @@ function lock_utils.sync_device_state(device)
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))
+end
+
+
+-- [[ CREDENTIAL TABLE MANAGEMENT ]] --
+
+-- Add a user and its credential together. Existing entries at either index are left untouched
+-- by the underlying table add. Returns the result status of the credential add.
+-- Only creates a user if the credential create succeeded, or if the credential already existed
+function lock_utils.add_user_and_credential(device, args)
+  local name = "Guest " .. args.userIndex
+  local user_type = "guest"
+  local credential_status = tables.add_entry(device, "credentials", {
+    userIndex       = args.userIndex,
+    credentialIndex = args.credentialIndex,
+    credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
+    credentialName  = args.credentialName or name,
+  })
+  if credential_status == consts.COMMAND_RESULT.SUCCESS or credential_status == consts.COMMAND_RESULT.OCCUPIED then
+    tables.add_entry(device, "users", {
+      userIndex = args.userIndex,
+      userName  = name,
+      userType  = user_type,
+    })
+  end
+  return credential_status
+end
+
+-- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
+-- from us (sync, or a programming event). If a credential already exists there it is left in place.
+function lock_utils.add_reported_credential(device, credential_index)
+  local found_cred = tables.find_entry(device, "credentials", credential_index)
+  if found_cred then return end
+  local user_index = tables.next_index(device, "users")
+  lock_utils.add_user_and_credential(device, {
+    userIndex       = user_index,
+    credentialIndex = credential_index,
+  })
 end
 
 
