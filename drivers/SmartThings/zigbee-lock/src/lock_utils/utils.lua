@@ -77,6 +77,16 @@ function lock_utils.add_user_and_credential(device, args)
   return credential_status
 end
 
+-- Per command: update the tables after the lock confirmed a set-credential command we sent.
+-- Returns the command result status, or nil for any other command.
+function lock_utils.add_commanded_credential(device, command_in_progress, credential_args)
+  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
+    return lock_utils.add_user_and_credential(device, credential_args)
+  elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    return consts.COMMAND_RESULT.SUCCESS
+  end
+end
+
 -- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
 -- from us (sync, or a programming event). If a credential already exists there it is left in place.
 function lock_utils.add_reported_credential(device, credential_index)

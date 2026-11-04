@@ -38,21 +38,7 @@ function ZigbeeHandlers.set_pin_code_response(driver, device, zb_rx)
   -- apply result based on response and identify command result status
   local result_status
   if set_pin_code_status == SetCodeStatus.SUCCESS then
-    if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
-      tables.add_entry(device, "users", {
-        userIndex = credential_args_in_use.userIndex,
-        userName = "Guest " .. credential_args_in_use.userIndex, -- default
-        userType = "guest", -- default
-      })
-      result_status = tables.add_entry(device, "credentials", {
-        userIndex       = credential_args_in_use.userIndex,
-        credentialIndex = credential_args_in_use.credentialIndex,
-        credentialType  = credential_args_in_use.credentialType,
-        credentialName  = "Guest " .. credential_args_in_use.userIndex, -- default
-      })
-    elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-      result_status = consts.COMMAND_RESULT.SUCCESS
-    end
+    result_status = lock_utils.add_commanded_credential(device, command_in_progress, credential_args_in_use)
   elseif RESPONSE_RESULT_MAP[set_pin_code_status] then
     result_status = RESPONSE_RESULT_MAP[set_pin_code_status]
   else
@@ -212,23 +198,8 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
   local credential_args_in_use = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
   if command_in_progress and credential_args_in_use.credentialIndex == user_id then
     local result_status
-    if event_code == ProgramEventCode.PIN_CODE_ADDED then
-      if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
-        tables.add_entry(device, "users", {
-          userIndex = credential_args_in_use.userIndex,
-          userName = "Guest " .. credential_args_in_use.userIndex, -- default
-          userType = "guest", -- default
-        })
-        result_status = tables.add_entry(device, "credentials", {
-          userIndex       = credential_args_in_use.userIndex,
-          credentialIndex = credential_args_in_use.credentialIndex,
-          credentialType  = credential_args_in_use.credentialType,
-          credentialName  = credential_args_in_use.credentialName, -- optional
-        })
-      elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-        -- some devices emit PIN_CODE_ADDED even for UPDATE events
-        result_status = consts.COMMAND_RESULT.SUCCESS
-      end
+    if event_code == ProgramEventCode.PIN_CODE_ADDED then -- note: some devices emit PIN_CODE_ADDED even for UPDATE events
+      result_status = lock_utils.add_commanded_credential(device, command_in_progress, credential_args_in_use)
     elseif event_code == ProgramEventCode.PIN_CODE_DELETED and (command_in_progress == consts.LOCK_CREDENTIALS.DELETE or command_in_progress == consts.LOCK_USERS.DELETE) then
       result_status = tables.delete_entry(device, "credentials", credential_args_in_use.credentialIndex)
       -- the deleteUser command injects a deleteCredential command, so ensure the lockUsers command results is emitted in this case.
