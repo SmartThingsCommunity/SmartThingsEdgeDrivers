@@ -72,34 +72,12 @@ end
 -- [[ MASTER CODE MANAGEMENT ]] --
 --
 -- Yale locks keep their master code in a user code slot (see consts.ADMIN.YALE_SLOT) that is not one of the
--- lock's user slots. It is exposed like any other credential, owned by a user with the same index.
-
--- True if the credential at credential_index is the lock's master code.
-function lock_utils.is_master_credential(device, credential_index)
-  return credential_index ~= nil and credential_index == tables.master_credential_index(device)
-end
+-- lock's user slots. It is exposed like any other credential, owned by a user with the same index. The
+-- runtime handling lives in the yale-lock sub-driver; these helpers are shared with the lockCodes migration.
 
 function lock_utils.get_master_credential(device)
   local master_index = tables.master_credential_index(device)
   return master_index ~= nil and tables.find_entry(device, "credentials", master_index) or nil
-end
-
--- Add the master code credential and the user that owns it. Both use the lock's master code slot as their
--- index, since the user index only has meaning inside the capability state.
-function lock_utils.add_master_entries(device, credential_index, name)
-  name = name or consts.ADMIN.NAME
-  local status = tables.add_entry(device, "users", {
-    userIndex = credential_index,
-    userName  = name,
-    userType  = consts.ADMIN.USER_TYPE,
-  }, true)
-  if status ~= consts.COMMAND_RESULT.SUCCESS and status ~= consts.COMMAND_RESULT.OCCUPIED then return status end
-  return tables.add_entry(device, "credentials", {
-    userIndex       = credential_index,
-    credentialIndex = credential_index,
-    credentialType  = consts.CRED_TYPE_PIN,
-    credentialName  = name,
-  }, true)
 end
 
 -- Read the master code slot back from the lock, so the master code is recorded even if it was set outside
@@ -150,11 +128,7 @@ function lock_utils.set_credential_report_helper(device, credential_index)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
 
   local result_status
-  if command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-     lock_utils.is_master_credential(device, credential_args.credentialIndex) then
-    result_status = lock_utils.add_master_entries(device,
-      credential_args.credentialIndex, credential_args.credentialName)
-  elseif command_in_progress == consts.LOCK_CREDENTIALS.ADD then
+  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
     result_status = tables.add_entry(device, "credentials", {
       userIndex       = credential_args.userIndex,
       credentialIndex = credential_args.credentialIndex,
@@ -163,9 +137,6 @@ function lock_utils.set_credential_report_helper(device, credential_index)
     })
   elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
     result_status = consts.COMMAND_RESULT.SUCCESS
-  elseif lock_utils.is_master_credential(device, credential_index) then
-    -- master code reported without a command in progress
-    lock_utils.add_master_entries(device, credential_index)
   elseif not tables.find_entry(device, "credentials", credential_index) then
     -- credential does not exist and no add/update command in progress, therefore it was added out-of-band
     -- check what user slot we have to associate this with, and add a default user

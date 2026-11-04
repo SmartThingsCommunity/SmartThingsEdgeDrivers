@@ -7,6 +7,7 @@ local sub_drivers = {
    lazy_load_if_possible("schlage-lock"),
    lazy_load_if_possible("samsung-lock"),
    lazy_load_if_possible("keywe-lock"),
+   lazy_load_if_possible("yale-lock"),
    lazy_load_if_possible("legacy-handlers"),
 }
 return sub_drivers
