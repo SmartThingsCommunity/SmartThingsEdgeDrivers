@@ -1,0 +1,78 @@
+{
+  "id": "17ae81ca-ed19-4b39-9591-5d88f291b808",
+  "name": "XRDR2.v4",
+  "metadata": {
+    "vid": "49cbf14e-c1d9-3040-92a5-57b85ab4c1cb",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [],
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "nexmosphere.summary",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "mode",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.uid",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.number",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.label1",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.label2",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.label3",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "TagReader",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
