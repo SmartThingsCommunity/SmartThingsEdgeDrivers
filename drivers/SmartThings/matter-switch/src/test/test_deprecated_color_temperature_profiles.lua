@@ -64,7 +64,7 @@ test.register_coroutine_test(
     assert(not switch_utils.check_deprecated_color_temperature_profile_vendor_overrides(unlisted_pid_device),
       "listed VID with unlisted PID should not match")
   end,
-  { min_api_version = 14 }
+  { min_api_version = 15 }
 )
 
 test.register_coroutine_test(
@@ -83,7 +83,7 @@ test.register_coroutine_test(
     })
     listed_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
-  { min_api_version = 14 }
+  { min_api_version = 15 }
 )
 
 for name, device in pairs({["unlisted VID"] = unlisted_device, ["unlisted PID"] = unlisted_pid_device}) do
@@ -104,7 +104,7 @@ for name, device in pairs({["unlisted VID"] = unlisted_device, ["unlisted PID"] 
       device:expect_metadata_update({ profile = "light-color-level" })
       device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
-    { min_api_version = 14 }
+    { min_api_version = 15 }
   )
 end
 
