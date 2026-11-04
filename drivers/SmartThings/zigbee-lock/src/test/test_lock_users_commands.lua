@@ -574,9 +574,9 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
 
-    -- Re-add a credential for the new user at slot 2.  The old credential at
-    -- credentialIndex 2 was cleanly removed, so add_entry must succeed without
-    -- returning OCCUPIED or any stale-state error.
+    -- Re-add a credential at the reclaimed slot 2.  The old credential at credentialIndex 2 was cleanly
+    -- removed, so add_entry must succeed without returning OCCUPIED or any stale-state error.
+    -- addCredential always creates a new user, which takes the next free user index, 4.
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
@@ -593,15 +593,25 @@ test.register_coroutine_test(
       mock_device.id,
       DoorLock.client.commands.SetPINCodeResponse.build_test_rx(mock_device, SetCodeStatus.SUCCESS),
     })
-    -- Credential is freshly added at index 2 alongside the retained entries at 1 and 3.
-    -- The user already exists, so the users table is unchanged.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 3, credentialIndex = 3, credentialType = "pin" },
-            { userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 2" },
+            { userIndex = 4, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 4" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 3, userName = "Carol", userType = "guest" },
+            { userIndex = 2, userName = "Dave",  userType = "guest" },
+            { userIndex = 4, userName = "Guest 4", userType = "guest" },
           },
           { visibility = { displayed = false } }
         ))
@@ -609,7 +619,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", userIndex = 2, credentialIndex = 2 },
+          { commandName = "addCredential", statusCode = "success", userIndex = 4, credentialIndex = 2 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

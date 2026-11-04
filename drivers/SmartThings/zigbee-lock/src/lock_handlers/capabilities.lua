@@ -133,19 +133,27 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- A userIndex of 0 means "auto-assign the next available slot". Credential index 0 is reserved for the master code,
-  -- so auto-assigned credentials start from 1.
-  local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
-  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials", 1) or command.args.userIndex
+  -- addCredential has no credentialIndex argument, so its userIndex argument selects the credential slot. A value
+  -- of 0 means "auto-assign the next available slot". The user is always new, and takes the next available user slot.
+  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  local user_index = tables.next_index(device, "users")
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  local max_credentials = tables.get_max_entries(device, "credentials")
+  if #(tables.get_state(device, "credentials") or {}) >= max_credentials then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
+    return
+  end
+
+  -- a requested slot must not already hold a credential
+  if tables.find_entry(device, "credentials", cred_index) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.OCCUPIED)
     return
   end
 
   -- Set busy state and attempt to set the PIN on-device.
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
     userIndex       = user_index,
+    userType        = command.args.userType,
     credentialIndex = cred_index,
     credentialType  = command.args.credentialType,
     credentialName  = command.args.credentialName,
@@ -153,7 +161,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   device:send(LockCluster.server.commands.SetPINCode(device,
     cred_index,
     UserStatusEnum.OCCUPIED_ENABLED,
-    UserTypeEnum.UNRESTRICTED,
+    command.args.userType == consts.MASTER.USER_TYPE and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED,
     command.args.credentialData)
   )
 end
