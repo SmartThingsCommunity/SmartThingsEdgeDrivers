@@ -8,6 +8,7 @@ lock_constants.DRIVER_STATE = {
   COMMAND_IN_PROGRESS = "commandInProgress",
   CREDENTIAL_ARGS_IN_USE = "currentCredential",
   SLGA_MIGRATED = "slgaMigrated",
+  PIN_LENGTH_FROM_DEVICE = "pinLengthFromDevice", -- true once the lock itself has reported its PIN length
 }
 
 lock_constants.SYNC = {
@@ -41,6 +42,9 @@ lock_constants.LOCK_USERS = {
 }
 
 lock_constants.CRED_TYPE_PIN = "pin"
+-- User Code CC has no capabilities report for PIN length; the spec fixes it at 4-10 digits
+lock_constants.DEFAULT_MIN_PIN_LENGTH = 4
+lock_constants.DEFAULT_MAX_PIN_LENGTH = 10
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10

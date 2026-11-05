@@ -49,6 +49,8 @@ local function added()
   mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, nil, {})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10, { visibility = { displayed = false } })))
 
   test.socket.zwave:__expect_send(
     DoorLock:OperationGet({}):build_test_tx(mock_device.id)
@@ -123,6 +125,33 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6))
     )
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "First configuration report after the default PIN length should not wipe existing credentials",
+  function()
+    added()
+    -- default (4-10) is in place; add a cached credential to confirm it survives the first real report
+    mock_device:set_field(constants.DRIVER_STATE.PIN_LENGTH_FROM_DEVICE, nil, {})
+    local tables = require "lock_utils.tables"
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }},
+        { visibility = { displayed = false } })))
+    tables.add_entry(mock_device, "credentials", { userIndex = 1, credentialIndex = 1, credentialType = "pin" })
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      Configuration:Report({ parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number, configuration_value = 6 })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6)))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6)))
+    test.wait_for_events()
+    assert(#(tables.get_state(mock_device, "credentials") or {}) == 1, "credential must not be wiped")
   end,
   { min_api_version = 15 }
 )

@@ -34,6 +34,7 @@ function LockLifecycle.device_added(driver, device)
   if device:supports_capability(capabilities.tamperAlert) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+  lock_utils.ensure_default_pin_length(device)
   -- set initial state
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
@@ -55,6 +56,9 @@ function LockLifecycle.init(driver, device)
     device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
   end
+
+  -- existing devices may predate the default PIN length being set
+  lock_utils.ensure_default_pin_length(device)
 
   if device:supports_capability(capabilities.tamperAlert) then
     -- ensure our user/credential state is accurate to the current device state

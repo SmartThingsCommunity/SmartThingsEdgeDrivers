@@ -57,6 +57,8 @@ local function added()
     UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
   )
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10, { visibility = { displayed = false } })))
   test.wait_for_events()
   assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
 end
