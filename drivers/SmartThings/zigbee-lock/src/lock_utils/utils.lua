@@ -39,7 +39,15 @@ end
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
+  local capabilities = require "st.capabilities"
   local clusters = require "st.zigbee.zcl.clusters"
+
+  if not (device:supports_capability(capabilities.lockCredentials) and
+    device:get_field(consts.SYNC.CODES_SYNCED) ~= true and
+    device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK) then
+      return
+  end
+
   -- Per spec, this attribute should be a boolean set to True if it is ok for the door lock server to send PINs over the air.
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 

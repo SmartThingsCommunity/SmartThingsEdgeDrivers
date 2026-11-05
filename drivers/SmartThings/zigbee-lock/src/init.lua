@@ -48,11 +48,7 @@ function LockLifecycle.init(driver, device)
   end
 
   -- retry sync on each driver init until it has been run to completion, in case of some kind of interruption (network, power, etc.)
-  if device:supports_capability(capabilities.lockCredentials) and
-    device:get_field(consts.SYNC.CODES_SYNCED) ~= true and
-    device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
-    lock_utils.sync_device_state(device)
-  end
+  lock_utils.sync_device_state(device)
 end
 
 function LockLifecycle.do_configure(driver, device)
@@ -65,10 +61,8 @@ function LockLifecycle.do_configure(driver, device)
   device:send(device_management.build_bind_request(device, clusters.Alarms.ID, driver.environment_info.hub_zigbee_eui))
   device:send(clusters.Alarms.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
 
-  if device:supports_capability(capabilities.lockCredentials) then
-    -- ensure our user/credential state is accurate to the current device state
-    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
-  end
+  -- ensure our user/credential state is accurate to the current device state
+  device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.info_changed(driver, device, event, args)
