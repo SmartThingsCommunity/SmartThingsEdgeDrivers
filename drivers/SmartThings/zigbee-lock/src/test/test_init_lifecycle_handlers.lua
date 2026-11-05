@@ -134,6 +134,7 @@ test.register_coroutine_test(
       mock_device_typed.id,
       DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device_typed),
     })
+    expect_sync_device_state(mock_device_typed)
     test.wait_for_events()
 
     assert(
@@ -301,7 +302,7 @@ test.register_coroutine_test(
 do
   local dev
   test.register_coroutine_test(
-    "infoChanged: switching from non-lockCodes to lockCodes+lockCredentials profile triggers full SLGA migration and two syncs",
+    "infoChanged: switching from non-lockCodes to lockCodes+lockCredentials profile triggers full SLGA migration and syncs once",
     function()
       -- Warm up device_cache with the original (lock-battery) profile via init.
       -- For a non-SLGA_MIGRATED device, legacy-handlers' init fires (no zigbee sends).
@@ -347,7 +348,8 @@ do
         dev.id,
         DoorLock.attributes.NumberOfPINUsersSupported:read(dev),
       })
-      -- Immediate sync_device_state
+      -- Immediate sync_device_state (from the refresh handler)
+      expect_sync_device_state(dev)
       test.wait_for_events()
 
       assert(
@@ -355,10 +357,8 @@ do
         "SLGA_MIGRATED must be set after infoChanged profile switch"
       )
 
-      -- Delayed sync_device_state (2 s)
+      -- Delayed sync_device_state is a no-op: the sync started by the refresh is still in progress
       test.mock_time.advance_time(2)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      expect_sync_device_state(dev)
       test.wait_for_events()
     end,
     {
@@ -511,6 +511,7 @@ test.register_coroutine_test(
       mock_device_typed.id,
       DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device_typed),
     })
+    expect_sync_device_state(mock_device_typed)
     test.wait_for_events()
 
     -- driverSwitched occurs after added, so migrated=true is already set in the capability state cache
