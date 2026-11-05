@@ -139,6 +139,11 @@ function lock_utils.is_master_user(device, user_index)
 end
 
 function lock_utils.update_entries_to_master(device, credential)
+  -- If the credential name is the default guest name, update it to the default master code name.
+  if credential.credentialName == "Guest " .. credential.credentialIndex then
+    tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
+  end
+
   local user = tables.find_entry(device, "users", credential.userIndex)
   if not user or user.userType ~= "guest" then return end
 
@@ -149,11 +154,6 @@ function lock_utils.update_entries_to_master(device, credential)
     user_updates.userName = consts.MASTER.DEFAULT_NAME
   end
   tables.update_entry(device, "users", user.userIndex, user_updates)
-
-  -- If the credential name is the default guest name, update it to the default master code name.
-  if credential.credentialName == "Guest " .. credential.credentialIndex then
-    tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
-  end
 end
 
 -- Delete every credential whose user is not a master code user. Returns the command result status.
