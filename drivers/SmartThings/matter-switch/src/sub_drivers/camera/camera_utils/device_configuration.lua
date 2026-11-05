@@ -330,6 +330,22 @@ function CameraDeviceConfiguration.match_profile(device)
     table.insert(status_led_component_capabilities, capabilities.mode.ID)
   end
 
+  -- support is aggregated across all PowerSource endpoints. battery percentage is preferred;
+  -- batteryLevel is only used when no endpoint supports percentage
+  local percent_supported, level_supported = false, false
+  for _, support in pairs(device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT) or {}) do
+    percent_supported = percent_supported or support.percent == true
+    level_supported = level_supported or support.level == true
+  end
+  if percent_supported then
+    table.insert(main_component_capabilities, capabilities.battery.ID)
+  elseif level_supported then
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+  end
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.RECHARGEABLE}) > 0 then
+    table.insert(main_component_capabilities, capabilities.chargingState.ID)
+  end
+
   table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.main, main_component_capabilities})
   if #status_led_component_capabilities > 0 then
     table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})

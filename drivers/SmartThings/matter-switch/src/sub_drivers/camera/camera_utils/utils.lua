@@ -273,6 +273,15 @@ function CameraUtils.subscribe(device)
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel
+    },
+    [capabilities.chargingState.ID] = {
+      clusters.PowerSource.attributes.BatChargeState
+    },
     [capabilities.switchLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
       clusters.LevelControl.attributes.MaxLevel,
@@ -322,6 +331,10 @@ function CameraUtils.subscribe(device)
 
   if #device:get_endpoints(clusters.ZoneManagement.ID) > 0 then
     table.insert(additional_attributes, camera_fields.ZoneManagementFeatureMapAttr)
+  end
+
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+    table.insert(additional_attributes, clusters.PowerSource.attributes.AttributeList)
   end
 
   for _, endpoint_info in ipairs(device.endpoints) do
