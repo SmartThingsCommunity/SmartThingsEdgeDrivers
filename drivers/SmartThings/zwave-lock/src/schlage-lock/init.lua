@@ -33,7 +33,10 @@ local function configuration_report(self, device, cmd)
   if parameter_number == SCHLAGE_LOCK_CODE_LENGTH_PARAM.number then
     local reported_code_length = cmd.args.configuration_value
     local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
-    if current_code_length ~= nil and current_code_length ~= reported_code_length then
+    -- only a length previously reported by the lock counts; the spec default emitted at startup does not
+    local previously_reported = device:get_field(consts.DRIVER_STATE.PIN_LENGTH_FROM_DEVICE) == true
+    device:set_field(consts.DRIVER_STATE.PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    if previously_reported and current_code_length ~= nil and current_code_length ~= reported_code_length then
       -- when the code length is changed, all the codes have been wiped
       tables.delete_all_entries(device, "credentials")
       tables.delete_all_entries(device, "users")
@@ -79,11 +82,11 @@ end
 
 local function add_credential_handler(self, device, cmd)
   local DEFAULT_COMMANDS_DELAY = 4.2
-  local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
   local base_handler = function()
     cap_handlers.add_credential(self, device, cmd)
   end
-  if current_code_length == nil then
+  -- the default PIN length is not authoritative; wait for the lock's own value if we don't have it yet
+  if device:get_field(consts.DRIVER_STATE.PIN_LENGTH_FROM_DEVICE) ~= true then
     device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
     device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, base_handler)
   else

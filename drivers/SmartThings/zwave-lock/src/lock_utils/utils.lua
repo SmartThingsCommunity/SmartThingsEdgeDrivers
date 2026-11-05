@@ -50,6 +50,24 @@ function lock_utils.sync_device_state(device)
 end
 
 
+-- Emit the spec default PIN length range (4-10) if no min/max has been reported yet.
+-- Migrated devices copy theirs from lockCodes, so those are left alone to avoid
+-- clobbering/misinterpreting them. Schlage locks report their own length later via a
+-- configuration parameter, which overrides these defaults.
+function lock_utils.ensure_default_pin_length(device)
+  if not device:supports_capability(capabilities.lockCredentials) then
+    return
+  end
+  local cred = capabilities.lockCredentials
+  if device:get_latest_state("main", cred.ID, cred.minPinCodeLen.NAME) == nil then
+    device:emit_event(cred.minPinCodeLen(consts.DEFAULT_MIN_PIN_LENGTH, { visibility = { displayed = false } }))
+  end
+  if device:get_latest_state("main", cred.ID, cred.maxPinCodeLen.NAME) == nil then
+    device:emit_event(cred.maxPinCodeLen(consts.DEFAULT_MAX_PIN_LENGTH, { visibility = { displayed = false } }))
+  end
+end
+
+
 -- [[ COMMAND RESULT STATE MANAGEMENT ]] --
 
 function lock_utils.emit_command_result(device, capability, command_name, status_code, additional_info)
