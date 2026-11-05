@@ -229,6 +229,29 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "sync_device_state: persists the starting code index so sync can resume after restart",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "doConfigure" })
+    expect_do_configure_zigbee(mock_device_base)
+    mock_device_base:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    expect_sync_device_state(mock_device_base)
+    test.wait_for_events()
+
+    assert(mock_device_base.persistent_store[constants.SYNC.CODE_INDEX] == 0)
+    assert(mock_device_base.transient_store[constants.SYNC.CODE_INDEX] == nil)
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
   "doConfigure: SLGA_MIGRATED device without lockCredentials sends bind/configure but does NOT create sync timer",
   function()
     -- Pre-seed SLGA_MIGRATED so the main driver's do_configure fires.

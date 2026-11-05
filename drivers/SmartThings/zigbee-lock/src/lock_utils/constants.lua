@@ -12,7 +12,7 @@ lock_constants.DRIVER_STATE = {
 
 lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
-  CODE_INDEX = "syncCodeIndex",
+  CODE_INDEX = "syncCodeIndex", -- persisted until codesSynced is set
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
   CODES_SYNCED = "codesSynced", -- persisted; true once a code sync has run to completion
 }

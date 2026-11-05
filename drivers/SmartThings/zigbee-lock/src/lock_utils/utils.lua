@@ -52,9 +52,9 @@ function lock_utils.sync_device_state(device)
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 
   -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
-  -- so start the process from 0.
+  -- so start the process from 0. Persist the index so we can resume if the driver is restarted mid-sync.
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, 0)
+    device:set_field(consts.SYNC.CODE_INDEX, 0, { persist = true })
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))

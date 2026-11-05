@@ -144,6 +144,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "get_pin_code_response: persists the sync code index while sync is in progress",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 1, {})
+
+    -- unoccupied slot: no credential events, just advance to the next index
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device,
+        1,
+        DoorLockUserStatus.AVAILABLE,
+        DoorLockUserType.UNRESTRICTED,
+        ""
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.GetPINCode(mock_device, 2),
+    })
+    test.wait_for_events()
+
+    -- the index must be in the persistent store so sync can resume after a driver restart
+    assert(mock_device.persistent_store[constants.SYNC.CODE_INDEX] == 2)
+    assert(mock_device.transient_store[constants.SYNC.CODE_INDEX] == nil)
+  end
+)
+
+test.register_coroutine_test(
   "get_pin_code_response: completes sync when max entries reached",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})

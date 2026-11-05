@@ -159,8 +159,8 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       lock_utils.clear_busy_state(device)
     else
       local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
-      device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
-      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = synced_code_index })
+      device:set_field(consts.SYNC.CODE_INDEX, synced_code_index, { persist = true })
+      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
       device:send(clusters.DoorLock.server.commands.GetPINCode(device, synced_code_index))
     end
   end
