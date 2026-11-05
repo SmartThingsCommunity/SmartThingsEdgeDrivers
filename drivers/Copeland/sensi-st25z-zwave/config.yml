@@ -1,0 +1,6 @@
+name: 'Sensi Lite Smart Thermostat Z-Wave'
+packageKey: 'copeland-sensi-st25z-zwave'
+permissions:
+  zwave: {}
+description: "SmartThings driver for the Sensi Lite Smart Thermostat (Z-Wave), model 1F76U-22ZB"
+vendorSupportInformation: "https://support.smartthings.com"

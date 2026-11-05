@@ -1,0 +1,45 @@
+name: thermostat-sensi-st25z
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 6.99, 36.12 ]
+          step: 1
+  - id: thermostatCoolingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "coolingSetpoint.value"
+          range: [ 8.33, 37.23 ]
+          step: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatFanMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - cooling
+            - fan only
+            - idle
+            - pending heat
+            - pending cool
+            - vent economizer
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
