@@ -45,6 +45,13 @@ local mock_device_typed = test.mock_device.build_test_zwave_device({
   _provisioning_state = "TYPED",
 })
 
+-- Schlage manufacturer (reports its own PIN length via configuration)
+local mock_device_schlage = test.mock_device.build_test_zwave_device({
+  profile             = t_utils.get_profile_definition("base-lock.yml"),
+  zwave_endpoints     = zwave_lock_endpoints,
+  zwave_manufacturer_id = 0x003B,
+})
+
 -- lock-battery profile: lock + battery only (no lockCodes / lockCredentials)
 local mock_device_battery = test.mock_device.build_test_zwave_device({
   profile         = t_utils.get_profile_definition("lock-battery.yml"),
@@ -56,6 +63,16 @@ local function make_test_init(device)
     test.disable_startup_messages()
     test.mock_device.add_test_device(device)
   end
+end
+
+
+local function expect_default_pin_length(device)
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main",
+      capabilities.lockCredentials.minPinCodeLen(4, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main",
+      capabilities.lockCredentials.maxPinCodeLen(10, { visibility = { displayed = false } })))
 end
 
 -- ============================================================================
@@ -137,6 +154,7 @@ test.register_coroutine_test(
       mock_device_base:generate_test_message("main",
         capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
     )
+    expect_default_pin_length(mock_device_base)
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device_base) }
@@ -150,6 +168,44 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "init: default PIN length is only emitted once",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    -- migrated emits
+    test.socket.capability:__expect_send(mock_device_base:generate_test_message("main",
+      capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_base:generate_test_message("main",
+      capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    expect_default_pin_length(mock_device_base)
+    test.wait_for_events()
+    -- second init: values are now cached, so only the migrated events are re-emitted
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(mock_device_base:generate_test_message("main",
+      capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_base:generate_test_message("main",
+      capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "init: Schlage device also gets the default PIN length (the config report overrides it later)",
+  function()
+    mock_device_schlage:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    test.socket.device_lifecycle:__queue_receive({ mock_device_schlage.id, "init" })
+    test.socket.capability:__expect_send(mock_device_schlage:generate_test_message("main",
+      capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_schlage:generate_test_message("main",
+      capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    expect_default_pin_length(mock_device_schlage)
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_schlage) }
 )
 
 test.register_coroutine_test(
