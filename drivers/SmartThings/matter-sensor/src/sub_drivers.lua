@@ -7,5 +7,6 @@ local sub_drivers = {
    lazy_load_if_possible("sub_drivers.smoke_co_alarm"),
    lazy_load_if_possible("sub_drivers.bosch_button_contact"),
    lazy_load_if_possible("sub_drivers.aqara_fp400"),
+   lazy_load_if_possible("sub_drivers.thingsone_presence_sensor"),
 }
 return sub_drivers

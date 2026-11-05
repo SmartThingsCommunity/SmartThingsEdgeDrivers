@@ -186,6 +186,12 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0006
     deviceProfileName: temperature-humidity
+  #ThingsOne
+  - id: "4673/32784"
+    deviceLabel: ThingsOne Presence Sensor
+    vendorId: 0x1241
+    productId: 0x8010
+    deviceProfileName: thingsone-presence-sensor
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
