@@ -179,7 +179,7 @@ test.register_coroutine_test(
       user_code       = "199111",
     }) })
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
-      capabilities.lockUsers.users({ { userIndex = 251, userName = "Master Code", userType = "controlOnlyMember" } },
+      capabilities.lockUsers.users({ { userIndex = 251, userName = "Master Code", userType = "programmingUser" } },
         { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
       capabilities.lockCredentials.credentials(

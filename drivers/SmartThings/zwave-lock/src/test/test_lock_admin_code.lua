@@ -3,7 +3,7 @@
 --
 -- Integration tests for the Yale admin code, which is kept in user code slot 251:
 --   it is set with a plain User Code Set and confirmed by the "master code changed" notification,
---   it is exposed as a controlOnlyMember user whose index matches the slot, a delete is left to the lock and
+--   it is exposed as a programmingUser user whose index matches the slot, a delete is left to the lock and
 --   reported as it confirms or refuses it, and delete-all keeps it. User identifier 0 (all users) is never
 --   sent for a single credential.
 
@@ -104,7 +104,7 @@ local function queue_admin_code_changed(device)
   }) })
 end
 
-local ADMIN_USER = { userIndex = 251, userName = "Master Code", userType = "controlOnlyMember" }
+local ADMIN_USER = { userIndex = 251, userName = "Master Code", userType = "programmingUser" }
 local ADMIN_CREDENTIAL = { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Master Code" }
 local GUEST_USER = { userIndex = 1, userName = "Guest 1", userType = "guest" }
 local GUEST_CREDENTIAL = { userIndex = 1, credentialIndex = 1, credentialType = "pin" }
@@ -118,7 +118,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "controlOnlyMember", "pin", "199111" } } })
+        args = { 251, "programmingUser", "pin", "199111" } } })
     test.socket.zwave:__expect_send(UserCode:Set({
       user_identifier = 251,
       user_code = "199111",
@@ -178,7 +178,7 @@ test.register_coroutine_test(
 
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "controlOnlyMember", "pin", "199111" } } })
+        args = { 251, "programmingUser", "pin", "199111" } } })
     test.socket.zwave:__expect_send(UserCode:Set({
       user_identifier = 251,
       user_code = "199111",
@@ -431,7 +431,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "controlOnlyMember", "pin", "199111" } } })
+        args = { 251, "programmingUser", "pin", "199111" } } })
     test.socket.zwave:__expect_send(UserCode:Set({
       user_identifier = 251,
       user_code = "199111",

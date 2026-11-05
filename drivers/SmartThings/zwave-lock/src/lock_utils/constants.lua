@@ -20,8 +20,8 @@ lock_constants.ADMIN = {
   -- Yale locks keep their admin code in this user code slot.
   YALE_SLOT = 251,
   YALE_MANUFACTURER_ID = 0x0129,
-  -- Stopgap userType for the admin code until the lockUsers capability has one for it.
-  USER_TYPE = "controlOnlyMember",
+  -- The lockUsers userType for the admin code.
+  USER_TYPE = "programmingUser",
   NAME = "Master Code",
 }
 
