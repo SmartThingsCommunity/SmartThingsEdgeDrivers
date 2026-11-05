@@ -29,6 +29,25 @@ python3 tools/run_driver_tests.py -vv -f <filter_string>
 ```
 The filter matches against driver directory/file names. Load the `testing-edge-drivers` skill for details.
 
+#### Running tests for a single driver
+When working on one driver, prefer `tools/test_driver.sh` over the repo-wide
+runner above — it's faster to reach for and gives a readable pass/fail summary. Run it from
+inside that driver's `src/` directory (or its root, which it will `cd src` into automatically):
+```bash
+cd drivers/<Vendor>/<driver>/src   # or drivers/<Vendor>/<driver>
+$(git rev-parse --show-toplevel)/tools/test_driver.sh -v
+```
+The `$(git rev-parse --show-toplevel)` form finds the repo root from wherever you are, so it
+works the same regardless of how deep the driver directory is — no need to work out a relative
+path back to `tools/`. (Human devs: running `tools/setup_test_driver_alias.sh` once adds a
+`test_driver` shell function so this becomes just `test_driver -v` — see the `dev-workflow`
+skill. This doesn't apply to agents, which don't have a persistent shell profile.)
+Useful flags: `-l` lists test files, `-t <n|path>` runs just one, `-f` shows only failures,
+`-g '<string>'` greps raw test output. Run with `-h` for the full list. It relies on `LUA_PATH`
+already pointing at a `lua_libs` checkout (see `dev-workflow` skill for one-time setup); once
+that's set, running this script from `src/` is usually all that's needed for local iteration —
+no extra path juggling required.
+
 ### Lint
 ```bash
 luacheck --config .github/workflows/.luacheckrc <path>
