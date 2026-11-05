@@ -146,6 +146,11 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
     local user_type = tonumber(zb_rx.body.zcl_body.user_type.value)
     if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
       local is_master = user_type == clusters.DoorLock.types.DrlkUserType.MASTER_USER
+      local found_cred = tables.find_entry(device, "credentials", user_id)
+      if found_cred and is_master then
+        lock_utils.update_entries_to_master(device, found_cred)
+      end
+      -- try to add a credential in all cases. no-op if valid entries already exist
       lock_utils.add_reported_credential(device, user_id, is_master)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
@@ -231,9 +236,9 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
     local found_cred = tables.find_entry(device, "credentials", user_id)
     if found_cred then
       lock_utils.update_entries_to_master(device, found_cred)
-    else
-      lock_utils.add_reported_credential(device, user_id, true)
     end
+    -- try to add a credential in all cases. no-op if valid entries already exist
+    lock_utils.add_reported_credential(device, user_id, true)
   elseif event_code == ProgramEventCode.PIN_CODE_ADDED then
     -- if no "addCredential" command is in progress, ensure the credential is represented locally
     lock_utils.add_reported_credential(device, user_id, false)
