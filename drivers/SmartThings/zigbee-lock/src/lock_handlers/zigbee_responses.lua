@@ -151,13 +151,23 @@ end
 
 -- Handles a ZCL Default Response on the DoorLock cluster. During a code sync, a non-success Default Response
 -- to GetPINCode (e.g. the lock rejects an unsupported index) means no GetPINCodeResponse will arrive,
--- so treat the slot as unoccupied and continue to the next step rather than stalling a sync.
+-- so the request is retried once (in case the error was transient) and then the slot is treated as
+-- unoccupied, continuing to the next step rather than stalling the sync.
 function ZigbeeHandlers.default_response(driver, device, zb_rx)
   local zcl_body = zb_rx.body.zcl_body
   if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then return end
   if zcl_body.cmd.value ~= clusters.DoorLock.server.commands.GetPINCode.ID then return end
   -- a SUCCESS default response is followed by the real GetPINCodeResponse
   if zcl_body.status.value == Status.SUCCESS then return end
+
+  local sync_index = device:get_field(consts.SYNC.CODE_INDEX)
+  if sync_index == nil then return end
+  if device:get_field(consts.SYNC.RETRIED_CODE_INDEX) ~= sync_index then
+    device:set_field(consts.SYNC.RETRIED_CODE_INDEX, sync_index)
+    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
+    device:send(clusters.DoorLock.server.commands.GetPINCode(device, sync_index))
+    return
+  end
 
   lock_utils.continue_code_sync(device, false)
 end
