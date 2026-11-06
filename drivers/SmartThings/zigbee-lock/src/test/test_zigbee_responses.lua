@@ -629,6 +629,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive(
       build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
     )
+    -- the default-named guest credential is renamed along with its user
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(MASTER_CREDENTIALS, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
