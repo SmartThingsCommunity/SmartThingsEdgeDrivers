@@ -493,4 +493,67 @@ test.register_coroutine_test(
   { test_init = make_test_init(yale_mock_device) }
 )
 
+-- ============================================================================
+-- updating the admin code user
+-- ============================================================================
+
+local function expect_user_result(device, result)
+  test.socket.capability:__expect_send(device:generate_test_message("main",
+    capabilities.lockUsers.commandResult(result, { state_change = true, visibility = { displayed = false } })))
+end
+
+test.register_coroutine_test(
+  "updateUser: a guest cannot be made the admin code user",
+  function()
+    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser",
+        args = { 1, "Guest", "programmingUser" } } })
+    expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "updateUser: the admin code user cannot be changed to another type",
+  function()
+    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser",
+        args = { 251, "Master Code", "guest" } } })
+    expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "updateUser: the admin code user can be renamed and keeps its type",
+  function()
+    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser",
+        args = { 251, "Renamed Master", "programmingUser" } } })
+    expect_users(yale_mock_device, { { userIndex = 251, userName = "Renamed Master", userType = "programmingUser" } })
+    expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "success", userIndex = 251 })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
+  "updateUser: other locks are not restricted by the admin code user type",
+  function()
+    seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser",
+        args = { 1, "Guest", "programmingUser" } } })
+    expect_users(mock_device, { { userIndex = 1, userName = "Guest", userType = "programmingUser" } })
+    expect_user_result(mock_device, { commandName = "updateUser", statusCode = "success", userIndex = 1 })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device) }
+)
+
 test.run_registered_tests()
