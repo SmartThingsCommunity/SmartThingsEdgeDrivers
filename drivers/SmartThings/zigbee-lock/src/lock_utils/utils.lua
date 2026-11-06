@@ -187,7 +187,7 @@ end
 
 function lock_utils.update_entries_to_master(device, credential)
   -- If the credential name is the default guest name, update it to the default master code name.
-  if credential.credentialName == "Guest " .. credential.credentialIndex then
+  if credential.credentialName == "Guest " .. credential.userIndex then
     tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
   end
 

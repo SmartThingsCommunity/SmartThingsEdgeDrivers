@@ -136,7 +136,7 @@ end
 -- An optional `start` overrides the table's minimum, e.g. to skip a reserved slot.
 function table_utils.next_index(device, table_name, start)
   local def = resolve_table_def(device, table_name)
-  assert(def, string.format("table_helpers: unknown table %q", tostring(table_name)))
+  if not def then return 1 end
   local t = table_utils.get_state(device, def) or {}
   local occupied = {}
   for _, entry in ipairs(t) do occupied[entry[def.match_key]] = true end
