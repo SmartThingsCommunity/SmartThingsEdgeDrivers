@@ -73,48 +73,91 @@ function lock_utils.get_code_id_from_notification_event(event_params, v1_alarm_l
   return tostring(code_id)
 end
 
+-- Add a user and its credential together, so a user never exists without a credential.
+-- The credential is added first; the user is only added if that succeeded, so a failed or
+-- colliding credential add leaves no user behind. Returns the result status of the credential add.
+function lock_utils.add_user_and_credential(device, args)
+  local name = "Guest " .. args.userIndex
+  local credential_status = tables.add_entry(device, "credentials", {
+    userIndex       = args.userIndex,
+    credentialIndex = args.credentialIndex,
+    credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
+    credentialName  = args.credentialName or name,
+  })
+  if credential_status == consts.COMMAND_RESULT.SUCCESS then
+    tables.add_entry(device, "users", {
+      userIndex = args.userIndex,
+      userName  = name,
+      userType  = "guest",
+    })
+  end
+  return credential_status
+end
+
+-- Apply the arguments of an updateCredential command to the credentials table.
+-- Returns the command result status and the credential's userIndex.
+function lock_utils.update_commanded_credential(device, credential_args)
+  local existing = tables.find_entry(device, "credentials", credential_args.credentialIndex)
+  if not existing then return consts.COMMAND_RESULT.FAILURE end
+  local updates = {}
+  if credential_args.credentialName ~= nil and credential_args.credentialName ~= existing.credentialName then
+    updates.credentialName = credential_args.credentialName
+  end
+  if credential_args.userIndex ~= nil and credential_args.userIndex ~= existing.userIndex then
+    updates.userIndex = credential_args.userIndex
+  end
+  if next(updates) then
+    local status = tables.update_entry(device, "credentials", credential_args.credentialIndex, updates)
+    if status ~= consts.COMMAND_RESULT.SUCCESS then return status end
+  end
+  return consts.COMMAND_RESULT.SUCCESS, updates.userIndex or existing.userIndex
+end
+
+-- Per command: update the tables after the lock confirmed a set-credential command we sent.
+-- Returns the command result status, or nil for any other command, plus the affected userIndex.
+-- For addCredential the user is always new, and its index is chosen here.
+function lock_utils.apply_commanded_credential(device, command_in_progress, credential_args)
+  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
+    local user_index = tables.next_index(device, "users")
+    local status = lock_utils.add_user_and_credential(device, {
+      userIndex       = user_index,
+      credentialIndex = credential_args.credentialIndex,
+      credentialType  = credential_args.credentialType,
+      credentialName  = credential_args.credentialName,
+    })
+    return status, status == consts.COMMAND_RESULT.SUCCESS and user_index or nil
+  elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
+    return lock_utils.update_commanded_credential(device, credential_args)
+  end
+end
+
+-- Per report: ensure a user and PIN credential exist for a code the lock reports at `credential_index`
+-- without any command from us (sync, or a user code event). If a credential already exists there it
+-- is left in place.
+function lock_utils.add_reported_credential(device, credential_index)
+  if tables.find_entry(device, "credentials", credential_index) then return end
+  lock_utils.add_user_and_credential(device, {
+    userIndex       = tables.next_index(device, "users"),
+    credentialIndex = credential_index,
+  })
+end
+
 function lock_utils.set_credential_report_helper(device, credential_index)
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
 
-  local result_status
-  if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
-    result_status = tables.add_entry(device, "credentials", {
-      userIndex       = credential_args.userIndex,
-      credentialIndex = credential_args.credentialIndex,
-      credentialType  = consts.CRED_TYPE_PIN,
-      credentialName  = credential_args.credentialName,
-    })
-  elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-    result_status = consts.COMMAND_RESULT.SUCCESS
-  elseif not tables.find_entry(device, "credentials", credential_index) then
-    -- credential does not exist and no add/update command in progress, therefore it was added out-of-band
-    -- check what user slot we have to associate this with, and add a default user
-    local next_available_index = tables.next_index(device, "users")
-    if next_available_index <= tables.get_max_entries(device, "users") then
-      tables.add_entry(device, "users", {
-        userIndex = next_available_index,
-        userName  = "Guest " .. next_available_index,
-        userType  = "guest",
-      })
-      tables.add_entry(device, "credentials", {
-        userIndex       = next_available_index,
-        credentialIndex = credential_index,
-        credentialType  = consts.CRED_TYPE_PIN,
-        credentialName  = "Guest " .. next_available_index,
-      })
-    end
-  end
-
-  -- emit command result
-  if command_in_progress and result_status then
+  local result_status, user_index = lock_utils.apply_commanded_credential(device, command_in_progress, credential_args)
+  if result_status then
     local additional_info = result_status == consts.COMMAND_RESULT.SUCCESS and {
-      userIndex       = credential_args.userIndex,
+      userIndex       = user_index,
       credentialIndex = credential_args.credentialIndex,
     } or nil
     lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress, result_status, additional_info)
     lock_utils.clear_busy_state(device)
+  else
+    -- no add/update command in progress, therefore the credential was added out-of-band
+    lock_utils.add_reported_credential(device, credential_index)
   end
 end
 
