@@ -38,7 +38,7 @@ function ZigbeeHandlers.set_pin_code_response(driver, device, zb_rx)
   -- apply result based on response and identify command result status
   local result_status, user_index
   if set_pin_code_status == SetCodeStatus.SUCCESS then
-    result_status, user_index = lock_utils.add_commanded_credential(device, command_in_progress, credential_args_in_use)
+    result_status, user_index = lock_utils.apply_commanded_credential(device, command_in_progress, credential_args_in_use)
   elseif RESPONSE_RESULT_MAP[set_pin_code_status] then
     result_status = RESPONSE_RESULT_MAP[set_pin_code_status]
   else
@@ -200,7 +200,7 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
     local result_status
     local user_index = credential_args_in_use.userIndex
     if event_code == ProgramEventCode.PIN_CODE_ADDED then -- note: some devices emit PIN_CODE_ADDED even for UPDATE events
-      result_status, user_index = lock_utils.add_commanded_credential(device, command_in_progress, credential_args_in_use)
+      result_status, user_index = lock_utils.apply_commanded_credential(device, command_in_progress, credential_args_in_use)
     elseif event_code == ProgramEventCode.PIN_CODE_DELETED and (command_in_progress == consts.LOCK_CREDENTIALS.DELETE or command_in_progress == consts.LOCK_USERS.DELETE) then
       result_status = tables.delete_entry(device, "credentials", credential_args_in_use.credentialIndex)
       -- the deleteUser command injects a deleteCredential command, so ensure the lockUsers command results is emitted in this case.
@@ -213,7 +213,7 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
         end
       end
     elseif event_code == ProgramEventCode.PIN_CODE_CHANGED and command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-      result_status = consts.COMMAND_RESULT.SUCCESS
+      result_status, user_index = lock_utils.apply_commanded_credential(device, command_in_progress, credential_args_in_use)
     end
 
     if result_status then

@@ -55,9 +55,9 @@ end
 
 -- [[ CREDENTIAL TABLE MANAGEMENT ]] --
 
--- Add a user and its credential together. Existing entries at either index are left untouched
--- by the underlying table add. Returns the result status of the credential add.
--- A user is only created if the credential add succeeded, so a failed or colliding credential never leaves an orphan user.
+-- Add a user and its credential together, so a user never exists without a credential.
+-- The credential is added first; the user is only added if that succeeded, so a failed or
+-- colliding credential add leaves no user behind. Returns the result status of the credential add.
 function lock_utils.add_user_and_credential(device, args)
   local name = "Guest " .. args.userIndex
   local user_type = "guest"
@@ -77,10 +77,29 @@ function lock_utils.add_user_and_credential(device, args)
   return credential_status
 end
 
+-- Apply the arguments of an updateCredential command to the credentials table.
+-- Returns the command result status and the credential's userIndex.
+function lock_utils.update_commanded_credential(device, credential_args)
+  local existing = tables.find_entry(device, "credentials", credential_args.credentialIndex)
+  if not existing then return consts.COMMAND_RESULT.FAILURE end
+  local updates = {}
+  if credential_args.credentialName ~= nil and credential_args.credentialName ~= existing.credentialName then
+    updates.credentialName = credential_args.credentialName
+  end
+  if credential_args.userIndex ~= nil and credential_args.userIndex ~= existing.userIndex then
+    updates.userIndex = credential_args.userIndex
+  end
+  if next(updates) then
+    local status = tables.update_entry(device, "credentials", credential_args.credentialIndex, updates)
+    if status ~= consts.COMMAND_RESULT.SUCCESS then return status end
+  end
+  return consts.COMMAND_RESULT.SUCCESS, updates.userIndex or existing.userIndex
+end
+
 -- Per command: update the tables after the lock confirmed a set-credential command we sent.
--- Returns the command result status, or nil for any other command. The user is always new,
--- and its index is chosen here. Also returns the newly chosen user's userIndex
-function lock_utils.add_commanded_credential(device, command_in_progress, credential_args)
+-- Returns the command result status, or nil for any other command, plus the affected userIndex.
+-- For addCredential the user is always new, and its index is chosen here.
+function lock_utils.apply_commanded_credential(device, command_in_progress, credential_args)
   if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
     local user_index = tables.next_index(device, "users")
     local status = lock_utils.add_user_and_credential(device, {
@@ -89,20 +108,19 @@ function lock_utils.add_commanded_credential(device, command_in_progress, creden
       credentialType  = credential_args.credentialType,
       credentialName  = credential_args.credentialName,
     })
-    return status, user_index
+    return status, status == consts.COMMAND_RESULT.SUCCESS and user_index or nil
   elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-    return consts.COMMAND_RESULT.SUCCESS, credential_args.userIndex
+    return lock_utils.update_commanded_credential(device, credential_args)
   end
 end
 
--- Per report: add a user and PIN credential for a code the lock reports at `credential_index` without any command
--- from us (sync, or a programming event). If a credential already exists there it is left in place.
+-- Per report: ensure a user and PIN credential exist for a code the lock reports at `credential_index`
+-- without any command from us (sync, or a programming event). If a credential already exists there it
+-- is left in place
 function lock_utils.add_reported_credential(device, credential_index)
-  local found_cred = tables.find_entry(device, "credentials", credential_index)
-  if found_cred then return end
-  local user_index = tables.next_index(device, "users")
+  if tables.find_entry(device, "credentials", credential_index) then return end
   lock_utils.add_user_and_credential(device, {
-    userIndex       = user_index,
+    userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
   })
 end
