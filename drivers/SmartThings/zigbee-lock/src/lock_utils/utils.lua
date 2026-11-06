@@ -88,6 +88,7 @@ function lock_utils.continue_code_sync(device, occupied)
     -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
     device:set_field(consts.SYNC.CODE_INDEX, nil, { persist = true })
     device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, nil)
+    device:set_field(consts.SYNC.RETRIED_CODE_INDEX, nil)
     device:set_field(consts.SYNC.CODES_SYNCED, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
     lock_utils.clear_busy_state(device)
   else

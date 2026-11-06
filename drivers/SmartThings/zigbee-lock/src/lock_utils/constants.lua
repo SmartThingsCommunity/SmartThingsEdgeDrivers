@@ -17,7 +17,7 @@ lock_constants.SYNC = {
   RETRIED_CODE_INDEX = "syncRetriedCodeIndex", -- the code index whose GetPINCode request was already retried once
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
   CODES_SYNCED = "codesSynced", -- persisted; holds the CODES_SYNC_VERSION of the last completed code sync
-  CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes
+  CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from index 0)
 }
 
 lock_constants.COMMAND_RESULT = {
