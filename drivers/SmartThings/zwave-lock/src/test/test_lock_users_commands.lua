@@ -469,7 +469,7 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "deleteAllUsers: sends ClearAllPINCodes and emits success for both users and credentials on PASS",
+  "deleteAllUsers: sends a single UserCode Set for identifier 0 and emits success for both users and credentials on PASS",
   function()
     seed_users({
       { userIndex = 1, userName = "Alice", userType = "guest" },
@@ -485,19 +485,13 @@ test.register_coroutine_test(
       { capability = capabilities.lockUsers.ID, command = "deleteAllUsers", args = {} },
     })
 
-    test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(0.5, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(8, "oneshot")
-    test.mock_time.advance_time(0)
-    expect_clear_pin_code(1)
-    test.wait_for_events()
-    test.mock_time.advance_time(0.5)
-    expect_clear_pin_code(2)
+    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    expect_clear_pin_code(0)
     test.wait_for_events()
 
     -- The legacy subdriver consumes deletion notifications for this mock profile; advance
     -- to the driver's cleanup timer, which clears both tables and reports success.
-    test.mock_time.advance_time(8)
+    test.mock_time.advance_time(4)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users({}, { visibility = { displayed = false } }))
