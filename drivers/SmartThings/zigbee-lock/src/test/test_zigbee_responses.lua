@@ -29,6 +29,25 @@ local OperationEventSource = DoorLock.types.DrlkOperationEventSource
 local ProgrammingEventCode = DoorLock.types.ProgramEventCode
 local LockState            = DoorLock.attributes.LockState
 
+local messages         = require "st.zigbee.messages"
+local default_response = require "st.zigbee.zcl.global_commands.default_response"
+local zb_const         = require "st.zigbee.constants"
+local zcl_messages     = require "st.zigbee.zcl"
+local data_types       = require "st.zigbee.data_types"
+local ZclStatus        = require "st.zigbee.generated.types.ZclStatus"
+
+local function build_default_response_rx(device, cluster, cmd, status)
+  local body = default_response.DefaultResponse(cmd, status)
+  return messages.ZigbeeMessageRx({
+    address_header = messages.AddressHeader(device:get_short_address(), device.fingerprinted_endpoint_id,
+      zb_const.HUB.ADDR, zb_const.HUB.ENDPOINT, zb_const.HA_PROFILE_ID, cluster),
+    body = zcl_messages.ZclMessageBody({
+      zcl_header = zcl_messages.ZclHeader({ cmd = data_types.ZCLCommandId(body.ID) }),
+      zcl_body = body,
+    }),
+  })
+end
+
 local mock_device = test.mock_device.build_test_zigbee_device({
   profile = t_utils.get_profile_definition("base-lock.yml"),
 })
@@ -144,6 +163,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "get_pin_code_response: persists the sync code index while sync is in progress",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 1, {})
+
+    -- unoccupied slot: no credential events, just advance to the next index
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device,
+        1,
+        DoorLockUserStatus.AVAILABLE,
+        DoorLockUserType.UNRESTRICTED,
+        ""
+      ),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.GetPINCode(mock_device, 2),
+    })
+    test.wait_for_events()
+
+    -- the index must be in the persistent store so sync can resume after a driver restart
+    assert(mock_device.persistent_store[constants.SYNC.CODE_INDEX] == 2)
+    assert(mock_device.transient_store[constants.SYNC.CODE_INDEX] == nil)
+  end
+)
+
+test.register_coroutine_test(
   "get_pin_code_response: completes sync when max entries reached",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
@@ -187,6 +237,97 @@ test.register_coroutine_test(
     -- Verify sync state is cleared (clear_busy_state sets BUSY to false, not nil)
     assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil)
     assert(mock_device:get_field(constants.DRIVER_STATE.BUSY) == false)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION)
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: ignores a response that does not match the sync code index",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, { persist = true })
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device, 1, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "1234"),
+    })
+    test.wait_for_events()
+
+    -- nothing sent or emitted, and the sync is still waiting on index 3
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: clears the consecutive unoccupied counter when the sync completes",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 6, { persist = true })
+    mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device, 6, DoorLockUserStatus.AVAILABLE, DoorLockUserType.UNRESTRICTED, ""),
+    })
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) == nil)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION)
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: does not interrupt another command in progress",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.LOCK_CREDENTIALS.ADD, {})
+    mock_device:set_field(constants.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE, { credentialIndex = 4 }, {})
+
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS) == constants.LOCK_CREDENTIALS.ADD)
+    assert(mock_device:get_field(constants.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE).credentialIndex == 4)
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: retries a stalled sync once the busy window has expired",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time() - 60, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 4, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
+
+    -- resumes from the persisted index
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 4) })
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: restarts from index 0 when the persisted index belongs to another sync version",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 7, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION - 1, { persist = true })
+
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 0) })
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX_VERSION) == constants.SYNC.CODES_SYNC_VERSION)
   end
 )
 
@@ -560,6 +701,85 @@ test.register_coroutine_test(
 
     -- No profile update should occur (value is 0)
     test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "default_response: first failure to GetPINCode during sync retries the same index",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_default_response_rx(mock_device, DoorLock.ID, DoorLock.server.commands.GetPINCode.ID, ZclStatus.FAILURE),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.GetPINCode(mock_device, 3),
+    })
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
+  end
+)
+
+test.register_coroutine_test(
+  "default_response: repeated failure to GetPINCode at the same index continues to the next index",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+    mock_device:set_field(constants.SYNC.RETRIED_CODE_INDEX, 3, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_default_response_rx(mock_device, DoorLock.ID, DoorLock.server.commands.GetPINCode.ID, ZclStatus.FAILURE),
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.GetPINCode(mock_device, 4),
+    })
+    test.wait_for_events()
+    assert(mock_device.persistent_store[constants.SYNC.CODE_INDEX] == 4)
+  end
+)
+
+test.register_coroutine_test(
+  "default_response: success to GetPINCode does not advance the sync",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_default_response_rx(mock_device, DoorLock.ID, DoorLock.server.commands.GetPINCode.ID, ZclStatus.SUCCESS),
+    })
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
+  end
+)
+
+test.register_coroutine_test(
+  "default_response: repeated failures complete the sync",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+    mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+    mock_device:set_field(constants.SYNC.RETRIED_CODE_INDEX, 3, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_default_response_rx(mock_device, DoorLock.ID, DoorLock.server.commands.GetPINCode.ID, ZclStatus.NOT_FOUND),
+    })
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION)
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil)
+    assert(mock_device:get_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS) == nil)
   end
 )
 

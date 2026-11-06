@@ -81,6 +81,8 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 0) })
       test.wait_for_events()
       assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true, "SLGA_MIGRATED field should be set to true after migration")
     end
@@ -110,6 +112,8 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(zero_slot_mock_device) })
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.attributes.LockState:read(zero_slot_mock_device) })
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, Alarm.attributes.AlarmCount:read(zero_slot_mock_device) })
+      test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(zero_slot_mock_device, true) })
+      test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.server.commands.GetPINCode(zero_slot_mock_device, 0) })
       test.wait_for_events()
     end
 )

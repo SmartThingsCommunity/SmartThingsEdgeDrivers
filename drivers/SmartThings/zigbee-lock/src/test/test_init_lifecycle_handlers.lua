@@ -48,7 +48,7 @@ end
 -- freshly-started device (no cached capability state, CODE_INDEX starts at 1).
 local function expect_sync_device_state(device)
   test.socket.zigbee:__expect_send({ device.id, DoorLock.attributes.SendPINOverTheAir:write(device, true) })
-  test.socket.zigbee:__expect_send({ device.id, DoorLock.server.commands.GetPINCode(device, 1) })
+  test.socket.zigbee:__expect_send({ device.id, DoorLock.server.commands.GetPINCode(device, 0) })
 end
 
 -- Helper: expect the messages produced by the legacy reload_all_codes path after
@@ -134,6 +134,7 @@ test.register_coroutine_test(
       mock_device_typed.id,
       DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device_typed),
     })
+    expect_sync_device_state(mock_device_typed)
     test.wait_for_events()
 
     assert(
@@ -206,12 +207,11 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure then calls sync_device_state after 2-second delay",
+  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure and does not start a sync (init handles it)",
   function()
     -- Pre-seed SLGA_MIGRATED so the main driver's do_configure fires (not legacy-handlers).
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
-    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "doConfigure" })
 
@@ -219,11 +219,35 @@ test.register_coroutine_test(
     mock_device_base:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
 
-    -- Timer fires: sync_device_state is called (GetPINCode slot 1)
-    test.mock_time.advance_time(2)
+    test.mock_time.advance_time(15)
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "sync_device_state: persists the starting code index so sync can resume after restart",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(15)
     test.socket.zigbee:__set_channel_ordering("relaxed")
     expect_sync_device_state(mock_device_base)
     test.wait_for_events()
+
+    assert(mock_device_base.persistent_store[constants.SYNC.CODE_INDEX] == 0)
+    assert(mock_device_base.transient_store[constants.SYNC.CODE_INDEX] == nil)
   end,
   { test_init = make_test_init(mock_device_base) }
 )
@@ -278,7 +302,7 @@ test.register_coroutine_test(
 do
   local dev
   test.register_coroutine_test(
-    "infoChanged: switching from non-lockCodes to lockCodes+lockCredentials profile triggers full SLGA migration and two syncs",
+    "infoChanged: switching from non-lockCodes to lockCodes+lockCredentials profile triggers full SLGA migration and syncs once",
     function()
       -- Warm up device_cache with the original (lock-battery) profile via init.
       -- For a non-SLGA_MIGRATED device, legacy-handlers' init fires (no zigbee sends).
@@ -324,7 +348,8 @@ do
         dev.id,
         DoorLock.attributes.NumberOfPINUsersSupported:read(dev),
       })
-      -- Immediate sync_device_state
+      -- Immediate sync_device_state (from the refresh handler)
+      expect_sync_device_state(dev)
       test.wait_for_events()
 
       assert(
@@ -332,10 +357,8 @@ do
         "SLGA_MIGRATED must be set after infoChanged profile switch"
       )
 
-      -- Delayed sync_device_state (2 s)
+      -- Delayed sync_device_state is a no-op: the sync started by the refresh is still in progress
       test.mock_time.advance_time(2)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      expect_sync_device_state(dev)
       test.wait_for_events()
     end,
     {
@@ -386,6 +409,7 @@ test.register_coroutine_test(
   function()
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
     test.socket.capability:__expect_send(
       mock_device_base:generate_test_message("main",
@@ -396,6 +420,29 @@ test.register_coroutine_test(
         capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
     )
     test.wait_for_events()
+    -- the sync is delayed so the number of supported users can be read first
+    test.mock_time.advance_time(15)
+    expect_sync_device_state(mock_device_base)
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "init: migrated device whose codes have already synced does not sync again",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    test.wait_for_events()
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, nil, { persist = true })
   end,
   { test_init = make_test_init(mock_device_base) }
 )
@@ -468,6 +515,7 @@ test.register_coroutine_test(
       mock_device_typed.id,
       DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device_typed),
     })
+    expect_sync_device_state(mock_device_typed)
     test.wait_for_events()
 
     -- driverSwitched occurs after added, so migrated=true is already set in the capability state cache
