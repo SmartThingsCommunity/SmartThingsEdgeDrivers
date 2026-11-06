@@ -241,6 +241,96 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "get_pin_code_response: ignores a response that does not match the sync code index",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, { persist = true })
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device, 1, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "1234"),
+    })
+    test.wait_for_events()
+
+    -- nothing sent or emitted, and the sync is still waiting on index 3
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: clears the consecutive unoccupied counter when the sync completes",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 6, { persist = true })
+    mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device, 6, DoorLockUserStatus.AVAILABLE, DoorLockUserType.UNRESTRICTED, ""),
+    })
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) == nil)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION)
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: does not interrupt another command in progress",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.LOCK_CREDENTIALS.ADD, {})
+    mock_device:set_field(constants.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE, { credentialIndex = 4 }, {})
+
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS) == constants.LOCK_CREDENTIALS.ADD)
+    assert(mock_device:get_field(constants.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE).credentialIndex == 4)
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: retries a stalled sync once the busy window has expired",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time() - 60, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 4, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
+
+    -- resumes from the persisted index
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 4) })
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "sync_device_state: restarts from index 0 when the persisted index belongs to another sync version",
+  function()
+    local lock_utils = require "lock_utils.utils"
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 7, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION - 1, { persist = true })
+
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 0) })
+    lock_utils.sync_device_state(mock_device)
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX_VERSION) == constants.SYNC.CODES_SYNC_VERSION)
+  end
+)
+
 -- ============================================================================
 -- programming_event_notification: Yale user_id shift
 -- ============================================================================

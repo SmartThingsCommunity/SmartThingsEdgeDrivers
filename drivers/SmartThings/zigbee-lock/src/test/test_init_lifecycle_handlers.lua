@@ -207,12 +207,11 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure then calls sync_device_state after 2-second delay",
+  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure and does not start a sync (init handles it)",
   function()
     -- Pre-seed SLGA_MIGRATED so the main driver's do_configure fires (not legacy-handlers).
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
-    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "doConfigure" })
 
@@ -220,10 +219,7 @@ test.register_coroutine_test(
     mock_device_base:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
 
-    -- Timer fires: sync_device_state is called (GetPINCode slot 1)
-    test.mock_time.advance_time(2)
-    test.socket.zigbee:__set_channel_ordering("relaxed")
-    expect_sync_device_state(mock_device_base)
+    test.mock_time.advance_time(15)
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device_base) }
@@ -234,14 +230,18 @@ test.register_coroutine_test(
   function()
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
-    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "doConfigure" })
-    expect_do_configure_zigbee(mock_device_base)
-    mock_device_base:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
     test.wait_for_events()
 
-    test.mock_time.advance_time(2)
+    test.mock_time.advance_time(15)
     test.socket.zigbee:__set_channel_ordering("relaxed")
     expect_sync_device_state(mock_device_base)
     test.wait_for_events()
@@ -409,6 +409,7 @@ test.register_coroutine_test(
   function()
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
 
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
     test.socket.capability:__expect_send(
       mock_device_base:generate_test_message("main",
@@ -418,6 +419,9 @@ test.register_coroutine_test(
       mock_device_base:generate_test_message("main",
         capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
     )
+    test.wait_for_events()
+    -- the sync is delayed so the number of supported users can be read first
+    test.mock_time.advance_time(15)
     expect_sync_device_state(mock_device_base)
     test.wait_for_events()
   end,

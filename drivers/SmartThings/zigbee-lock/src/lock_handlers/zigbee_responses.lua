@@ -134,31 +134,6 @@ function ZigbeeHandlers.clear_pin_code_response(driver, device, zb_rx)
 end
 
 
--- Advance the sync-codes-from-lock flow after a response for the current code index.
--- `occupied` is true only when the lock reported an occupied slot at `user_id`.
-local function continue_code_sync(device, user_id, occupied)
-  if occupied then
-    lock_utils.add_reported_credential(device, user_id)
-    -- reset the consecutive unoccupied codes counter since we found an occupied code
-    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
-  else
-    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1)
-  end
-
-  if user_id >= tables.get_max_entries(device, "credentials") or
-   (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-    -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
-    device:set_field(consts.SYNC.CODE_INDEX, nil)
-    device:set_field(consts.SYNC.CODES_SYNCED, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
-    lock_utils.clear_busy_state(device)
-  else
-    local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
-    device:set_field(consts.SYNC.CODE_INDEX, synced_code_index, { persist = true })
-    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
-    device:send(clusters.DoorLock.server.commands.GetPINCode(device, synced_code_index))
-  end
-end
-
 function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
@@ -167,8 +142,10 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
+    -- ignore late, duplicate or unsolicited responses that do not match the index we are waiting on
+    if user_id ~= device:get_field(consts.SYNC.CODE_INDEX) then return end
     local user_status = zb_rx.body.zcl_body.user_status.value
-    continue_code_sync(device, user_id, user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED)
+    lock_utils.continue_code_sync(device, user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED)
   end
 end
 
@@ -182,9 +159,7 @@ function ZigbeeHandlers.default_response(driver, device, zb_rx)
   -- a SUCCESS default response is followed by the real GetPINCodeResponse
   if zcl_body.status.value == Status.SUCCESS then return end
 
-  local sync_index = device:get_field(consts.SYNC.CODE_INDEX)
-  if sync_index == nil then return end
-  continue_code_sync(device, sync_index, false)
+  lock_utils.continue_code_sync(device, false)
 end
 
 

@@ -13,6 +13,7 @@ lock_constants.DRIVER_STATE = {
 lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
   CODE_INDEX = "syncCodeIndex", -- persisted until codesSynced is set
+  CODE_INDEX_VERSION = "syncCodeIndexVersion", -- persisted; the CODES_SYNC_VERSION under which CODE_INDEX was started
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
   CODES_SYNCED = "codesSynced", -- persisted; holds the CODES_SYNC_VERSION of the last completed code sync
   CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes
