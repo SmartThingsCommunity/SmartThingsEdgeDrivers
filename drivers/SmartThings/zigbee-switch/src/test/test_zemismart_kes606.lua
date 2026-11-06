@@ -191,7 +191,7 @@ for _, key in ipairs({ "00", "05", "01-extra", "gang1", "invalid" }) do
     send_switch_command(malformed, "on")
     send_switch_command(malformed, "off")
     test.socket.device_lifecycle:__queue_receive(malformed:generate_info_changed({
-      preferences = { switchMode = "scene", countdownSeconds = 30 }
+      preferences = { ["stse.changeToWirelessSwitch"] = true, countdownSeconds = 30 }
     }))
   end, { test_init = function()
     initialize_devices()
@@ -264,7 +264,7 @@ for ep = 1, 4 do
     confirm_switch_modes()
     expect_mode_request(parent, ep, "scene")
     test.socket.device_lifecycle:__queue_receive(children[ep]:generate_info_changed({
-      preferences = { switchMode = "scene" }
+      preferences = { ["stse.changeToWirelessSwitch"] = true }
     }))
     test.wait_for_events()
     expect_relay_command(parent, ep, true)
@@ -408,6 +408,15 @@ end, { test_init = function()
   expect_button_metadata(parent)
 end })
 
+test.register_coroutine_test("Standard relay command IDs do not synthesize scene presses", function()
+  confirm_scene_modes()
+  for _, command_id in ipairs({ 0x00, 0x01, 0x02 }) do
+    test.socket.zigbee:__queue_receive({ scene_parent.id,
+      zb_utils.build_custom_command_id(scene_parent, 0x0006, command_id, nil, "", 1) })
+    test.wait_for_events()
+  end
+end)
+
 test.register_coroutine_test("A late scene profile is corrected to the newer confirmed switch mode", function()
   confirm_switch_modes()
   children[2]:expect_metadata_update({ profile = "scene-switch-child-scene" })
@@ -439,7 +448,7 @@ test.register_coroutine_test("Returning to switch refreshes again when the child
   expect_button_metadata(scene_children[2])
   expect_mode_request(scene_parent, 2, "switch")
   test.socket.device_lifecycle:__queue_receive(scene_children[2]:generate_info_changed({
-    preferences = { switchMode = "switch" }
+    preferences = { ["stse.changeToWirelessSwitch"] = false }
   }))
   test.wait_for_events()
   send_switch_command(scene_children[2], "on")
@@ -448,7 +457,7 @@ test.register_coroutine_test("Returning to switch refreshes again when the child
   receive_mode_report(scene_parent, 2, "switch")
   receive_relay_report(scene_parent, nil, 2, true)
   local info = utils.deep_copy(scene_children[2].raw_st_data)
-  info.preferences.switchMode = "switch"
+  info.preferences["stse.changeToWirelessSwitch"] = false
   info.profile = utils.deep_copy(children[2].raw_st_data.profile)
   test.socket.zigbee:__expect_send({ scene_parent.id, OnOff.attributes.OnOff:read(scene_parent):to_endpoint(2) })
   test.socket.device_lifecycle:__queue_receive({ scene_children[2].id, "infoChanged", json.encode(info) })

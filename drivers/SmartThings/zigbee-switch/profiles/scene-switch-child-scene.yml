@@ -7,13 +7,5 @@ components:
     categories:
       - name: RemoteController
 preferences:
-  - title: Mode
-    name: switchMode
-    description: Switch mode shows a controllable relay; scene mode shows a wireless button.
-    required: true
-    preferenceType: enumeration
-    definition:
-      options:
-        switch: Switch
-        scene: Scene
-      default: scene
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true

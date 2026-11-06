@@ -19,6 +19,7 @@ local POWER_ON_ATTRIBUTE = 0xD010
 local LIGHT_ATTRIBUTE = 0x8001
 local GLOBAL_POWER_ON_ATTRIBUTE = 0x8002
 local SCENE_PRESS_COMMAND = 0xFD
+local WIRELESS_PREFERENCE = "stse.changeToWirelessSwitch"
 local LIGHT_VALUES = { none = 0, relay = 1, pos = 2 }
 local POWER_ON_VALUES = { off = 0, on = 1, memory = 2 }
 
@@ -227,9 +228,9 @@ local function info_changed(_, device, _, args)
   if parent == nil or not valid_endpoint(endpoint) then return end
   initialize_button(device)
   local preferences = device.preferences or {}
-  local mode = preferences.switchMode
-  if changed(preferences, old_preferences, "switchMode") and (mode == "switch" or mode == "scene") then
-    write_enum(device, MODE_CLUSTER, MODE_ATTRIBUTE, mode == "scene" and 1 or 0)
+  local wireless = preferences[WIRELESS_PREFERENCE]
+  if changed(preferences, old_preferences, WIRELESS_PREFERENCE) and type(wireless) == "boolean" then
+    write_enum(device, MODE_CLUSTER, MODE_ATTRIBUTE, wireless and 1 or 0)
     device:send(cluster_base.read_attribute(device,
       data_types.ClusterId(MODE_CLUSTER), data_types.AttributeId(MODE_ATTRIBUTE)))
   end
@@ -237,6 +238,7 @@ local function info_changed(_, device, _, args)
     local seconds = tonumber(preferences.countdownSeconds)
     if seconds ~= nil and seconds == seconds then
       seconds = math.max(0, math.min(43200, math.floor(seconds)))
+      -- On the tested KES606 sample, unscaled seconds produced a delayed state change.
       device:send(OnOff.server.commands.OnWithTimedOff(
         device, data_types.Uint8(0), data_types.Uint16(seconds), data_types.Uint16(seconds)))
     end
@@ -273,9 +275,6 @@ return {
     },
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.On.ID] = scene_command,
-        [OnOff.server.commands.Off.ID] = scene_command,
-        [OnOff.server.commands.Toggle.ID] = scene_command,
         [SCENE_PRESS_COMMAND] = scene_command,
       },
     },

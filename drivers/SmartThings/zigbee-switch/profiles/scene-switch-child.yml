@@ -9,16 +9,8 @@ components:
     categories:
       - name: Switch
 preferences:
-  - title: Mode
-    name: switchMode
-    description: Switch mode shows a controllable relay; scene mode shows a wireless button.
-    required: true
-    preferenceType: enumeration
-    definition:
-      options:
-        switch: Switch
-        scene: Scene
-      default: switch
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true
   - title: Countdown Seconds
     name: countdownSeconds
     description: Set the relay countdown in seconds; 0 disables the countdown.

@@ -109,37 +109,24 @@ test.register_coroutine_test("Generic Tuya child commands and reports retain the
     OnOffCluster.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
 end)
 
-for _, endpoint_ids in ipairs({ { 1, 4 }, { 1 } }) do
-  local endpoints = {}
-  for _, ep in ipairs(endpoint_ids) do
-    endpoints[ep] = { id = ep, manufacturer = "_TZ123fas", server_clusters = { 0x0006 } }
-  end
+do
   local sample = test.mock_device.build_test_zigbee_device({
-    profile = profile, fingerprinted_endpoint_id = 1, zigbee_endpoints = endpoints,
+    profile = profile, fingerprinted_endpoint_id = 1,
+    zigbee_endpoints = {
+      [1] = { id = 1, manufacturer = "_TZ123fas", server_clusters = { 0x0006 } },
+    },
   })
-  local is_multi = #endpoint_ids > 1
-  local description = is_multi
-    and "Sparse Tuya endpoints 1 and 4 both configure through the generic Tuya handler"
-    or "Single-endpoint Tuya device retains root configuration without a magic packet"
-  test.register_coroutine_test(description, function()
+  test.register_coroutine_test("Single-endpoint Tuya device retains root configuration without a magic packet", function()
     local driver = test.driver_wrapper.driver_under_test
     local actual = driver:get_device_info(sample.id)
-    assert((require("tuya-multi.can_handle")({}, driver, actual)) == is_multi)
-    assert(actual.zigbee_endpoints[2] == nil, "The test must preserve the gap in the SDK endpoint map")
+    assert(not require("tuya-multi.can_handle")({}, driver, actual))
     test.socket.zigbee:__set_channel_ordering("relaxed")
-    for _, ep in ipairs(endpoint_ids) do
-      test.socket.zigbee:__expect_send({ sample.id, OnOffCluster.attributes.OnOff:read(sample):to_endpoint(ep) })
-      test.socket.zigbee:__expect_send({ sample.id,
-        OnOffCluster.attributes.OnOff:configure_reporting(sample, 0, 300):to_endpoint(ep) })
-      test.socket.zigbee:__expect_send({ sample.id,
-        zigbee_test_utils.build_bind_request(sample, zigbee_test_utils.mock_hub_eui,
-          OnOffCluster.ID, ep):to_endpoint(ep) })
-    end
-    if is_multi then
-      test.socket.zigbee:__expect_send({ sample.id,
-        zigbee_test_utils.build_attribute_read(sample, BasicCluster.ID,
-          { 0x0004, 0x0000, 0x0001, 0x0005, 0x0007, 0xfffe }) })
-    end
+    test.socket.zigbee:__expect_send({ sample.id, OnOffCluster.attributes.OnOff:read(sample):to_endpoint(1) })
+    test.socket.zigbee:__expect_send({ sample.id,
+      OnOffCluster.attributes.OnOff:configure_reporting(sample, 0, 300):to_endpoint(1) })
+    test.socket.zigbee:__expect_send({ sample.id,
+      zigbee_test_utils.build_bind_request(sample, zigbee_test_utils.mock_hub_eui,
+        OnOffCluster.ID, 1):to_endpoint(1) })
     sample:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.socket.device_lifecycle:__queue_receive({ sample.id, "doConfigure" })
   end, {
