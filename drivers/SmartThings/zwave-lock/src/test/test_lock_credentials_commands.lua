@@ -158,11 +158,18 @@ test.register_coroutine_test(
     -- Lock responds with SUCCESS
     queue_user_code_added(1)
 
-    -- Handler adds the credential to the credentials table.
+    -- Handler adds the credential, then a new user, to the tables.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin" } },
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -308,6 +315,71 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
           { commandName = "updateCredential", statusCode = "busy" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: returns occupied when the requested slot already holds a credential",
+  function()
+    seed_users({ { userIndex = 1, userName = "Alice", userType = "guest" } })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    -- userIndex arg selects the credential slot; slot 1 is taken. No Z-Wave message should be sent.
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 1, "guest", "pin", "1234" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "occupied" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "updateCredential: applies a changed credentialName and userIndex to the credentials table",
+  function()
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+    })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Old" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "updateCredential",
+        args = { 2, 1, "pin", "newPin9", "New" } },
+    })
+    expect_set_pin_code(1, "newPin9")
+    test.wait_for_events()
+
+    queue_user_code_added(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 2, credentialIndex = 1, credentialType = "pin", credentialName = "New" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "updateCredential", statusCode = "success", userIndex = 2, credentialIndex = 1 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

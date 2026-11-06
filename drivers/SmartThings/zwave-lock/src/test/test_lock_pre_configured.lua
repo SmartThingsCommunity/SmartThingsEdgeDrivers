@@ -360,6 +360,18 @@ test.register_coroutine_test(
           { visibility = { displayed = false } }
         ))
     )
+    -- addCredential always creates a new user, which takes the next free user index
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",   userType = "guest" },
+            { userIndex = 3, userName = "Guest 3", userType = "guest" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
