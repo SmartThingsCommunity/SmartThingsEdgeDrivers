@@ -14,7 +14,8 @@ lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
   CODE_INDEX = "syncCodeIndex", -- persisted until codesSynced is set
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
-  CODES_SYNCED = "codesSynced", -- persisted; true once a code sync has run to completion
+  CODES_SYNCED = "codesSynced", -- persisted; holds the CODES_SYNC_VERSION of the last completed code sync
+  CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes
 }
 
 lock_constants.COMMAND_RESULT = {

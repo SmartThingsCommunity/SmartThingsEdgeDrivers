@@ -43,7 +43,7 @@ function lock_utils.sync_device_state(device)
   local clusters = require "st.zigbee.zcl.clusters"
 
   if not (device:supports_capability(capabilities.lockCredentials) and
-    device:get_field(consts.SYNC.CODES_SYNCED) ~= true and
+    device:get_field(consts.SYNC.CODES_SYNCED) ~= consts.SYNC.CODES_SYNC_VERSION and
     device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK) then
       return
   end

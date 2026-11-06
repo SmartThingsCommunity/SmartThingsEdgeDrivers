@@ -428,7 +428,7 @@ test.register_coroutine_test(
   "init: migrated device whose codes have already synced does not sync again",
   function()
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, true, { persist = true })
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
     test.socket.capability:__expect_send(
