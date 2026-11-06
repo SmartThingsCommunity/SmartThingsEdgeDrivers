@@ -62,6 +62,48 @@ local query_device = function(device)
   end
 end
 
+-- True when the device is currently using the CCT profile (both lamp components present).
+local function is_cct_profile(device)
+  return device.profile.components[COMPONENT_LAMP1] ~= nil
+     and device.profile.components[COMPONENT_LAMP2] ~= nil
+end
+
+-- Compute main's switch state as the OR of both lamps (unknown lamp state treated as Off)
+-- and emit it. Used by both onoff_handler (device report path) and the switch command
+-- handlers (optimistic pre-emit path).
+local function emit_main_switch_from_lamps(device)
+  local lamp1On = device:get_latest_state(COMPONENT_LAMP1, capabilities.switch.ID, capabilities.switch.switch.NAME) == "on"
+  local lamp2On = device:get_latest_state(COMPONENT_LAMP2, capabilities.switch.ID, capabilities.switch.switch.NAME) == "on"
+  local mainEvt = (lamp1On or lamp2On)
+    and capabilities.switch.switch.on()
+    or capabilities.switch.switch.off()
+  device:emit_component_event(device.profile.components[COMPONENT_MAIN], mainEvt)
+end
+
+-- Pre-emit the expected state for the lamp components affected by a command in CCT mode.
+-- This is necessary because endpoint 2 has no configure_reporting set up, so lamp2 state
+-- would otherwise stay stale after lamp2 or main commands. We trust the command intent as
+-- the authoritative value. A main emit (either OR-aggregated or mirrored) is handled by
+-- the caller.
+local function pre_emit_cct_lamp_state(device, cmdComponent, evt)
+  if not is_cct_profile(device) then return false end
+  local targets
+  if cmdComponent == COMPONENT_MAIN then
+    targets = { COMPONENT_LAMP1, COMPONENT_LAMP2 }
+  elseif cmdComponent == COMPONENT_LAMP1 or cmdComponent == COMPONENT_LAMP2 then
+    targets = { cmdComponent }
+  else
+    return false
+  end
+  for _, name in ipairs(targets) do
+    local component = device.profile.components[name]
+    if component ~= nil then
+      device:emit_component_event(component, evt)
+    end
+  end
+  return true
+end
+
 local function switch_on_handler(driver, device, cmd)
   local curMode = SUPPORTED_MODES[1]
   local cmdComponent = cmd.component
@@ -73,6 +115,10 @@ local function switch_on_handler(driver, device, cmd)
         device:send(OnOff.commands.On(device):to_endpoint(i.endPoint + j))
       end
     end
+  end
+
+  if pre_emit_cct_lamp_state(device, cmdComponent, capabilities.switch.switch.on()) then
+    emit_main_switch_from_lamps(device)
   end
 end
 
@@ -87,6 +133,10 @@ local function switch_off_handler(driver, device, cmd)
         device:send(OnOff.commands.Off(device):to_endpoint(i.endPoint + j))
       end
     end
+  end
+
+  if pre_emit_cct_lamp_state(device, cmdComponent, capabilities.switch.switch.off()) then
+    emit_main_switch_from_lamps(device)
   end
 end
 
@@ -103,6 +153,13 @@ local function set_level_handler(driver, device, cmd)
       end
     end
   end
+
+  -- CCT-only: pre-emit the expected level because endpoint 2 does not report state back.
+  -- Main is a simple mirror of the commanded value. RGBW path is unchanged.
+  local evt = capabilities.switchLevel.level(cmd.args.level)
+  if pre_emit_cct_lamp_state(device, cmdComponent, evt) then
+    device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
+  end
 end
 
 local function set_color_temp_handler(driver, device, cmd)
@@ -117,6 +174,15 @@ local function set_color_temp_handler(driver, device, cmd)
         device:send(ColorControl.commands.MoveToColorTemperature(device, temp_in_mired):to_endpoint(i.endPoint + j))
       end
     end
+  end
+
+  -- CCT-only: pre-emit the expected color temperature because endpoint 2 does not report back.
+  -- Clamp to the supported hardware range (2700-6500 K) to match what the device will settle at.
+  -- RGBW path is unchanged.
+  local clamped_kelvin = utils.clamp_value(cmd.args.temperature, 2700, 6500)
+  local evt = capabilities.colorTemperature.colorTemperature(clamped_kelvin)
+  if pre_emit_cct_lamp_state(device, cmdComponent, evt) then
+    device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
   end
 end
 
@@ -201,31 +267,60 @@ local function set_saturation_handler(driver, device, cmd)
 end
 
 local function onoff_handler(driver, device, value, zb_rx)
-  local curMode = SUPPORTED_MODES[1]
   local srcEndpoint = zb_rx.address_header.src_endpoint.value
-  local evt = capabilities.switch.switch.off()
-  if value.value then evt = capabilities.switch.switch.on() end
+  local newOn = value.value
+  local evt = newOn and capabilities.switch.switch.on() or capabilities.switch.switch.off()
 
-  if isCCTmode(device) then curMode = SUPPORTED_MODES[2] end
-  for _, i in ipairs(COMPONENT_INFO_TABLE) do
-    if i.supportMode == curMode and i.endPoint == srcEndpoint then
-      device:emit_component_event(device.profile.components[i.name], evt)
-    end
+  if not isCCTmode(device) then
+    -- RGBW mode: only the fingerprinted endpoint is active, emit to main.
+    device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
+    return
   end
+
+  -- CCT mode: emit to the owning lamp component, then recompute main as
+  -- "On if either lamp is On". An unknown lamp state is treated as Off.
+  local lampName
+  if srcEndpoint == 0x01 then
+    lampName = COMPONENT_LAMP1
+  elseif srcEndpoint == 0x02 then
+    lampName = COMPONENT_LAMP2
+  else
+    return
+  end
+
+  local lampComponent = device.profile.components[lampName]
+  if lampComponent == nil then return end
+  device:emit_component_event(lampComponent, evt)
+  emit_main_switch_from_lamps(device)
 end
 
 local function current_level_handler(driver, device, value, zb_rx)
-  local curMode = SUPPORTED_MODES[1]
   local srcEndpoint = zb_rx.address_header.src_endpoint.value
   local level = math.floor((value.value / 254.0 * 100) + 0.5)
   local evt = capabilities.switchLevel.level(level)
 
-  if isCCTmode(device) then curMode = SUPPORTED_MODES[2] end
-  for _, i in ipairs(COMPONENT_INFO_TABLE) do
-    if i.supportMode == curMode and i.endPoint == srcEndpoint then
-      device:emit_component_event(device.profile.components[i.name], evt)
-    end
+  if not isCCTmode(device) then
+    -- RGBW mode: only the fingerprinted endpoint is active, emit to main.
+    device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
+    return
   end
+
+  -- CCT mode: emit to the owning lamp component and mirror to main so that
+  -- level reports from both endpoints keep main's value in sync.
+  local lampName
+  if srcEndpoint == 0x01 then
+    lampName = COMPONENT_LAMP1
+  elseif srcEndpoint == 0x02 then
+    lampName = COMPONENT_LAMP2
+  else
+    return
+  end
+
+  local lampComponent = device.profile.components[lampName]
+  if lampComponent ~= nil then
+    device:emit_component_event(lampComponent, evt)
+  end
+  device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
 end
 
 local function current_color_temp_mireds_handler(driver, device, value, zb_rx)
@@ -233,14 +328,28 @@ local function current_color_temp_mireds_handler(driver, device, value, zb_rx)
   local mired = utils.clamp_value(utils.round(CONVERSION_CONSTANT / value.value), 2700, 6500)
   local evt = capabilities.colorTemperature.colorTemperature(mired)
 
-  local curMode = SUPPORTED_MODES[1]
-
-  if isCCTmode(device) then curMode = SUPPORTED_MODES[2] end
-  for _, i in ipairs(COMPONENT_INFO_TABLE) do
-    if i.supportMode == curMode and i.endPoint == srcEndpoint then
-      device:emit_component_event(device.profile.components[i.name], evt)
-    end
+  if not isCCTmode(device) then
+    -- RGBW mode: only the fingerprinted endpoint is active, emit to main.
+    device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
+    return
   end
+
+  -- CCT mode: emit to the owning lamp component and mirror to main so that
+  -- color-temperature reports from both endpoints keep main's value in sync.
+  local lampName
+  if srcEndpoint == 0x01 then
+    lampName = COMPONENT_LAMP1
+  elseif srcEndpoint == 0x02 then
+    lampName = COMPONENT_LAMP2
+  else
+    return
+  end
+
+  local lampComponent = device.profile.components[lampName]
+  if lampComponent ~= nil then
+    device:emit_component_event(lampComponent, evt)
+  end
+  device:emit_component_event(device.profile.components[COMPONENT_MAIN], evt)
 end
 
 local function current_x_attr_handler(driver, device, value, zb_rx)
@@ -307,9 +416,27 @@ end
 local function default_response_handler(driver, device, zb_rx)
 end
 
+-- Emit the device's actual color temperature range to every present light component.
+-- Without this, the SmartThings capability defaults imply a wider range than the hardware
+-- supports (device hardware max is 6500 K), which both widens the app's color-temperature
+-- slider past the supported range and causes STTS "max" tests to probe above the device's
+-- limit and fail.
+local function emit_color_temp_range(device)
+  local range = capabilities.colorTemperature.colorTemperatureRange(
+    { minimum = 2700, maximum = 6500 }
+  )
+  for _, componentName in ipairs({ COMPONENT_MAIN, COMPONENT_LAMP1, COMPONENT_LAMP2 }) do
+    local component = device.profile.components[componentName]
+    if component ~= nil then
+      device:emit_component_event(component, range)
+    end
+  end
+end
+
 local function device_added(driver, device)
   device:emit_component_event(device.profile.components[COMPONENT_MODE],
     capabilities.mode.supportedModes(SUPPORTED_MODES, { visibility = { displayed = false } }))
+  emit_color_temp_range(device)
   -- Set private attribute
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRI_CLU, PRI_ATTR, MFG_CODE, data_types.Uint8, 1))
@@ -348,6 +475,8 @@ local function device_info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     local mode = isCCTmode(device) and "cct" or "rgbw"
     log.info_with({ hub_logs = true }, string.format("profile changed to mode=%s (model=%s)", mode, device:get_model()))
+    -- Re-emit colorTemperatureRange for the newly-available components (lamp1/lamp2 on CCT).
+    emit_color_temp_range(device)
     -- The device auto-reboots (~5-8s) when its operating mode (RGB/CCT) changes.
     -- Delay these writes so they aren't lost during the reboot window.
     -- The delayed writes already read the current preference values, so skip the per-preference

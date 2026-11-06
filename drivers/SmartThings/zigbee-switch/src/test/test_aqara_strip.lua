@@ -51,10 +51,26 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
+local mock_device_cct = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("aqara-lightstrip-cct.yml"),
+    fingerprinted_endpoint_id = 0x01,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "LUMI",
+        model = "lumi.dimmer.rcbac1",
+        server_clusters = { 0x0006, 0x0008, 0x0300 }
+      }
+    }
+  }
+)
+
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_device_cct)
 end
 
 test.set_test_init_function(test_init)
@@ -68,6 +84,12 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         COMPONENT_MODE,
         capabilities.mode.supportedModes(SUPPORTED_MODES, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6500 })
       )
     )
     test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
@@ -414,6 +436,128 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__queue_receive({ mock_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_device, true) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+  end
+)
+
+-- onoff_handler (CCT mode, lamp1 report with lamp2 unknown)
+-- Verifies that a lamp1 ON report emits to lamp1 and computes main = On
+-- (lamp2 unknown is treated as Off; On OR Off = On).
+test.register_coroutine_test(
+  "OnOff handler test - CCT mode, lamp1 On (lamp2 unknown)",
+  function()
+    test.socket.zigbee:__queue_receive({
+      mock_device_cct.id,
+      OnOff.attributes.OnOff:build_test_attr_report(mock_device_cct, true):from_endpoint(0x01)
+    })
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp1", capabilities.switch.switch.on()))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switch.switch.on()))
+  end
+)
+
+-- onoff_handler (CCT mode, lamp1 off while lamp2 is on)
+-- This is the exact scenario that caused the STTS "main=On AND lamp1=Off" prerequisite
+-- to be unreachable: after this fix, turning off lamp1 must leave main=On when lamp2 is still On.
+test.register_coroutine_test(
+  "OnOff handler test - CCT mode, lamp1 Off while lamp2 is On, main stays On",
+  function()
+    -- Step 1: lamp2 ON report (establishes lamp2 = On in device state).
+    test.socket.zigbee:__queue_receive({
+      mock_device_cct.id,
+      OnOff.attributes.OnOff:build_test_attr_report(mock_device_cct, true):from_endpoint(0x02)
+    })
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.switch.switch.on()))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switch.switch.on()))
+
+    -- Step 2: lamp1 OFF report. main must stay On because lamp2 is still On.
+    test.socket.zigbee:__queue_receive({
+      mock_device_cct.id,
+      OnOff.attributes.OnOff:build_test_attr_report(mock_device_cct, false):from_endpoint(0x01)
+    })
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp1", capabilities.switch.switch.off()))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switch.switch.on()))
+  end
+)
+
+-- current_level_handler (CCT mode, ep 0x02 report updates lamp2 and main symmetrically)
+test.register_coroutine_test(
+  "CurrentLevel handler test - CCT mode, ep 0x02 updates lamp2 and main",
+  function()
+    test.socket.zigbee:__queue_receive({
+      mock_device_cct.id,
+      Level.attributes.CurrentLevel:build_test_attr_report(mock_device_cct, math.floor(50 / 100 * 254)):from_endpoint(0x02)
+    })
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.switchLevel.level(50)))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switchLevel.level(50)))
+  end
+)
+
+-- current_color_temp_mireds_handler (CCT mode, ep 0x02 report updates lamp2 and main symmetrically)
+test.register_coroutine_test(
+  "CurrentColorTemperature handler test - CCT mode, ep 0x02 updates lamp2 and main",
+  function()
+    -- 250 mireds -> 1000000 / 250 = 4000 K (within the clamp range 2700-6500).
+    test.socket.zigbee:__queue_receive({
+      mock_device_cct.id,
+      ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device_cct, 250):from_endpoint(0x02)
+    })
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.colorTemperature.colorTemperature(4000)))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.colorTemperature.colorTemperature(4000)))
+  end
+)
+
+-- Command path test: main switch off in CCT must drive main, lamp1 and lamp2 to Off
+-- immediately (endpoint 2 does not report back, so without the pre-emit lamp2 state would
+-- stay stale and the OR aggregation would keep main On). This is the exact scenario that
+-- failed in STTS main/switch/command_off/2/command.
+test.register_coroutine_test(
+  "Switch Off handler test - CCT mode, main off drives all components Off",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device_cct.id,
+      { capability = "switch", component = "main", command = "off", args = {} } })
+
+    test.socket.zigbee:__expect_send({ mock_device_cct.id,
+      OnOff.server.commands.Off(mock_device_cct):to_endpoint(0x01) })
+    test.socket.zigbee:__expect_send({ mock_device_cct.id,
+      OnOff.server.commands.Off(mock_device_cct):to_endpoint(0x02) })
+
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp1", capabilities.switch.switch.off()))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.switch.switch.off()))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switch.switch.off()))
+  end
+)
+
+-- Command path test: lamp2 setLevel must update lamp2's and main's level even though
+-- endpoint 2 never reports back.
+test.register_coroutine_test(
+  "Set Level handler test - CCT mode, lamp2 setLevel updates lamp2 and main",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device_cct.id,
+      { capability = "switchLevel", component = "lamp2", command = "setLevel", args = { 60 } } })
+
+    test.socket.zigbee:__expect_send({ mock_device_cct.id,
+      Level.commands.MoveToLevelWithOnOff(mock_device_cct, math.floor(60 / 100 * 254)):to_endpoint(0x02) })
+
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.switchLevel.level(60)))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.switchLevel.level(60)))
+  end
+)
+
+-- Command path test: lamp2 setColorTemperature must update lamp2 and main even though
+-- endpoint 2 never reports back. The emitted value is clamped to the device's actual range.
+test.register_coroutine_test(
+  "Set ColorTemperature handler test - CCT mode, lamp2 setColorTemperature updates lamp2 and main",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device_cct.id,
+      { capability = "colorTemperature", component = "lamp2", command = "setColorTemperature", args = { 4000 } } })
+
+    test.socket.zigbee:__expect_send({ mock_device_cct.id,
+      ColorControl.commands.MoveToColorTemperature(mock_device_cct, utils.round(CONVERSION_CONSTANT / 4000)):to_endpoint(0x02) })
+
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("lamp2", capabilities.colorTemperature.colorTemperature(4000)))
+    test.socket.capability:__expect_send(mock_device_cct:generate_test_message("main", capabilities.colorTemperature.colorTemperature(4000)))
   end
 )
 
