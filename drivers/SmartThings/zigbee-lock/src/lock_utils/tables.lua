@@ -11,7 +11,8 @@ local table_utils = {}
 --
 --   capability        SmartThings capability (used for device support checks and to get latest state)
 --   attribute         Capability attribute function (used to emit state)
---   max_entries       Attribute of the capability that defines the maximum number of entries allowed in the table
+--   max_entries       Optional. Attribute of the capability that defines the maximum number of entries
+--                     allowed in the table. Tables without it are unbounded.
 --   match_key         Key used to identify entries in flat tables
 --   required_keys     Keys that must be non-nil when adding an entry
 --   persistent_field  device:set_field key used to back up the table across restarts
@@ -22,7 +23,6 @@ local DEFS = {
   users = {
     capability       = capabilities.lockUsers,
     attribute        = capabilities.lockUsers.users,
-    max_entries      = capabilities.lockUsers.totalUsersSupported,
     minimum          = 1,
     match_key        = "userIndex",
     required_keys    = {"userIndex", "userType"},
@@ -131,15 +131,16 @@ function table_utils.find_all_entries_by(device, table_name, key, value)
   return matches
 end
 
--- Return the lowest positive integer not yet used as the match_key in the named table.
--- Used to auto-assign the next available slot for a new entry.
-function table_utils.next_index(device, table_name)
+-- Return the lowest integer, starting at the table's minimum, not yet used as the
+-- match_key in the named table. Used to auto-assign the next available slot for a new entry.
+-- An optional `start` overrides the table's minimum, e.g. to skip a reserved slot.
+function table_utils.next_index(device, table_name, start)
   local def = resolve_table_def(device, table_name)
-  if not def then return 1 end
+  assert(def, string.format("table_helpers: unknown table %q", tostring(table_name)))
   local t = table_utils.get_state(device, def) or {}
   local occupied = {}
   for _, entry in ipairs(t) do occupied[entry[def.match_key]] = true end
-  local idx = 1
+  local idx = start or def.minimum
   while occupied[idx] do idx = idx + 1 end
   return idx
 end
@@ -150,9 +151,10 @@ function table_utils.get_minimum(device, table_name)
   return def.minimum
 end
 
+-- Returns nil when the table has no limit.
 function table_utils.get_max_entries(device, table_name)
   local def = resolve_table_def(device, table_name)
-  if not def then return end
+  if not def or not def.max_entries then return end
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
@@ -168,7 +170,8 @@ function table_utils.add_entry(device, table_name, entry)
   local t = table_utils.get_state(device, def)
   if not t then return COMMAND_RESULT.FAILURE end
 
-  if #t >= table_utils.get_max_entries(device, table_name) then
+  local max_entries = table_utils.get_max_entries(device, table_name)
+  if max_entries and #t >= max_entries then
     device.log.warn(string.format(
       "table_helpers: cannot add entry to %q, max entries reached", table_name
     ))

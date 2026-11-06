@@ -169,31 +169,6 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "addUser: returns resourceExhausted when totalUsersSupported has been reached",
-  function()
-    set_total_users_supported(2)
-    seed_users({
-      { userIndex = 1, userName = "Alice", userType = "guest" },
-      { userIndex = 2, userName = "Bob",   userType = "guest" },
-    })
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Carol", "guest" } },
-    })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "resourceExhausted" },
-          { state_change = true, visibility = { displayed = false } }
-        ))
-    )
-    test.wait_for_events()
-  end
-)
-
 -- ============================================================================
 -- updateUser
 -- ============================================================================

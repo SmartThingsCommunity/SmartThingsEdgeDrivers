@@ -129,7 +129,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
 
   -- addCredential has no credentialIndex argument, so its userIndex argument selects the credential slot. A value
   -- of 0 means "auto-assign the next available slot". The user is always new, and takes the next available user slot.
-  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials", 1) or command.args.userIndex
   local user_index = tables.next_index(device, "users")
 
   if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
