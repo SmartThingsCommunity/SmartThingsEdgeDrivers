@@ -62,15 +62,6 @@ local function seed_credentials(entries)
   test.wait_for_events()
 end
 
--- Set totalUsersSupported on the mock device and consume the resulting event.
-local function set_total_users_supported(n)
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main",
-      capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  )
-  mock_device:emit_event(capabilities.lockUsers.totalUsersSupported(n, { visibility = { displayed = false } }))
-  test.wait_for_events()
-end
 
 -- ============================================================================
 -- addUser

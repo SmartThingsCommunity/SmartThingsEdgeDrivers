@@ -57,7 +57,7 @@ end
 
 -- Add a user and its credential together. Existing entries at either index are left untouched
 -- by the underlying table add. Returns the result status of the credential add.
--- Only creates a user if the credential create succeeded, or if the credential already existed
+-- A user is only created if the credential add succeeded, so a failed or colliding credential never leaves an orphan user.
 function lock_utils.add_user_and_credential(device, args)
   local name = "Guest " .. args.userIndex
   local user_type = "guest"
@@ -67,7 +67,7 @@ function lock_utils.add_user_and_credential(device, args)
     credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
     credentialName  = args.credentialName or name,
   })
-  if credential_status == consts.COMMAND_RESULT.SUCCESS or credential_status == consts.COMMAND_RESULT.OCCUPIED then
+  if credential_status == consts.COMMAND_RESULT.SUCCESS then
     tables.add_entry(device, "users", {
       userIndex = args.userIndex,
       userName  = name,
@@ -78,12 +78,20 @@ function lock_utils.add_user_and_credential(device, args)
 end
 
 -- Per command: update the tables after the lock confirmed a set-credential command we sent.
--- Returns the command result status, or nil for any other command.
+-- Returns the command result status, or nil for any other command. The user is always new,
+-- and its index is chosen here. Also returns the newly chosen user's userIndex
 function lock_utils.add_commanded_credential(device, command_in_progress, credential_args)
   if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
-    return lock_utils.add_user_and_credential(device, credential_args)
+    local user_index = tables.next_index(device, "users")
+    local status = lock_utils.add_user_and_credential(device, {
+      userIndex       = user_index,
+      credentialIndex = credential_args.credentialIndex,
+      credentialType  = credential_args.credentialType,
+      credentialName  = credential_args.credentialName,
+    })
+    return status, user_index
   elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
-    return consts.COMMAND_RESULT.SUCCESS
+    return consts.COMMAND_RESULT.SUCCESS, credential_args.userIndex
   end
 end
 
