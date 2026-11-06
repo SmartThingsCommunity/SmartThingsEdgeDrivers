@@ -93,6 +93,11 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: SNZB-02B
     deviceProfileName: humidity-temp-battery
+  - id: SONOFF/SNZB-02UL
+    deviceLabel: SONOFF Zigbee Temperature Humidity Sensor
+    manufacturer: SONOFF
+    model: SNZB-02UL
+    deviceProfileName: humidity-temp-battery
   - id: "Third Reality/3RTHS24BZ"
     deviceLabel: ThirdReality Temperature and Humidity Sensor
     manufacturer: Third Reality, Inc

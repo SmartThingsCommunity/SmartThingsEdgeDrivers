@@ -2,11 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 return function(opts, driver, device, ...)
-  local FINGERPRINTS = require("zigbee-switch-power.ledvance-metering-plug.fingerprints")
-  for _, fingerprint in ipairs(FINGERPRINTS) do
+  local fingerprints = require "sonoff.tp_wgzba.fingerprints"
+  for _, fingerprint in ipairs(fingerprints) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("zigbee-switch-power.ledvance-metering-plug")
-      return true, subdriver
+      return true, require("sonoff.tp_wgzba")
     end
   end
   return false

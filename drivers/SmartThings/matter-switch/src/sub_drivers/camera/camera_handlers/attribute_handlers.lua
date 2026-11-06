@@ -57,10 +57,14 @@ end
 
 function CameraAttributeHandlers.volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MAX
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
-  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MAX
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component) or camera_fields.ABS_VOL_MIN
   local limited_range = max_volume - min_volume
+  if limited_range <= 0 then
+    device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(0))
+    return
+  end
+  -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local normalized_volume = utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
   device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(normalized_volume))
 end
@@ -68,23 +72,33 @@ end
 function CameraAttributeHandlers.max_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local max_volume = ib.data.value
-  local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component)
-  if max_volume > camera_fields.ABS_VOL_MAX or (min_volume and max_volume <= min_volume) then
+  local min_volume = camera_utils.get_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component)
+  -- min == max is a valid (non-adjustable) range per the Matter spec, so only max < min is malformed;
+  -- an out-of-bounds value is clamped, but a malformed relationship is only logged and left as-is,
+  -- since volume_level_handler already guards against a non-positive range.
+  if max_volume > camera_fields.ABS_VOL_MAX then
     device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
     max_volume = camera_fields.ABS_VOL_MAX
+  elseif min_volume and max_volume < min_volume then
+    device.log.warn(string.format("Device reported invalid maximum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component, max_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component, max_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.min_volume_level_handler(driver, device, ib, response)
   local component = device:endpoint_to_component(ib)
   local min_volume = ib.data.value
-  local max_volume = device:get_field(camera_fields.MAX_VOLUME_LEVEL .. "_" .. component)
-  if min_volume < camera_fields.ABS_VOL_MIN or (max_volume and min_volume >= max_volume) then
+  local max_volume = camera_utils.get_field_for_component(device, camera_fields.MAX_VOLUME_LEVEL, component)
+  -- See max_volume_level_handler: min == max is valid, only min > max is malformed and only logged.
+  if min_volume < camera_fields.ABS_VOL_MIN then
     device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
     min_volume = camera_fields.ABS_VOL_MIN
+  elseif max_volume and min_volume > max_volume then
+    device.log.warn(string.format("Device reported invalid minimum (%d) %s volume level range value", ib.data.value, component))
   end
-  device:set_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component, min_volume)
+  camera_utils.set_field_for_component(device, camera_fields.MIN_VOLUME_LEVEL, component, min_volume)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 function CameraAttributeHandlers.status_light_enabled_handler(driver, device, ib, response)
@@ -471,6 +485,32 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
   camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
   camera_cfg.update_hard_privacy_mode_attribute_presence(device, hard_privacy_mode_present)
   camera_cfg.reconcile_profile_and_capabilities(device)
+end
+
+function CameraAttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
+  local percent_present, level_present = false, false
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      percent_present = true
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
+      level_present = true
+    end
+  end
+  -- store support per endpoint so that a report from one PowerSource endpoint (e.g. wired) cannot
+  -- overwrite what another endpoint (e.g. battery) reported
+  local support_by_ep = device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT) or {}
+  local ep_key = tostring(ib.endpoint_id)
+  local previous = support_by_ep[ep_key] or {}
+  if (previous.percent or false) ~= percent_present or (previous.level or false) ~= level_present then
+    support_by_ep[ep_key] = { percent = percent_present, level = level_present }
+    device:set_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT, support_by_ep, {persist = true})
+    camera_cfg.reconcile_profile_and_capabilities(device)
+  end
+end
+
+function CameraAttributeHandlers.bat_charge_state_handler(driver, device, ib, response)
+  local state = camera_fields.BAT_CHARGE_STATE_MAP[ib.data.value] or "error"
+  device:emit_event_for_endpoint(ib, capabilities.chargingState.chargingState(state))
 end
 
 function CameraAttributeHandlers.camera_feature_map_handler(driver, device, ib, response)

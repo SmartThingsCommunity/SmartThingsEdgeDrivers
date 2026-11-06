@@ -122,6 +122,12 @@ matterManufacturer:
     vendorId: 0x1575
     productId: 0x0001
     deviceProfileName: thermostat-modular
+  #ZEMISMART
+  - id: "5020/51713"
+    deviceLabel: Zemismart Matter WiFi IR Thermostat
+    vendorId: 0x139C
+    productId: 0xCA01
+    deviceProfileName: thermostat-modular
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat

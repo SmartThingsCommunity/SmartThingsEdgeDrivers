@@ -82,6 +82,14 @@ function CameraUtils.feature_supported(device, cluster_id, feature_flag)
   return #device:get_endpoints(cluster_id, { feature_bitmap = feature_flag }) > 0
 end
 
+function CameraUtils.get_field_for_component(device, field, component)
+  return device:get_field(string.format("%s_%s", field, component))
+end
+
+function CameraUtils.set_field_for_component(device, field, component, value, additional_params)
+  device:set_field(string.format("%s_%s", field, component), value, additional_params)
+end
+
 function CameraUtils.update_supported_attributes(device, ib, capability, attribute)
   local attribute_set = device:get_latest_state(
     camera_fields.profile_components.main, capability.ID, capability.supportedAttributes.NAME
@@ -212,17 +220,21 @@ function CameraUtils.subscribe(device)
       clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
       clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin
     },
+    -- SpeakerMaxLevel/MinLevel and MicrophoneMaxLevel/MinLevel are subscribed alongside audioMute
+    -- (unconditional on the AUDIO/SPEAKER feature) rather than audioVolume, since audioVolume's own
+    -- presence in the profile depends on first discovering these values -- gating their subscription
+    -- on audioVolume already being present would make that discovery impossible.
     [capabilities.audioMute.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
+      clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
+      clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel
     },
     [capabilities.audioVolume.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
-      clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
-      clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel
+      clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel
     },
     [capabilities.mode.ID] = {
       clusters.CameraAvStreamManagement.attributes.StatusLightBrightness
@@ -260,6 +272,15 @@ function CameraUtils.subscribe(device)
     },
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel
+    },
+    [capabilities.chargingState.ID] = {
+      clusters.PowerSource.attributes.BatChargeState
     },
     [capabilities.switchLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
@@ -310,6 +331,10 @@ function CameraUtils.subscribe(device)
 
   if #device:get_endpoints(clusters.ZoneManagement.ID) > 0 then
     table.insert(additional_attributes, camera_fields.ZoneManagementFeatureMapAttr)
+  end
+
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+    table.insert(additional_attributes, clusters.PowerSource.attributes.AttributeList)
   end
 
   for _, endpoint_info in ipairs(device.endpoints) do

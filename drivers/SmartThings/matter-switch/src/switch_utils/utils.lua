@@ -53,8 +53,17 @@ end
 function utils.remove_field_index(device, field_name, index)
   local new_table = device:get_field(field_name)
   if type(new_table) == "table" then
-    new_table[index] = nil -- remove value associated with index from table
+    new_table[index] = nil -- remove value associated with index from table without altering table structure
     device:set_field(field_name, new_table)
+  end
+end
+
+function utils.is_field_empty(device, field_name)
+  local field = device:get_field(field_name)
+  if type(field) == "table" then
+    return next(field) == nil
+  else
+    return field == nil
   end
 end
 
@@ -102,6 +111,22 @@ end
 
 function utils.check_switch_category_vendor_overrides(device)
   for _, product_id in ipairs(fields.switch_category_vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
+    if device.manufacturer_info.product_id == product_id then
+      return true
+    end
+  end
+end
+
+function utils.check_deprecated_color_temperature_profile_vendor_overrides(device)
+  for _, product_id in ipairs(fields.deprecated_color_temperature_profile_vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
+    if device.manufacturer_info.product_id == product_id then
+      return true
+    end
+  end
+end
+
+function utils.check_color_motion_profile_vendor_overrides(device)
+  for _, product_id in ipairs(fields.color_motion_profile_vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
     if device.manufacturer_info.product_id == product_id then
       return true
     end
