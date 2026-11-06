@@ -121,7 +121,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  if tables.is_full(device, "credentials") then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
@@ -152,22 +152,47 @@ function CapabilityHandlers.update_credential(driver, device, command)
     return
   end
 
-  if not tables.find_entry(device, "credentials", command.args.credentialIndex) then
+  local credential_index = command.args.credentialIndex
+  if not tables.find_entry(device, "credentials", credential_index) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.FAILURE)
+    return
+  elseif credential_index == 0 then
+    -- user identifier 0 addresses every user code on the lock, never a single credential
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.UPDATE, {
     userIndex       = command.args.userIndex,
-    credentialIndex = command.args.credentialIndex,
+    credentialIndex = credential_index,
     credentialType  = command.args.credentialType,
     credentialName  = command.args.credentialName,
   })
   device:send(UserCode:Set({
-    user_identifier = command.args.credentialIndex,
+    user_identifier = credential_index,
     user_code = command.args.credentialData,
     user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
   }))
+end
+
+-- Remove a credential from the lock. The busy state must already be set.
+local function send_credential_delete(device, credential_index)
+  if credential_index == 0 then
+    -- user identifier 0 addresses every user code on the lock, so a stale entry is only removed locally
+    lock_utils.delete_credential_report_helper(device, credential_index)
+  else
+    device:send(UserCode:Set({
+      user_identifier = credential_index,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    }))
+    -- A lock that refuses the delete (e.g. a Yale admin code) ignores the Set and sends nothing, so read the
+    -- slot back if the delete has not completed. The report tells us whether the code is still there.
+    device.thread:call_with_delay(consts.DELETE_CONFIRM_DELAY, function()
+      if lock_utils.is_delete_in_progress(device, credential_index) then
+        device:send(UserCode:Get({ user_identifier = credential_index }))
+      end
+    end)
+  end
 end
 
 function CapabilityHandlers.delete_credential(driver, device, command)
@@ -182,10 +207,7 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   if cmd_in_progress == consts.LOCK_USERS.DELETE then
     -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-    device:send(UserCode:Set({
-      user_identifier = credential_args.credentialIndex,
-      user_id_status = UserCode.user_id_status.AVAILABLE
-    }))
+    send_credential_delete(device, credential_args.credentialIndex)
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
   else
@@ -200,10 +222,7 @@ function CapabilityHandlers.delete_credential(driver, device, command)
       credentialType  = command.args.credentialType,
       userIndex       = found_cred.userIndex,
     })
-    device:send(UserCode:Set({
-      user_identifier = command.args.credentialIndex,
-      user_id_status = UserCode.user_id_status.AVAILABLE
-    }))
+    send_credential_delete(device, command.args.credentialIndex)
   end
 end
 
@@ -211,7 +230,8 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with a
+    -- admin code (Yale) keeps it, so the admin entries are kept in state below.
     device:send(UserCode:Set({
       user_identifier = 0,
       user_id_status = UserCode.user_id_status.AVAILABLE
@@ -219,10 +239,10 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
     -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
     device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
-        tables.delete_all_entries(device, "users")
+        lock_utils.delete_all_non_admin_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       end
-      tables.delete_all_entries(device, "credentials")
+      lock_utils.delete_all_non_admin_entries(device, "credentials")
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)
     end)

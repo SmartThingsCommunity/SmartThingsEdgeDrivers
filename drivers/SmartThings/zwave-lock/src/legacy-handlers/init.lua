@@ -55,6 +55,7 @@ end
 local function migrate(driver, device, cmd)
   local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
   local table_utils = require "lock_utils.tables"
+  local consts = require("lock_utils.constants")
   local get_lock_codes = LockCodesDefaults.get_lock_codes
   local lock_users = {}
   local lock_credentials = {}
@@ -74,10 +75,23 @@ local function migrate(driver, device, cmd)
   end
 
   table.sort(ordered_codes, function(a, b) return a.index < b.index end)
+  local admin_index = table_utils.admin_credential_index(device)
+  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the admin code's
+  -- user takes the admin code slot as its index.
+  local user_index = 0
   for _, code in ipairs(ordered_codes) do
-    local user_index = #lock_users + 1
-    table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = lock_codes[code.slot]})
-    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin"})
+    local is_admin = admin_index ~= nil and code.index == admin_index
+    if not is_admin then
+      user_index = user_index + 1
+      if admin_index ~= nil and user_index == admin_index then user_index = user_index + 1 end
+    end
+    local owner_index = is_admin and code.index or user_index
+    table.insert(lock_users, {
+      userIndex = owner_index,
+      userType = is_admin and consts.ADMIN.USER_TYPE or "guest",
+      userName = lock_codes[code.slot],
+    })
+    table.insert(lock_credentials, {userIndex = owner_index, credentialIndex = code.index, credentialType = "pin"})
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
@@ -99,9 +113,20 @@ local function migrate(driver, device, cmd)
 
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-  local consts = require("lock_utils.constants")
 
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
+
+  -- lockCodes only holds the admin code if SmartThings set it and the lock confirmed it as a user code. A factory
+  -- admin code, or one a Yale ZW3 confirmed with the "master code changed" notification, is read back instead.
+  if admin_index ~= nil then
+    local admin_migrated = false
+    for _, code in ipairs(ordered_codes) do
+      if code.index == admin_index then admin_migrated = true end
+    end
+    if not admin_migrated then
+      require("lock_utils.utils").read_admin_code(device)
+    end
+  end
 end
 
 local legacy_capabilities = {

@@ -37,6 +37,25 @@ function lock_utils.clear_busy_state(device)
 end
 
 
+-- True if a deleteCredential or deleteUser of the credential at credential_index is waiting on the lock.
+function lock_utils.is_delete_in_progress(device, credential_index)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return (command_in_progress == consts.LOCK_CREDENTIALS.DELETE or command_in_progress == consts.LOCK_USERS.DELETE) and
+    credential_args.credentialIndex == credential_index
+end
+
+-- Report a delete the lock refused, leaving the user and credential in place.
+function lock_utils.emit_delete_failure(device)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  if command_in_progress == consts.LOCK_USERS.DELETE then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+  lock_utils.clear_busy_state(device)
+end
+
+
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
@@ -47,6 +66,36 @@ function lock_utils.sync_device_state(device)
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(UserCode:Get({user_identifier = device:get_field(consts.SYNC.CODE_INDEX)}))
+end
+
+
+-- [[ ADMIN CODE MANAGEMENT ]] --
+--
+-- Yale locks keep their admin code in a user code slot (see consts.ADMIN.YALE_SLOT) that is not one of the
+-- lock's user slots. It is exposed like any other credential, owned by a user with the same index. The
+-- runtime handling lives in the yale-lock sub-driver; these helpers are shared with the lockCodes migration.
+
+function lock_utils.get_admin_credential(device)
+  local admin_index = tables.admin_credential_index(device)
+  return admin_index ~= nil and tables.find_entry(device, "credentials", admin_index) or nil
+end
+
+-- Read the admin code slot back from the lock, so the admin code is recorded even if it was set outside
+-- SmartThings. The report is handled like any other user code report.
+function lock_utils.read_admin_code(device)
+  local admin_index = tables.admin_credential_index(device)
+  if admin_index == nil then return end
+  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+  device:send(UserCode:Get({ user_identifier = admin_index }))
+end
+
+-- Clear every entry of the "users" or "credentials" table except the admin code credential and its user.
+function lock_utils.delete_all_non_admin_entries(device, table_name)
+  local admin = lock_utils.get_admin_credential(device)
+  local match_key = table_name == "users" and "userIndex" or "credentialIndex"
+  tables.delete_all_entries(device, table_name, function(entry)
+    return admin ~= nil and entry[match_key] == admin[match_key]
+  end)
 end
 
 

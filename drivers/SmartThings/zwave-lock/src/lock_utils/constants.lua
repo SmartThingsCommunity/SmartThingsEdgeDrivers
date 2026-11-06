@@ -16,6 +16,15 @@ lock_constants.SYNC = {
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
 }
 
+lock_constants.ADMIN = {
+  -- Yale locks keep their admin code in this user code slot.
+  YALE_SLOT = 251,
+  YALE_MANUFACTURER_ID = 0x0129,
+  -- The lockUsers userType for the admin code.
+  USER_TYPE = "programmingUser",
+  NAME = "Master Code",
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",
@@ -44,5 +53,7 @@ lock_constants.CRED_TYPE_PIN = "pin"
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10
+-- Seconds to wait for a delete to be confirmed before reading the slot back
+lock_constants.DELETE_CONFIRM_DELAY = 4.2
 
 return lock_constants
