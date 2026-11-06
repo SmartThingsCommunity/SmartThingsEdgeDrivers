@@ -101,6 +101,11 @@ local zigbee_lock_driver = {
     infoChanged = LockLifecycle.info_changed,
   },
   zigbee_handlers = {
+    global = {
+      [clusters.DoorLock.ID] = {
+        [0x0B] = zigbee_handlers.default_response, -- ZCL Default Response
+      }
+    },
     cluster = {
       [clusters.Alarms.ID] = {
         [clusters.Alarms.client.commands.Alarm.ID] = zigbee_handlers.alarm
