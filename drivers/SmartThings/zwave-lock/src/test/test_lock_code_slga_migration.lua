@@ -7,6 +7,8 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local t_utils = require "integration_test.utils"
 --- @type st.zwave.constants
@@ -79,6 +81,8 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+      test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device.id))
       test.wait_for_events()
       assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
     end
@@ -90,9 +94,11 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.wait_for_events()
     assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
   end
@@ -107,9 +113,11 @@ test.register_coroutine_test(
     -- slot 0 is below the minimum credentialIndex for Z-Wave (1), so it is dropped
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}}, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.wait_for_events()
   end
 )
@@ -124,9 +132,11 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=2, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}, {credentialIndex=10, credentialType="pin", userIndex=3}}, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}, {userIndex=3, userName="Alex", userType="guest"}}, { visibility = { displayed = false } })))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device.id))
+    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
     test.wait_for_events()
   end
 )
@@ -152,6 +162,8 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(schlage_mock_device.id))
+      test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(schlage_mock_device.id))
       test.wait_for_events()
       assert(schlage_mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
     end

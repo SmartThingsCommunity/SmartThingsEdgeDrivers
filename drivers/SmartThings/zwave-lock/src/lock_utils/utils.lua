@@ -42,11 +42,56 @@ end
 function lock_utils.sync_device_state(device)
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
+  -- skip if unsupported, already synced, or busy (including a sync already in progress).
+  if not (device:supports_capability(capabilities.lockCredentials) and
+    device:get_field(consts.SYNC.CODES_SYNCED) ~= consts.SYNC.CODES_SYNC_VERSION and
+    not lock_utils.is_device_busy(device)) then
+    return
+  end
+
+  -- a persisted index from a sync begun under a different sync version is stale; start over.
+  if device:get_field(consts.SYNC.CODE_INDEX_VERSION) ~= consts.SYNC.CODES_SYNC_VERSION then
+    device:set_field(consts.SYNC.CODE_INDEX, nil, { persist = true })
+  end
+
+  -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet, so start the
+  -- process from the first valid index. Persist the index so we can resume after a restart as needed.
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, 1)
+    device:set_field(consts.SYNC.CODE_INDEX, tables.get_minimum(device, "credentials"), { persist = true })
+    device:set_field(consts.SYNC.CODE_INDEX_VERSION, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(UserCode:Get({user_identifier = device:get_field(consts.SYNC.CODE_INDEX)}))
+end
+
+-- Advance the sync-codes-from-lock flow after a report for the current code index (consts.SYNC.CODE_INDEX).
+-- `occupied` is true only when the lock reported an occupied slot at that index.
+function lock_utils.continue_code_sync(device, occupied)
+  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+  local code_index = device:get_field(consts.SYNC.CODE_INDEX)
+  if code_index == nil then return end
+
+  if occupied then
+    lock_utils.add_reported_credential(device, code_index)
+    -- reset the consecutive unoccupied codes counter since we found an occupied code
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
+  else
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1)
+  end
+
+  if code_index >= tables.get_max_entries(device, "credentials") or
+   (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+    -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+    device:set_field(consts.SYNC.CODE_INDEX, nil, { persist = true })
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, nil)
+    device:set_field(consts.SYNC.CODES_SYNCED, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
+    lock_utils.clear_busy_state(device)
+  else
+    local next_index = code_index + 1
+    device:set_field(consts.SYNC.CODE_INDEX, next_index, { persist = true })
+    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
+    device:send(UserCode:Get({user_identifier = next_index}))
+  end
 end
 
 

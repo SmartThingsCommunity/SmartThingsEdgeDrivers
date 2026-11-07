@@ -263,7 +263,10 @@ end
 
 function CapabilityHandlers.refresh(driver, device, cmd)
   device:send(DoorLock:OperationGet({}))
-  device:send(Battery:Get({}))
+
+  if device:supports_capability(capabilities.battery) then
+    device:send(Battery:Get({}))
+  end
 
   if device:supports_capability(capabilities.lockCredentials) then
     -- If we are missing the cached values for these attributes, read them so we can properly manage them locally
@@ -271,6 +274,9 @@ function CapabilityHandlers.refresh(driver, device, cmd)
        (device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME) == nil) then
       device:send(UserCode:UsersNumberGet({}))
     end
+
+    -- Allow callers to try to sync device state- fails silently if the device is busy or already synced.
+    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
   end
 end
 

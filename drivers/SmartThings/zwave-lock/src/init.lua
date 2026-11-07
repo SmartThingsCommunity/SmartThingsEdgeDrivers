@@ -40,8 +40,6 @@ function LockLifecycle.device_added(driver, device)
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
-  -- ensure our user/credential state is accurate to the current device state
-  device.thread:call_with_delay(5, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.init(driver, device)
@@ -60,6 +58,10 @@ function LockLifecycle.init(driver, device)
     -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+
+  -- ensure our user/credential state is accurate to the current device state.
+  -- the delay allows the number of supported users to be read first.
+  device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.driver_switched(driver, device)
