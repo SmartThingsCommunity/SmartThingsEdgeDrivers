@@ -161,6 +161,57 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "init: syncs codes after a delay and persists the starting code index so the sync can resume after restart",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    expect_default_pin_length(mock_device_base)
+    test.wait_for_events()
+
+    -- the sync is delayed so the number of supported users can be read first
+    test.mock_time.advance_time(15)
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device_base.id))
+    test.wait_for_events()
+
+    assert(mock_device_base.persistent_store[constants.SYNC.CODE_INDEX] == 1)
+    assert(mock_device_base.transient_store[constants.SYNC.CODE_INDEX] == nil)
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
+  "init: device whose codes have already synced does not sync again",
+  function()
+    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
+
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device_base:generate_test_message("main",
+        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+    expect_default_pin_length(mock_device_base)
+    test.wait_for_events()
+
+    test.mock_time.advance_time(15)
+    test.wait_for_events()
+    mock_device_base:set_field(constants.SYNC.CODES_SYNCED, nil, { persist = true })
+  end,
+  { test_init = make_test_init(mock_device_base) }
+)
+
+test.register_coroutine_test(
   "init: device with lockCodes but SLGA_MIGRATED not set does nothing",
   function()
     -- SLGA_MIGRATED is not set; no events or z-wave sends expected

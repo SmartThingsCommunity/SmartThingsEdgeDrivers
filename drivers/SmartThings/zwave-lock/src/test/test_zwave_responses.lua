@@ -28,6 +28,8 @@ local constants    = require "lock_utils.constants"
 
 --- @type st.zwave.CommandClass.DoorLock
 local DoorLock     = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+--- @type st.zwave.CommandClass.Battery
+local Battery      = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.UserCode
 local UserCode     = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
@@ -142,6 +144,71 @@ test.register_coroutine_test(
       "CODE_INDEX must be nil after sync completes")
     assert(mock_device:get_field(constants.DRIVER_STATE.BUSY) == false,
       "BUSY must be false after sync completes")
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION,
+      "CODES_SYNCED must record the completed sync version")
+  end
+,
+    {
+      min_api_version = 15
+    })
+
+-- the reads sent by the refresh handler on a device with no cached state
+local function expect_refresh_reads()
+  test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+  test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device.id))
+  test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device.id))
+end
+
+test.register_coroutine_test(
+  "sync_device_state: restarts from the first index when the persisted index is from a different sync version",
+  function()
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 7, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION - 1, { persist = true })
+
+    -- refresh schedules a delayed sync attempt
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.refresh.ID, command = "refresh", args = {} },
+    })
+    expect_refresh_reads()
+    test.wait_for_events()
+    test.mock_time.advance_time(15)
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device.id))
+    test.wait_for_events()
+    assert(mock_device.persistent_store[constants.SYNC.CODE_INDEX_VERSION] == constants.SYNC.CODES_SYNC_VERSION)
+
+    -- reset shared device state
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, false, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, nil, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, nil, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, nil, { persist = true })
+  end
+,
+    {
+      min_api_version = 15
+    })
+
+test.register_coroutine_test(
+  "sync_device_state: does nothing while the device is busy",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.LOCK_CREDENTIALS.ADD, {})
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.refresh.ID, command = "refresh", args = {} },
+    })
+    expect_refresh_reads()
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil, "sync must not start while busy")
+
+    -- reset shared device state
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, false, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, nil, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, nil, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, nil, { persist = true })
   end
 ,
     {
