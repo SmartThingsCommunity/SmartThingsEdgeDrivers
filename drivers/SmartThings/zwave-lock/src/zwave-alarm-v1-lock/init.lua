@@ -17,8 +17,12 @@ local METHOD = {
   KEYPAD = "keypad",
   MANUAL = "manual",
   COMMAND = "command",
-  AUTO = "auto"
+  AUTO = "auto",
+  RFID = "rfid"
 }
+
+-- Yale reports a key tag/card unlock as alarm type 144, with the tag slot in the alarm level
+local YALE_TAG_UNLOCK = 144
 
 --- Default handler for alarm command class reports, these were largely OEM-defined
 ---
@@ -47,9 +51,18 @@ local function alarm_report_handler(driver, device, cmd)
       local user_id = credential and credential.userIndex or nil
       event.data = { userIndex = user_id, method = METHOD.KEYPAD}
     end
+  elseif (alarm_type == YALE_TAG_UNLOCK and lock_utils.is_yale(device)) then
+    event = capabilities.lock.lock.unlocked()
+    if (credential_index ~= nil) then
+      event.data = { codeId = tostring(credential_index), method = METHOD.RFID }
+    else
+      event.data = { method = METHOD.RFID }
+    end
   elseif (alarm_type == 21) then
     event = capabilities.lock.lock.locked()
-    event.data = {method = (cmd.args.alarm_level == 2) and METHOD.MANUAL or METHOD.KEYPAD}
+    -- the Yale Conexis has no keypad: alarm 21 level 1 is the handle being lifted
+    local manual = cmd.args.alarm_level == 2 or lock_utils.is_yale_conexis(device)
+    event.data = {method = manual and METHOD.MANUAL or METHOD.KEYPAD}
   elseif (alarm_type == 22) then
     event = capabilities.lock.lock.unlocked()
     event.data = {method = METHOD.MANUAL}
@@ -111,6 +124,7 @@ local function alarm_report_handler(driver, device, cmd)
   end
 
   if (event ~= nil) then
+    lock_utils.handle_alarm_lock_event_delay(device, event)
     device:emit_event(event)
   end
 end

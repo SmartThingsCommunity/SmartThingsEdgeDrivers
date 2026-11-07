@@ -156,5 +156,40 @@ function lock_utils.delete_credential_report_helper(device, credential_index)
   end
 end
 
+-- [[ YALE ALARM V1 REPORTS ]] --
+
+local YALE_MFR = 0x0129
+local YALE_CONEXIS_PRODUCT_TYPE = 0x6600
+
+function lock_utils.is_yale(device)
+  return device.zwave_manufacturer_id == YALE_MFR
+end
+
+function lock_utils.is_yale_conexis(device)
+  return lock_utils.is_yale(device) and device.zwave_product_type == YALE_CONEXIS_PRODUCT_TYPE
+end
+
+-- Yale locks send a Door Lock Operation Report about a second before the alarm v1 report that says
+-- how the lock was operated. Mirror the delay bookkeeping the Notification handlers do, so later
+-- Operation Reports are held and the detailed alarm event replaces them instead of being dropped
+-- as a repeat of the current state.
+function lock_utils.handle_alarm_lock_event_delay(device, event)
+  if not lock_utils.is_yale(device) or event.capability.ID ~= capabilities.lock.ID then
+    return
+  end
+  if device:get_latest_state("main", capabilities.lock.ID, capabilities.lock.lock.ID) == event.value.value then
+    local socket = require "cosock.socket"
+    local preceding_event_time = device:get_field(consts.DELAY_LOCK_EVENT) or 0
+    local time_diff = socket.gettime() - preceding_event_time
+    if time_diff < consts.MAX_DELAY then
+      device:set_field(consts.DELAY_LOCK_EVENT, time_diff)
+    end
+  end
+  local timer = device:get_field(consts.DELAY_LOCK_EVENT_TIMER)
+  if timer ~= nil then
+    device.thread:cancel_timer(timer)
+    device:set_field(consts.DELAY_LOCK_EVENT_TIMER, nil)
+  end
+end
 
 return lock_utils
