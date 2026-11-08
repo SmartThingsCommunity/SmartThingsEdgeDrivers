@@ -10,14 +10,14 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: TotalReverseEnergy
   label: Total Reverse Energy
   capabilities:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: PhaseA
   label: Phase A
   capabilities:
@@ -28,7 +28,7 @@ components:
   - id: voltageMeasurement
     version: 1
   categories:
-    - name: CurbPowerMeter
+    - name: PowerMeasurementSensor
 - id: PhaseB
   label: Phase B
   capabilities:
@@ -39,7 +39,7 @@ components:
   - id: voltageMeasurement
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: PhaseC
   label: Phase C
   capabilities:
@@ -50,4 +50,4 @@ components:
   - id: voltageMeasurement
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
