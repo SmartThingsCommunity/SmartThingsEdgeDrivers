@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "Rti-Tek/STHZB"
+    deviceLabel: Rti-Tek STHZB
+    manufacturer: Rti-Tek
+    model: STHZB
+    deviceProfileName: rtitek-sthzb
   - id: "LUMI/lumi.sensor_ht.agl02"
     deviceLabel: Aqara Temperature and Humidity Sensor T1
     manufacturer: LUMI
