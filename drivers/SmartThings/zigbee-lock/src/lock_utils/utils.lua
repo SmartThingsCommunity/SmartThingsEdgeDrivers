@@ -99,13 +99,13 @@ function lock_utils.apply_commanded_credential(device, command_in_progress, cred
   if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
     local user_index = credential_args.userIndex
     if (user_index == 0) then user_index = tables.next_index(device, "users") end
-    local add_user = (user_index == 0) or not tables.find_entry(device, "users", user_index)
+    local user_not_found = not tables.find_entry(device, "users", user_index)
     local status = lock_utils.add_credential_and_user(device, {
       userIndex       = user_index,
       credentialIndex = credential_args.credentialIndex,
       credentialType  = credential_args.credentialType,
       credentialName  = credential_args.credentialName,
-    }, add_user)
+    }, user_not_found)
     return status, status == consts.COMMAND_RESULT.SUCCESS and user_index or nil
   elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
     return lock_utils.update_commanded_credential(device, credential_args)
