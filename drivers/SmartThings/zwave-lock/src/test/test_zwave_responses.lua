@@ -152,6 +152,36 @@ test.register_coroutine_test(
       min_api_version = 15
     })
 
+test.register_coroutine_test(
+  "user_code_report: sync does not end early on non-available, non-occupied slots",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 1, {})
+
+    -- more than 5 consecutive "disabled" slots must not count as unoccupied
+    for i = 1, 7 do
+      test.socket.zwave:__queue_receive({
+        mock_device.id,
+        UserCode:Report({
+          user_identifier = i,
+          user_id_status  = UserCode.user_id_status.DISABLED,
+        }),
+      })
+      test.socket.zwave:__expect_send(
+        UserCode:Get({ user_identifier = i + 1 }):build_test_tx(mock_device.id)
+      )
+    end
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 8, "sync must still be in progress, index=" .. tostring(mock_device:get_field(constants.SYNC.CODE_INDEX) or "nil"))
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == nil, "sync must not be marked complete")
+  end
+,
+    {
+      min_api_version = 15
+    })
+
 -- the reads sent by the refresh handler on a device with no cached state
 local function expect_refresh_reads()
   test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
