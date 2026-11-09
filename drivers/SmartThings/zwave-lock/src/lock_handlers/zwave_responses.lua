@@ -36,7 +36,9 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   local user_code_available = user_id_status == UserCode.user_id_status.AVAILABLE
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
-    lock_utils.continue_code_sync(device, user_code_occupied)
+    -- if given codes don't match the index we are expecting, then mark them explicitly as unavailable and continue
+    if user_id_status == device:get_field(consts.SYNC.CODE_INDEX) then user_code_available = false end
+    lock_utils.continue_code_sync(device, user_code_occupied, user_code_available)
   elseif user_code_occupied then
       -- Code slot is now occupied: add or update credential and associated user
       lock_utils.set_credential_report_helper(device, credential_index)

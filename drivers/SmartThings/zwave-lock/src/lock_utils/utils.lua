@@ -83,8 +83,10 @@ function lock_utils.ensure_pin_length_bounds(device)
 end
 
 -- Advance the sync-codes-from-lock flow after a report for the current code index (consts.SYNC.CODE_INDEX).
--- `occupied` is true only when the lock reported an occupied slot at that index.
-function lock_utils.continue_code_sync(device, occupied)
+-- `occupied` is true when the lock reported an occupied slot at that index; `available` is true only when
+-- it explicitly reported the slot as available. Any other status (reserved, disabled, unknown) neither
+-- resets nor advances the consecutive-unoccupied counter, so it can't end the sync early.
+function lock_utils.continue_code_sync(device, occupied, available)
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
   local code_index = device:get_field(consts.SYNC.CODE_INDEX)
   if code_index == nil then return end
@@ -93,7 +95,7 @@ function lock_utils.continue_code_sync(device, occupied)
     lock_utils.add_reported_credential(device, code_index)
     -- reset the consecutive unoccupied codes counter since we found an occupied code
     device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
-  else
+  elseif available then
     device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1)
   end
 
