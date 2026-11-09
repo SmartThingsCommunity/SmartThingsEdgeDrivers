@@ -565,7 +565,7 @@ zwaveManufacturer:
     productId: 0xC001
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF07
-    deviceLabel: Smart Plug
+    deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF07
@@ -880,13 +880,13 @@ zwaveManufacturer:
     productId: 0xFF0E
     deviceProfileName: metering-switch
   - id: "0312/FF01/FF97"
-    deviceLabel: IP65 Outdoor Zwave Smart Plug with 2 Individual Outlets
+    deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productId: 0xFF97
     productType: 0xFF01
     deviceProfileName: switch-binary
   - id: "0312/FF00/FF0C"
-    deviceLabel: Z-Wave Smart Plug
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productId: 0xFF0C
     productType: 0xFF00
