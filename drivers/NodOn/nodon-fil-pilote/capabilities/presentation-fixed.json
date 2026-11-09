@@ -1,0 +1,211 @@
+{
+  "id": "musictheme49844.filPiloteMode",
+  "version": 1,
+  "dashboard": {
+    "states": [
+      {
+        "label": "{{filPiloteMode.value}}",
+        "alternatives": [
+          {
+            "key": "off",
+            "value": "Off",
+            "type": "inactive"
+          },
+          {
+            "key": "comfort",
+            "value": "Comfort",
+            "type": "active"
+          },
+          {
+            "key": "eco",
+            "value": "Eco",
+            "type": "active"
+          },
+          {
+            "key": "antiFreeze",
+            "value": "Anti-Freeze",
+            "type": "active"
+          },
+          {
+            "key": "comfort1",
+            "value": "Comfort -1°C",
+            "type": "active"
+          },
+          {
+            "key": "comfort2",
+            "value": "Comfort -2°C",
+            "type": "active"
+          }
+        ]
+      }
+    ],
+    "actions": [],
+    "basicPlus": []
+  },
+  "detailView": [
+    {
+      "label": "Fil Pilote Mode",
+      "displayType": "list",
+      "list": {
+        "command": {
+          "name": "setFilPiloteMode",
+          "alternatives": [
+            {
+              "key": "off",
+              "value": "Off",
+              "type": "inactive"
+            },
+            {
+              "key": "comfort",
+              "value": "Comfort",
+              "type": "active"
+            },
+            {
+              "key": "eco",
+              "value": "Eco",
+              "type": "active"
+            },
+            {
+              "key": "antiFreeze",
+              "value": "Anti-Freeze",
+              "type": "active"
+            },
+            {
+              "key": "comfort1",
+              "value": "Comfort -1°C",
+              "type": "active"
+            },
+            {
+              "key": "comfort2",
+              "value": "Comfort -2°C",
+              "type": "active"
+            }
+          ],
+          "argumentType": "string"
+        },
+        "state": {
+          "value": "filPiloteMode.value",
+          "valueType": "string",
+          "alternatives": [
+            {
+              "key": "off",
+              "value": "Off",
+              "type": "inactive"
+            },
+            {
+              "key": "comfort",
+              "value": "Comfort",
+              "type": "active"
+            },
+            {
+              "key": "eco",
+              "value": "Eco",
+              "type": "active"
+            },
+            {
+              "key": "antiFreeze",
+              "value": "Anti-Freeze",
+              "type": "active"
+            },
+            {
+              "key": "comfort1",
+              "value": "Comfort -1°C",
+              "type": "active"
+            },
+            {
+              "key": "comfort2",
+              "value": "Comfort -2°C",
+              "type": "active"
+            }
+          ]
+        }
+      },
+      "state": null
+    }
+  ],
+  "automation": {
+    "conditions": [
+      {
+        "label": "Fil Pilote Mode is",
+        "displayType": "list",
+        "list": {
+          "alternatives": [
+            {
+              "key": "off",
+              "value": "Off",
+              "type": "inactive"
+            },
+            {
+              "key": "comfort",
+              "value": "Comfort",
+              "type": "active"
+            },
+            {
+              "key": "eco",
+              "value": "Eco",
+              "type": "active"
+            },
+            {
+              "key": "antiFreeze",
+              "value": "Anti-Freeze",
+              "type": "active"
+            },
+            {
+              "key": "comfort1",
+              "value": "Comfort -1°C",
+              "type": "active"
+            },
+            {
+              "key": "comfort2",
+              "value": "Comfort -2°C",
+              "type": "active"
+            }
+          ],
+          "value": "filPiloteMode.value",
+          "valueType": "string"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "label": "Set Fil Pilote Mode",
+        "displayType": "list",
+        "list": {
+          "command": "setFilPiloteMode",
+          "alternatives": [
+            {
+              "key": "off",
+              "value": "Off",
+              "type": "inactive"
+            },
+            {
+              "key": "comfort",
+              "value": "Comfort",
+              "type": "active"
+            },
+            {
+              "key": "eco",
+              "value": "Eco",
+              "type": "active"
+            },
+            {
+              "key": "antiFreeze",
+              "value": "Anti-Freeze",
+              "type": "active"
+            },
+            {
+              "key": "comfort1",
+              "value": "Comfort -1°C",
+              "type": "active"
+            },
+            {
+              "key": "comfort2",
+              "value": "Comfort -2°C",
+              "type": "active"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

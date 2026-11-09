@@ -1,0 +1,11 @@
+name: 'NodOn Fil Pilote Controller'
+packageKey: 'nodon-fil-pilote-v2'
+permissions:
+  zigbee: {}
+profiles:
+  - id: "nodon-fil-pilote"
+    deviceLabel: "NodOn Fil Pilote"
+    manufacturer: "NodOn"
+    model: "SIN-4-FP-21"
+    deviceProfileName: nodon-fil-pilote
+preferences: []
