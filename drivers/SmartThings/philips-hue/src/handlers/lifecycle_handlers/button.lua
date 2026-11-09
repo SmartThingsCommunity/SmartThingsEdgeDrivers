@@ -35,7 +35,7 @@ function ButtonLifecycleHandlers.added(driver, device, parent_device_id, resourc
     return
   end
 
-  local button_info = Discovery.device_state_disco_cache[device_button_resource_id]
+  local button_info = Discovery.cached_state_for_device(driver, device, device_button_resource_id)
   if not button_info then
     log.error(
       string.format(
@@ -120,6 +120,15 @@ function ButtonLifecycleHandlers.init(driver, device)
     hue_id_to_device[device_button_resource_id] = device
   end
 
+  if not hue_device_id then
+    -- `added` hasn't completed for this device (e.g. its bridge isn't ready), so there is nothing
+    -- to initialize yet. The stray device resolver will run `added` and `init` again later.
+    log.warn(string.format(
+      "Button %s has no Hue device ID, skipping init until it has been added", (device and device.label) or "unknown button"
+    ))
+    return
+  end
+
   local maybe_idx_map = device:get_field(Fields.BUTTON_INDEX_MAP)
   local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
 
@@ -139,7 +148,7 @@ function ButtonLifecycleHandlers.init(driver, device)
   driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
 
   local button_info, err
-  button_info = Discovery.device_state_disco_cache[device_button_resource_id]
+  button_info = Discovery.cached_state_for_device(driver, device, device_button_resource_id)
   if not button_info then
     log.debug("no button info")
     local parent_bridge = utils.get_hue_bridge_for_device(
@@ -153,7 +162,7 @@ function ButtonLifecycleHandlers.init(driver, device)
         api_instance,
         hue_device_id,
         parent_bridge.device_network_id,
-        Discovery.device_state_disco_cache
+        Discovery.state_cache_for_bridge(parent_bridge.device_network_id)
       )
       if err then
         log.error(

@@ -54,6 +54,12 @@ http.expect_request(conns.rest, "GET", "/clip/v2/resource/device", {
   } } },
   reusable = true,
 })
+-- Each scan reads the state of the devices it finds, so the cached light is read again on top of
+-- its two init refreshes (registered after them, so those take the first two reads).
+http.expect_request(conns.rest, "GET", "/clip/v2/resource/light/" .. cached_light.rid, {
+  body = hue_test_helpers.light_resource(cached_light),
+  reusable = true,
+})
 
 hue_test_helpers.setup_scenario_test_init(function()
   fixtures.test_init()

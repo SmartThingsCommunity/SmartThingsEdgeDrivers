@@ -29,7 +29,7 @@ local HueApi = require "hue.api"
 ---
 --- The fixtures pre-populate what an earlier discovery and pairing would have left behind (the
 --- bridge's network info and API key in the driver's datastore, each child's resource state in
---- `disco`'s `device_state_disco_cache`), so that the real `added`/`init` lifecycle handlers
+--- the bridge's partition of `disco`'s state cache), so that the real `added`/`init` lifecycle handlers
 --- resolve without discovery (covered separately in test_hue_bridge_discovery.lua). Everything
 --- after that runs for real against the mock LAN socket: the bridge's network init connects its
 --- event stream, and each child refreshes its state from the bridge.
@@ -507,7 +507,7 @@ function HueDeviceBuilder:start()
     -- Populate disco cache with child device states
     for _, child_config in ipairs(self.children) do
       child_config.state.parent_device_id = mock_bridge.id
-      disco.device_state_disco_cache[child_config.rid] = child_config.state
+      disco.state_cache_for_bridge(self.bridge_dni)[child_config.rid] = child_config.state
     end
   end)
 

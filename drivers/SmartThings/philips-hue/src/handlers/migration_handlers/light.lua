@@ -43,7 +43,9 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
-      Discovery.device_state_disco_cache[utils.get_hue_rid(device) or v1_id] --[[@as HueLightInfo]]
+      (bridge_device and (Discovery.state_cache_for_bridge(bridge_device.device_network_id) or {})[
+        utils.get_hue_rid(device) or v1_id
+      ]) --[[@as HueLightInfo]]
 
   if not (api_instance and bridge_device and bridge_device:get_field(Fields._INIT)
         and driver.joined_bridges[bridge_id] and light_resource) then

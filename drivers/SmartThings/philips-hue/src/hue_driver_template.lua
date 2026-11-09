@@ -38,6 +38,7 @@ local function _remove(driver, device)
     -- This operation will be committed to the datastore
     -- immediately, see the note in init.lua#L57
     Discovery.api_keys[device.device_network_id] = nil
+    Discovery.device_state_disco_cache_by_bridge[device.device_network_id] = nil
   end
 end
 
