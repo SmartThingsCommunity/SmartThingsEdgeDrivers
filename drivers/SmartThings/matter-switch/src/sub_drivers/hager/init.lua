@@ -4,9 +4,11 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
+local im = require "st.matter.interaction_model"
 local device_lib = require "st.device"
 local buttonCfg = require "switch_utils.device_configuration".ButtonCfg
 local create_child = require "switch_utils.device_configuration".ChildCfg.create_or_update_child_devices
+local subscriptions = require "sub_drivers.hager.hager_utils.subscriptions"
 local switch_utils = require "switch_utils.utils"
 local fields = require "switch_utils.fields"
 local version = require "version"
@@ -216,39 +218,45 @@ local function info_changed(driver, device, event, args)
       local parent = device:get_parent_device()
       local matter_device = get_matter_device(parent)
       local map = {}
-      if device:supports_capability(capabilities.button) then
-        local button_eps = parent:get_field(BUTTON_EPS)
-        local clean_eps = {}
-        table.sort(button_eps)
-        for _, v in ipairs(button_eps or {}) do
-          table.insert(clean_eps, v)
-        end
 
-        buttonCfg.update_button_component_map(matter_device, clean_eps[1], clean_eps)
-        for _, ep_id in ipairs(clean_eps) do
-          subscribe(device, ep_id, clusters.Switch.ID, nil, clusters.Switch.events.MultiPressComplete.ID)
-          subscribe(device, ep_id, clusters.Switch.ID, nil, clusters.Switch.events.LongPress.ID)
-          device:emit_event_for_endpoint(ep_id, capabilities.button.supportedButtonValues({ "pushed", "double", "held" }))
+      local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+
+      for cap_id, attrs in pairs(subscriptions.subscribed_attributes) do
+        if device:supports_capability_by_id(cap_id) then
+          for _, attr in ipairs(attrs) do
+            local cluster_id = (attr.cluster or attr._cluster).ID
+            subscribe_request:with_info_block(im.InteractionInfoBlock(nil, cluster_id, attr.ID))
+          end
+          for k, v in pairs(subscriptions.component_map[cap_id] or {}) do map[k] = v end
         end
-        return
-      elseif device:supports_capability(capabilities.switch) then
-        map = { main = 3 }
-        subscribe(device, nil, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil)
-        if device:supports_capability(capabilities.switchLevel) then
-          map = { main = 4 }
-          subscribe(device, nil, clusters.LevelControl.ID, clusters.LevelControl.attributes.CurrentLevel.ID, nil)
-          subscribe(device, nil, clusters.LevelControl.ID, clusters.LevelControl.attributes.MaxLevel.ID)
-          subscribe(device, nil, clusters.LevelControl.ID, clusters.LevelControl.attributes.MinLevel.ID)
-        end
-      elseif device:supports_capability(capabilities.motionSensor) then
-        subscribe(device, nil, clusters.OccupancySensing.ID, clusters.OccupancySensing.attributes.Occupancy.ID, nil)
-        subscribe(device, nil, clusters.IlluminanceMeasurement.ID, clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID, nil)
-      elseif device:supports_capability(capabilities.windowShadeLevel) then
-        map = { main = 5 }
-        subscribe(device, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.OperationalStatus.ID)
-        subscribe(device, nil, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil)
       end
+
+      for cap_id, events in pairs(subscriptions.subscribed_events) do
+        if cap_id == capabilities.button.ID and device:supports_capability_by_id(cap_id) then
+          local button_eps = parent:get_field(BUTTON_EPS)
+          local clean_eps = {}
+          table.sort(button_eps)
+
+          for _, v in ipairs(button_eps or {}) do
+            table.insert(clean_eps, v)
+          end
+          buttonCfg.update_button_component_map(matter_device, clean_eps[1], clean_eps)
+          for _, ep_id in ipairs(button_eps) do
+            for _, event in ipairs(events) do
+              local cluster_id = (event.cluster or event._cluster).ID
+              subscribe_request:with_info_block(im.InteractionInfoBlock(ep_id, cluster_id, nil, event.ID))
+            end
+            device:emit_event_for_endpoint(ep_id, capabilities.button.supportedButtonValues({ "pushed", "double", "held" }))
+          end
+        end
+      end
+
+      if #subscribe_request.info_blocks > 0 then
+        device:send(subscribe_request)
+      end
+
       if not is_non_bridge_type(device) and device.id == matter_device.id then
+        for k, v in pairs(matter_device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do map[k] = v end
         parent:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, map, { persist = true })
         matter_device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, map, { persist = true })
       end
@@ -321,8 +329,10 @@ local function handle_descriptor_report(driver, device, ib, response)
   local removed_eps, added_eps = detect_endpoint_changes(device, new_eps)
   device:set_field(ACTIVE_EPS, new_eps, { persist = true })
 
+  local dtl_subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   for _, ep_id in ipairs(added_eps or {}) do
-    subscribe(parent, ep_id, clusters.Descriptor.ID, clusters.Descriptor.attributes.DeviceTypeList.ID, nil)
+    dtl_subscribe_request:with_info_block(im.InteractionInfoBlock(ep_id, clusters.Descriptor.ID, clusters.Descriptor.attributes.DeviceTypeList.ID))
+
     if product_id == PRODUCT_ID.SWITCH_1G and ep_id == 3 then
       matter_device:try_update_metadata({ profile = "light-binary" })
     elseif product_id == PRODUCT_ID.SWITCH_2G then
@@ -336,33 +346,38 @@ local function handle_descriptor_report(driver, device, ib, response)
     end
   end
 
-  for _, ep_id in ipairs(removed_eps) do
-    local button_eps = parent:get_field(BUTTON_EPS) or {}
-    local clean_eps = {}
+  if #dtl_subscribe_request.info_blocks > 0 then
+    parent:send(dtl_subscribe_request)
+  end
 
+  if #removed_eps > 0 then
+    local button_eps = parent:get_field(BUTTON_EPS) or {}
+    local removal_set = {}
+    for _, ep_id in ipairs(removed_eps) do removal_set[ep_id] = true end
+    local clean_eps = {}
     for _, value in ipairs(button_eps) do
-      if value ~= ep_id then
-        table.insert(clean_eps, value)
-      end
+      if not removal_set[value] then table.insert(clean_eps, value) end
     end
     table.sort(clean_eps)
     parent:set_field(BUTTON_EPS, clean_eps, { persist = true })
     matter_device:set_field(BUTTON_EPS, clean_eps, { persist = true })
+  end
 
+  for _, ep_id in ipairs(removed_eps) do
     local child = parent:get_child_by_parent_assigned_key(tostring(ep_id))
     if child then
       driver:try_delete_device(child.id)
     end
 
     if ep_id == 3 then
-      if device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_1G then
+      if product_id == PRODUCT_ID.SWITCH_1G then
         matter_device:try_update_metadata({ profile = "2-button" })
-      elseif device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_2G then
+      elseif product_id == PRODUCT_ID.SWITCH_2G then
         local has_ep4 = switch_utils.tbl_contains(new_eps, 4)
         matter_device:try_update_metadata({ profile = has_ep4 and "2-button" or "4-button" })
       end
     elseif ep_id == 4 then
-      if device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_2G then
+      if product_id == PRODUCT_ID.SWITCH_2G then
         local button_comb = switch_utils.tbl_contains(new_eps, 3)
         if button_comb then
           matter_device:try_update_metadata({ profile = "2-button" })
@@ -388,6 +403,7 @@ local function device_type_handler (driver, device, ib)
 
   local matter_device = get_matter_device(device)
   local stored_btn_eps = parent:get_field(BUTTON_EPS) or {}
+  local product_id = device.manufacturer_info and device.manufacturer_info.product_id
   local new_btn_eps = {}
   local ep_id = ib.endpoint_id
   local value = ib.data.elements
@@ -421,9 +437,9 @@ local function device_type_handler (driver, device, ib)
     if device_type_id == fields.DEVICE_TYPE_ID.LIGHT.ON_OFF then
       local active_eps = device:get_field(ACTIVE_EPS)
 
-      if ep_id == 3 and device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_1G then
+      if ep_id == 3 and product_id == PRODUCT_ID.SWITCH_1G then
         return
-      elseif ep_id == 4 and device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_2G then
+      elseif ep_id == 4 and product_id == PRODUCT_ID.SWITCH_2G then
         if switch_utils.tbl_contains(active_eps, 3) then
           local ep3 = parent:get_child_by_parent_assigned_key("3")
           if ep3 then
@@ -433,7 +449,7 @@ local function device_type_handler (driver, device, ib)
           create_child(driver, parent, { 4 }, 1, assign_profile_for_endpoint(device_type_id))
           return
         end
-      elseif ep_id == 3 and device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_2G then
+      elseif ep_id == 3 and product_id == PRODUCT_ID.SWITCH_2G then
         if not switch_utils.tbl_contains(active_eps, 4) then
           create_child(driver, parent, { 3 }, 1, assign_profile_for_endpoint(device_type_id))
         else
@@ -447,7 +463,7 @@ local function device_type_handler (driver, device, ib)
       end
       create_child(driver, parent, { ep_id }, 1, assign_profile_for_endpoint(device_type_id))
     elseif device_type_id == fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE then
-      if ep_id == 4 and device.manufacturer_info.product_id == PRODUCT_ID.SWITCH_1G then
+      if ep_id == 4 and product_id == PRODUCT_ID.SWITCH_1G then
         return
       elseif ep_id == 1 and device.manufacturer_info.product_id == PRODUCT_ID.ROTARY_DIMMER then
         device:try_update_metadata({ profile = "light-level" })

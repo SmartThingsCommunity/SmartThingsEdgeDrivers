@@ -727,7 +727,7 @@ local parent_1g = create_parent_device(0x0005)  -- 1G button product
 local parent_pir = create_parent_device(0x0007)  -- PIR product
 
 local function test_init()
-  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+  test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
 end
 
 test.set_test_init_function(test_init)
