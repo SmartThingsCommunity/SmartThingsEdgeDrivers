@@ -17,6 +17,7 @@ local ZWAVE_MULTI_BUTTON_FINGERPRINTS = {
   {mfr = 0x0086, prod = 0x0001, model = 0x0003}, -- Aeotec Mimimote,
   {mfr = 0x0371, prod = 0x0102, model = 0x0016}, -- Aeotec illumino Wallmote 7,
   {mfr = 0x0460, prod = 0x0009, model = 0x0081}, -- Shelly Wave i4,
+  {mfr = 0x0312, prod = 0x0924, model = 0xD001}, -- Minoston Wallmote,
   {mfr = 0x0460, prod = 0x0009, model = 0x0082}  -- Shelly Wave i4DC,
 }
 
