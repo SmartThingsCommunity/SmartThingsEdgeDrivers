@@ -72,15 +72,47 @@ function StrayDeviceHelper.bridge_has_strays(driver, stray_devices, bridge_devic
   return false
 end
 
+--- Whether the stray is the Hue device `device_data`'s service `svc_rid`: by the v1 ID a light
+--- migrated from the DTH integration stored, or by resource ID.
+---@param stray_device HueChildDevice
+---@param device_data HueDeviceInfo
+---@param svc_rid string
+---@return boolean matching_v1_id
+---@return boolean matching_uuid
+local function stray_matches_service(stray_device, device_data, svc_rid)
+  local matching_v1_id = (stray_device.data and stray_device.data.bulbId and
+      stray_device.data.bulbId == (device_data.id_v1 or ""):gsub("/lights/", "")) or false
+  local matching_uuid = utils.get_hue_rid(stray_device) == svc_rid or
+      stray_device.device_network_id == svc_rid
+  return matching_v1_id, matching_uuid
+end
+
+--- Whether any of the bridge `bridge_device_uuid`'s own strays is one of the services of the Hue
+--- device `device_data`. Only needs the bridge's device listing, so the bridge scan can skip,
+--- without any requests, the devices that no stray is waiting for.
+---@param driver HueDriver
+---@param stray_devices table<string,HueChildDevice>
+---@param bridge_device_uuid string
+---@param device_data HueDeviceInfo
+---@return boolean
+function StrayDeviceHelper.device_has_matching_stray(driver, stray_devices, bridge_device_uuid, device_data)
+  for _, stray_device in pairs(stray_devices) do
+    if StrayDeviceHelper.stray_belongs_to_bridge(driver, stray_device, bridge_device_uuid) then
+      for _, svc_info in ipairs(device_data.services or {}) do
+        local matching_v1_id, matching_uuid = stray_matches_service(stray_device, device_data, svc_info.rid)
+        if matching_v1_id or matching_uuid then return true end
+      end
+    end
+  end
+  return false
+end
+
 local function check_strays_for_match(hue_driver, api_instance, stray_devices, bridge_device_uuid, device_data, svc_info)
   for _, stray_device in pairs(stray_devices) do
     -- Only this bridge's own strays can match (see `bridge_for_stray`).
     local matching_v1_id, matching_uuid = false, false
     if StrayDeviceHelper.stray_belongs_to_bridge(hue_driver, stray_device, bridge_device_uuid) then
-      matching_v1_id = stray_device.data and stray_device.data.bulbId and
-          stray_device.data.bulbId == (device_data.id_v1 or ""):gsub("/lights/", "")
-      matching_uuid = utils.get_hue_rid(stray_device) == svc_info.rid or
-          stray_device.device_network_id == svc_info.rid
+      matching_v1_id, matching_uuid = stray_matches_service(stray_device, device_data, svc_info.rid)
     end
 
     if matching_v1_id or matching_uuid then
@@ -161,6 +193,11 @@ function StrayDeviceHelper.discovery_callback(
     hue_driver, bridge_network_id, api_instance, primary_services,
     device_data, msg_device, bridge_device_uuid, stray_devices
 )
+  -- The scan repeats while strays remain, so only read the state of the devices a stray is
+  -- waiting for, not every device on the bridge.
+  if not StrayDeviceHelper.device_has_matching_stray(hue_driver, stray_devices, bridge_device_uuid, device_data) then
+    return
+  end
   -- `primary_services` maps each service type to the list of the device's services of that type.
   for rtype, services in pairs(primary_services) do
     if not (HueDeviceTypes.can_join_device_for_service(rtype)) then goto next_rtype end
@@ -263,81 +300,91 @@ function StrayDeviceHelper.spawn()
       end
 
       do
-        local msg_device = msg.device
-        thread_local_driver = msg.driver
-        if msg.type == StrayDeviceHelper.MessageTypes.FoundBridge then
-          local bridge_ip = msg_device:get_field(Fields.IPV4)
-          local api_instance =
-              msg_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
-              or Discovery.disco_api_instances[msg_device.device_network_id]
-
-          if not api_instance then
-            api_instance = HueApi.new_bridge_manager(
-              "https://" .. bridge_ip,
-              msg_device:get_field(HueApi.APPLICATION_KEY_HEADER),
-              utils.labeled_socket_builder((msg_device.label or msg_device.device_network_id or msg_device.id or "unknown bridge"))
-            )
-            Discovery.disco_api_instances[msg_device.device_network_id] = api_instance
-          end
-
-          found_bridges[msg_device.id] = msg.device
-          local bridge_device_uuid = msg_device.id
-
-          if StrayDeviceHelper.bridge_has_strays(thread_local_driver, stray_devices, bridge_device_uuid) then
-            log.info(
-              string.format(
-                "Stray devices handler notified of new bridge %s, scanning bridge",
-                (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
-              )
-            )
-            Discovery.search_bridge_for_supported_devices(thread_local_driver,
-              msg_device:get_field(Fields.BRIDGE_ID),
-              api_instance,
-              function(driver, bridge_network_id, primary_services, device_data)
-                StrayDeviceHelper.discovery_callback(
-                  driver,
-                  bridge_network_id,
-                  api_instance,
-                  primary_services,
-                  device_data,
-                  msg_device,
-                  bridge_device_uuid,
-                  stray_devices
-                )
-              end,
-              "[process_strays]"
-            )
-            log.info(string.format(
-              "Finished querying bridge %s for devices from stray devices handler",
-              (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
-            )
-            )
-            StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, msg_device.id)
-          end
-        elseif msg.type == StrayDeviceHelper.MessageTypes.NewStrayDevice then
-          stray_devices[msg_device.device_network_id] = msg_device
-
-          local maybe_bridge = utils.get_hue_bridge_for_device(thread_local_driver, msg_device)
-
-          if maybe_bridge ~= nil then
-            local bridge_ip = maybe_bridge:get_field(Fields.IPV4)
+        -- Catch errors handling a message: an error escaping this task ends it, and with it the
+        -- resolution of every stray on every bridge for the rest of the driver's run.
+        local handled, handle_err = pcall(function()
+          local msg_device = msg.device
+          thread_local_driver = msg.driver
+          if msg.type == StrayDeviceHelper.MessageTypes.FoundBridge then
+            local bridge_ip = msg_device:get_field(Fields.IPV4)
             local api_instance =
-                maybe_bridge:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
-                or Discovery.disco_api_instances[maybe_bridge.device_network_id]
+                msg_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
+                or Discovery.disco_api_instances[msg_device.device_network_id]
 
-            if not api_instance and bridge_ip then
+            if not api_instance then
               api_instance = HueApi.new_bridge_manager(
                 "https://" .. bridge_ip,
-                maybe_bridge:get_field(HueApi.APPLICATION_KEY_HEADER),
-                utils.labeled_socket_builder((maybe_bridge.label or maybe_bridge.device_network_id or maybe_bridge.id or "unknown bridge"))
+                msg_device:get_field(HueApi.APPLICATION_KEY_HEADER),
+                utils.labeled_socket_builder((msg_device.label or msg_device.device_network_id or msg_device.id or "unknown bridge"))
               )
-              Discovery.disco_api_instances[maybe_bridge.device_network_id] = api_instance
+              Discovery.disco_api_instances[msg_device.device_network_id] = api_instance
             end
 
-            if api_instance then
-              StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, maybe_bridge.id)
+            found_bridges[msg_device.id] = msg.device
+            local bridge_device_uuid = msg_device.id
+
+            if StrayDeviceHelper.bridge_has_strays(thread_local_driver, stray_devices, bridge_device_uuid) then
+              log.info(
+                string.format(
+                  "Stray devices handler notified of new bridge %s, scanning bridge",
+                  (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
+                )
+              )
+              Discovery.search_bridge_for_supported_devices(thread_local_driver,
+                msg_device:get_field(Fields.BRIDGE_ID),
+                api_instance,
+                function(driver, bridge_network_id, primary_services, device_data)
+                  StrayDeviceHelper.discovery_callback(
+                    driver,
+                    bridge_network_id,
+                    api_instance,
+                    primary_services,
+                    device_data,
+                    msg_device,
+                    bridge_device_uuid,
+                    stray_devices
+                  )
+                end,
+                "[process_strays]"
+              )
+              log.info(string.format(
+                "Finished querying bridge %s for devices from stray devices handler",
+                (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
+              )
+              )
+              StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, msg_device.id)
+            end
+          elseif msg.type == StrayDeviceHelper.MessageTypes.NewStrayDevice then
+            stray_devices[msg_device.device_network_id] = msg_device
+
+            local maybe_bridge = utils.get_hue_bridge_for_device(thread_local_driver, msg_device)
+
+            if maybe_bridge ~= nil then
+              local bridge_ip = maybe_bridge:get_field(Fields.IPV4)
+              local api_instance =
+                  maybe_bridge:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
+                  or Discovery.disco_api_instances[maybe_bridge.device_network_id]
+
+              if not api_instance and bridge_ip then
+                api_instance = HueApi.new_bridge_manager(
+                  "https://" .. bridge_ip,
+                  maybe_bridge:get_field(HueApi.APPLICATION_KEY_HEADER),
+                  utils.labeled_socket_builder((maybe_bridge.label or maybe_bridge.device_network_id or maybe_bridge.id or "unknown bridge"))
+                )
+                Discovery.disco_api_instances[maybe_bridge.device_network_id] = api_instance
+              end
+
+              if api_instance then
+                StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, maybe_bridge.id)
+              end
             end
           end
+        end)
+        if not handled then
+          log.error_with({ hub_logs = true }, string.format(
+            "Error handling %s message in the stray device resolver: %s",
+            tostring(type(msg) == "table" and msg.type or "unknown"), tostring(handle_err)
+          ))
         end
       end
       ::continue::

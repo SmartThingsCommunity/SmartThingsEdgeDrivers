@@ -54,12 +54,8 @@ http.expect_request(conns.rest, "GET", "/clip/v2/resource/device", {
   } } },
   reusable = true,
 })
--- Each scan reads the state of the devices it finds, so the cached light is read again on top of
--- its two init refreshes (registered after them, so those take the first two reads).
-http.expect_request(conns.rest, "GET", "/clip/v2/resource/light/" .. cached_light.rid, {
-  body = hue_test_helpers.light_resource(cached_light),
-  reusable = true,
-})
+-- The scans don't read the cached light: no stray is waiting for it. Its two init refreshes are
+-- the only reads expected of it, so another would fail the test.
 
 hue_test_helpers.setup_scenario_test_init(function()
   fixtures.test_init()
@@ -84,6 +80,16 @@ test.register_coroutine_test(
       "expected the driver to look for the stray light on the bridge once the bridge initialized")
     assert(http.count_requests(conns.rest, "GET", "/clip/v2/resource/light/" .. NEW_LIGHT_RID) == 0,
       "expected no state request for the stray light")
+
+    -- The stray stays queued, so the bridge is scanned for it again every 30 seconds. Let a few of
+    -- those scans run: none of them should read the state of a device no stray is waiting for.
+    local scans = http.count_requests(conns.rest, "GET", "/clip/v2/resource/device")
+    test.wait_until(function()
+      return http.count_requests(conns.rest, "GET", "/clip/v2/resource/device") >= scans + 2
+    end, { within = 120, message = "the bridge being scanned again for the stray" })
+    test.wait_for_events()
+    assert(http.count_requests(conns.rest, "GET", "/clip/v2/resource/light/" .. cached_light.rid) == 2,
+      "expected the scans not to read the state of the cached light")
 
     local cached = fixtures.driver_device(mock_cached_light)
     assert(cached:get_field(Fields._ADDED) == true and cached:get_field(Fields.DEVICE_TYPE) == "light",
