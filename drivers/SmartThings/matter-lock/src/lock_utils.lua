@@ -115,6 +115,7 @@ end
 -- user_index and credential_index are used in the matter commands
 --
 function lock_utils.get_field_for_endpoint(device, field, endpoint)
+  device.log.info_with({hub_logs=true}, string.format("!!get_field_for_endpoint: field: %s, endpoint: %s", field, endpoint))
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
 
