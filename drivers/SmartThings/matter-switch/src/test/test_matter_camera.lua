@@ -3619,6 +3619,88 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "setStream reallocation should omit watermark and OSD when those features are not supported",
+  function()
+    update_device_profile_no_per_zone_sensitivity()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_no_per_zone_sensitivity.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device_no_per_zone_sensitivity, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_no_per_zone_sensitivity:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 1280, height = 720, fps = 30 },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            }
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device_no_per_zone_sensitivity.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        1,
+        "liveStream",  -- type
+        "Stream 1",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1280, y = 720} },  -- viewport
+        "enabled",  -- watermark (ignored, feature not supported)
+        "enabled"  -- onScreenDisplay (ignored, feature not supported)
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device_no_per_zone_sensitivity.id,
+      clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(mock_device_no_per_zone_sensitivity, CAMERA_EP, 1)
+    })
+    test.socket.matter:__expect_send({
+      mock_device_no_per_zone_sensitivity.id,
+      clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(mock_device_no_per_zone_sensitivity, CAMERA_EP,
+        clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+        clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+        30,
+        60,
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        10000,
+        2000000,
+        4000,
+        nil,
+        nil
+      )
+    })
+  end,
+  {
+    test_init = test_init_no_per_zone_sensitivity,
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Stream label should persist across attribute reports",
   function()
     update_device_profile()

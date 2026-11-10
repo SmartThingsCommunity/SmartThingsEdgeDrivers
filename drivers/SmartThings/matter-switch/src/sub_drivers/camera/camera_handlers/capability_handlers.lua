@@ -362,14 +362,16 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
 
   local watermark_enabled, on_screen_display_enabled
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
-    clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+  local watermark_supported = camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.WATERMARK)
+  local on_screen_display_supported = camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY)
+  if watermark_supported then
     if cmd.args.watermark ~= nil then
       watermark_enabled = cmd.args.watermark == "enabled"
     end
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
-    clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+  if on_screen_display_supported then
     if cmd.args.onScreenDisplay ~= nil then
       on_screen_display_enabled = cmd.args.onScreenDisplay == "enabled"
     end
@@ -469,11 +471,13 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     })
   end
 
-  if watermark_enabled == nil then
+  -- WatermarkEnabled and OSDEnabled are only permitted in VideoStreamAllocate when the corresponding
+  -- feature is supported, so leave them nil (omitted) otherwise.
+  if watermark_supported and watermark_enabled == nil then
     watermark_enabled = camera_fields.video_stream_defaults.watermark_enabled
   end
 
-  if on_screen_display_enabled == nil then
+  if on_screen_display_supported and on_screen_display_enabled == nil then
     on_screen_display_enabled = camera_fields.video_stream_defaults.on_screen_display_enabled
   end
 
