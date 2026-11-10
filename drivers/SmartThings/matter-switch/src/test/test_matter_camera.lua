@@ -610,7 +610,7 @@ local function update_device_profile_no_per_zone_sensitivity()
 
   test.socket.capability:__expect_send(
     mock_device_no_per_zone_sensitivity:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
-      {"liveStreaming", "clipRecording", "perStreamViewports"}
+      {"liveStreaming", "clipRecording"}
     ))
   )
 
@@ -673,7 +673,7 @@ local function update_device_profile_no_user_defined_zone()
 
   test.socket.capability:__expect_send(
     mock_device_no_user_defined_zone:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
-      {"liveStreaming", "clipRecording", "perStreamViewports"}
+      {"liveStreaming", "clipRecording"}
     ))
   )
 
