@@ -472,6 +472,14 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     })
   end
 
+  local max_frame_rate = math.min(
+    device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or camera_fields.video_stream_defaults.max_frame_rate,
+    camera_fields.video_stream_defaults.max_frame_rate
+  )
+  -- Use the requested fps as the MinFrameRate, capped so that it never exceeds MaxFrameRate.
+  local requested_fps = cmd.args.resolution ~= nil and cmd.args.resolution.fps or nil
+  local min_frame_rate = math.min(requested_fps or camera_fields.video_stream_defaults.min_frame_rate, max_frame_rate)
+
   -- WatermarkEnabled and OSDEnabled are only permitted in VideoStreamAllocate when the corresponding
   -- feature is supported, so leave them nil (omitted) otherwise.
   if watermark_supported and watermark_enabled == nil then
@@ -487,9 +495,8 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
     stream_usage,
     camera_fields.video_stream_defaults.codec,
-    camera_fields.video_stream_defaults.min_frame_rate,
-    math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or camera_fields.video_stream_defaults.max_frame_rate,
-      camera_fields.video_stream_defaults.max_frame_rate),
+    min_frame_rate,
+    max_frame_rate,
     min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or camera_fields.video_stream_defaults.min_resolution,
     max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or camera_fields.video_stream_defaults.max_resolution,
     camera_fields.video_stream_defaults.min_bitrate,
