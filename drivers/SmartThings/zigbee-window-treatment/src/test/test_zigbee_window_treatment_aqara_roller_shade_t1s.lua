@@ -303,27 +303,13 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "CurrentPositionLiftPercentage report should read the init state when the device is not initialized",
+  "CurrentPositionLiftPercentage report should not read the init state when the device is not initialized",
   function()
     set_not_initialized()
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
-      }
-    )
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { INIT_STATE_ATTRIBUTE_ID }, MFG_CODE)
-    })
-    test.wait_for_events()
-
-    -- Once the device reports that it is initialized, the init state is not read anymore
-    set_initialized()
-    test.socket.zigbee:__queue_receive(
-      {
-        mock_device.id,
-        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
       }
     )
     test.wait_for_events()
@@ -387,11 +373,13 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Shade state report stop should read the shade position",
   function()
+    set_initialized()
     test.socket.zigbee:__queue_receive({ mock_device.id, build_shade_state_report(SHADE_STATE_STOP) })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
+    test.wait_for_events()
   end,
   {
     min_api_version = 14
@@ -401,11 +389,53 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Shade state report blocked should read the shade position",
   function()
+    set_initialized()
     test.socket.zigbee:__queue_receive({ mock_device.id, build_shade_state_report(SHADE_STATE_BLOCKED) })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Shade state report stop should also read the init state when the device is not initialized",
+  function()
+    set_not_initialized()
+    test.socket.zigbee:__queue_receive({ mock_device.id, build_shade_state_report(SHADE_STATE_STOP) })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      AnalogOutput.attributes.PresentValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { INIT_STATE_ATTRIBUTE_ID }, MFG_CODE)
+    })
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Shade state report blocked should also read the init state when the device is not initialized",
+  function()
+    set_not_initialized()
+    test.socket.zigbee:__queue_receive({ mock_device.id, build_shade_state_report(SHADE_STATE_BLOCKED) })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      AnalogOutput.attributes.PresentValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { INIT_STATE_ATTRIBUTE_ID }, MFG_CODE)
+    })
+    test.wait_for_events()
   end,
   {
     min_api_version = 14

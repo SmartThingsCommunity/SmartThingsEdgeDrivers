@@ -101,13 +101,7 @@ end
 -- cluster, where 0 is fully closed and 100 is fully open. The lift percentage of the window
 -- covering cluster is reported with the opposite polarity (100% = fully closed), so it is
 -- ignored here to keep the parent Aqara handler from emitting an inverted shade level.
--- The device does not report the init state when its travel points have been set, so it is
--- re-read whenever the shade moves while the device is still not initialized.
 local function current_position_lift_percentage_handler(driver, device, value, zb_rx)
-  if is_not_init(device) then
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
-      INIT_STATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE))
-  end
 end
 
 local function shade_state_report_handler(driver, device, value, zb_rx)
@@ -116,6 +110,12 @@ local function shade_state_report_handler(driver, device, value, zb_rx)
   if state == SHADE_STATE_STOP or state == SHADE_STATE_BLOCKED then
     -- read shade position to update the UI
     device:send(AnalogOutput.attributes.PresentValue:read(device))
+    -- The device does not report the init state when its travel points have been set, so it is
+    -- re-read once each time the shade stops while the device is still not initialized.
+    if is_not_init(device) then
+      device:send(cluster_base.read_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+        INIT_STATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE))
+    end
   elseif state == SHADE_STATE_OPEN then
     device:emit_event(capabilities.windowShade.windowShade.opening())
   elseif state == SHADE_STATE_CLOSE then
