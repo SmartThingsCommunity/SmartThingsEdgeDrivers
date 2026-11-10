@@ -8,9 +8,7 @@ local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
 local window_treatment_utils = require "window_treatment_utils"
-local utils = require "st.utils"
 
-local Groups = clusters.Groups
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 
@@ -85,18 +83,6 @@ local function init_state_handler(driver, device, value, zb_rx)
   device:emit_event(state)
 end
 
-local function shade_level_report_handler(driver, device, value, zb_rx)
-  aqara_utils.emit_shade_level_event(device, value)
-  local level = utils.round(value.value)
-  if level >= 100 then
-    device:emit_event(capabilities.windowShade.windowShade.open())
-  elseif level <= 0 then
-    device:emit_event(capabilities.windowShade.windowShade.closed())
-  else
-    device:emit_event(capabilities.windowShade.windowShade.partially_open())
-  end
-end
-
 -- The position of this device is reported through the present value of the analog output
 -- cluster, where 0 is fully closed and 100 is fully open. The lift percentage of the window
 -- covering cluster is reported with the opposite polarity (100% = fully closed), so it is
@@ -156,7 +142,6 @@ end
 
 local function do_configure(self, device)
   device:configure()
-  device:send(Groups.server.commands.RemoveAllGroups(device))
   do_refresh(self, device)
 end
 
@@ -186,9 +171,6 @@ local aqara_roller_shade_t1s_handler = {
     attr = {
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
         [INIT_STATE_ATTRIBUTE_ID] = init_state_handler,
-      },
-      [AnalogOutput.ID] = {
-        [AnalogOutput.attributes.PresentValue.ID] = shade_level_report_handler
       },
       [WindowCovering.ID] = {
         [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = current_position_lift_percentage_handler
