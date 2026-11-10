@@ -214,15 +214,18 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "addCredential: attaches the next free credential slot to an existing user when userIndex is non-zero",
+  "addCredential: attaches the next free credential slot to an existing user without a credential when userIndex is non-zero",
   function()
-    seed_users({ { userIndex = 1, userName = "Alice", userType = "guest" } })
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob", userType = "guest" },
+    })
     seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
 
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 1, "guest", "pin", "5678" } },
+        args = { 2, "guest", "pin", "5678" } },
     })
     -- slot 1 is taken, so the next available credential slot, 2, is used
     test.socket.zigbee:__expect_send({
@@ -241,7 +244,7 @@ test.register_coroutine_test(
         capabilities.lockCredentials.credentials(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
-            { userIndex = 1, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 1" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 2" },
           },
           { visibility = { displayed = false } }
         ))
@@ -249,7 +252,29 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 2 },
+          { commandName = "addCredential", statusCode = "success", userIndex = 2, credentialIndex = 2 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "addCredential: fails without contacting the lock when the user already has a credential",
+  function()
+    seed_users({ { userIndex = 1, userName = "Alice", userType = "guest" } })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 1, "guest", "pin", "5678" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

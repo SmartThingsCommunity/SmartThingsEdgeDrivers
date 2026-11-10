@@ -128,9 +128,11 @@ function CapabilityHandlers.add_credential(driver, device, command)
   end
 
   -- userIndex 0 means "create a new user for this credential" (its index is chosen when the lock confirms the
-  -- code). Any other userIndex must name an existing user, which the new credential is attached to.
+  -- code). Any other userIndex must name an existing user that does not already have a credential (for now,
+  -- each user may have at most one credential).
   local user_index = command.args.userIndex
-  if user_index ~= 0 and not tables.find_entry(device, "users", user_index) then
+  if user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+      or tables.find_entry_by(device, "credentials", "userIndex", user_index)) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
