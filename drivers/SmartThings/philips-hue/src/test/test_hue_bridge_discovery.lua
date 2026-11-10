@@ -8,7 +8,7 @@ if require("version").api < 23 then return end
 local test = require "integration_test"
 -- Sets the file-level test modes every Hue test runs with (LAN driver tests need test coroutine
 -- priority: discovery rescans every second until stopped).
-local hue_test_helpers = require "test.hue_test_helpers"
+require "test.hue_test_helpers"
 local connection_scenario = require "integration_test.connection_scenario"
 local http = require "integration_test.connection_scenario_http"
 local mock_mdns = test.mock_mdns
