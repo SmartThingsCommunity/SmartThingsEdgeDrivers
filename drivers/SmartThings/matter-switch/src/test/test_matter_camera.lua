@@ -3701,6 +3701,45 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "setStream with a label for an unknown stream should allocate without error",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        5,
+        "liveStream",  -- type
+        "New Stream",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(mock_device, CAMERA_EP, 5)
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(mock_device, CAMERA_EP,
+        clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+        clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+        30,
+        60,
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        10000,
+        2000000,
+        4000,
+        false,
+        false
+      )
+    })
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
   "Stream label should persist across attribute reports",
   function()
     update_device_profile()

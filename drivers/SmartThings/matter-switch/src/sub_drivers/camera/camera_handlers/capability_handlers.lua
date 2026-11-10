@@ -431,13 +431,14 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     end
   end
 
-  local label_changed = cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
+  local label_changed = current_stream ~= nil and cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
 
   if viewport_changed or label_changed then
     update_viewport_or_label(device, current_streams, cmd.args.streamId, cmd.args.label, cmd.args.viewport)
   end
 
   if not needs_reallocation then
+    if current_stream == nil then return end
     local watermark_changed = watermark_enabled ~= nil and current_stream.watermark ~= nil and
       ((watermark_enabled and current_stream.watermark == "disabled") or
       (not watermark_enabled and current_stream.watermark == "enabled"))
