@@ -126,7 +126,7 @@ function lock_utils.add_credential_and_user(device, args, add_user)
   if add_user and credential_status == consts.COMMAND_RESULT.SUCCESS then
     tables.add_entry(device, "users", {
       userIndex = args.userIndex,
-      userName  = args.userName or args.credentialName or default_name,
+      userName  = args.credentialName or default_name,
       userType  = args.userType or "guest",
     })
   end
