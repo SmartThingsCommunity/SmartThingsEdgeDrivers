@@ -228,7 +228,7 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
     end
   end
 
-  -- handle the case where we receive a programming event notification for a code we've just deleted,
+  -- handle the case where we receive a programming event notification for a code we didn't send a command for
   if event_code == ProgramEventCode.PIN_CODE_ADDED then
     -- if no "addCredential" command is in progress, ensure the credential is represented locally
     lock_utils.add_reported_credential(device, user_id)
