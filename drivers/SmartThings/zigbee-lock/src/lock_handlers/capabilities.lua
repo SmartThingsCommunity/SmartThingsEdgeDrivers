@@ -127,14 +127,26 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- A userIndex of 0 means "auto-assign the next available slot"
-  local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
-  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  -- userIndex 0 means "create a new user for this credential" (its index is chosen when the lock confirms the
+  -- code). Any other userIndex must name an existing user that does not already have a credential (for now,
+  -- each user may have at most one credential).
+  local user_index = command.args.userIndex
+  if user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+      or tables.find_entry_by(device, "credentials", "userIndex", user_index)) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  local credentials_full = #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials")
+  -- if we are being asked to create a new user (index 0), this also needs a free user index.
+  local users_full = (user_index == 0) and #(tables.get_state(device, "users") or {}) >= tables.get_max_entries(device, "users")
+  if credentials_full or users_full then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
+
+  -- the credential always takes the next available slot.
+  local cred_index = tables.next_index(device, "credentials", 1)
 
   -- Set busy state and attempt to set the PIN on-device.
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
@@ -157,8 +169,15 @@ function CapabilityHandlers.update_credential(driver, device, command)
     return
   end
 
-  if not tables.find_entry(device, "credentials", command.args.credentialIndex) then
+  local existing = tables.find_entry(device, "credentials", command.args.credentialIndex)
+  if not existing then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.FAILURE)
+    return
+  end
+
+  -- a credential cannot be moved to another user: the given userIndex must already own this credential
+  if existing.userIndex ~= command.args.userIndex then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
