@@ -7,7 +7,12 @@ Dp2Knx.__index = Dp2Knx
 Dp2Knx.pids = {
  ['cekfhkz5'] = {pid='cekfhkz5',type=config.ENUM.AC, devs={[1]={[1]=0,[4]=1,[5]=2,[2]=3,[3]=4,[101]=5}}},
  ['drrearrq'] = {pid='drrearrq',type=config.ENUM.HEATER, devs={[1]={[1]=0,[24]=2,[16]=3}}},
- ['w35ineur'] = {pid='w35ineur',type=config.ENUM.NEWFAN, devs={[1]={[1]=0,[12]=1}}}
+ ['w35ineur'] = {pid='w35ineur',type=config.ENUM.NEWFAN, devs={[1]={[1]=0,[12]=1}}},
+ ['fzjliiuu'] = {pid='fzjliiuu',type=config.ENUM.SWITCH, devs={[1]={[1]=0}}},
+ ['a2u6yabn'] = {pid='a2u6yabn',type=config.ENUM.SLIDER, devs={[1]={[101]=0,[102]=1}}},
+ ['uyyvbtjs'] = {pid='uyyvbtjs',type=config.ENUM.HUE, devs={[1]={[101]=0,[102]=1,[24]=2}}},
+ ['oruqmmxg'] = {pid='oruqmmxg',type=config.ENUM.HUE, devs={[1]={[101]=0,[102]=1,[24]=2}}},
+ ['5bempufw'] = {pid='5bempufw',type=config.ENUM.CURTAIN, devs={[1]={[4]=0,[2]=3,[1]=1}}}
 }
 ------------------
 -- load wiser dp2knx config
