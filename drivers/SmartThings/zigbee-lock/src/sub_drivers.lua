@@ -7,5 +7,6 @@ local sub_drivers = {
    lazy_load_if_possible("samsungsds"),
    lazy_load_if_possible("bad-battery-reporter"),
    lazy_load_if_possible("yale-fingerprint-lock"),
+   lazy_load_if_possible("shinasystems"),
 }
 return sub_drivers
