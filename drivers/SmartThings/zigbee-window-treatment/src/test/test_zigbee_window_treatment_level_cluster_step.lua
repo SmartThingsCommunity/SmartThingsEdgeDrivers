@@ -397,4 +397,66 @@ test.register_coroutine_test(
   { min_api_version = 17 }
 )
 
+-- Test: a step after the accumulation window expires starts from the reported level again
+test.register_coroutine_test(
+  "statelessWindowShadeLevelStep with Level cluster - step after timeout starts from current shade level",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(121, "oneshot")
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive({
+      axis_device.id,
+      Level.attributes.CurrentLevel:build_test_attr_report(axis_device, 127)
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 50 } }
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "partially open" } }
+    })
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      axis_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 60 } }
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+    })
+    test.socket.zigbee:__expect_send({
+      axis_device.id,
+      Level.server.commands.MoveToLevelWithOnOff(axis_device, 152)
+    })
+    test.wait_for_events()
+
+    -- The 120 second window has elapsed, so the next step is computed from the current shade level (60)
+    test.mock_time.advance_time(121)
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      axis_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 70 } }
+    })
+    test.socket.capability:__expect_send({
+      axis_device.id,
+      { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+    })
+    test.socket.zigbee:__expect_send({
+      axis_device.id,
+      Level.server.commands.MoveToLevelWithOnOff(axis_device, 178)
+    })
+  end,
+  { min_api_version = 17 }
+)
+
 test.run_registered_tests()
