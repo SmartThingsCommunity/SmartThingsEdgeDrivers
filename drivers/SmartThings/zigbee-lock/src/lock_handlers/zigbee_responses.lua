@@ -159,16 +159,7 @@ function ZigbeeHandlers.default_response(driver, device, zb_rx)
   if zcl_body.cmd.value ~= clusters.DoorLock.server.commands.GetPINCode.ID then return end
   -- a SUCCESS default response is followed by the real GetPINCodeResponse
   if zcl_body.status.value == Status.SUCCESS then return end
-
-  local sync_index = device:get_field(consts.SYNC.CODE_INDEX)
-  if sync_index == nil then return end
-  if device:get_field(consts.SYNC.RETRIED_CODE_INDEX) ~= sync_index then
-    device:set_field(consts.SYNC.RETRIED_CODE_INDEX, sync_index)
-    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
-    device:send(clusters.DoorLock.server.commands.GetPINCode(device, sync_index))
-    return
-  end
-
+  -- else, continue the code sync
   lock_utils.continue_code_sync(device, false, true)
 end
 

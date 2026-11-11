@@ -705,27 +705,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "default_response: first failure to GetPINCode during sync retries the same index",
-  function()
-    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
-    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
-    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
-    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
-
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      build_default_response_rx(mock_device, DoorLock.ID, DoorLock.server.commands.GetPINCode.ID, ZclStatus.FAILURE),
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      DoorLock.server.commands.GetPINCode(mock_device, 3),
-    })
-    test.wait_for_events()
-    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
-  end
-)
-
-test.register_coroutine_test(
   "default_response: repeated failure to GetPINCode at the same index continues to the next index",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
