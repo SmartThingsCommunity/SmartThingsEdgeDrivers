@@ -826,11 +826,11 @@ test.register_coroutine_test(
   function()
     seed_users({ MASTER_USER })
     seed_credentials({ { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } })
-    -- the userIndex in the command args is ignored in favor of the credential's stored owner
+    -- the userIndex must match the credential's stored owner; the owner's type decides MASTER_USER
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "updateCredential",
-        args = { 5, 0, "pin", "4321" } },
+        args = { 1, 0, "pin", "4321" } },
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
