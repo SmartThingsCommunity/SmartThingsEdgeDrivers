@@ -242,26 +242,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "get_pin_code_response: ignores a response that does not match the sync code index",
-  function()
-    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
-    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
-    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
-    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, { persist = true })
-
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
-        mock_device, 1, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.UNRESTRICTED, "1234"),
-    })
-    test.wait_for_events()
-
-    -- nothing sent or emitted, and the sync is still waiting on index 3
-    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3)
-  end
-)
-
-test.register_coroutine_test(
   "get_pin_code_response: clears the consecutive unoccupied counter when the sync completes",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})

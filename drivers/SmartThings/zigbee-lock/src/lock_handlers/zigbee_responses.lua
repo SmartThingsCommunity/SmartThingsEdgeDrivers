@@ -142,10 +142,15 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
-    -- ignore late, duplicate or unsolicited responses that do not match the index we are waiting on
-    if user_id ~= device:get_field(consts.SYNC.CODE_INDEX) then return end
-    local user_status = zb_rx.body.zcl_body.user_status.value
-    lock_utils.continue_code_sync(device, user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED)
+    local occupied = zb_rx.body.zcl_body.user_status.value == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED
+    if user_id < device:get_field(consts.SYNC.CODE_INDEX) then
+      device.log.warn_with({ hub_logs = true }, "GetPINCodeResponse for index %s already processed, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
+      return -- return early if we've already processed this response.
+    elseif user_id ~= device:get_field(consts.SYNC.CODE_INDEX) then
+      device.log.warn_with({ hub_logs = true }, "Unexpected GetPINCodeResponse for index %s, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
+      occupied = false -- treat this as an unoccupied slot to continue the sync
+    end
+    lock_utils.continue_code_sync(device, occupied, false)
   end
 end
 
