@@ -1,0 +1,54 @@
+name: Duplicate production PR to latest support branch
+on:
+  pull_request_target:
+    types: [opened, reopened]
+    branches:
+      - production
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  duplicate-pr:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_DRAFT: ${{ github.event.pull_request.draft }}
+      PR_HEAD: ${{ github.event.pull_request.head.label }}
+      PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Find latest support branch
+        id: latest
+        run: |
+          latest=$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/support-" --jq '.[].ref' \
+            | sed 's|^refs/heads/||' \
+            | grep -E '^support-[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n 1)
+          if [ -z "$latest" ]; then
+            echo "::warning::No support-X.Y branch found, nothing to do"
+            exit 0
+          fi
+          echo "Latest support branch: $latest"
+          echo "branch=$latest" >> "$GITHUB_OUTPUT"
+
+      - name: Create duplicate PR
+        if: steps.latest.outputs.branch != ''
+        env:
+          BASE: ${{ steps.latest.outputs.branch }}
+        run: |
+          existing=$(gh pr list --base "$BASE" --head "$PR_HEAD_REF" --state open --json number --jq 'length')
+          if [ "$existing" != "0" ]; then
+            echo "A PR from $PR_HEAD_REF to $BASE already exists, skipping"
+            exit 0
+          fi
+
+          args=(--base "$BASE" --head "$PR_HEAD" --title "[$BASE] $PR_TITLE")
+          printf 'Duplicate of %s, targeting `%s`. Human intervention is required before merging.\n\n---\n\n%s\n' "$PR_URL" "$BASE" "$PR_BODY" > body.md
+          gh pr create "${args[@]}" --body-file body.md
