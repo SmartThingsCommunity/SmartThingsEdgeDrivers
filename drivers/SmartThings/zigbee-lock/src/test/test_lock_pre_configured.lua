@@ -243,7 +243,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     test.socket.zigbee:__expect_send({
@@ -260,22 +260,22 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
+        capabilities.lockCredentials.credentials(
           {
-            { userIndex = 1, userName = "Alice", userType = "guest" },
-            { userIndex = 2, userName = "Bob",   userType = "guest" },
-            { userIndex = 3, userName = "Guest 3", userType = "guest" }, -- default name since lock doesn't provide one
+            { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+            { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
           },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
+        capabilities.lockUsers.users(
           {
-            { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
-            { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
-            { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",   userType = "guest" },
+            { userIndex = 3, userName = "Guest 3", userType = "guest" }, -- default name since lock doesn't provide one
           },
           { visibility = { displayed = false } }
         ))
@@ -299,7 +299,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin01" } },
+        args = { 0, "guest", "pin", "pin01" } },
     })
 
     test.socket.zigbee:__expect_send({
@@ -333,7 +333,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     test.socket.zigbee:__expect_send({
