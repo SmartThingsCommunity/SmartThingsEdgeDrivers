@@ -1,0 +1,88 @@
+name: Upload driver packages
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        type: boolean
+        required: true
+        description: 'Dry run'
+      channel_name:
+        type: string
+        required: true
+        description: 'Name of the new channel & branch (Example: support-27.1)'
+      old_channel_id:
+        type: string
+        required: true
+        description: 'ID of the channel that will be renamed to new the new channel name'
+
+permissions:
+  contents: write
+
+
+jobs:
+  get-channel:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_BRANCH: production
+    steps:
+      - name: Checkout production branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_BRANCH }}
+          fetch-depth: 0
+      - name: Validate branch names
+        run: |
+          git check-ref-format --branch "${{ inputs.channel_name }}"
+          if git ls-remote --exit-code --heads origin "${{ inputs.channel_name }}" > /dev/null; then
+            echo "::error::Branch '${{ inputs.channel_name }}' already exists"
+            exit 1
+          fi
+      - name: List channels
+        id: channels
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/'
+          method: GET
+          bearerToken: ${{ secrets.TOKEN }}
+          timeout: 10000
+      - name: Rename prod
+        if: ${{ !contains(steps.channels.outputs.response, inputs.channel_name) && !inputs.dry_run }}
+        id: rename-prod
+        uses: fjogeleit/http-request-action@master
+        with:
+          method: 'PUT'
+          url: 'https://api.smartthings.com/distchannels/${{ inputs.old_channel_id }}'
+          bearerToken: ${{ secrets.TOKEN }}
+          data: '{
+              "name": "${{ inputs.channel_name }}",
+              "description": "Driver support channel: ${{ inputs.channel_name }}",
+              "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/tree/${{ inputs.channel_name }}"
+            }'
+      - name: Rename prod response
+        run: |
+          echo "${{ steps.rename-prod.outputs.response }}"
+      - name: Create new prod channel
+        if: ${{ !contains(steps.channels.outputs.response, inputs.channel_name) && !inputs.dry_run }}
+        id: create-prod-channel
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/'
+          bearerToken: ${{ secrets.TOKEN }}
+          data: '{
+              "name": "PROD",
+              "description": "Production channel",
+              "type": "DRIVER",
+              "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/tree/production"
+            }'
+      - name: New channel creation response
+        run: |
+          echo "${{ steps.create-prod-channel.outputs.response }}"
+      - name: Create new branch
+        run: |
+          echo "Cloning '${{ env.SOURCE_BRANCH }}' ($(git rev-parse --short HEAD)) into '${{ inputs.channel_name }}'"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            git push --dry-run origin "HEAD:refs/heads/${{ inputs.channel_name }}"
+          else
+            git push origin "HEAD:refs/heads/${{ inputs.channel_name }}"
+          fi
+      

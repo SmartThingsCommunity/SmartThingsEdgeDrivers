@@ -4,6 +4,10 @@ def getEnvName() {
   if (branch == "origin/main") {return "ALPHA"}
   else if (branch == "origin/beta") {return "BETA"}
   else if (branch == "origin/production") {return "PROD"}
+  else if (branch ==~ /origin\/support-\d+\.\d+/) {
+    // e.g. origin/support-1.2 -> SUPPORT_1_2
+    return branch.replaceFirst("origin/support-", "SUPPORT_").replace(".", "_")
+  }
 }
 
 def getChangedDrivers() {
