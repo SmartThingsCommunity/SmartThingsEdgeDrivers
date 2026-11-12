@@ -98,13 +98,16 @@ function LifecycleHandlers.device_added(driver, device, ...)
         hue_id_to_device[resource_id] = device
       end
 
-      local resource_state_known = (Discovery.device_state_disco_cache[resource_id] ~= nil)
       log.info(
         string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
 
       local parent_bridge = utils.get_hue_bridge_for_device(
         driver, device, device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
       )
+      -- Only the device's own bridge's state counts: another bridge may report the same resource ID.
+      local bridge_state_cache = parent_bridge and Discovery.state_cache_for_bridge(parent_bridge.device_network_id)
+      local resource_state_known = (bridge_state_cache ~= nil and resource_id ~= nil
+        and bridge_state_cache[resource_id] ~= nil)
 
       local key = parent_bridge and parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER)
       local bridge_ip = parent_bridge and parent_bridge:get_field(Fields.IPV4)
@@ -188,6 +191,27 @@ function LifecycleHandlers.initialize_device(driver, device, event, _args, ...)
         "_ADDED for device %s not set while _initialize is handling %s, performing added lifecycle operations",
         (device.label or device.id or "unknown device"), event))
     LifecycleHandlers.device_added(driver, device, ...)
+
+    -- `added` can defer a child device (e.g. its bridge isn't ready, so it is queued as a "stray")
+    -- without having recorded anything about it. Initializing a child in that state would act on
+    -- fields that were never populated, so wait for the stray resolver to run `added` again.
+    -- Devices that have a Hue device ID were added by an earlier driver run and still need `init`.
+    -- Lights are exempt: their `init` copes with the missing fields, and a light's `added` can also
+    -- fail (e.g. on a REST error) without queuing it for a retry, so deferring would leave it
+    -- uninitialized.
+    if not device:get_field(Fields._ADDED)
+        and not device:get_field(Fields.HUE_DEVICE_ID)
+        and not utils.is_bridge(driver, device)
+        and utils.determine_device_type(device) ~= HueDeviceTypes.LIGHT
+    then
+      log.warn(
+        string.format(
+          "Device %s has not completed `added`, deferring init until it has been added",
+          (device.label or device.id or "unknown device")
+        )
+      )
+      return
+    end
   end
 
   if not device:get_field(Fields._INIT) then

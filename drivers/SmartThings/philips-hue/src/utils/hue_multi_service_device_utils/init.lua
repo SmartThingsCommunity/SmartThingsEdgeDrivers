@@ -28,6 +28,13 @@ function multi_service_device_utils.get_all_service_states(driver, sensor_device
 end
 
 function multi_service_device_utils.update_multi_service_device_maps(driver, device, hue_device_id, device_info, device_type)
+  if not hue_device_id then
+    log.warn(string.format(
+      "No Hue device ID for %s, unable to update multi-service device maps",
+      (device and device.label) or "unknown device"
+    ))
+    return
+  end
   device_type = device_type or utils.determine_device_type(device)
   device_type = lookup_transforms[device_type] or device_type
   if not lazy_map_helpers[device_type] then
@@ -38,6 +45,7 @@ function multi_service_device_utils.update_multi_service_device_maps(driver, dev
         device_type or "unknown type"
       )
     )
+    return
   end
   return lazy_map_helpers[device_type].update_multi_service_device_maps(driver, device, hue_device_id, device_info)
 end

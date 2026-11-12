@@ -36,7 +36,9 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     return
   end
 
-  local light_info_known = (Discovery.device_state_disco_cache[device_light_resource_id] ~= nil)
+  -- The state cached for this light's own bridge (another bridge may report the same resource ID).
+  local light_state_cache = Discovery.state_cache_for_device(driver, device, parent_device_id) or {}
+  local light_info_known = (light_state_cache[device_light_resource_id] ~= nil)
   if not light_info_known then
     log.info(
       string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
@@ -88,7 +90,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
 
     local light_resource, err, _ = api_instance:get_light_by_id(device_light_resource_id)
     if err ~= nil or not light_resource then
-      log.error_with({ hub_logs = true }, "Error getting light info: ", error)
+      log.error_with({ hub_logs = true }, "Error getting light info: ", err)
       return
     end
 
@@ -102,7 +104,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
 
     for _, light in ipairs(light_resource.data or {}) do
       if device_light_resource_id == light.id then
-        Discovery.device_state_disco_cache[light.id] = {
+        light_state_cache[light.id] = {
           hue_provided_name = light.metadata.name,
           id = light.id,
           on = light.on,
@@ -140,7 +142,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   end
 
   ---@type HueLightInfo
-  local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
+  local light_info = light_state_cache[device_light_resource_id]
 
   -- Remembering that mirek are reciprocal to kelvin, note the following:
   --  ** Minimum Mirek -> _Maximum_ Kelvin
