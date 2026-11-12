@@ -56,6 +56,9 @@ function LockLifecycle.init(driver, device)
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
   end
 
+  -- existing devices may predate the default PIN length being set
+  lock_utils.ensure_pin_length_bounds(device)
+
   if device:supports_capability(capabilities.tamperAlert) then
     -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())

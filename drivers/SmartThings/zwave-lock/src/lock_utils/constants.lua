@@ -41,6 +41,10 @@ lock_constants.LOCK_USERS = {
 }
 
 lock_constants.CRED_TYPE_PIN = "pin"
+-- User Code Command Class has no capabilities report for PIN length, so
+-- the zwave spec fixes pin length to 4-10 digits
+lock_constants.DEFAULT_MIN_PIN_LENGTH = 4
+lock_constants.DEFAULT_MAX_PIN_LENGTH = 10
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10

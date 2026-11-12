@@ -82,11 +82,15 @@ local function migrate(driver, device, cmd)
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
 
+  local consts = require "lock_utils.constants"
+
+  -- lockCodes tracks a single fixed code length, which only some locks (e.g. Schlage) report.
+  -- Without one, fall back to the Z-Wave spec default range so the bounds are always set.
   local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  if code_length then
-    device:emit_event(capabilities.lockCredentials.minPinCodeLen(code_length, { visibility = { displayed = false } }))
-    device:emit_event(capabilities.lockCredentials.maxPinCodeLen(code_length, { visibility = { displayed = false } }))
-  end
+  local min_pin_length = code_length or consts.DEFAULT_MIN_PIN_LENGTH
+  local max_pin_length = code_length or consts.DEFAULT_MAX_PIN_LENGTH
+  device:emit_event(capabilities.lockCredentials.minPinCodeLen(min_pin_length, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.lockCredentials.maxPinCodeLen(max_pin_length, { visibility = { displayed = false } }))
 
   local max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
   if max_codes then
@@ -99,8 +103,6 @@ local function migrate(driver, device, cmd)
 
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-  local consts = require("lock_utils.constants")
-
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
 end
 
