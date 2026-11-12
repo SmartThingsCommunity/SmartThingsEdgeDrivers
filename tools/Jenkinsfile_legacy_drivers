@@ -49,7 +49,7 @@ pipeline {
     stage('requirements') {
       steps {
         script {
-          currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+          currentBuild.description = "Driver support channel release: " + env.NEW_BRANCH_CHANNEL
         }
         sh 'git config --global --add safe.directory "*"'
         sh 'git clean -xfd'

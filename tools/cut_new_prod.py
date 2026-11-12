@@ -55,7 +55,7 @@ def create_and_push_git_branch(new_branch):
         f"git ls-remote --exit-code --heads origin '{new_branch}'",
         shell=True
     )
-    if result.returncode != 0:
+    if result.returncode == 0:
         print(f"Branch '{new_branch}' already exists at origin", file=sys.stderr)
         exit(1)
 
@@ -105,7 +105,7 @@ def create_new_channel():
         print(f"Status Code: {response.status_code}", file=sys.stderr)
         print(f"Response: {json.dumps(response.json(),indent=2)}", file=sys.stderr)
         exit(1)
-    new_channel_id = response.json["channelId"]
+    new_channel_id = response.json()["channelId"]
     print(f"New channel created: {new_channel_id}")
     return new_channel_id
 
@@ -123,7 +123,7 @@ def update_old_channel(channel_name):
             "X-ST-LOG-LEVEL": "DEBUG"
         },
         json={
-            "name": "SmartThings Drivers - {channel_name}",
+            "name": f"SmartThings Drivers - {channel_name}",
             "description": f"SmartThings Driver - {channel_name}",
             "termsOfServiceUrl": f"{GIT_URL}/tree/{channel_name}"
         }
@@ -195,7 +195,7 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
 
     # Upload the driver ID and version to the destination channel
     failures = {}
-    for (driverId, version) in uploaded_drivers:
+    for (driverId, version) in uploaded_drivers.items():
         print(f"Posting driverID: {driverId}-v{version}")
         # if DRY_RUN:
         #     continue # skip update
