@@ -209,43 +209,21 @@ function CapabilityHandlers.update_credential(driver, device, command)
   }))
 end
 
--- Remove a credential from the lock. The busy state must already be set.
-local function send_credential_delete(device, credential_index)
-  if credential_index == 0 then
-    -- user identifier 0 addresses every user code on the lock, so a stale entry is only removed locally
-    lock_utils.delete_credential_report_helper(device, credential_index)
-  else
-    device:send(UserCode:Set({
-      user_identifier = credential_index,
-      user_id_status = UserCode.user_id_status.AVAILABLE
-    }))
-    -- A lock that refuses the delete (e.g. a Yale programming code) ignores the Set and sends nothing, so read the
-    -- slot back if the delete has not completed. The report tells us whether the code is still there. A timer
-    -- left from an earlier delete is cancelled so it cannot read back the slot during this one.
-    local previous_timer = device:get_field(consts.DELETE_CONFIRM_TIMER)
-    if previous_timer ~= nil then device.thread:cancel_timer(previous_timer) end
-    device:set_field(consts.DELETE_CONFIRM_TIMER, device.thread:call_with_delay(consts.DELETE_CONFIRM_DELAY, function()
-      device:set_field(consts.DELETE_CONFIRM_TIMER, nil)
-      if lock_utils.is_delete_in_progress(device, credential_index) then
-        device:send(UserCode:Get({ user_identifier = credential_index }))
-      end
-    end))
-  end
-end
-
 function CapabilityHandlers.delete_credential(driver, device, command)
-  local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
-
-  if cmd_in_progress == consts.LOCK_USERS.DELETE then
-    -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context. A stale
-    -- credential at index 0 is removed locally by send_credential_delete.
-    local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-    send_credential_delete(device, credential_args.credentialIndex)
-  elseif command.args.credentialIndex == 0 then
-    -- Index 0 is the Z-Wave "all users" wildcard; clearing everything must go through deleteAllCredentials.
+  -- Index 0 is the Z-Wave "all users" wildcard; clearing everything must go through deleteAllCredentials.
+  if command.args.credentialIndex == 0 then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
+  local credential_index
+  if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.LOCK_USERS.DELETE then
+    -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
+    local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+    credential_index = credential_args.credentialIndex
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
+    return
   else
     -- Standalone deleteCredential: look up the credential to obtain its associated userIndex.
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
@@ -258,8 +236,24 @@ function CapabilityHandlers.delete_credential(driver, device, command)
       credentialType  = command.args.credentialType,
       userIndex       = found_cred.userIndex,
     })
-    send_credential_delete(device, command.args.credentialIndex)
+    credential_index = command.args.credentialIndex
   end
+
+  device:send(UserCode:Set({
+    user_identifier = credential_index,
+    user_id_status = UserCode.user_id_status.AVAILABLE
+  }))
+  -- A lock that refuses the delete (e.g. a Yale programming code) ignores the Set and sends nothing, so read the
+  -- slot back if the delete has not completed. The report tells us whether the code is still there. A timer
+  -- left from an earlier delete is cancelled so it cannot read back the slot during this one.
+  local previous_timer = device:get_field(consts.DELETE_CONFIRM_TIMER)
+  if previous_timer ~= nil then device.thread:cancel_timer(previous_timer) end
+  device:set_field(consts.DELETE_CONFIRM_TIMER, device.thread:call_with_delay(consts.DELETE_CONFIRM_DELAY, function()
+    device:set_field(consts.DELETE_CONFIRM_TIMER, nil)
+    if lock_utils.is_delete_in_progress(device, credential_index) then
+      device:send(UserCode:Get({ user_identifier = credential_index }))
+    end
+  end))
 end
 
 function CapabilityHandlers.delete_all_credentials(driver, device, command)
