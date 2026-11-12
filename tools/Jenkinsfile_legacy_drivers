@@ -1,0 +1,71 @@
+def get_region() {
+  def url = env.JENKINS_URL?.trim()
+  if (url?.endsWith('/')) {
+    url = url[0..-2]
+  }
+
+  def region = url?.endsWith('.cn') ? 'cn' : 'global'
+  return region
+}
+
+// Gate artifactory-credentials for prod nodes in cn due to a docker authentication error arising in that environment
+def getDockerCredentialId() {
+    def nodeLabel = params.NODE_LABEL ?: 'production'
+    def region = get_region()
+    if (nodeLabel == 'production' && region == 'cn') {
+      return 'artifactory-cn'
+    }
+    else {
+      return ''
+    }
+}
+// Gate RegistryUrl for prod nodes in cn due to a docker authentication error arising in that environment
+def getRegistryUrl() {
+  def nodeLabel = params.NODE_LABEL ?: 'production'
+  def region = get_region()
+  if (nodeLabel == 'production' && region == 'cn') {
+    return 'https://registry.artifactoryedge.streleng.cn'
+  } else {
+    // Default
+    return ''
+  }
+}
+
+pipeline {
+  agent {
+    docker {
+      image 'python:3.10'
+      label  "${params.NODE_LABEL ?: 'production'}"
+      registryUrl getRegistryUrl()
+      registryCredentialsId getDockerCredentialId()
+      args '--entrypoint= -u 0:0'
+    }
+  }
+  environment {
+    NEW_BRANCH = "${env.NEW_BRANCH_CHANNEL}"
+    ENVIRONMENT = "${env.NODE_LABEL.toUpperCase()}"
+  }
+  stages {
+    stage('requirements') {
+      steps {
+        script {
+          currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+        }
+        sh 'git config --global --add safe.directory "*"'
+        sh 'git clean -xfd'
+        sh 'apt-get update'
+        sh 'apt-get install zip -y'
+        sh 'pip3 install -r tools/requirements.txt'
+      }
+    }
+    stage('deploy') {
+      stages {
+        stage('environment_update') {
+          steps {
+            sh 'python3 tools/cut_new_prod.py'
+          }
+        }
+      }
+    }
+  }
+}
