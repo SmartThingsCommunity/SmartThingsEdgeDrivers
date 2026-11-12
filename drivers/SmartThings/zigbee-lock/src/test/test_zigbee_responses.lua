@@ -691,7 +691,6 @@ test.register_coroutine_test(
     mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
     mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
     mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
-    mock_device:set_field(constants.SYNC.RETRIED_CODE_INDEX, 3, {})
 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -730,7 +729,6 @@ test.register_coroutine_test(
     mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
     -- a default response does not increment the counter, so it must already be over the limit to end the sync
     mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 6, {})
-    mock_device:set_field(constants.SYNC.RETRIED_CODE_INDEX, 3, {})
 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -751,7 +749,6 @@ test.register_coroutine_test(
     mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
     mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
     mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
-    mock_device:set_field(constants.SYNC.RETRIED_CODE_INDEX, 3, {})
 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
