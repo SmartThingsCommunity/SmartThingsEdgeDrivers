@@ -2,10 +2,9 @@
 -- Licensed under the Apache License, Version 2.0
 --
 -- Integration tests for the Yale programming code, which is kept in user code slot 251:
---   it is set with a plain User Code Set and confirmed by the "programming code changed" notification,
---   it is exposed as a programmingUser user whose index matches the slot, a delete is left to the lock and
---   reported as it confirms or refuses it, and delete-all keeps it. User identifier 0 (all users) is never
---   sent for a single credential.
+--   it is recorded by the code sync (or when the lock reports it), it is exposed as a programmingUser user whose
+--   index matches the slot, it can be updated but not added or deleted, and delete-all keeps it. User identifier
+--   0 (all users) is never sent for a single credential.
 
 local test              = require "integration_test"
 local t_utils           = require "integration_test.utils"
@@ -111,56 +110,8 @@ local GUEST_USER = { userIndex = 1, userName = "Guest 1", userType = "guest" }
 local GUEST_CREDENTIAL = { userIndex = 1, credentialIndex = 1, credentialType = "pin" }
 
 -- ============================================================================
--- setting the programming code
+-- updating the programming code
 -- ============================================================================
-
-test.register_coroutine_test(
-  "addCredential: Yale programming code is written to slot 251 and added when the lock reports it changed",
-  function()
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "programmingUser", "pin", "199111" } } })
-    test.socket.zwave:__expect_send(UserCode:Set({
-      user_identifier = 251,
-      user_code = "199111",
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-    }):build_test_tx(yale_mock_device.id))
-    test.wait_for_events()
-
-    -- The lock reports the change with a notification, not a User Code Report.
-    queue_programming_code_changed(yale_mock_device)
-    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
-    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
-    expect_credential_result(yale_mock_device,
-      { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
-)
-
-test.register_coroutine_test(
-  "addCredential: a guest credential cannot be written to the Yale programming code slot",
-  function()
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 251, "guest", "pin", "1234" } } })
-    expect_credential_result(yale_mock_device, { commandName = "addCredential", statusCode = "invalidCommand" })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
-)
-
-test.register_coroutine_test(
-  "addCredential: an existing Yale programming code is not overwritten and the add is reported as occupied",
-  function()
-    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "programmingUser", "pin", "9999" } } })
-    expect_credential_result(yale_mock_device, { commandName = "addCredential", statusCode = "occupied" })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
-)
 
 test.register_coroutine_test(
   "addCredential: user 251 is an ordinary user on a lock that is not a Yale",
@@ -177,42 +128,6 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device) }
-)
-
-test.register_coroutine_test(
-  "addCredential: the Yale programming code can be added when the credentials table is full",
-  function()
-    local function guests()
-      local users, credentials = {}, {}
-      for i = 1, 20 do
-        table.insert(users, { userIndex = i, userName = "Guest " .. i, userType = "guest" })
-        table.insert(credentials, { userIndex = i, credentialIndex = i, credentialType = "pin" })
-      end
-      return users, credentials
-    end
-    seed(yale_mock_device, guests())
-
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "programmingUser", "pin", "199111" } } })
-    test.socket.zwave:__expect_send(UserCode:Set({
-      user_identifier = 251,
-      user_code = "199111",
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-    }):build_test_tx(yale_mock_device.id))
-    test.wait_for_events()
-
-    queue_programming_code_changed(yale_mock_device)
-    local expected_users, expected_credentials = guests()
-    table.insert(expected_users, PROGRAMMING_USER_ENTRY)
-    table.insert(expected_credentials, PROGRAMMING_CREDENTIAL)
-    expect_users(yale_mock_device, expected_users)
-    expect_credentials(yale_mock_device, expected_credentials)
-    expect_credential_result(yale_mock_device,
-      { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
@@ -481,29 +396,6 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device) }
-)
-
-test.register_coroutine_test(
-  "addCredential: Yale programming code is added when the lock confirms the write with a new user code event",
-  function()
-    test.socket.capability:__queue_receive({ yale_mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 251, "programmingUser", "pin", "199111" } } })
-    test.socket.zwave:__expect_send(UserCode:Set({
-      user_identifier = 251,
-      user_code = "199111",
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-    }):build_test_tx(yale_mock_device.id))
-    test.wait_for_events()
-
-    queue_new_user_code_added(yale_mock_device, 251)
-    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
-    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
-    expect_credential_result(yale_mock_device,
-      { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
