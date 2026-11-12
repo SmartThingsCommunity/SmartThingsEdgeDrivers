@@ -4,6 +4,7 @@
 local socket = require "cosock.socket"
 
 local clusters     = require "st.zigbee.zcl.clusters"
+local Status       = require "st.zigbee.generated.types.ZclStatus"
 local capabilities = require "st.capabilities"
 
 local consts     = require "lock_utils.constants"
@@ -141,27 +142,32 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
-    local user_status = zb_rx.body.zcl_body.user_status.value
-    if user_status == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED then
-      lock_utils.add_reported_credential(device, user_id)
-      -- reset the consecutive unoccupied codes counter since we found an occupied code
-      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
-    else
-      local consecutive_unoccupied_codes = (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1
-      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
+    local occupied = zb_rx.body.zcl_body.user_status.value == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED
+    if user_id < device:get_field(consts.SYNC.CODE_INDEX) then
+      device.log.warn_with({ hub_logs = true }, "GetPINCodeResponse for index %s already processed, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
+      return -- return early if we've already processed this response.
+    elseif user_id ~= device:get_field(consts.SYNC.CODE_INDEX) then
+      device.log.warn_with({ hub_logs = true }, "Unexpected GetPINCodeResponse for index %s, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
+      occupied = false -- treat this as an unoccupied slot to continue the sync
     end
+    lock_utils.continue_code_sync(device, occupied, false)
+  end
+end
 
-    if user_id >= tables.get_max_entries(device, "credentials") or
-     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
-      device:set_field(consts.SYNC.CODE_INDEX, nil)
-      lock_utils.clear_busy_state(device)
-    else
-      local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
-      device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
-      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = synced_code_index })
-      device:send(clusters.DoorLock.server.commands.GetPINCode(device, synced_code_index))
-    end
+-- Handles a ZCL Default Response on the DoorLock cluster. During a code sync, a non-success Default Response
+-- to GetPINCode (e.g. the lock rejects an unsupported index) means no GetPINCodeResponse will arrive,
+-- so the request is retried once (in case the error was transient) and then the slot is treated as
+-- unoccupied, continuing to the next step rather than stalling the sync.
+function ZigbeeHandlers.default_response(driver, device, zb_rx)
+  local zcl_body = zb_rx.body.zcl_body
+  if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then return end
+  if zcl_body.cmd.value ~= clusters.DoorLock.server.commands.GetPINCode.ID then return end
+  -- a SUCCESS default response is followed by the real GetPINCodeResponse
+  if zcl_body.status.value == Status.SUCCESS then
+    return
+  else  -- else, continue the code sync
+    device.log.warn_with({ hub_logs = true }, "Default Response for GetPINCode at index %s with status %s", device:get_field(consts.SYNC.CODE_INDEX), zcl_body.status.value)
+    lock_utils.continue_code_sync(device, false, true)
   end
 end
 

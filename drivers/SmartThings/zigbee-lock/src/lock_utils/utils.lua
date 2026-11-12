@@ -39,17 +39,66 @@ end
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
+  local capabilities = require "st.capabilities"
   local clusters = require "st.zigbee.zcl.clusters"
+
+  -- skip if unsupported, already synced, or busy (including a sync already in progress). is_device_busy
+  -- expires stale busy state, so a sync that stalled on a lost response can be retried.
+  if not (device:supports_capability(capabilities.lockCredentials) and
+    device:get_field(consts.SYNC.CODES_SYNCED) ~= consts.SYNC.CODES_SYNC_VERSION and
+    not lock_utils.is_device_busy(device)) then
+      return
+  end
+
+  -- a persisted index from a sync begun under a different sync version is stale; start over.
+  if device:get_field(consts.SYNC.CODE_INDEX_VERSION) ~= consts.SYNC.CODES_SYNC_VERSION then
+    device:set_field(consts.SYNC.CODE_INDEX, nil, { persist = true })
+  end
+
   -- Per spec, this attribute should be a boolean set to True if it is ok for the door lock server to send PINs over the air.
   device:send(clusters.DoorLock.attributes.SendPINOverTheAir:write(device, true))
 
   -- if consts.SYNC.CODE_INDEX is nil, we haven't started syncing codes from the lock yet,
-  -- so start the process from 1. note: the Zigbee "Master Code" is associated with index 0.
+  -- so start the process from 0. Persist the index so we can resume if the driver is restarted mid-sync.
   if (device:get_field(consts.SYNC.CODE_INDEX) == nil) then
-    device:set_field(consts.SYNC.CODE_INDEX, 1)
+    device:set_field(consts.SYNC.CODE_INDEX, 0, { persist = true })
+    device:set_field(consts.SYNC.CODE_INDEX_VERSION, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
   end
   lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
   device:send(clusters.DoorLock.server.commands.GetPINCode(device, device:get_field(consts.SYNC.CODE_INDEX)))
+end
+
+-- Advance the sync-codes-from-lock flow after a response for the current code index (consts.SYNC.CODE_INDEX).
+-- `occupied` is true only when the lock reported an occupied slot at that index.
+-- `default_response` is true when the step was resolved by a Default Response: that is not treated as a
+-- failure, but it is not an occupied slot either, so it does not count toward the consecutive unoccupied codes.
+function lock_utils.continue_code_sync(device, occupied, default_response)
+  local clusters = require "st.zigbee.zcl.clusters"
+  local code_index = device:get_field(consts.SYNC.CODE_INDEX)
+  if code_index == nil then return end
+
+  if occupied then
+    lock_utils.add_reported_credential(device, code_index)
+    -- reset the consecutive unoccupied codes counter since we found an occupied code
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
+  elseif not default_response then
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1)
+  end
+
+  if code_index >= tables.get_max_entries(device, "credentials") or
+   (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+    -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+    device:set_field(consts.SYNC.CODE_INDEX, nil, { persist = true })
+    device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, nil)
+    device:set_field(consts.SYNC.RETRIED_CODE_INDEX, nil)
+    device:set_field(consts.SYNC.CODES_SYNCED, consts.SYNC.CODES_SYNC_VERSION, { persist = true })
+    lock_utils.clear_busy_state(device)
+  else
+    local next_index = code_index + 1
+    device:set_field(consts.SYNC.CODE_INDEX, next_index, { persist = true })
+    lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK)
+    device:send(clusters.DoorLock.server.commands.GetPINCode(device, next_index))
+  end
 end
 
 
@@ -117,7 +166,7 @@ end
 -- is left in place
 function lock_utils.add_reported_credential(device, credential_index)
   if tables.find_entry(device, "credentials", credential_index) then return end
-  lock_utils.add_credential_and_user(device, {
+  return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
   }, true)

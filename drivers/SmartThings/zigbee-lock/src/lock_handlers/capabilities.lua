@@ -256,6 +256,9 @@ function CapabilityHandlers.refresh(driver, device, cmd)
        (device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME) == nil) then
       device:send(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device))
     end
+
+    -- Allow callers to try to sync device state- fails silently if the device is busy or already synced.
+    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
   elseif not device:supports_capability(capabilities.lockCodes) then
     -- Generically fingerprinted devices may support PINs even though the profile does not yet
     -- reflect it.  Read NumberOfPINUsersSupported so the response handler can trigger a profile
