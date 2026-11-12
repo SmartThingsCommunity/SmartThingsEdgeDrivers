@@ -73,10 +73,15 @@ function lock_utils.get_code_id_from_notification_event(event_params, v1_alarm_l
   return tostring(code_id)
 end
 
--- Add a user and its credential together, so a user never exists without a credential.
+
+-- [[ CREDENTIAL TABLE MANAGEMENT ]] --
+
+-- Add a credential and, optionally, a new user for it. `args.userIndex` is the credential's user.
+-- When `add_user` is true the user is created too, so a user never exists without a credential; when false
+-- the credential is attached to the already-existing user `args.userIndex`.
 -- The credential is added first; the user is only added if that succeeded, so a failed or
 -- colliding credential add leaves no user behind. Returns the result status of the credential add.
-function lock_utils.add_user_and_credential(device, args)
+function lock_utils.add_credential_and_user(device, args, add_user)
   local name = "Guest " .. args.userIndex
   local credential_status = tables.add_entry(device, "credentials", {
     userIndex       = args.userIndex,
@@ -84,10 +89,10 @@ function lock_utils.add_user_and_credential(device, args)
     credentialType  = args.credentialType or consts.CRED_TYPE_PIN,
     credentialName  = args.credentialName or name,
   })
-  if credential_status == consts.COMMAND_RESULT.SUCCESS then
+  if add_user and credential_status == consts.COMMAND_RESULT.SUCCESS then
     tables.add_entry(device, "users", {
       userIndex = args.userIndex,
-      userName  = name,
+      userName  = args.credentialName or name,
       userType  = "guest",
     })
   end
@@ -99,32 +104,30 @@ end
 function lock_utils.update_commanded_credential(device, credential_args)
   local existing = tables.find_entry(device, "credentials", credential_args.credentialIndex)
   if not existing then return consts.COMMAND_RESULT.FAILURE end
-  local updates = {}
-  if credential_args.credentialName ~= nil and credential_args.credentialName ~= existing.credentialName then
-    updates.credentialName = credential_args.credentialName
-  end
-  if credential_args.userIndex ~= nil and credential_args.userIndex ~= existing.userIndex then
-    updates.userIndex = credential_args.userIndex
-  end
-  if next(updates) then
-    local status = tables.update_entry(device, "credentials", credential_args.credentialIndex, updates)
+  local name = credential_args.credentialName
+  if name ~= nil and name ~= existing.credentialName then
+    local status = tables.update_entry(device, "credentials", credential_args.credentialIndex, { credentialName = name })
     if status ~= consts.COMMAND_RESULT.SUCCESS then return status end
   end
-  return consts.COMMAND_RESULT.SUCCESS, updates.userIndex or existing.userIndex
+  return consts.COMMAND_RESULT.SUCCESS, existing.userIndex
 end
 
 -- Per command: update the tables after the lock confirmed a set-credential command we sent.
 -- Returns the command result status, or nil for any other command, plus the affected userIndex.
--- For addCredential the user is always new, and its index is chosen here.
+-- For addCredential, a userIndex of 0 creates a new user (its index is chosen here); otherwise the credential
+-- is attached to the existing user with that index.
 function lock_utils.apply_commanded_credential(device, command_in_progress, credential_args)
   if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
-    local user_index = tables.next_index(device, "users")
-    local status = lock_utils.add_user_and_credential(device, {
+    local user_index = credential_args.userIndex
+    if user_index == 0 then user_index = tables.next_index(device, "users") end
+    -- also covers a requested user that was deleted while the lock was confirming the code
+    local user_not_found = not tables.find_entry(device, "users", user_index)
+    local status = lock_utils.add_credential_and_user(device, {
       userIndex       = user_index,
       credentialIndex = credential_args.credentialIndex,
       credentialType  = credential_args.credentialType,
       credentialName  = credential_args.credentialName,
-    })
+    }, user_not_found)
     return status, status == consts.COMMAND_RESULT.SUCCESS and user_index or nil
   elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
     return lock_utils.update_commanded_credential(device, credential_args)
@@ -136,10 +139,10 @@ end
 -- is left in place.
 function lock_utils.add_reported_credential(device, credential_index)
   if tables.find_entry(device, "credentials", credential_index) then return end
-  lock_utils.add_user_and_credential(device, {
+  lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
-  })
+  }, true)
 end
 
 function lock_utils.set_credential_report_helper(device, credential_index)
