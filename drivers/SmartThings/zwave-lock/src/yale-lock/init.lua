@@ -70,21 +70,28 @@ local function user_code_report(driver, device, cmd)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local occupied = lock_utils.is_code_occupied(cmd)
 
-  -- a report of the programming code slot records the programming code, unless it answers an update of the
-  -- programming code (handled like any other credential).
-  if is_programming_credential(device, credential_index) and occupied and not is_programming_change_in_progress(device) then
-    programming_code_reported(device)
-    -- a sync only moves on when the slot it asked for is reported. The programming code is already recorded, so
-    -- the sync does not add it again.
-    if command_in_progress ~= consts.SYNC.CODES_FROM_LOCK or
-       credential_index ~= device:get_field(consts.SYNC.CODE_INDEX) then
+  -- The generic sync handler treats a report for any other index as an empty slot and moves on, which would skip
+  -- an index. The programming code slot is outside the sync's range and is read separately, so its reports must
+  -- not reach the sync unless the sync asked for that slot.
+  local syncing = command_in_progress == consts.SYNC.CODES_FROM_LOCK
+  local sync_asked_for_slot = syncing and credential_index == device:get_field(consts.SYNC.CODE_INDEX)
+
+  if is_programming_credential(device, credential_index) then
+    if occupied and not is_programming_change_in_progress(device) then
+      -- a report of the programming code slot records the programming code, unless it answers an update of the
+      -- programming code (handled like any other credential). The programming code is already recorded, so a
+      -- sync does not add it again.
+      programming_code_reported(device)
+      if not sync_asked_for_slot then return end
+    elseif syncing and not sync_asked_for_slot then
+      -- an unrequested report that the programming code slot is empty must not move the sync on, or it would skip
+      -- the index the sync is waiting for
       return
     end
   end
 
-  local was_syncing = command_in_progress == consts.SYNC.CODES_FROM_LOCK
   zwave_handlers.user_code_report(driver, device, cmd)
-  if was_syncing and device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
+  if syncing and device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
     -- the sync is finished. The programming code slot is outside the lock's user code slots, so it is read separately.
     yale_programming_code.read_programming_code(device)
   end
