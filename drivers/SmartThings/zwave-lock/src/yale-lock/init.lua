@@ -56,8 +56,8 @@ local function programming_code_reported(device)
   end
 end
 
--- True if an update or delete of the programming code is waiting on the lock. The lock confirms or refuses it like
--- any other credential, so its reports go to the generic handlers.
+-- True if an update of the programming code is waiting on the lock. The lock confirms it like any other
+-- credential, so its reports go to the generic handlers.
 local function is_programming_change_in_progress(device)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
@@ -70,7 +70,7 @@ local function user_code_report(driver, device, cmd)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local occupied = lock_utils.is_code_occupied(cmd)
 
-  -- a report of the programming code slot records the programming code, unless it answers an update or delete of the
+  -- a report of the programming code slot records the programming code, unless it answers an update of the
   -- programming code (handled like any other credential).
   if is_programming_credential(device, credential_index) and occupied and not is_programming_change_in_progress(device) then
     programming_code_reported(device)

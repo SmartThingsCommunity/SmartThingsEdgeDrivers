@@ -209,6 +209,16 @@ function CapabilityHandlers.update_credential(driver, device, command)
   }))
 end
 
+-- The programming code cannot be deleted. Fail the command without sending anything to the lock.
+local function refuse_programming_credential_delete(device, injected_by_delete_user)
+  device.log.warn("ignoring deleteCredential for a programming code, it cannot be deleted")
+  if injected_by_delete_user then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+    lock_utils.clear_busy_state(device)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+end
+
 function CapabilityHandlers.delete_credential(driver, device, command)
   -- Index 0 is the Z-Wave "all users" wildcard; clearing everything must go through deleteAllCredentials.
   if command.args.credentialIndex == 0 then
@@ -220,6 +230,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.LOCK_USERS.DELETE then
     -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+    if lock_utils.is_programming_user(device, credential_args.userIndex) then
+      refuse_programming_credential_delete(device, true)
+      return
+    end
     credential_index = credential_args.credentialIndex
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
@@ -229,6 +243,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+      return
+    end
+    if lock_utils.is_programming_user(device, found_cred.userIndex) then
+      refuse_programming_credential_delete(device, false)
       return
     end
     lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.DELETE, {
@@ -243,17 +261,6 @@ function CapabilityHandlers.delete_credential(driver, device, command)
     user_identifier = credential_index,
     user_id_status = UserCode.user_id_status.AVAILABLE
   }))
-  -- A lock that refuses the delete (e.g. a Yale programming code) ignores the Set and sends nothing, so read the
-  -- slot back if the delete has not completed. The report tells us whether the code is still there. A timer
-  -- left from an earlier delete is cancelled so it cannot read back the slot during this one.
-  local previous_timer = device:get_field(consts.DELETE_CONFIRM_TIMER)
-  if previous_timer ~= nil then device.thread:cancel_timer(previous_timer) end
-  device:set_field(consts.DELETE_CONFIRM_TIMER, device.thread:call_with_delay(consts.DELETE_CONFIRM_DELAY, function()
-    device:set_field(consts.DELETE_CONFIRM_TIMER, nil)
-    if lock_utils.is_delete_in_progress(device, credential_index) then
-      device:send(UserCode:Get({ user_identifier = credential_index }))
-    end
-  end))
 end
 
 function CapabilityHandlers.delete_all_credentials(driver, device, command)
