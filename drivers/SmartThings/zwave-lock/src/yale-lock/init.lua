@@ -9,24 +9,24 @@ local UserCode       = (require "st.zwave.CommandClass.UserCode")({version=1})
 local consts         = require "lock_utils.constants"
 local lock_utils     = require "lock_utils.utils"
 local tables         = require "lock_utils.tables"
-local yale_admin     = require "yale-lock.admin"
+local yale_programming_code     = require "yale-lock.programming_code"
 local zwave_handlers = require "lock_handlers.zwave_responses"
 local cap_handlers   = require "lock_handlers.capabilities"
 
--- Yale locks keep their admin code in a user code slot that is not one of the lock's user slots. It is exposed
--- like any other credential, owned by a user that has the same index and the admin code userType.
-local function is_admin_credential(device, credential_index)
-  return credential_index ~= nil and credential_index == yale_admin.credential_index(device)
+-- Yale locks keep their programming code in a user code slot that is not one of the lock's user slots. It is exposed
+-- like any other credential, owned by a user that has the same index and the programming code userType.
+local function is_programming_credential(device, credential_index)
+  return credential_index ~= nil and credential_index == yale_programming_code.credential_index(device)
 end
 
--- Add the admin code credential and the user that owns it. Both use the admin code slot as their index,
+-- Add the programming code credential and the user that owns it. Both use the programming code slot as their index,
 -- since the user index only has meaning inside the capability state.
-local function add_admin_entries(device, credential_index, name)
-  name = name or consts.ADMIN.NAME
+local function add_programming_entries(device, credential_index, name)
+  name = name or consts.PROGRAMMING_USER.DEFAULT_NAME
   local status = tables.add_entry(device, "users", {
     userIndex = credential_index,
     userName  = name,
-    userType  = consts.ADMIN.USER_TYPE,
+    userType  = consts.PROGRAMMING_USER.USER_TYPE,
   }, true)
   if status ~= consts.COMMAND_RESULT.SUCCESS and status ~= consts.COMMAND_RESULT.OCCUPIED then return status end
   return tables.add_entry(device, "credentials", {
@@ -37,16 +37,16 @@ local function add_admin_entries(device, credential_index, name)
   }, true)
 end
 
--- Record the admin code and, if an addCredential for the admin code is in progress, report the result. A
+-- Record the programming code and, if an addCredential for the programming code is in progress, report the result. A
 -- command in progress for any other credential is left alone.
-local function admin_code_reported(device)
-  local admin_index = yale_admin.credential_index(device)
+local function programming_code_reported(device)
+  local programming_code_slot = yale_programming_code.credential_index(device)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-  local adding_admin = command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-  credential_args.credentialIndex == admin_index
-  local status = add_admin_entries(device, admin_index, adding_admin and credential_args.credentialName or nil)
-  if adding_admin then
+  local adding_programming = command_in_progress == consts.LOCK_CREDENTIALS.ADD and
+  credential_args.credentialIndex == programming_code_slot
+  local status = add_programming_entries(device, programming_code_slot, adding_programming and credential_args.credentialName or nil)
+  if adding_programming then
     local additional_info = status == consts.COMMAND_RESULT.SUCCESS and {
       userIndex       = credential_args.userIndex,
       credentialIndex = credential_args.credentialIndex,
@@ -56,13 +56,13 @@ local function admin_code_reported(device)
   end
 end
 
--- True if an update or delete of the admin code is waiting on the lock. The lock confirms or refuses it like
+-- True if an update or delete of the programming code is waiting on the lock. The lock confirms or refuses it like
 -- any other credential, so its reports go to the generic handlers.
-local function is_admin_change_in_progress(device)
+local function is_programming_change_in_progress(device)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
   return command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and
-    is_admin_credential(device, credential_args.credentialIndex)
+    is_programming_credential(device, credential_args.credentialIndex)
 end
 
 local function user_code_report(driver, device, cmd)
@@ -70,11 +70,11 @@ local function user_code_report(driver, device, cmd)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local occupied = lock_utils.is_code_occupied(cmd)
 
-  -- a report of the admin code slot records the admin code, unless it answers an update or delete of the
-  -- admin code (handled like any other credential).
-  if is_admin_credential(device, credential_index) and occupied and not is_admin_change_in_progress(device) then
-    admin_code_reported(device)
-    -- a sync only moves on when the slot it asked for is reported. The admin code is already recorded, so
+  -- a report of the programming code slot records the programming code, unless it answers an update or delete of the
+  -- programming code (handled like any other credential).
+  if is_programming_credential(device, credential_index) and occupied and not is_programming_change_in_progress(device) then
+    programming_code_reported(device)
+    -- a sync only moves on when the slot it asked for is reported. The programming code is already recorded, so
     -- the sync does not add it again.
     if command_in_progress ~= consts.SYNC.CODES_FROM_LOCK or
        credential_index ~= device:get_field(consts.SYNC.CODE_INDEX) then
@@ -85,8 +85,8 @@ local function user_code_report(driver, device, cmd)
   local was_syncing = command_in_progress == consts.SYNC.CODES_FROM_LOCK
   zwave_handlers.user_code_report(driver, device, cmd)
   if was_syncing and device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
-    -- the sync is finished. The admin code slot is outside the lock's user code slots, so it is read separately.
-    yale_admin.read_admin_code(device)
+    -- the sync is finished. The programming code slot is outside the lock's user code slots, so it is read separately.
+    yale_programming_code.read_programming_code(device)
   end
 end
 
@@ -96,18 +96,18 @@ local function notification_report(driver, device, cmd)
     local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
     if cmd.args.event == access_control_event.NEW_USER_CODE_ADDED and
-       is_admin_credential(device, tonumber(lock_utils.get_code_id_from_notification_event(
-         cmd.args.event_parameter, cmd.args.v1_alarm_level))) and not is_admin_change_in_progress(device) then
-      -- the lock confirms a write to the admin code slot like any other user code (ZW2). An update of the
-      -- admin code is completed by the generic handler.
-      admin_code_reported(device)
+       is_programming_credential(device, tonumber(lock_utils.get_code_id_from_notification_event(
+         cmd.args.event_parameter, cmd.args.v1_alarm_level))) and not is_programming_change_in_progress(device) then
+      -- the lock confirms a write to the programming code slot like any other user code (ZW2). An update of the
+      -- programming code is completed by the generic handler.
+      programming_code_reported(device)
       return
     elseif cmd.args.event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION and
        command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-       is_admin_credential(device, credential_args.credentialIndex) then
-      -- the "master code changed" event is sent instead of NEW_USER_CODE_ADDED by other modules (ZW3), so it
+       is_programming_credential(device, credential_args.credentialIndex) then
+      -- the "programming code changed" event is sent instead of NEW_USER_CODE_ADDED by other modules (ZW3), so it
       -- completes an addCredential in progress.
-      admin_code_reported(device)
+      programming_code_reported(device)
       return
     end
   end
@@ -116,14 +116,14 @@ end
 
 local function add_credential(driver, device, command)
   local cred_index = command.args.userIndex
-  if not is_admin_credential(device, cred_index) then
+  if not is_programming_credential(device, cred_index) then
     cap_handlers.add_credential(driver, device, command)
     return
   end
 
-  -- only an admin code credential may be written to the admin code slot, and it is not limited by the lock's
+  -- only a programming code credential may be written to the programming code slot, and it is not limited by the lock's
   -- user slots
-  if command.args.userType ~= consts.ADMIN.USER_TYPE then
+  if command.args.userType ~= consts.PROGRAMMING_USER.USER_TYPE then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
@@ -131,7 +131,7 @@ local function add_credential(driver, device, command)
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.BUSY)
     return
   end
-  -- writing the slot would replace the admin code on the lock, which is what updateCredential is for
+  -- writing the slot would replace the programming code on the lock, which is what updateCredential is for
   if tables.find_entry(device, "credentials", cred_index) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.OCCUPIED)
     return
@@ -141,8 +141,8 @@ local function add_credential(driver, device, command)
 end
 
 local function add_user(driver, device, command)
-  -- the admin code user is added with the admin code credential, never on its own in a user slot
-  if command.args.userType == consts.ADMIN.USER_TYPE then
+  -- the programming code user is added with the programming code credential, never on its own in a user slot
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE then
     lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
@@ -150,8 +150,8 @@ local function add_user(driver, device, command)
 end
 
 local function update_user(driver, device, command)
-  -- the admin code user cannot be changed to another type, and no other user can be made an admin code user
-  if (command.args.userType == consts.ADMIN.USER_TYPE) ~= is_admin_credential(device, command.args.userIndex) then
+  -- the programming code user cannot be changed to another type, and no other user can be made a programming code user
+  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= is_programming_credential(device, command.args.userIndex) then
     lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end

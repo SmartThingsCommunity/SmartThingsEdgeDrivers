@@ -204,7 +204,7 @@ local function send_credential_delete(device, credential_index)
       user_identifier = credential_index,
       user_id_status = UserCode.user_id_status.AVAILABLE
     }))
-    -- A lock that refuses the delete (e.g. a Yale admin code) ignores the Set and sends nothing, so read the
+    -- A lock that refuses the delete (e.g. a Yale programming code) ignores the Set and sends nothing, so read the
     -- slot back if the delete has not completed. The report tells us whether the code is still there. A timer
     -- left from an earlier delete is cancelled so it cannot read back the slot during this one.
     local previous_timer = device:get_field(consts.DELETE_CONFIRM_TIMER)
@@ -252,7 +252,7 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
 
   local send_clear_commands = function()
     -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with an
-    -- admin code (Yale) keeps it, so the admin entries are kept in state below.
+    -- programming code (Yale) keeps it, so the programming entries are kept in state below.
     device:send(UserCode:Set({
       user_identifier = 0,
       user_id_status = UserCode.user_id_status.AVAILABLE
@@ -260,10 +260,10 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
     -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
     device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
-        lock_utils.delete_all_non_admin_entries(device, "users")
+        lock_utils.delete_all_non_programming_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       end
-      lock_utils.delete_all_non_admin_entries(device, "credentials")
+      lock_utils.delete_all_non_programming_entries(device, "credentials")
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)
     end)

@@ -181,7 +181,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Migrate maps the Yale admin code slot 251 to a programmingUser user with userIndex 251",
+  "Migrate maps the Yale programming code slot 251 to a programmingUser user with userIndex 251",
   function()
     init_code_slot(1, "Zach", yale_mock_device)
     init_code_slot(251, "Master", yale_mock_device)
@@ -198,7 +198,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Migrate adds the Yale admin code at slot 251 when the lock answers the slot read",
+  "Migrate adds the Yale programming code at slot 251 when the lock answers the slot read",
   function()
     init_code_slot(1, "Zach", yale_mock_device)
     test.socket.capability:__queue_receive({ yale_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
@@ -214,8 +214,8 @@ test.register_coroutine_test(
 
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
       user_identifier = 251, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS, user_code = "199111" }) })
-    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Master Code", userType="programmingUser"}}, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Master Code"}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Programming Code", userType="programmingUser"}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Programming Code"}}, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )
