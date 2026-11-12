@@ -140,24 +140,6 @@ local function add_credential(driver, device, command)
   cap_handlers.send_add_credential(device, cred_index, cred_index, command)
 end
 
-local function add_user(driver, device, command)
-  -- the programming code user is added with the programming code credential, never on its own in a user slot
-  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE then
-    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
-    return
-  end
-  cap_handlers.add_user(driver, device, command)
-end
-
-local function update_user(driver, device, command)
-  -- the programming code user cannot be changed to another type, and no other user can be made a programming code user
-  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= is_programming_credential(device, command.args.userIndex) then
-    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
-    return
-  end
-  cap_handlers.update_user(driver, device, command)
-end
-
 local yale_lock = {
   zwave_handlers = {
     [cc.USER_CODE] = {
@@ -168,10 +150,6 @@ local yale_lock = {
     },
   },
   capability_handlers = {
-    [capabilities.lockUsers.ID] = {
-      [capabilities.lockUsers.commands.addUser.NAME] = add_user,
-      [capabilities.lockUsers.commands.updateUser.NAME] = update_user
-    },
     [capabilities.lockCredentials.ID] = {
       [capabilities.lockCredentials.commands.addCredential.NAME] = add_credential
     }
