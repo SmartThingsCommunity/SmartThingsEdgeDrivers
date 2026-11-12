@@ -171,13 +171,20 @@ end
 -- without any command from us (sync, or a programming event). If a credential already exists there it
 -- is left in place. A master report creates a master code user.
 function lock_utils.add_reported_credential(device, credential_index, is_master)
-  if tables.find_entry(device, "credentials", credential_index) then return end
+  local credential = tables.find_entry(device, "credentials", credential_index)
+  if credential then
+    if is_master then lock_utils.update_entries_to_master(device, credential) end
+    return
+  end
   return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
     userType        = is_master and consts.MASTER.USER_TYPE or nil,
   }, true)
 end
+
+
+--[[ MASTER CODE MANAGEMENT ]] --
 
 -- Whether the user at `user_index` is a master code user.
 function lock_utils.is_master_user(device, user_index)
@@ -191,10 +198,9 @@ function lock_utils.update_entries_to_master(device, credential)
     tables.update_entry(device, "credentials", credential.credentialIndex, { credentialName = consts.MASTER.DEFAULT_NAME })
   end
 
+  -- update userType as needed
   local user = tables.find_entry(device, "users", credential.userIndex)
   if not user or user.userType ~= "guest" then return end
-
-  -- update userType
   local user_updates = { userType = consts.MASTER.USER_TYPE }
   -- If the user name is the default guest name, update it to the master code name as well.
   if user.userName == "Guest " .. user.userIndex then

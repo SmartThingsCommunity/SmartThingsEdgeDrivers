@@ -20,6 +20,7 @@ lock_constants.SYNC = {
   CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from index 0)
 }
 
+-- constants defining master code representation in the lock's state tables.
 lock_constants.MASTER = {
   USER_TYPE = "programmingUser",
   DEFAULT_NAME = "Master Code"

@@ -152,12 +152,6 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       device.log.warn_with({ hub_logs = true }, "Unexpected GetPINCodeResponse for index %s, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
       occupied = false -- treat this as an unoccupied slot to continue the sync
     end
-    if occupied and is_master then
-      local found_cred = tables.find_entry(device, "credentials", user_id)
-      if found_cred then
-        lock_utils.update_entries_to_master(device, found_cred)
-      end
-    end
     lock_utils.continue_code_sync(device, occupied, false, is_master)
   end
 end
@@ -239,11 +233,7 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
 
   -- handle the case where we receive a programming event notification for a code we didn't send a command for
   if event_code == ProgramEventCode.MASTER_CODE_CHANGED then
-    local found_cred = tables.find_entry(device, "credentials", user_id)
-    if found_cred then
-      lock_utils.update_entries_to_master(device, found_cred)
-    end
-    -- try to add a credential in all cases. no-op if valid entries already exist
+    -- ensure the credential is represented locally. no-op if it already exists and state is accurate.
     lock_utils.add_reported_credential(device, user_id, true)
   elseif event_code == ProgramEventCode.PIN_CODE_ADDED then
     -- if no "addCredential" command is in progress, ensure the credential is represented locally
