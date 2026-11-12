@@ -113,7 +113,7 @@ def update_old_channel(channel_name):
         },
         json={
             "name": "SmartThings Drivers - {channel_name}",
-            "description": f"Driver support channel: {channel_name}",
+            "description": f"SmartThings Driver - {channel_name}",
             "termsOfServiceUrl": f"{GIT_URL}/tree/{channel_name}"
         }
     )
@@ -175,8 +175,8 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
     failures = {}
     for (driverId, version) in uploaded_drivers:
         print(f"Posting driverID: {driverId}-v{version}")
-        if DRY_RUN:
-            continue # skip update
+        # if DRY_RUN:
+        #     continue # skip update
         response = requests.post(
             f"{ENVIRONMENT_URL}/distchannels/{dest_channel_id}/drivers",
             headers = {
@@ -200,18 +200,6 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
         exit(1)
 
 
-
-'''
-1) Clone production head locally
-2) Create new Channel that will become the new production'
-3) Point new channel to driver ID and versions on prod
-2) Git: Create $NEW_BRANCH name (support-27.1) from production head
-3) (Only from production node) Push to $NEW_BRANCH
-6) Rename PROD_CHANNEL_ID to $NEW_BRANCH
-
-Manually:
-Update Jenkins (PROD|${NEW_BRANCH})_CHANNEL_IDs 
-'''
 def main():
 
     # Creating new prod steps
