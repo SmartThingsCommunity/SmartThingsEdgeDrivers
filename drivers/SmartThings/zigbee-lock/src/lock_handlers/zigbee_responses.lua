@@ -163,9 +163,12 @@ function ZigbeeHandlers.default_response(driver, device, zb_rx)
   if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then return end
   if zcl_body.cmd.value ~= clusters.DoorLock.server.commands.GetPINCode.ID then return end
   -- a SUCCESS default response is followed by the real GetPINCodeResponse
-  if zcl_body.status.value == Status.SUCCESS then return end
-  -- else, continue the code sync
-  lock_utils.continue_code_sync(device, false, true)
+  if zcl_body.status.value == Status.SUCCESS then
+    return
+  else  -- else, continue the code sync
+    device.log.warn_with({ hub_logs = true }, "Default Response for GetPINCode at index %s with status %s", device:get_field(consts.SYNC.CODE_INDEX), zcl_body.status.value)
+    lock_utils.continue_code_sync(device, false, true)
+  end
 end
 
 
