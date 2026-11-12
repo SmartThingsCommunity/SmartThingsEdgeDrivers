@@ -69,9 +69,9 @@ local function alarm_report_handler(driver, device, cmd)
     event = capabilities.lock.lock.locked()
     event.data = {method = METHOD.AUTO}
   elseif (alarm_type == 32) then
-    -- all credentials have been deleted
-    tables.delete_all_entries(device, "credentials")
-    tables.delete_all_entries(device, "users")
+    -- all user codes have been deleted, which does not affect the admin code
+    lock_utils.delete_all_non_admin_entries(device, "credentials")
+    lock_utils.delete_all_non_admin_entries(device, "users")
   elseif (alarm_type == 33) then
     -- credential has been deleted
     lock_utils.delete_credential_report_helper(device, credential_index)
