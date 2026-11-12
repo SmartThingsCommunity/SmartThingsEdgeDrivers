@@ -255,7 +255,7 @@ test.register_coroutine_test(
     })
 
 test.register_coroutine_test(
-  "user_code_report: sync on a Yale reads the admin code slot when it completes",
+  "user_code_report: sync on a Yale reads the programming code slot when it completes",
   function()
     yale_mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     yale_mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
@@ -269,18 +269,18 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 251 }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
 
-    -- a ZW2 module answers the slot read; the admin code is added at 251
+    -- a ZW2 module answers the slot read; the programming code is added at 251
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
       user_identifier = 251,
       user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
       user_code       = "199111",
     }) })
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
-      capabilities.lockUsers.users({ { userIndex = 251, userName = "Master Code", userType = "programmingUser" } },
+      capabilities.lockUsers.users({ { userIndex = 251, userName = "Programming Code", userType = "programmingUser" } },
         { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
       capabilities.lockCredentials.credentials(
-        { { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Master Code" } },
+        { { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Programming Code" } },
         { visibility = { displayed = false } })))
     test.wait_for_events()
   end,

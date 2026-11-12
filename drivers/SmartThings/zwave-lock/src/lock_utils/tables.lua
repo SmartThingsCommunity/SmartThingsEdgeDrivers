@@ -157,17 +157,17 @@ function table_utils.get_max_entries(device, table_name)
   return device:get_latest_state("main", def.capability.ID, def.max_entries.NAME, 20) -- arbitrary, default to 20 if the attribute is missing
 end
 
--- Returns the admin code credential, or nil if there is none. A lock may keep an admin code in a credential
--- outside its user slots, owned by a user with the admin userType (consts.ADMIN.USER_TYPE); where that
--- credential lives is manufacturer specific and handled by the sub-driver for the lock. A user given the admin
+-- Returns the programming code credential, or nil if there is none. A lock may keep a programming code in a credential
+-- outside its user slots, owned by a user with the programmingUser userType (consts.PROGRAMMING_USER.USER_TYPE); where that
+-- credential lives is manufacturer specific and handled by the sub-driver for the lock. A user given the programmingUser
 -- userType in one of the lock's user slots is an ordinary user.
-function table_utils.get_admin_credential(device)
+function table_utils.get_programming_credential(device)
   local user_slots = table_utils.get_max_entries(device, "credentials")
   local users = table_utils.get_state(device, "users") or {}
   for _, credential in ipairs(table_utils.get_state(device, "credentials") or {}) do
     if credential.credentialIndex > user_slots then
       for _, user in ipairs(users) do
-        if user.userIndex == credential.userIndex and user.userType == consts.ADMIN.USER_TYPE then
+        if user.userIndex == credential.userIndex and user.userType == consts.PROGRAMMING_USER.USER_TYPE then
           return credential
         end
       end
@@ -175,15 +175,15 @@ function table_utils.get_admin_credential(device)
   end
 end
 
--- Return true if the named table has reached its max_entries limit. The admin code credential, and the
+-- Return true if the named table has reached its max_entries limit. The programming code credential, and the
 -- user that owns it, are not one of the lock's user slots, so they do not count toward the limit.
 function table_utils.is_full(device, table_name)
   local def = resolve_table_def(device, table_name)
   if not def then return true end
-  local admin = table_utils.get_admin_credential(device)
+  local programming = table_utils.get_programming_credential(device)
   local count = 0
   for _, entry in ipairs(table_utils.get_state(device, def) or {}) do
-    if not (admin and entry.userIndex == admin.userIndex) then count = count + 1 end
+    if not (programming and entry.userIndex == programming.userIndex) then count = count + 1 end
   end
   return count >= table_utils.get_max_entries(device, table_name)
 end
@@ -191,7 +191,7 @@ end
 -- Add an entry to a named table. The entry must satisfy all required_keys for
 -- that table. An entry whose match_key value already exists in the
 -- table is skipped to prevent duplicates. If the table has a max_entries limit,
--- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the admin code).
+-- entries that exceed the limit are not added, unless exempt_from_limit is true (used for the programming code).
 function table_utils.add_entry(device, table_name, entry, exempt_from_limit)
   device.log.debug("table_helpers: attempting to add entry " .. st_utils.stringify_table(entry) .. " to " .. table_name)
   local def = resolve_table_def(device, table_name)

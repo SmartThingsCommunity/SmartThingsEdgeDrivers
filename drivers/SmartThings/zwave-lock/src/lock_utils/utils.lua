@@ -133,16 +133,16 @@ function lock_utils.continue_code_sync(device, occupied, available)
 end
 
 
--- [[ ADMIN CODE MANAGEMENT ]] --
+-- [[ PROGRAMMING CODE MANAGEMENT ]] --
 --
--- The admin code credential is found with tables.get_admin_credential.
+-- The programming code credential is found with tables.get_programming_credential.
 
--- Clear every entry of the "users" or "credentials" table except the admin code credential and its user.
-function lock_utils.delete_all_non_admin_entries(device, table_name)
-  local admin = tables.get_admin_credential(device)
+-- Clear every entry of the "users" or "credentials" table except the programming code credential and its user.
+function lock_utils.delete_all_non_programming_entries(device, table_name)
+  local programming = tables.get_programming_credential(device)
   local match_key = table_name == "users" and "userIndex" or "credentialIndex"
   tables.delete_all_entries(device, table_name, function(entry)
-    return admin ~= nil and entry[match_key] == admin[match_key]
+    return programming ~= nil and entry[match_key] == programming[match_key]
   end)
 end
 
