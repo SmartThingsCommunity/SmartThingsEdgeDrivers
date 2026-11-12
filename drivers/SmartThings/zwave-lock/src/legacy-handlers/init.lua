@@ -77,7 +77,7 @@ local function migrate(driver, device, cmd)
   for _, code in ipairs(ordered_codes) do
     local user_index = #lock_users + 1
     table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = lock_codes[code.slot]})
-    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin"})
+    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin", credentialName = lock_codes[code.slot]})
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
