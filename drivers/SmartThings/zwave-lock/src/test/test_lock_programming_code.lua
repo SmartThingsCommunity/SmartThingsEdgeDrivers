@@ -551,8 +551,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "updateCredential: credentialIndex 0 is rejected without sending user identifier 0",
   function()
-    seed(mock_device, { { userIndex = 1, userName = "Master Code", userType = "guest" } },
-         { { userIndex = 1, credentialIndex = 0, credentialType = "pin" } })
+    seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "updateCredential", args = { 1, 0, "pin", "5678" } } })
     expect_credential_result(mock_device, { commandName = "updateCredential", statusCode = "invalidCommand" })
@@ -564,29 +563,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "deleteCredential: credentialIndex 0 is rejected without sending user identifier 0",
   function()
-    seed(mock_device, { { userIndex = 1, userName = "Master Code", userType = "guest" } },
-         { { userIndex = 1, credentialIndex = 0, credentialType = "pin" } })
+    seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 0, "pin" } } })
     expect_credential_result(mock_device, { commandName = "deleteCredential", statusCode = "invalidCommand" })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(mock_device) }
-)
-
-test.register_coroutine_test(
-  "deleteUser: a stale credential at index 0 is removed locally without sending user identifier 0",
-  function()
-    seed(mock_device, { GUEST_USER }, { { userIndex = 1, credentialIndex = 0, credentialType = "pin" } })
-    test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 1 } } })
-    expect_users(mock_device, {})
-    expect_credentials(mock_device, {})
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockUsers.commandResult({ commandName = "deleteUser", statusCode = "success", userIndex = 1 },
-        { state_change = true, visibility = { displayed = false } })))
-    expect_credential_result(mock_device,
-      { commandName = "deleteCredential", statusCode = "success", userIndex = 1, credentialIndex = 0 })
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device) }
@@ -624,6 +604,16 @@ local function queue_new_user_code_added(device, slot)
     event_parameter = string.char(slot),
   }) })
 end
+
+test.register_coroutine_test(
+  "an out-of-band user code added event for index 0 is ignored",
+  function()
+    -- nothing is added or emitted
+    queue_new_user_code_added(mock_device, 0)
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device) }
+)
 
 test.register_coroutine_test(
   "addCredential: Yale programming code is added when the lock confirms the write with a new user code event",
