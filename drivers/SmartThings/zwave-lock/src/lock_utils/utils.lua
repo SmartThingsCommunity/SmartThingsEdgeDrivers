@@ -4,6 +4,8 @@
 local capabilities = require "st.capabilities"
 local consts = require "lock_utils.constants"
 local tables = require "lock_utils.tables"
+--- @type st.zwave.CommandClass.UserCode
+local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
 local lock_utils = {}
 
@@ -59,8 +61,6 @@ end
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
-  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-
   -- skip if unsupported, already synced, or busy (including a sync already in progress).
   if not (device:supports_capability(capabilities.lockCredentials) and
     device:get_field(consts.SYNC.CODES_SYNCED) ~= consts.SYNC.CODES_SYNC_VERSION and
@@ -106,7 +106,6 @@ end
 -- it explicitly reported the slot as available. Any other status (reserved, disabled, unknown) neither
 -- resets nor advances the consecutive-unoccupied counter, so it can't end the sync early.
 function lock_utils.continue_code_sync(device, occupied, available)
-  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
   local code_index = device:get_field(consts.SYNC.CODE_INDEX)
   if code_index == nil then return end
 
@@ -134,6 +133,20 @@ function lock_utils.continue_code_sync(device, occupied, available)
 end
 
 
+-- [[ ADMIN CODE MANAGEMENT ]] --
+--
+-- The admin code credential is found with tables.get_admin_credential.
+
+-- Clear every entry of the "users" or "credentials" table except the admin code credential and its user.
+function lock_utils.delete_all_non_admin_entries(device, table_name)
+  local admin = tables.get_admin_credential(device)
+  local match_key = table_name == "users" and "userIndex" or "credentialIndex"
+  tables.delete_all_entries(device, table_name, function(entry)
+    return admin ~= nil and entry[match_key] == admin[match_key]
+  end)
+end
+
+
 -- [[ COMMAND RESULT STATE MANAGEMENT ]] --
 
 function lock_utils.emit_command_result(device, capability, command_name, status_code, additional_info)
@@ -147,6 +160,13 @@ end
 
 
 -- [[ HELPERS ]] --
+
+-- True if a User Code Report shows a code in the slot. A lock that does not report the status of a slot
+-- still holds a code if it reports one.
+function lock_utils.is_code_occupied(cmd)
+  return cmd.args.user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
+    (cmd.args.user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code ~= nil)
+end
 
 function lock_utils.get_code_id_from_notification_event(event_params, v1_alarm_level)
   local code_id = v1_alarm_level

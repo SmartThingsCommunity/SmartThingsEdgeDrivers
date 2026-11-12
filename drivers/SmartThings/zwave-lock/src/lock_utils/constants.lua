@@ -19,6 +19,12 @@ lock_constants.SYNC = {
   CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from the first index)
 }
 
+lock_constants.ADMIN = {
+  -- The lockUsers userType for the admin code.
+  USER_TYPE = "programmingUser",
+  NAME = "Master Code",
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",

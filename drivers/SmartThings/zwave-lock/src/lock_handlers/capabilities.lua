@@ -111,6 +111,21 @@ end
 
 -- [[ LOCK CREDENTIALS CAPABILITY COMMANDS ]] --
 
+-- Set the busy state and write the PIN to the lock. The caller must already have validated the command.
+function CapabilityHandlers.send_add_credential(device, user_index, cred_index, command)
+  lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
+    userIndex       = user_index,
+    credentialIndex = cred_index,
+    credentialType  = command.args.credentialType,
+    credentialName  = command.args.credentialName,
+  })
+  device:send(UserCode:Set({
+    user_identifier = cred_index,
+    user_code = command.args.credentialData,
+    user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
+  }))
+end
+
 function CapabilityHandlers.add_credential(driver, device, command)
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.BUSY)
@@ -127,9 +142,9 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  local credentials_full = #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials")
+  local credentials_full = tables.is_full(device, "credentials")
   -- if we are being asked to create a new user (index 0), this also needs a free user index.
-  local users_full = (user_index == 0) and #(tables.get_state(device, "users") or {}) >= tables.get_max_entries(device, "users")
+  local users_full = (user_index == 0) and tables.is_full(device, "users")
   if credentials_full or users_full then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
@@ -139,17 +154,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local cred_index = tables.next_index(device, "credentials")
 
   -- Set busy state and attempt to set the PIN on-device.
-  lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
-    userIndex       = user_index,
-    credentialIndex = cred_index,
-    credentialType  = command.args.credentialType,
-    credentialName  = command.args.credentialName,
-  })
-  device:send(UserCode:Set({
-    user_identifier = cred_index,
-    user_code = command.args.credentialData,
-    user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-  }))
+  CapabilityHandlers.send_add_credential(device, user_index, cred_index, command)
 end
 
 function CapabilityHandlers.update_credential(driver, device, command)
@@ -246,7 +251,8 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with an
+    -- admin code (Yale) keeps it, so the admin entries are kept in state below.
     device:send(UserCode:Set({
       user_identifier = 0,
       user_id_status = UserCode.user_id_status.AVAILABLE
@@ -254,10 +260,10 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
     -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
     device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
-        tables.delete_all_entries(device, "users")
+        lock_utils.delete_all_non_admin_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       end
-      tables.delete_all_entries(device, "credentials")
+      lock_utils.delete_all_non_admin_entries(device, "credentials")
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)
     end)
