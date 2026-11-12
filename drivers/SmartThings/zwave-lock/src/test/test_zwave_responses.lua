@@ -520,4 +520,154 @@ test.register_coroutine_test(
       min_api_version = 15
     })
 
+-- clear the sync state the tests below leave on the shared mock device
+local function reset_sync_state()
+  mock_device:set_field(constants.DRIVER_STATE.BUSY, false, {})
+  mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, nil, {})
+  mock_device:set_field(constants.SYNC.CODE_INDEX, nil, { persist = true })
+  mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, nil, { persist = true })
+  mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, nil, {})
+  mock_device:set_field(constants.SYNC.CODES_SYNCED, nil, { persist = true })
+end
+
+test.register_coroutine_test(
+  "user_code_report: sync ignores a report for an index that was already processed",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+
+    -- a late, duplicate report for slot 2: no credential is added and no request is sent
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({
+        user_identifier = 2,
+        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+        user_code       = "1234",
+      }),
+    })
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == 3, "sync must still be waiting on index 3")
+    reset_sync_state()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "user_code_report: sync treats a report for an unexpected index as an unoccupied slot and continues",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 3, {})
+
+    -- an occupied report for slot 5 while waiting on slot 3: no credential is recorded at slot 3
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({
+        user_identifier = 5,
+        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+        user_code       = "1234",
+      }),
+    })
+    test.socket.zwave:__expect_send(
+      UserCode:Get({ user_identifier = 4 }):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) == 1,
+      "an unexpected report counts as an unoccupied code")
+    reset_sync_state()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "user_code_report: persists the sync code index while sync is in progress",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 1, {})
+
+    -- unoccupied slot: no credential events, just advance to the next index
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({
+        user_identifier = 1,
+        user_id_status  = UserCode.user_id_status.AVAILABLE,
+      }),
+    })
+    test.socket.zwave:__expect_send(
+      UserCode:Get({ user_identifier = 2 }):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+
+    -- the index must be in the persistent store so sync can resume after a driver restart
+    assert(mock_device.persistent_store[constants.SYNC.CODE_INDEX] == 2)
+    assert(mock_device.transient_store[constants.SYNC.CODE_INDEX] == nil)
+    reset_sync_state()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "user_code_report: clears the consecutive unoccupied counter when the sync completes",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 6, { persist = true })
+    mock_device:set_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 5, {})
+
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({
+        user_identifier = 6,
+        user_id_status  = UserCode.user_id_status.AVAILABLE,
+      }),
+    })
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) == nil)
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION)
+    reset_sync_state()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "sync_device_state: retries a stalled sync once the busy window has expired",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time() - 60, {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 4, { persist = true })
+    mock_device:set_field(constants.SYNC.CODE_INDEX_VERSION, constants.SYNC.CODES_SYNC_VERSION, { persist = true })
+
+    -- refresh schedules a delayed sync attempt, which resumes from the persisted index
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.refresh.ID, command = "refresh", args = {} },
+    })
+    expect_refresh_reads()
+    test.wait_for_events()
+    test.mock_time.advance_time(15)
+    test.socket.zwave:__expect_send(
+      UserCode:Get({ user_identifier = 4 }):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+    reset_sync_state()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
 test.run_registered_tests()
