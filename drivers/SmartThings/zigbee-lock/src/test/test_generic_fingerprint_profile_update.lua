@@ -34,6 +34,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "base-lock"})
 
     test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = t_utils.get_profile_definition("base-lock.yml") }))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
@@ -44,6 +45,11 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MinPINCodeLength:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
+    test.wait_for_events()
+    -- the refresh handler delays the sync by 15 seconds
+    test.mock_time.advance_time(15)
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 0) })
   end,
   {
      min_api_version = 14

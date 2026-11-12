@@ -68,6 +68,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4,  { visibility = { displayed = false } })))
       test.wait_for_events()
       -- Validate `migrate` command functionality.
+      test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
 
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
@@ -81,6 +82,11 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
+      test.wait_for_events()
+      -- the refresh handler delays the sync by 15 seconds
+      test.mock_time.advance_time(15)
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 0) })
       test.wait_for_events()
       assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true, "SLGA_MIGRATED field should be set to true after migration")
     end
@@ -97,6 +103,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( zero_slot_mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( zero_slot_mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4,  { visibility = { displayed = false } })))
       test.wait_for_events()
+      test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
       test.socket.capability:__queue_receive({ zero_slot_mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
       -- slot 0 is a valid credentialIndex but not a valid userIndex (minimum 1), so its user gets the next free userIndex, 2, without displacing slot 1.
       test.socket.capability:__expect_send( zero_slot_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
@@ -110,6 +117,11 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(zero_slot_mock_device) })
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.attributes.LockState:read(zero_slot_mock_device) })
       test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, Alarm.attributes.AlarmCount:read(zero_slot_mock_device) })
+      test.wait_for_events()
+      -- the refresh handler delays the sync by 15 seconds
+      test.mock_time.advance_time(15)
+      test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(zero_slot_mock_device, true) })
+      test.socket.zigbee:__expect_send({ zero_slot_mock_device.id, DoorLock.server.commands.GetPINCode(zero_slot_mock_device, 0) })
       test.wait_for_events()
     end
 )

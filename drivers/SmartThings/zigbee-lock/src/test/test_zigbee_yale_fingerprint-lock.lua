@@ -29,6 +29,7 @@ local function test_init_new_capabilities()
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MinPINCodeLength:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
+  -- the sync started by refresh is delayed by 15 seconds, and this test does not advance time
 end
 
 test.register_message_test(
