@@ -18,17 +18,17 @@ PACKAGEKEY = "packageKey"
 
 # Pulls repo, changes directory into and checks out production branch
 def pull_prod():
-    result = subprocess.run(
-        f"git clone {GIT_URL}",
-        shell=True,
-    )
-    if result.returncode != 0:
-        print("Failed to clone SmartThingsEdgeDrivers repo", file=sys.stderr)
-        exit(1)
+    # result = subprocess.run(
+    #     f"git clone {GIT_URL}",
+    #     shell=True,
+    # )
+    # if result.returncode != 0:
+    #     print("Failed to clone SmartThingsEdgeDrivers repo", file=sys.stderr)
+    #     exit(1)
 
-    print("Changing directory into: SmartThingsEdgeDrivers")
-    os.chdir("SmartThingsEdgeDrivers")
-    print(f"New cwd: {os.getcwd()}")
+    # print("Changing directory into: SmartThingsEdgeDrivers")
+    # os.chdir("SmartThingsEdgeDrivers")
+    # print(f"New cwd: {os.getcwd()}")
 
     result = subprocess.run("git checkout origin/production", shell=True)
     if result.returncode != 0:
