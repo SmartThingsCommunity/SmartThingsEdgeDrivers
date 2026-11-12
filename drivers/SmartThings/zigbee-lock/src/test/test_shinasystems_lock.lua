@@ -20,7 +20,7 @@ local constants          = require "lock_utils.constants"
 local DoorState = DoorLock.attributes.DoorState
 
 local mock_device = test.mock_device.build_test_zigbee_device({
-  profile = t_utils.get_profile_definition("base-lock-contact.yml"),
+  profile = t_utils.get_profile_definition("base-lock-door-state.yml"),
   zigbee_endpoints = {
     [1] = {
       id = 1,
@@ -64,8 +64,8 @@ local function expect_refresh(pin_users_known)
 end
 
 -- the messages of every init: the default handler reads the number of PIN users as the profile has
--- no lockCodes, and the sub-driver reports the lock states and commands, the PIN support and the
--- single PIN of the DLM-300Z
+-- no lockCodes, and the sub-driver reports the lock states and commands, the door states, the PIN
+-- support and the single PIN of the DLM-300Z
 local function expect_init_events()
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
   test.socket.capability:__expect_send(
@@ -75,6 +75,10 @@ local function expect_init_events()
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main",
       capabilities.lock.supportedLockCommands({ "lock", "unlock" }, { visibility = { displayed = false } }))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.doorState.supportedDoorStates({ "open", "closed" }, { visibility = { displayed = false } }))
   )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main",
@@ -156,17 +160,17 @@ end
 -- ============================================================================
 
 test.register_coroutine_test(
-  "DoorState report should be handled as a contact event",
+  "DoorState report should be handled as a doorState event",
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorState:build_test_attr_report(mock_device, DoorState.OPEN) })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.open())
     )
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorState:build_test_attr_report(mock_device, DoorState.CLOSED) })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.closed())
     )
     test.wait_for_events()
 

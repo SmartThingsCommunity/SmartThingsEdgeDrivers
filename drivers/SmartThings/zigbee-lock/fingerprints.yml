@@ -237,7 +237,7 @@ zigbeeManufacturer:
     deviceLabel: SiHAS Door Lock
     manufacturer: ShinaSystem
     model: DLM-300Z
-    deviceProfileName: base-lock-contact
+    deviceProfileName: base-lock-door-state
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock

@@ -55,6 +55,8 @@ local function device_init(driver, device)
   -- The DLM-300Z has no latch, and does not report the "not fully locked" or "unknown" state
   device:emit_event(capabilities.lock.supportedLockValues({ "locked", "unlocked" }, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lock.supportedLockCommands({ "lock", "unlock" }, { visibility = { displayed = false } }))
+  -- It only reports whether its door is open or closed
+  device:emit_event(capabilities.doorState.supportedDoorStates({ "open", "closed" }, { visibility = { displayed = false } }))
   if device:supports_capability(capabilities.lockCredentials) then
     -- The default handler only reports the PIN support of a device that has lockCodes in its profile
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
@@ -148,9 +150,9 @@ end
 
 local function door_state_handler(driver, device, value)
   if value.value == DoorState.OPEN then
-    device:emit_event(capabilities.contactSensor.contact.open())
+    device:emit_event(capabilities.doorState.doorState.open())
   elseif value.value == DoorState.CLOSED then
-    device:emit_event(capabilities.contactSensor.contact.closed())
+    device:emit_event(capabilities.doorState.doorState.closed())
   end
 end
 

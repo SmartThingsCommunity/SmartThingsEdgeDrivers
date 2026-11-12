@@ -1,10 +1,10 @@
-name: base-lock-contact
+name: base-lock-door-state
 components:
 - id: main
   capabilities:
   - id: lock
     version: 1
-  - id: contactSensor
+  - id: doorState
     version: 1
   - id: lockCredentials
     version: 1
