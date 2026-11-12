@@ -213,3 +213,6 @@ def main():
 
     print(f"\n\nNew production channel ID: {new_prod_channel_id}\n\n")
     
+
+if __name__ == "__main__":
+    main()
