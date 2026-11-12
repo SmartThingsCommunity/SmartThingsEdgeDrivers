@@ -262,7 +262,7 @@ function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with an
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with a
     -- programming code (Yale) keeps it, so the programming entries are kept in state below.
     device:send(UserCode:Set({
       user_identifier = 0,
