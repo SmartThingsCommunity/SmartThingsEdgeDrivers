@@ -832,14 +832,49 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: other locks are not restricted by the programming code user type",
+  "updateUser: no lock can make a guest a programming user",
   function()
     seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser",
         args = { 1, "Guest", "programmingUser" } } })
-    expect_users(mock_device, { { userIndex = 1, userName = "Guest", userType = "programmingUser" } })
-    expect_user_result(mock_device, { commandName = "updateUser", statusCode = "success", userIndex = 1 })
+    expect_user_result(mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device) }
+)
+
+test.register_coroutine_test(
+  "addUser: no lock can add a programming user",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Owner", "programmingUser" } } })
+    expect_user_result(mock_device, { commandName = "addUser", statusCode = "invalidCommand" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device) }
+)
+
+test.register_coroutine_test(
+  "addCredential: no lock can add a credential of the programming user type",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 0, "programmingUser", "pin", "123456" } } })
+    expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "invalidCommand" })
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(mock_device) }
+)
+
+test.register_coroutine_test(
+  "addCredential: an existing programming user cannot be given another credential",
+  function()
+    seed(mock_device, { PROGRAMMING_USER_ENTRY }, {})
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 251, "guest", "pin", "123456" } } })
+    expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device) }

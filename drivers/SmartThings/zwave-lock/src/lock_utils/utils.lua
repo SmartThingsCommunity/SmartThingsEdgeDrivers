@@ -119,6 +119,12 @@ end
 --
 -- The programming code credential is found with tables.get_programming_credential.
 
+-- Whether the user at user_index is a programming user.
+function lock_utils.is_programming_user(device, user_index)
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.PROGRAMMING_USER.USER_TYPE
+end
+
 -- Clear every entry of the "users" or "credentials" table except the programming code credential and its user.
 function lock_utils.delete_all_non_programming_entries(device, table_name)
   local programming = tables.get_programming_credential(device)
