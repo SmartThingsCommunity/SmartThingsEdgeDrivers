@@ -1,7 +1,6 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities   = require "st.capabilities"
 local cc             = require "st.zwave.CommandClass"
 local Notification   = (require "st.zwave.CommandClass.Notification")({version=3})
 local UserCode       = (require "st.zwave.CommandClass.UserCode")({version=1})
@@ -11,7 +10,6 @@ local lock_utils     = require "lock_utils.utils"
 local tables         = require "lock_utils.tables"
 local yale_programming_code     = require "yale-lock.programming_code"
 local zwave_handlers = require "lock_handlers.zwave_responses"
-local cap_handlers   = require "lock_handlers.capabilities"
 
 -- Yale locks keep their programming code in a user code slot that is not one of the lock's user slots. It is exposed
 -- like any other credential, owned by a user that has the same index and the programming code userType.
@@ -37,23 +35,9 @@ local function add_programming_entries(device, credential_index, name)
   }, true)
 end
 
--- Record the programming code and, if an addCredential for the programming code is in progress, report the result. A
--- command in progress for any other credential is left alone.
+-- Record the programming code the lock reported: the programming code credential and the user that owns it.
 local function programming_code_reported(device)
-  local programming_code_slot = yale_programming_code.credential_index(device)
-  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
-  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-  local adding_programming = command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-  credential_args.credentialIndex == programming_code_slot
-  local status = add_programming_entries(device, programming_code_slot, adding_programming and credential_args.credentialName or nil)
-  if adding_programming then
-    local additional_info = status == consts.COMMAND_RESULT.SUCCESS and {
-      userIndex       = credential_args.userIndex,
-      credentialIndex = credential_args.credentialIndex,
-    } or nil
-    lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress, status, additional_info)
-    lock_utils.clear_busy_state(device)
-  end
+  add_programming_entries(device, yale_programming_code.credential_index(device))
 end
 
 -- True if an update of the programming code is waiting on the lock. The lock confirms it like any other
@@ -61,7 +45,7 @@ end
 local function is_programming_change_in_progress(device)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-  return command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and
+  return command_in_progress == consts.LOCK_CREDENTIALS.UPDATE and
     is_programming_credential(device, credential_args.credentialIndex)
 end
 
@@ -100,8 +84,6 @@ end
 local function notification_report(driver, device, cmd)
   if cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL then
     local access_control_event = Notification.event.access_control
-    local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
-    local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
     if cmd.args.event == access_control_event.NEW_USER_CODE_ADDED and
        is_programming_credential(device, tonumber(lock_utils.get_code_id_from_notification_event(
          cmd.args.event_parameter, cmd.args.v1_alarm_level))) and not is_programming_change_in_progress(device) then
@@ -109,42 +91,9 @@ local function notification_report(driver, device, cmd)
       -- programming code is completed by the generic handler.
       programming_code_reported(device)
       return
-    elseif cmd.args.event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION and
-       command_in_progress == consts.LOCK_CREDENTIALS.ADD and
-       is_programming_credential(device, credential_args.credentialIndex) then
-      -- the "programming code changed" event is sent instead of NEW_USER_CODE_ADDED by other modules (ZW3), so it
-      -- completes an addCredential in progress.
-      programming_code_reported(device)
-      return
     end
   end
   zwave_handlers.notification_report(driver, device, cmd)
-end
-
-local function add_credential(driver, device, command)
-  local cred_index = command.args.userIndex
-  if not is_programming_credential(device, cred_index) then
-    cap_handlers.add_credential(driver, device, command)
-    return
-  end
-
-  -- only a programming code credential may be written to the programming code slot, and it is not limited by the lock's
-  -- user slots
-  if command.args.userType ~= consts.PROGRAMMING_USER.USER_TYPE then
-    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
-    return
-  end
-  if lock_utils.is_device_busy(device) then
-    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.BUSY)
-    return
-  end
-  -- writing the slot would replace the programming code on the lock, which is what updateCredential is for
-  if tables.find_entry(device, "credentials", cred_index) then
-    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.OCCUPIED)
-    return
-  end
-
-  cap_handlers.send_add_credential(device, cred_index, cred_index, command)
 end
 
 local yale_lock = {
@@ -155,11 +104,6 @@ local yale_lock = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report
     },
-  },
-  capability_handlers = {
-    [capabilities.lockCredentials.ID] = {
-      [capabilities.lockCredentials.commands.addCredential.NAME] = add_credential
-    }
   },
   NAME = "Yale Lock",
   can_handle = require("yale-lock.can_handle"),

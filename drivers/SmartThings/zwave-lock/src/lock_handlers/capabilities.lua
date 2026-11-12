@@ -123,21 +123,6 @@ end
 
 -- [[ LOCK CREDENTIALS CAPABILITY COMMANDS ]] --
 
--- Set the busy state and write the PIN to the lock. The caller must already have validated the command.
-function CapabilityHandlers.send_add_credential(device, user_index, cred_index, command)
-  lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
-    userIndex       = user_index,
-    credentialIndex = cred_index,
-    credentialType  = command.args.credentialType,
-    credentialName  = command.args.credentialName,
-  })
-  device:send(UserCode:Set({
-    user_identifier = cred_index,
-    user_code = command.args.credentialData,
-    user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-  }))
-end
-
 function CapabilityHandlers.add_credential(driver, device, command)
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.BUSY)
@@ -169,7 +154,17 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local cred_index = tables.next_index(device, "credentials")
 
   -- Set busy state and attempt to set the PIN on-device.
-  CapabilityHandlers.send_add_credential(device, user_index, cred_index, command)
+  lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
+    userIndex       = user_index,
+    credentialIndex = cred_index,
+    credentialType  = command.args.credentialType,
+    credentialName  = command.args.credentialName,
+  })
+  device:send(UserCode:Set({
+    user_identifier = cred_index,
+    user_code = command.args.credentialData,
+    user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
+  }))
 end
 
 function CapabilityHandlers.update_credential(driver, device, command)
