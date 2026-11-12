@@ -204,7 +204,7 @@ end
 -- is left in place.
 function lock_utils.add_reported_credential(device, credential_index)
   if tables.find_entry(device, "credentials", credential_index) then return end
-  lock_utils.add_credential_and_user(device, {
+  return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
     credentialIndex = credential_index,
   }, true)
