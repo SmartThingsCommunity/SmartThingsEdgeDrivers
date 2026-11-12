@@ -137,8 +137,8 @@ local function init_and_add_pin()
     mock_device.id,
     DoorLock.client.commands.SetPINCodeResponse.build_test_rx(mock_device, DoorLock.types.DrlkSetCodeStatus.SUCCESS),
   })
-  expect_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
   expect_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } })
+  expect_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
   expect_command_result(capabilities.lockCredentials,
     { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 })
   test.wait_for_events()
