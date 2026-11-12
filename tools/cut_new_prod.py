@@ -81,7 +81,7 @@ def create_and_push_git_branch(new_branch):
 
 def create_new_channel():
     response = requests.post(
-        url=f"{ENVIRONMENT_URL}/distchannels/",
+        url=f"{ENVIRONMENT_URL}/distchannels",
         headers={
             "Accept": "application/vnd.smartthings+json;v=20200810",
             "Authorization": "Bearer "+TOKEN,
@@ -224,31 +224,6 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
 
 
 def main():
-
-    # Get drivers currently on the source channel
-    response = requests.get(
-        ENVIRONMENT_URL+"/channels/"+PROD_CHANNEL_ID+"/drivers",
-        headers={
-            "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN,
-            "Content-Type": "application/json",
-            "X-ST-LOG-LEVEL": "DEBUG"
-        }
-    )
-    if response.status_code != 200:
-        print("Failed to retrieve channel's current drivers", file=sys.stderr)
-        print(f"Request:", file=sys.stderr)
-        print(f"- URL: {response.request.url}", file=sys.stderr)
-        print(f"- Method: {response.request.method}", file=sys.stderr)
-        print(f"- Headers: {response.request.headers}", file=sys.stderr)
-        print(f"- Body: {response.request.body}", file=sys.stderr)
-        print(f"Status Code: {response.status_code}", file=sys.stderr)
-        print(f"Response: {json.dumps(response.json(),indent=2)}", file=sys.stderr)
-        exit(1)
-
-    print("Got response form server")
-    response_json = json.loads(response.text)["items"]
-    print(response_json)
 
     # Creating new prod steps
     pull_prod()
