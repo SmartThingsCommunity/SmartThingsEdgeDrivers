@@ -118,7 +118,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "addCredential: auto-assign (userIndex 0) skips credential slot 0, which is reserved for the master code",
+  "addCredential: auto-assign (userIndex 0) skips credential slot 0, which is reserved for the programming code",
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -751,14 +751,14 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteAllCredentials: keeps master code credentials locally when the lock returns PASS",
+  "deleteAllCredentials: keeps programming code credentials locally when the lock returns PASS",
   function()
     seed_users({
-      { userIndex = 1, userName = "Master Code", userType = constants.MASTER.USER_TYPE },
+      { userIndex = 1, userName = "Programming Code", userType = constants.PROGRAMMING_USER.USER_TYPE },
       { userIndex = 2, userName = "Alice", userType = "guest" },
     })
-    local master = { userIndex = 1, credentialIndex = 1, credentialType = "pin" }
-    seed_credentials({ master, { userIndex = 2, credentialIndex = 2, credentialType = "pin" } })
+    local programming_credential = { userIndex = 1, credentialIndex = 1, credentialType = "pin" }
+    seed_credentials({ programming_credential, { userIndex = 2, credentialIndex = 2, credentialType = "pin" } })
 
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -773,7 +773,7 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials({ master }, { visibility = { displayed = false } }))
+        capabilities.lockCredentials.credentials({ programming_credential }, { visibility = { displayed = false } }))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -816,17 +816,17 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- Master codes: known master codes keep their type on update
+-- Programming Codes: known programming codes keep their type on update
 -- ============================================================================
 
-local MASTER_USER = { userIndex = 1, userName = "Master Code", userType = "programmingUser" }
+local PROGRAMMING_USER = { userIndex = 1, userName = "Programming Code", userType = "programmingUser" }
 
 test.register_coroutine_test(
-  "updateCredential: a known master code is sent as MASTER_USER, based on the credential's stored user",
+  "updateCredential: a known programming code is sent as PROGRAMMING_USER, based on the credential's stored user",
   function()
-    seed_users({ MASTER_USER })
-    seed_credentials({ { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } })
-    -- the userIndex must match the credential's stored owner; the owner's type decides MASTER_USER
+    seed_users({ PROGRAMMING_USER })
+    seed_credentials({ { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Programming Code" } })
+    -- the userIndex must match the credential's stored owner; the owner's type decides PROGRAMMING_USER
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "updateCredential",

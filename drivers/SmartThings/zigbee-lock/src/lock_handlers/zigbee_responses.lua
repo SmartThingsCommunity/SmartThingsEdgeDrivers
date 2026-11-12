@@ -71,12 +71,12 @@ function ZigbeeHandlers.clear_all_pin_codes_response(driver, device, zb_rx)
   -- apply result and identify command result statuses
   local user_status, credential_status
   if clear_pin_code_status == ResponseStatus.PASS then
-    -- The lock keeps master codes when clearing all PINs, so keep them locally too.
+    -- The lock keeps programming codes when clearing all PINs, so keep them locally too.
     -- Only clear the users table when this response is for a deleteAllUsers flow.
     if command_in_progress == consts.LOCK_USERS.DELETE_ALL then
-      user_status = lock_utils.delete_all_non_master_users(device)
+      user_status = lock_utils.delete_all_non_programming_users(device)
     end
-    credential_status = lock_utils.delete_all_non_master_credentials(device)
+    credential_status = lock_utils.delete_all_non_programming_credentials(device)
   elseif clear_pin_code_status == ResponseStatus.FAIL then
     user_status = consts.COMMAND_RESULT.FAILURE
     credential_status = consts.COMMAND_RESULT.FAILURE
@@ -144,7 +144,7 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     -- Only add entries for slots that are actually occupied on the lock.
     local occupied = zb_rx.body.zcl_body.user_status.value == clusters.DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED
-    local is_master = zb_rx.body.zcl_body.user_type.value == clusters.DoorLock.types.DrlkUserType.MASTER_USER
+    local is_programming_code = zb_rx.body.zcl_body.user_type.value == clusters.DoorLock.types.DrlkUserType.MASTER_USER
     if user_id < device:get_field(consts.SYNC.CODE_INDEX) then
       device.log.warn_with({ hub_logs = true }, "GetPINCodeResponse for index %s already processed, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
       return -- return early if we've already processed this response.
@@ -152,7 +152,7 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       device.log.warn_with({ hub_logs = true }, "Unexpected GetPINCodeResponse for index %s, expected %s", user_id, device:get_field(consts.SYNC.CODE_INDEX))
       occupied = false -- treat this as an unoccupied slot to continue the sync
     end
-    lock_utils.continue_code_sync(device, occupied, false, is_master)
+    lock_utils.continue_code_sync(device, occupied, false, is_programming_code)
   end
 end
 

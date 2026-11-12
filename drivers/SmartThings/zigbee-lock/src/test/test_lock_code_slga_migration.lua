@@ -54,7 +54,7 @@ local yale_zero_slot_mock_device = test.mock_device.build_test_zigbee_device(
       },
       data = {
         lockCodes = json.encode({
-          ["0"] = "Master Code",
+          ["0"] = "Programming Code",
           ["1"] = "Zach"
         }),
       }
@@ -148,7 +148,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Yale migrate treats slot 0 as a master code user",
+    "Yale migrate treats slot 0 as a programming code",
     function()
       test.socket.device_lifecycle:__queue_receive({ yale_zero_slot_mock_device.id, "init" })
       test.socket.zigbee:__queue_receive({ yale_zero_slot_mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(yale_zero_slot_mock_device, 5) })
@@ -167,8 +167,8 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=2, userName="Master Code", userType="programmingUser"}, {userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=0, credentialType="pin", userIndex=2, credentialName="Master Code"}, {credentialIndex=1, credentialType="pin", userIndex=1, credentialName="Zach"}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=2, userName="Programming Code", userType="programmingUser"}, {userIndex=1, userName="Zach", userType="guest"}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=0, credentialType="pin", userIndex=2, credentialName="Programming Code"}, {credentialIndex=1, credentialType="pin", userIndex=1, credentialName="Zach"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( yale_zero_slot_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
       test.socket.zigbee:__expect_send({ yale_zero_slot_mock_device.id, DoorLock.attributes.LockState:read(yale_zero_slot_mock_device) })
       test.socket.zigbee:__expect_send({ yale_zero_slot_mock_device.id, Alarm.attributes.AlarmCount:read(yale_zero_slot_mock_device) })

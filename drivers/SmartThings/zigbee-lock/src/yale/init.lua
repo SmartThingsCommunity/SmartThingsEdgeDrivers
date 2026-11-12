@@ -5,33 +5,33 @@ local clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
 local zigbee_handlers = require "lock_handlers.zigbee_responses"
 
--- Yale (and ASSA ABLOY iRevo) locks hold their master code at user id 0.
-local YALE_MASTER_USER_ID = 0
--- However, some Yale locks report the master code (though it can only be altered via user_id 0) as being at user_id 0xFFEE.
+-- Yale (and ASSA ABLOY iRevo) locks hold their programming code at user id 0.
+local YALE_PROGRAMMING_USER_ID = 0
+-- However, some Yale locks report the programming code (though it can only be altered via user_id 0) as being at user_id 0xFFEE.
 local YALE_UNKNOWN_USER_ID = 0xFFEE
 
--- Yale locks report some messages incorrectly: user ids may be in the high byte, and the master code (slot 0) may be
--- reported as 0xFFEE and/or with a non-master user type. Returns a corrected copy of `zb_rx`, leaving the original
+-- Yale locks report some messages incorrectly: user ids may be in the high byte, and the programming code (slot 0) may be
+-- reported as 0xFFEE and/or with a non-MASTER_USER user type. Returns a corrected copy of `zb_rx`, leaving the original
 -- untouched. Messages without a user type (e.g. operating events) only get their user id corrected.
 local function normalize_user(zb_rx)
   local zcl_body = zb_rx.body.zcl_body
   local user_id = tonumber(zcl_body.user_id.value)
   local normalized_user_id = user_id
   if user_id >= 256 then
-    normalized_user_id = (user_id == YALE_UNKNOWN_USER_ID) and YALE_MASTER_USER_ID or user_id >> 8
+    normalized_user_id = (user_id == YALE_UNKNOWN_USER_ID) and YALE_PROGRAMMING_USER_ID or user_id >> 8
   end
 
-  local master_type = clusters.DoorLock.types.DrlkUserType.MASTER_USER
-  local needs_master_type = normalized_user_id == YALE_MASTER_USER_ID and zcl_body.user_type ~= nil
-    and zcl_body.user_type.value ~= master_type
-  if normalized_user_id == user_id and not needs_master_type then
+  local programming_type = clusters.DoorLock.types.DrlkUserType.MASTER_USER
+  local needs_programming_type = normalized_user_id == YALE_PROGRAMMING_USER_ID and zcl_body.user_type ~= nil
+    and zcl_body.user_type.value ~= programming_type
+  if normalized_user_id == user_id and not needs_programming_type then
     return zb_rx
   end
 
   local new_zb_rx = utils.deep_copy(zb_rx)
   new_zb_rx.body.zcl_body.user_id.value = normalized_user_id
-  if needs_master_type then
-    new_zb_rx.body.zcl_body.user_type.value = master_type
+  if needs_programming_type then
+    new_zb_rx.body.zcl_body.user_type.value = programming_type
   end
   return new_zb_rx
 end

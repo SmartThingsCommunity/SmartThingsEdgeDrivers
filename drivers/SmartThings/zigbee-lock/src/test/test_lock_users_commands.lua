@@ -629,7 +629,7 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- Master codes: the master userType cannot be set or cleared via addUser/updateUser
+-- Programming Codes: the programmingUser userType cannot be set or cleared via addUser/updateUser
 -- ============================================================================
 
 local function expect_invalid(command_name)
@@ -643,16 +643,16 @@ local function expect_invalid(command_name)
 end
 
 test.register_coroutine_test(
-  "addUser: accepts the master userType",
+  "addUser: accepts the programmingUser userType",
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Master Code", "programmingUser" } },
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Programming Code", "programmingUser" } },
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Master Code", userType = "programmingUser" } },
+          { { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -668,7 +668,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: rejects changing a guest to the master userType",
+  "updateUser: rejects changing a guest to the programmingUser userType",
   function()
     seed_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
     test.socket.capability:__queue_receive({
@@ -681,12 +681,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: rejects changing a master code user to another userType",
+  "updateUser: rejects changing a programming user to another userType",
   function()
-    seed_users({ { userIndex = 1, userName = "Master Code", userType = "programmingUser" } })
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Master Code", "guest" } },
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Programming Code", "guest" } },
     })
     expect_invalid("updateUser")
     test.wait_for_events()
@@ -694,9 +694,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: allows renaming a master code user",
+  "updateUser: allows renaming a programming user",
   function()
-    seed_users({ { userIndex = 1, userName = "Master Code", userType = "programmingUser" } })
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Front Door", "programmingUser" } },

@@ -12,9 +12,9 @@ local LockUsers       = capabilities.lockUsers
 local LockCredentials = capabilities.lockCredentials
 
 -- Migrate lockCodes state to lockUsers/lockCredentials.
--- `master_code_slot` is the user_id, if any, known to hold a master code on this device. It is migrated
--- as a master code user rather than a guest.
-return function(driver, device, command, master_code_slot)
+-- `programming_code_slot` is the user_id, if any, known to hold a master code on this device. It is migrated
+-- as a programmingUser user rather than a guest.
+return function(driver, device, command, programming_code_slot)
   -- set supported credentials
   device:emit_event(LockCredentials.supportedCredentials({ post_migration_consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
 
@@ -53,12 +53,12 @@ return function(driver, device, command, master_code_slot)
     end
   end
 
-  -- A passed-in master code slot should always be migrated, even if it is not among the known codes.
-  if math.type(master_code_slot) == "integer" and master_code_slot >= min_credential
-    and cached_lock_codes[tostring(master_code_slot)] == nil then
-    cached_lock_codes[tostring(master_code_slot)] = post_migration_consts.MASTER.DEFAULT_NAME
-    table.insert(ordered_code_slots, master_code_slot)
-    if master_code_slot >= min_user then occupied_user_indices[master_code_slot] = true end
+  -- A passed-in programming user code slot should always be migrated, even if it is not among the known codes.
+  if math.type(programming_code_slot) == "integer" and programming_code_slot >= min_credential
+    and cached_lock_codes[tostring(programming_code_slot)] == nil then
+    cached_lock_codes[tostring(programming_code_slot)] = post_migration_consts.PROGRAMMING_USER.DEFAULT_NAME
+    table.insert(ordered_code_slots, programming_code_slot)
+    if programming_code_slot >= min_user then occupied_user_indices[programming_code_slot] = true end
   end
   table.sort(ordered_code_slots)
   local next_free_user_index = min_user
@@ -73,7 +73,7 @@ return function(driver, device, command, master_code_slot)
       occupied_user_indices[user_index] = true
     end
     -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
-    local user_type = code_slot == master_code_slot and post_migration_consts.MASTER.USER_TYPE or "guest"
+    local user_type = code_slot == programming_code_slot and post_migration_consts.PROGRAMMING_USER.USER_TYPE or "guest"
     table.insert(users, { userIndex = user_index, userType = user_type, userName = code_name })
     table.insert(credentials, { userIndex = user_index, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })
   end

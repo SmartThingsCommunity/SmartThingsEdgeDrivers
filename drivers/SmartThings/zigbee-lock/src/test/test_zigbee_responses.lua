@@ -767,14 +767,14 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- Master codes: represented as a programmingUser user + credential
+-- Programming Codes: represented as a programmingUser user + credential
 -- ============================================================================
 
-local MASTER_USERS = { { userIndex = 1, userName = "Master Code", userType = "programmingUser" } }
-local MASTER_CREDENTIALS = { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Master Code" } }
+local PROGRAMMING_USERS = { { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } }
+local PROGRAMMING_CREDENTIALS = { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Programming Code" } }
 
 test.register_coroutine_test(
-  "programming_event_notification: MASTER_CODE_CHANGED adds a master code user and credential if unknown",
+  "programming_event_notification: MASTER_CODE_CHANGED adds a programming user and credential if unknown",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     test.socket.zigbee:__queue_receive(
@@ -782,26 +782,26 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(MASTER_CREDENTIALS, { visibility = { displayed = false } })))
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
-  "programming_event_notification: MASTER_CODE_CHANGED is a no-op if the master credential is already known",
+  "programming_event_notification: MASTER_CODE_CHANGED is a no-op if the credential is already known",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
-    table_utils.add_entry(mock_device, "users", MASTER_USERS[1])
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "users", PROGRAMMING_USERS[1])
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(MASTER_CREDENTIALS, { visibility = { displayed = false } })))
-    table_utils.add_entry(mock_device, "credentials", MASTER_CREDENTIALS[1])
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "credentials", PROGRAMMING_CREDENTIALS[1])
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive(
@@ -812,7 +812,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "programming_event_notification: MASTER_CODE_CHANGED promotes a known guest credential's user to a master user",
+  "programming_event_notification: MASTER_CODE_CHANGED promotes a known guest credential's user to programmingUser",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     local guest_users = { { userIndex = 1, userName = "Guest 1", userType = "guest" } }
@@ -835,16 +835,16 @@ test.register_coroutine_test(
     -- the default-named guest credential is renamed along with its user
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(MASTER_CREDENTIALS, { visibility = { displayed = false } })))
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
-  "get_pin_code_response: a master user type syncs as a master code user",
+  "get_pin_code_response: a programmingUser type syncs as a programming user",
   function()
     mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
     mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
@@ -858,10 +858,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(MASTER_CREDENTIALS, { visibility = { displayed = false } })))
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(MASTER_USERS, { visibility = { displayed = false } })))
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
     test.wait_for_events()
   end
