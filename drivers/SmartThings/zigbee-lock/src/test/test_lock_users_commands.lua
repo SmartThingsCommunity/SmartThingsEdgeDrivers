@@ -643,23 +643,47 @@ local function expect_invalid(command_name)
 end
 
 test.register_coroutine_test(
-  "addUser: accepts the programmingUser userType",
+  "addUser: rejects the programmingUser userType",
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Programming Code", "programmingUser" } },
     })
+    expect_invalid("addUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "addCredential: rejects the programmingUser userType",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "programmingUser", "pin", "1234" } },
+    })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } },
-          { visibility = { displayed = false } }
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
         ))
     )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "addCredential: rejects adding a credential to a programming user",
+  function()
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 1, "guest", "pin", "1234" } },
+    })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )

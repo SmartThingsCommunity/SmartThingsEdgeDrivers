@@ -35,6 +35,12 @@ function CapabilityHandlers.add_user(driver, device, command)
     return
   end
 
+  -- programming users cannot be created through the capability
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   -- Find the smallest positive userIndex not already in the table
   local next_available_index = tables.next_index(device, "users")
   local status = tables.add_entry(device, "users", {
@@ -136,8 +142,11 @@ function CapabilityHandlers.add_credential(driver, device, command)
   -- userIndex 0 means "create a new user for this credential" (its index is chosen when the lock confirms the
   -- code). Any other userIndex must name an existing user that does not already have a credential (for now,
   -- each user may have at most one credential).
+  -- A programming user cannot be created or given a credential through the capability.
   local user_index = command.args.userIndex
-  if user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE
+      or user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+      or lock_utils.is_programming_user(device, user_index)
       or tables.find_entry_by(device, "credentials", "userIndex", user_index)) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
