@@ -581,6 +581,27 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "an empty programming code slot report during a sync does not move the sync on",
+  function()
+    start_sync(yale_mock_device, 2)
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 251,
+      user_id_status = UserCode.user_id_status.AVAILABLE,
+    }) })
+    test.wait_for_events()
+
+    -- the sync still waits for the index it asked for
+    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
+      user_identifier = 2,
+      user_id_status = UserCode.user_id_status.AVAILABLE,
+    }) })
+    test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 3 }):build_test_tx(yale_mock_device.id))
+    test.wait_for_events()
+  end,
+  { test_init = make_test_init(yale_mock_device) }
+)
+
+test.register_coroutine_test(
   "a sync that reaches the programming code slot records the programming code and moves on",
   function()
     -- a lock with more user slots than the programming code slot
