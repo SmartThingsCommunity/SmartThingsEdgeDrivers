@@ -89,9 +89,9 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
   local access_control_event = Notification.event.access_control
 
   if event == access_control_event.ALL_USER_CODES_DELETED then
-    -- Deleting all user codes does not affect the admin code.
-    lock_utils.delete_all_non_admin_entries(device, "credentials")
-    lock_utils.delete_all_non_admin_entries(device, "users")
+    -- Deleting all user codes does not affect the programming code.
+    lock_utils.delete_all_non_programming_entries(device, "credentials")
+    lock_utils.delete_all_non_programming_entries(device, "users")
 
   elseif event == access_control_event.SINGLE_USER_CODE_DELETED then
     lock_utils.delete_credential_report_helper(device, credential_index)
@@ -100,7 +100,7 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
     lock_utils.set_credential_report_helper(device, credential_index)
 
   elseif event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
-    -- aka "master code" changed
+    -- aka "programming code" changed
     if command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
       lock_utils.emit_command_result(device, capabilities.lockCredentials,
         consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.SUCCESS)

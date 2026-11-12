@@ -1,8 +1,8 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 --
--- Integration tests for the Yale admin code, which is kept in user code slot 251:
---   it is set with a plain User Code Set and confirmed by the "master code changed" notification,
+-- Integration tests for the Yale programming code, which is kept in user code slot 251:
+--   it is set with a plain User Code Set and confirmed by the "programming code changed" notification,
 --   it is exposed as a programmingUser user whose index matches the slot, a delete is left to the lock and
 --   reported as it confirms or refuses it, and delete-all keeps it. User identifier 0 (all users) is never
 --   sent for a single credential.
@@ -98,24 +98,24 @@ local function expect_credential_result(device, result)
     capabilities.lockCredentials.commandResult(result, { state_change = true, visibility = { displayed = false } })))
 end
 
-local function queue_admin_code_changed(device)
+local function queue_programming_code_changed(device)
   test.socket.zwave:__queue_receive({ device.id, Notification:Report({
     notification_type = Notification.notification_type.ACCESS_CONTROL,
     event = access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION,
   }) })
 end
 
-local ADMIN_USER = { userIndex = 251, userName = "Master Code", userType = "programmingUser" }
-local ADMIN_CREDENTIAL = { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Master Code" }
+local PROGRAMMING_USER_ENTRY = { userIndex = 251, userName = "Programming Code", userType = "programmingUser" }
+local PROGRAMMING_CREDENTIAL = { userIndex = 251, credentialIndex = 251, credentialType = "pin", credentialName = "Programming Code" }
 local GUEST_USER = { userIndex = 1, userName = "Guest 1", userType = "guest" }
 local GUEST_CREDENTIAL = { userIndex = 1, credentialIndex = 1, credentialType = "pin" }
 
 -- ============================================================================
--- setting the admin code
+-- setting the programming code
 -- ============================================================================
 
 test.register_coroutine_test(
-  "addCredential: Yale admin code is written to slot 251 and added when the lock reports it changed",
+  "addCredential: Yale programming code is written to slot 251 and added when the lock reports it changed",
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
@@ -128,9 +128,9 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     -- The lock reports the change with a notification, not a User Code Report.
-    queue_admin_code_changed(yale_mock_device)
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    queue_programming_code_changed(yale_mock_device)
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     expect_credential_result(yale_mock_device,
       { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
     test.wait_for_events()
@@ -139,7 +139,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "addCredential: a guest credential cannot be written to the Yale admin code slot",
+  "addCredential: a guest credential cannot be written to the Yale programming code slot",
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 251, "guest", "pin", "1234" } } })
@@ -150,9 +150,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "addCredential: an existing Yale admin code is not overwritten and the add is reported as occupied",
+  "addCredential: an existing Yale programming code is not overwritten and the add is reported as occupied",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
         args = { 251, "programmingUser", "pin", "9999" } } })
@@ -165,7 +165,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "addCredential: user 251 is an ordinary user on a lock that is not a Yale",
   function()
-    -- the credential takes the next free slot, not the admin code slot
+    -- the credential takes the next free slot, not the programming code slot
     seed(mock_device, { { userIndex = 251, userName = "Guest 251", userType = "guest" } }, {})
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 251, "guest", "pin", "1234" } } })
@@ -180,7 +180,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "addCredential: the Yale admin code can be added when the credentials table is full",
+  "addCredential: the Yale programming code can be added when the credentials table is full",
   function()
     local function guests()
       local users, credentials = {}, {}
@@ -202,10 +202,10 @@ test.register_coroutine_test(
     }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
 
-    queue_admin_code_changed(yale_mock_device)
+    queue_programming_code_changed(yale_mock_device)
     local expected_users, expected_credentials = guests()
-    table.insert(expected_users, ADMIN_USER)
-    table.insert(expected_credentials, ADMIN_CREDENTIAL)
+    table.insert(expected_users, PROGRAMMING_USER_ENTRY)
+    table.insert(expected_credentials, PROGRAMMING_CREDENTIAL)
     expect_users(yale_mock_device, expected_users)
     expect_credentials(yale_mock_device, expected_credentials)
     expect_credential_result(yale_mock_device,
@@ -216,9 +216,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateCredential: Yale admin code is written to slot 251 and succeeds when the lock reports it changed",
+  "updateCredential: Yale programming code is written to slot 251 and succeeds when the lock reports it changed",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "updateCredential", args = { 251, 251, "pin", "5678" } } })
     test.socket.zwave:__expect_send(UserCode:Set({
@@ -228,7 +228,7 @@ test.register_coroutine_test(
     }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
 
-    queue_admin_code_changed(yale_mock_device)
+    queue_programming_code_changed(yale_mock_device)
     expect_credential_result(yale_mock_device, { commandName = "updateCredential", statusCode = "success" })
     test.wait_for_events()
   end,
@@ -236,9 +236,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateCredential: Yale admin code update succeeds when the lock confirms it with a new user code event",
+  "updateCredential: Yale programming code update succeeds when the lock confirms it with a new user code event",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "updateCredential", args = { 251, 251, "pin", "5678" } } })
     test.socket.zwave:__expect_send(UserCode:Set({
@@ -261,7 +261,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateCredential: an admin code report during a guest update records the admin code and leaves the update alone",
+  "updateCredential: a programming code report during a guest update records the programming code and leaves the update alone",
   function()
     seed(yale_mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
@@ -278,8 +278,8 @@ test.register_coroutine_test(
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
       user_code = "1234",
     }) })
-    expect_users(yale_mock_device, { GUEST_USER, ADMIN_USER })
-    expect_credentials(yale_mock_device, { GUEST_CREDENTIAL, ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { GUEST_USER, PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { GUEST_CREDENTIAL, PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
 
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
@@ -295,10 +295,10 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "the User Code v2 Master Code Report that follows an admin code change is ignored",
+  "the User Code v2 Master Code Report that follows a programming code change is ignored",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
-    queue_admin_code_changed(yale_mock_device)
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
+    queue_programming_code_changed(yale_mock_device)
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCodeV2:MasterCodeReport({ master_code = "199111" }) })
     test.wait_for_events()
   end,
@@ -306,7 +306,7 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- deleting the admin code: the lock decides, and the driver reports what it did
+-- deleting the programming code: the lock decides, and the driver reports what it did
 -- ============================================================================
 
 local DELETE_CONFIRM_DELAY = constants.DELETE_CONFIRM_DELAY
@@ -323,7 +323,7 @@ local function queue_delete_credential(device, slot)
     { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { slot, "pin" } } })
 end
 
-local function queue_delete_admin_credential(device)
+local function queue_delete_programming_credential(device)
   queue_delete_credential(device, 251)
 end
 
@@ -334,11 +334,11 @@ local function read_back_after_delay(device, slot)
 end
 
 test.register_coroutine_test(
-  "deleteCredential: the Yale admin code is deleted when the lock confirms it",
+  "deleteCredential: the Yale programming code is deleted when the lock confirms it",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_admin_credential(yale_mock_device)
+    queue_delete_programming_credential(yale_mock_device)
     expect_delete_set(yale_mock_device, 251)
     test.wait_for_events()
 
@@ -362,9 +362,9 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "deleteCredential: an unconfirmed delete is read back and succeeds when the slot is empty",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_admin_credential(yale_mock_device)
+    queue_delete_programming_credential(yale_mock_device)
     expect_delete_set(yale_mock_device, 251)
     test.wait_for_events()
     read_back_after_delay(yale_mock_device, 251)
@@ -382,11 +382,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteCredential: a delete the lock refuses is reported as a failure and the admin code is kept",
+  "deleteCredential: a delete the lock refuses is reported as a failure and the programming code is kept",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_admin_credential(yale_mock_device)
+    queue_delete_programming_credential(yale_mock_device)
     expect_delete_set(yale_mock_device, 251)
     test.wait_for_events()
     read_back_after_delay(yale_mock_device, 251)
@@ -444,9 +444,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteUser: a delete of the admin code user the lock refuses fails for both capabilities",
+  "deleteUser: a delete of the programming code user the lock refuses fails for both capabilities",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 251 } } })
@@ -469,44 +469,44 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "all user codes deleted at the lock keeps the Yale admin code",
+  "all user codes deleted at the lock keeps the Yale programming code",
   function()
-    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY, GUEST_USER }, { PROGRAMMING_CREDENTIAL, GUEST_CREDENTIAL })
     test.socket.zwave:__queue_receive({ yale_mock_device.id, Notification:Report({
       notification_type = Notification.notification_type.ACCESS_CONTROL,
       event = access_control_event.ALL_USER_CODES_DELETED,
     }) })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
-    expect_users(yale_mock_device, { ADMIN_USER })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
-  "an Alarm v1 all codes deleted report keeps the Yale admin code",
+  "an Alarm v1 all codes deleted report keeps the Yale programming code",
   function()
-    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY, GUEST_USER }, { PROGRAMMING_CREDENTIAL, GUEST_CREDENTIAL })
     test.socket.zwave:__queue_receive({ yale_mock_device.id, Alarm:Report({ alarm_type = 32 }) })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
-    expect_users(yale_mock_device, { ADMIN_USER })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
-  "all user codes deleted at a Yale keeps only the admin code, not a programmingUser in a user slot",
+  "all user codes deleted at a Yale keeps only the programming code, not a programmingUser in a user slot",
   function()
     local slot_user = { userIndex = 3, userName = "Slot 3", userType = "programmingUser" }
     local slot_credential = { userIndex = 3, credentialIndex = 3, credentialType = "pin" }
-    seed(yale_mock_device, { slot_user, ADMIN_USER }, { slot_credential, ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { slot_user, PROGRAMMING_USER_ENTRY }, { slot_credential, PROGRAMMING_CREDENTIAL })
     test.socket.zwave:__queue_receive({ yale_mock_device.id, Notification:Report({
       notification_type = Notification.notification_type.ACCESS_CONTROL,
       event = access_control_event.ALL_USER_CODES_DELETED,
     }) })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
-    expect_users(yale_mock_device, { ADMIN_USER })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
@@ -593,9 +593,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteAllCredentials: sends a single user identifier 0 clear and keeps the admin code in state",
+  "deleteAllCredentials: sends a single user identifier 0 clear and keeps the programming code in state",
   function()
-    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY, GUEST_USER }, { PROGRAMMING_CREDENTIAL, GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "deleteAllCredentials", args = {} } })
     test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
@@ -606,7 +606,7 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     test.mock_time.advance_time(4)
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     expect_credential_result(yale_mock_device, { commandName = "deleteAllCredentials", statusCode = "success" })
     test.wait_for_events()
   end,
@@ -614,7 +614,7 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- admin code confirmed or reported in other ways
+-- programming code confirmed or reported in other ways
 -- ============================================================================
 
 local function queue_new_user_code_added(device, slot)
@@ -626,7 +626,7 @@ local function queue_new_user_code_added(device, slot)
 end
 
 test.register_coroutine_test(
-  "addCredential: Yale admin code is added when the lock confirms the write with a new user code event",
+  "addCredential: Yale programming code is added when the lock confirms the write with a new user code event",
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
@@ -639,8 +639,8 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     queue_new_user_code_added(yale_mock_device, 251)
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     expect_credential_result(yale_mock_device,
       { commandName = "addCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
     test.wait_for_events()
@@ -649,18 +649,18 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "new user code event at the Yale admin slot with no command in progress adds the admin code",
+  "new user code event at the Yale programming code slot with no command in progress adds the programming code",
   function()
     queue_new_user_code_added(yale_mock_device, 251)
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
 )
 
 test.register_coroutine_test(
-  "admin code report during an addCredential for another slot records the admin code and leaves the add alone",
+  "programming code report during an addCredential for another slot records the programming code and leaves the add alone",
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
@@ -677,15 +677,15 @@ test.register_coroutine_test(
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
       user_code = "1234",
     }) })
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
 
     -- the guest add still completes when the lock confirms it
     queue_new_user_code_added(yale_mock_device, 1)
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL,
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL,
       { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } })
-    expect_users(yale_mock_device, { ADMIN_USER, { userIndex = 1, userName = "Guest 1", userType = "guest" } })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY, { userIndex = 1, userName = "Guest 1", userType = "guest" } })
     expect_credential_result(yale_mock_device,
       { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 })
     test.wait_for_events()
@@ -700,7 +700,7 @@ local function start_sync(device, code_index)
 end
 
 test.register_coroutine_test(
-  "an admin code report during a sync records the admin code and the sync waits for the slot it asked for",
+  "a programming code report during a sync records the programming code and the sync waits for the slot it asked for",
   function()
     start_sync(yale_mock_device, 2)
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
@@ -708,8 +708,8 @@ test.register_coroutine_test(
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
       user_code = "199111",
     }) })
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
 
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
@@ -723,9 +723,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "a sync that reaches the admin code slot records the admin code and moves on",
+  "a sync that reaches the programming code slot records the programming code and moves on",
   function()
-    -- a lock with more user slots than the admin code slot
+    -- a lock with more user slots than the programming code slot
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:UsersNumberReport({ supported_users = 255 }) })
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
       capabilities.lockUsers.totalUsersSupported(255, { state_change = true, visibility = { displayed = false } })))
@@ -739,8 +739,8 @@ test.register_coroutine_test(
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
       user_code = "199111",
     }) })
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 252 }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
   end,
@@ -748,19 +748,19 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "a new user code event at the admin slot during a sync records the admin code, not a guest",
+  "a new user code event at the programming code slot during a sync records the programming code, not a guest",
   function()
     start_sync(yale_mock_device, 2)
     queue_new_user_code_added(yale_mock_device, 251)
-    expect_users(yale_mock_device, { ADMIN_USER })
-    expect_credentials(yale_mock_device, { ADMIN_CREDENTIAL })
+    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
+    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
   end,
   { test_init = make_test_init(yale_mock_device) }
 )
 
 -- ============================================================================
--- updating the admin code user
+-- updating the programming code user
 -- ============================================================================
 
 local function expect_user_result(device, result)
@@ -769,7 +769,7 @@ local function expect_user_result(device, result)
 end
 
 test.register_coroutine_test(
-  "addUser: a Yale admin code user cannot be added in a user slot",
+  "addUser: a Yale programming code user cannot be added in a user slot",
   function()
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Owner", "programmingUser" } } })
@@ -792,9 +792,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: a guest cannot be made the admin code user",
+  "updateUser: a guest cannot be made the programming code user",
   function()
-    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY, GUEST_USER }, { PROGRAMMING_CREDENTIAL, GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser",
         args = { 1, "Guest", "programmingUser" } } })
@@ -805,9 +805,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: the admin code user cannot be changed to another type",
+  "updateUser: the programming code user cannot be changed to another type",
   function()
-    seed(yale_mock_device, { ADMIN_USER, GUEST_USER }, { ADMIN_CREDENTIAL, GUEST_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY, GUEST_USER }, { PROGRAMMING_CREDENTIAL, GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser",
         args = { 251, "Master Code", "guest" } } })
@@ -818,9 +818,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: the admin code user can be renamed and keeps its type",
+  "updateUser: the programming code user can be renamed and keeps its type",
   function()
-    seed(yale_mock_device, { ADMIN_USER }, { ADMIN_CREDENTIAL })
+    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser",
         args = { 251, "Renamed Master", "programmingUser" } } })
@@ -832,7 +832,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: other locks are not restricted by the admin code user type",
+  "updateUser: other locks are not restricted by the programming code user type",
   function()
     seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
     test.socket.capability:__queue_receive({ mock_device.id,

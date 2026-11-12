@@ -8,11 +8,11 @@ local consts      = require "lock_utils.constants"
 local table_utils = require "lock_utils.tables"
 
 -- Migrate the lock's lockCodes state to lockUsers and lockCredentials. This is shared by the lockCodes.migrate
--- handlers of the legacy sub-drivers, which pass the admin code slot for a lock that has one.
+-- handlers of the legacy sub-drivers, which pass the programming code slot for a lock that has one.
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
---- @param admin_index number|nil the credentialIndex of the lock's admin code slot, or nil if it has none
-local function migrate_codes(driver, device, admin_index)
+--- @param programming_code_slot number|nil the credentialIndex of the lock's programming code slot, or nil if it has none
+local function migrate_codes(driver, device, programming_code_slot)
   local get_lock_codes = LockCodesDefaults.get_lock_codes
   local lock_users = {}
   local lock_credentials = {}
@@ -32,19 +32,19 @@ local function migrate_codes(driver, device, admin_index)
   end
 
   table.sort(ordered_codes, function(a, b) return a.index < b.index end)
-  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the admin code's
-  -- user takes the admin code slot as its index.
+  -- userIndex is assigned sequentially from 1 so every user is valid and unique, except that the programming code's
+  -- user takes the programming code slot as its index.
   local user_index = 0
   for _, code in ipairs(ordered_codes) do
-    local is_admin = admin_index ~= nil and code.index == admin_index
-    if not is_admin then
+    local is_programming = programming_code_slot ~= nil and code.index == programming_code_slot
+    if not is_programming then
       user_index = user_index + 1
-      if admin_index ~= nil and user_index == admin_index then user_index = user_index + 1 end
+      if programming_code_slot ~= nil and user_index == programming_code_slot then user_index = user_index + 1 end
     end
-    local owner_index = is_admin and code.index or user_index
+    local owner_index = is_programming and code.index or user_index
     table.insert(lock_users, {
       userIndex = owner_index,
-      userType = is_admin and consts.ADMIN.USER_TYPE or "guest",
+      userType = is_programming and consts.PROGRAMMING_USER.USER_TYPE or "guest",
       userName = lock_codes[code.slot],
     })
     table.insert(lock_credentials, {userIndex = owner_index, credentialIndex = code.index, credentialType = "pin"})
