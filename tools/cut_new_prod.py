@@ -76,7 +76,7 @@ def create_and_push_git_branch(new_branch):
 
 def create_new_channel():
     response = requests.post(
-        url='https://api.smartthings.com/distchannels/',
+        url=f"{ENVIRONMENT_URL}/distchannels/",
         headers={
             "Accept": "application/vnd.smartthings+json;v=20200810",
             "Authorization": "Bearer "+TOKEN,
