@@ -31,8 +31,7 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   -- Determine boolean states of user code slot
-  local user_code_occupied = user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
-    (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)
+  local user_code_occupied = lock_utils.is_code_occupied(cmd)
   local user_code_available = user_id_status == UserCode.user_id_status.AVAILABLE
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
@@ -90,8 +89,9 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
   local access_control_event = Notification.event.access_control
 
   if event == access_control_event.ALL_USER_CODES_DELETED then
-    tables.delete_all_entries(device, "credentials")
-    tables.delete_all_entries(device, "users")
+    -- Deleting all user codes does not affect the admin code.
+    lock_utils.delete_all_non_admin_entries(device, "credentials")
+    lock_utils.delete_all_non_admin_entries(device, "users")
 
   elseif event == access_control_event.SINGLE_USER_CODE_DELETED then
     lock_utils.delete_credential_report_helper(device, credential_index)
