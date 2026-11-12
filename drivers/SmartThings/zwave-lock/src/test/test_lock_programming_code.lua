@@ -306,96 +306,15 @@ test.register_coroutine_test(
 )
 
 -- ============================================================================
--- deleting the programming code: the lock decides, and the driver reports what it did
+-- the programming code cannot be deleted
 -- ============================================================================
 
-local DELETE_CONFIRM_DELAY = constants.DELETE_CONFIRM_DELAY
-
-local function expect_delete_set(device, slot)
-  test.socket.zwave:__expect_send(UserCode:Set({
-    user_identifier = slot,
-    user_id_status = UserCode.user_id_status.AVAILABLE,
-  }):build_test_tx(device.id))
-end
-
-local function queue_delete_credential(device, slot)
-  test.socket.capability:__queue_receive({ device.id,
-    { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { slot, "pin" } } })
-end
-
-local function queue_delete_programming_credential(device)
-  queue_delete_credential(device, 251)
-end
-
-local function read_back_after_delay(device, slot)
-  test.mock_time.advance_time(DELETE_CONFIRM_DELAY)
-  test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = slot }):build_test_tx(device.id))
-  test.wait_for_events()
-end
-
 test.register_coroutine_test(
-  "deleteCredential: the Yale programming code is deleted when the lock confirms it",
+  "deleteCredential: the programming code cannot be deleted and nothing is sent to the lock",
   function()
     seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_programming_credential(yale_mock_device)
-    expect_delete_set(yale_mock_device, 251)
-    test.wait_for_events()
-
-    test.socket.zwave:__queue_receive({ yale_mock_device.id, Notification:Report({
-      notification_type = Notification.notification_type.ACCESS_CONTROL,
-      event = access_control_event.SINGLE_USER_CODE_DELETED,
-      v1_alarm_level = 251,
-    }) })
-    expect_credentials(yale_mock_device, {})
-    expect_credential_result(yale_mock_device,
-      { commandName = "deleteCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
-    test.wait_for_events()
-
-    -- the delete is already confirmed, so the slot is not read back
-    test.mock_time.advance_time(DELETE_CONFIRM_DELAY)
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
-)
-
-test.register_coroutine_test(
-  "deleteCredential: an unconfirmed delete is read back and succeeds when the slot is empty",
-  function()
-    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_programming_credential(yale_mock_device)
-    expect_delete_set(yale_mock_device, 251)
-    test.wait_for_events()
-    read_back_after_delay(yale_mock_device, 251)
-
-    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
-      user_identifier = 251,
-      user_id_status = UserCode.user_id_status.AVAILABLE,
-    }) })
-    expect_credentials(yale_mock_device, {})
-    expect_credential_result(yale_mock_device,
-      { commandName = "deleteCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(yale_mock_device) }
-)
-
-test.register_coroutine_test(
-  "deleteCredential: a delete the lock refuses is reported as a failure and the programming code is kept",
-  function()
-    seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_programming_credential(yale_mock_device)
-    expect_delete_set(yale_mock_device, 251)
-    test.wait_for_events()
-    read_back_after_delay(yale_mock_device, 251)
-
-    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
-      user_identifier = 251,
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-      user_code = "199111",
-    }) })
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "deleteCredential", args = { 251, "pin" } } })
     expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "failure" })
     test.wait_for_events()
   end,
@@ -403,62 +322,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "deleteCredential: the read-back timer of an earlier delete does not fire during a later delete of the same slot",
-  function()
-    seed(mock_device, { GUEST_USER }, { GUEST_CREDENTIAL })
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
-    queue_delete_credential(mock_device, 1)
-    expect_delete_set(mock_device, 1)
-    test.wait_for_events()
-
-    -- the first delete is confirmed right away
-    test.socket.zwave:__queue_receive({ mock_device.id, Notification:Report({
-      notification_type = Notification.notification_type.ACCESS_CONTROL,
-      event = access_control_event.SINGLE_USER_CODE_DELETED,
-      v1_alarm_level = 1,
-    }) })
-    expect_credentials(mock_device, {})
-    expect_credential_result(mock_device,
-      { commandName = "deleteCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 })
-    test.wait_for_events()
-
-    -- the slot is set again at the lock and deleted again before the first timer would fire
-    test.socket.zwave:__queue_receive({ mock_device.id, UserCode:Report({
-      user_identifier = 1,
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-      user_code = "1234",
-    }) })
-    expect_credentials(mock_device,
-      { { userIndex = 2, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 2" } })
-    expect_users(mock_device, { GUEST_USER, { userIndex = 2, userName = "Guest 2", userType = "guest" } })
-    test.wait_for_events()
-    queue_delete_credential(mock_device, 1)
-    expect_delete_set(mock_device, 1)
-    test.wait_for_events()
-
-    -- only the second delete reads the slot back
-    read_back_after_delay(mock_device, 1)
-  end,
-  { test_init = make_test_init(mock_device) }
-)
-
-test.register_coroutine_test(
-  "deleteUser: a delete of the programming code user the lock refuses fails for both capabilities",
+  "deleteUser: the programming code user cannot be deleted and fails for both capabilities",
   function()
     seed(yale_mock_device, { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL })
-    test.timer.__create_and_queue_test_time_advance_timer(DELETE_CONFIRM_DELAY, "oneshot")
     test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "deleteUser", args = { 251 } } })
-    expect_delete_set(yale_mock_device, 251)
-    test.wait_for_events()
-    read_back_after_delay(yale_mock_device, 251)
-
-    test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
-      user_identifier = 251,
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-      user_code = "199111",
-    }) })
     test.socket.capability:__expect_send(yale_mock_device:generate_test_message("main",
       capabilities.lockUsers.commandResult({ commandName = "deleteUser", statusCode = "failure" },
         { state_change = true, visibility = { displayed = false } })))
