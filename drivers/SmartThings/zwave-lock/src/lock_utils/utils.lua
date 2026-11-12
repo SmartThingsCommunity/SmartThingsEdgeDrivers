@@ -230,6 +230,8 @@ end
 -- without any command from us (sync, or a user code event). If a credential already exists there it
 -- is left in place.
 function lock_utils.add_reported_credential(device, credential_index)
+  -- Index 0 means "all users" in Z-Wave, so a report for it is not a credential.
+  if credential_index < tables.get_minimum(device, "credentials") then return end
   if tables.find_entry(device, "credentials", credential_index) then return end
   return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
