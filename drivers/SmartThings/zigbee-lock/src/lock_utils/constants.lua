@@ -19,6 +19,12 @@ lock_constants.SYNC = {
   CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from index 0)
 }
 
+-- constants defining programming code representation in the lock's state tables.
+lock_constants.PROGRAMMING_USER = {
+  USER_TYPE = "programmingUser",
+  DEFAULT_NAME = "Programming Code"
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",

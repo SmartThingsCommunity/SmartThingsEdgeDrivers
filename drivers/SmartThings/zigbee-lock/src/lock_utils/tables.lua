@@ -258,6 +258,23 @@ function table_utils.delete_all_entries(device, table_name)
   return COMMAND_RESULT.SUCCESS
 end
 
+-- Delete every entry of a table for which `keep(entry)` is false, emitting a single update.
+function table_utils.delete_entries_except(device, table_name, keep)
+  device.log.debug("table_helpers: attempting to delete all non-kept entries from " .. table_name)
+  local def = resolve_table_def(device, table_name)
+  if not def then return COMMAND_RESULT.FAILURE end
+  local t = table_utils.get_state(device, def)
+  if not t then return COMMAND_RESULT.FAILURE end
+
+  local kept = {}
+  for _, entry in ipairs(t) do
+    if keep(entry) then table.insert(kept, entry) end
+  end
+  device:emit_event(def.attribute(kept, {visibility = {displayed = false}}))
+  persist_table(device, def, kept)
+  return COMMAND_RESULT.SUCCESS
+end
+
 -- Restore capability state from the persistent field store.
 -- Called during init to re-emit table events if the capability state cache
 -- has been wiped (e.g. after a hub reboot). Only emits for tables that have
