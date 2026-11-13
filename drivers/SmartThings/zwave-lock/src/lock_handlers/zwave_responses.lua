@@ -37,18 +37,7 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
     if user_code_occupied then
-      -- If an entry already exists at this index, this will be a no-op.
-      tables.add_entry(device, "users", {
-        userIndex = credential_index,
-        userName = "Guest " .. credential_index,
-        userType = "guest",
-      })
-      tables.add_entry(device, "credentials", {
-        userIndex = credential_index,
-        credentialIndex = credential_index,
-        credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. credential_index,
-      })
+      lock_utils.add_reported_credential(device, credential_index)
       -- reset the consecutive unoccupied codes counter since we found an occupied code
       device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
     elseif user_code_available then
