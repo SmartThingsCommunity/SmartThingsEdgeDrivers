@@ -12,8 +12,11 @@ lock_constants.DRIVER_STATE = {
 
 lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
-  CODE_INDEX = "syncCodeIndex",
+  CODE_INDEX = "syncCodeIndex", -- persisted until codesSynced is set
+  CODE_INDEX_VERSION = "syncCodeIndexVersion", -- persisted; the CODES_SYNC_VERSION under which CODE_INDEX was started
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
+  CODES_SYNCED = "codesSynced", -- persisted; holds the CODES_SYNC_VERSION of the last completed code sync
+  CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from the first index)
 }
 
 lock_constants.COMMAND_RESULT = {
@@ -41,6 +44,10 @@ lock_constants.LOCK_USERS = {
 }
 
 lock_constants.CRED_TYPE_PIN = "pin"
+-- User Code Command Class has no capabilities report for PIN length, so
+-- the zwave spec fixes pin length to 4-10 digits
+lock_constants.DEFAULT_MIN_PIN_LENGTH = 4
+lock_constants.DEFAULT_MAX_PIN_LENGTH = 10
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10

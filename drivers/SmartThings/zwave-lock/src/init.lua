@@ -24,13 +24,6 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
-  if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
-    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
-    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
-    -- and should be migrated manually by the user.
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-  end
   if device:supports_capability(capabilities.tamperAlert) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
@@ -40,8 +33,6 @@ function LockLifecycle.device_added(driver, device)
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
-  -- ensure our user/credential state is accurate to the current device state
-  device.thread:call_with_delay(5, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.init(driver, device)
@@ -56,10 +47,17 @@ function LockLifecycle.init(driver, device)
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
   end
 
+  -- existing devices may predate the default PIN length being set
+  lock_utils.ensure_pin_length_bounds(device)
+
   if device:supports_capability(capabilities.tamperAlert) then
     -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+
+  -- ensure our user/credential state is accurate to the current device state.
+  -- the delay allows the number of supported users to be read first.
+  device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.driver_switched(driver, device)
