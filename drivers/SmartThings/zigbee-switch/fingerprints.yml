@@ -126,6 +126,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.cwacn1
     deviceProfileName: aqara-light
+  - id: "LUMI/lumi.dimmer.rcbac1"
+    deviceLabel: Aqara Smart LED Strip Driver
+    manufacturer: LUMI
+    model: lumi.dimmer.rcbac1
+    deviceProfileName: aqara-lightstrip-rgbw
   - id: "Aqara/lumi.light.acn014"
     deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
     manufacturer: Aqara
