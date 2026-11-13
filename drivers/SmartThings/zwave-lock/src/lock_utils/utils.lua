@@ -125,10 +125,8 @@ end
 
 -- Clear every entry of the "users" or "credentials" table except the programming code credential and its user.
 function lock_utils.delete_all_non_programming_entries(device, table_name)
-  local programming = tables.get_programming_credential(device)
-  local match_key = table_name == "users" and "userIndex" or "credentialIndex"
   tables.delete_all_entries(device, table_name, function(entry)
-    return programming ~= nil and entry[match_key] == programming[match_key]
+    return lock_utils.is_programming_user(device, entry.userIndex)
   end)
 end
 

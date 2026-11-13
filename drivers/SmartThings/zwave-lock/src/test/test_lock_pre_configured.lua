@@ -252,20 +252,8 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          {
-            { userIndex = 1, userName = "Alice", userType = "guest" },
-            { userIndex = 2, userName = "Bob",   userType = "guest" },
-            { userIndex = 10, userName = "Ghost", userType = "guest" },
-          },
-          { visibility = { displayed = false } }
-        ))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
-          { commandName = "updateUser", statusCode = "success", userIndex = 10 },
+          { commandName = "updateUser", statusCode = "failure" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
