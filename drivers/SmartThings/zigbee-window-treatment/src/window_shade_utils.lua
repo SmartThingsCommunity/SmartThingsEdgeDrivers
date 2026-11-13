@@ -18,6 +18,19 @@ local LATEST_TARGET_LEVEL = "_latestTargetLevel"
 local TARGET_LEVEL_TIME_OUT_SECONDS = 15
 -- Field name for the timer that clears LATEST_TARGET_LEVEL after timeout
 local TARGET_LEVEL_TIME_OUT = "_targetLevelTimeOut"
+local TARGET_LEVEL_GENERATION = "_targetLevelGeneration"
+
+utils.clear_step_target = function(device)
+  local generation = device:get_field(TARGET_LEVEL_GENERATION)
+  if generation then generation.active = false end
+  device:set_field(TARGET_LEVEL_GENERATION, nil)
+  local timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+  if timer then
+    pcall(device.thread.cancel_timer, device.thread, timer)
+  end
+  device:set_field(TARGET_LEVEL_TIME_OUT, nil)
+  device:set_field(LATEST_TARGET_LEVEL, nil)
+end
 
 utils.get_preset_level = function(device, component)
   local level = device:get_latest_state(component, "windowShadePreset", "position") or
@@ -54,11 +67,20 @@ utils.step_shade_level_handler = function(driver, device, command)
   -- Cancel any previous timer and set a 15 second timeout timer to ensure LATEST_TARGET_LEVEL is cleared
   -- This is to prevent the stateless step from accumulating indefinitely, while ensuring that a single
   -- "scroll" action can accumulate multiple steps within a short time frame
+  local previous_generation = device:get_field(TARGET_LEVEL_GENERATION)
+  if previous_generation then previous_generation.active = false end
   if device:get_field(TARGET_LEVEL_TIME_OUT) then
-    device.thread:cancel_timer(device:get_field(TARGET_LEVEL_TIME_OUT))
+    pcall(device.thread.cancel_timer, device.thread, device:get_field(TARGET_LEVEL_TIME_OUT))
   end
+  local generation = { active = true }
+  device:set_field(TARGET_LEVEL_GENERATION, generation)
   local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
+    if not generation.active then return end
+    if device:get_field(TARGET_LEVEL_GENERATION) ~= generation then return end
+    generation.active = false
+    device:set_field(TARGET_LEVEL_GENERATION, nil)
     device:set_field(LATEST_TARGET_LEVEL, nil)
+    device:set_field(TARGET_LEVEL_TIME_OUT, nil)
   end)
   device:set_field(TARGET_LEVEL_TIME_OUT, timer)
   device:set_field(LATEST_TARGET_LEVEL, new_target_level)
