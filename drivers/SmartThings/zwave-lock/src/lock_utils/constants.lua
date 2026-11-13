@@ -19,6 +19,12 @@ lock_constants.SYNC = {
   CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from the first index)
 }
 
+lock_constants.PROGRAMMING_USER = {
+  -- The lockUsers userType for the programming code.
+  USER_TYPE = "programmingUser",
+  DEFAULT_NAME = "Programming Code",
+}
+
 lock_constants.COMMAND_RESULT = {
   SUCCESS = "success",
   FAILURE = "failure",
@@ -47,5 +53,6 @@ lock_constants.CRED_TYPE_PIN = "pin"
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10
+-- Seconds to wait for a delete to be confirmed before reading the slot back
 
 return lock_constants

@@ -4,6 +4,8 @@
 local capabilities = require "st.capabilities"
 local consts = require "lock_utils.constants"
 local tables = require "lock_utils.tables"
+--- @type st.zwave.CommandClass.UserCode
+local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
 local lock_utils = {}
 
@@ -36,12 +38,9 @@ function lock_utils.clear_busy_state(device)
   device:set_field(consts.DRIVER_STATE.BUSY, false)
 end
 
-
 -- [[ SYNC STATE MANAGEMENT ]] --
 
 function lock_utils.sync_device_state(device)
-  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-
   -- skip if unsupported, already synced, or busy (including a sync already in progress).
   if not (device:supports_capability(capabilities.lockCredentials) and
     device:get_field(consts.SYNC.CODES_SYNCED) ~= consts.SYNC.CODES_SYNC_VERSION and
@@ -69,7 +68,6 @@ end
 -- it explicitly reported the slot as available. Any other status (reserved, disabled, unknown) neither
 -- resets nor advances the consecutive-unoccupied counter, so it can't end the sync early.
 function lock_utils.continue_code_sync(device, occupied, available)
-  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
   local code_index = device:get_field(consts.SYNC.CODE_INDEX)
   if code_index == nil then return end
 
@@ -97,6 +95,26 @@ function lock_utils.continue_code_sync(device, occupied, available)
 end
 
 
+-- [[ PROGRAMMING CODE MANAGEMENT ]] --
+--
+-- The programming code credential is found with tables.get_programming_credential.
+
+-- Whether the user at user_index is a programming user.
+function lock_utils.is_programming_user(device, user_index)
+  local user = tables.find_entry(device, "users", user_index)
+  return user ~= nil and user.userType == consts.PROGRAMMING_USER.USER_TYPE
+end
+
+-- Clear every entry of the "users" or "credentials" table except the programming code credential and its user.
+function lock_utils.delete_all_non_programming_entries(device, table_name)
+  local programming = tables.get_programming_credential(device)
+  local match_key = table_name == "users" and "userIndex" or "credentialIndex"
+  tables.delete_all_entries(device, table_name, function(entry)
+    return programming ~= nil and entry[match_key] == programming[match_key]
+  end)
+end
+
+
 -- [[ COMMAND RESULT STATE MANAGEMENT ]] --
 
 function lock_utils.emit_command_result(device, capability, command_name, status_code, additional_info)
@@ -110,6 +128,13 @@ end
 
 
 -- [[ HELPERS ]] --
+
+-- True if a User Code Report shows a code in the slot. A lock that does not report the status of a slot
+-- still holds a code if it reports one.
+function lock_utils.is_code_occupied(cmd)
+  return cmd.args.user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
+    (cmd.args.user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code ~= nil)
+end
 
 function lock_utils.get_code_id_from_notification_event(event_params, v1_alarm_level)
   local code_id = v1_alarm_level
@@ -185,6 +210,8 @@ end
 -- without any command from us (sync, or a user code event). If a credential already exists there it
 -- is left in place.
 function lock_utils.add_reported_credential(device, credential_index)
+  -- Index 0 means "all users" in Z-Wave, so a report for it is not a credential.
+  if credential_index < tables.get_minimum(device, "credentials") then return end
   if tables.find_entry(device, "credentials", credential_index) then return end
   return lock_utils.add_credential_and_user(device, {
     userIndex       = tables.next_index(device, "users"),
