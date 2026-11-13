@@ -127,7 +127,10 @@ test.register_coroutine_test(
     }):build_test_tx(mock_device.id))
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -147,7 +150,10 @@ test.register_coroutine_test(
     expect_credential_result(yale_mock_device, { commandName = "updateCredential", statusCode = "success" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -172,7 +178,10 @@ test.register_coroutine_test(
       { commandName = "updateCredential", statusCode = "success", userIndex = 251, credentialIndex = 251 })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -206,7 +215,10 @@ test.register_coroutine_test(
       { commandName = "updateCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -217,7 +229,10 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCodeV2:MasterCodeReport({ master_code = "199111" }) })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -233,7 +248,10 @@ test.register_coroutine_test(
     expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "failure" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -248,7 +266,10 @@ test.register_coroutine_test(
     expect_credential_result(yale_mock_device, { commandName = "deleteCredential", statusCode = "failure" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -263,7 +284,10 @@ test.register_coroutine_test(
     expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -275,7 +299,10 @@ test.register_coroutine_test(
     expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -292,7 +319,10 @@ test.register_coroutine_test(
     expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -307,7 +337,10 @@ test.register_coroutine_test(
     expect_users(mock_device, {})
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -324,7 +357,10 @@ test.register_coroutine_test(
     expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "resourceExhausted" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -340,7 +376,10 @@ test.register_coroutine_test(
     expect_credential_result(mock_device, { commandName = "updateCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -352,7 +391,10 @@ test.register_coroutine_test(
     expect_credential_result(mock_device, { commandName = "deleteCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -373,7 +415,10 @@ test.register_coroutine_test(
     expect_credential_result(yale_mock_device, { commandName = "deleteAllCredentials", statusCode = "success" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -395,7 +440,10 @@ test.register_coroutine_test(
     queue_new_user_code_added(mock_device, 0)
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -406,7 +454,10 @@ test.register_coroutine_test(
     expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -440,7 +491,10 @@ test.register_coroutine_test(
       { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 local function start_sync(device, code_index)
@@ -469,7 +523,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 3 }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -490,7 +547,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 3 }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -515,7 +575,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(UserCode:Get({ user_identifier = 252 }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -527,7 +590,10 @@ test.register_coroutine_test(
     expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 -- ============================================================================
@@ -547,7 +613,10 @@ test.register_coroutine_test(
     expect_user_result(yale_mock_device, { commandName = "addUser", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -559,7 +628,10 @@ test.register_coroutine_test(
     expect_user_result(yale_mock_device, { commandName = "addUser", statusCode = "success", userIndex = 1 })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -572,7 +644,10 @@ test.register_coroutine_test(
     expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -585,7 +660,10 @@ test.register_coroutine_test(
     expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -599,7 +677,10 @@ test.register_coroutine_test(
     expect_user_result(yale_mock_device, { commandName = "updateUser", statusCode = "success", userIndex = 251 })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(yale_mock_device) }
+  {
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -612,7 +693,10 @@ test.register_coroutine_test(
     expect_user_result(mock_device, { commandName = "updateUser", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -623,7 +707,10 @@ test.register_coroutine_test(
     expect_user_result(mock_device, { commandName = "addUser", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -635,7 +722,10 @@ test.register_coroutine_test(
     expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -648,7 +738,10 @@ test.register_coroutine_test(
     expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "invalidCommand" })
     test.wait_for_events()
   end,
-  { test_init = make_test_init(mock_device) }
+  {
+    test_init = make_test_init(mock_device),
+    min_api_version = 15
+  }
 )
 
 test.run_registered_tests()
