@@ -110,7 +110,12 @@ local function build_video_stream_settings_supported_features(device)
   if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
     table.insert(supported_features, "liveStreaming")
     table.insert(supported_features, "clipRecording")
-    table.insert(supported_features, "perStreamViewports")
+    -- Per-stream viewports are set via DPTZSetViewport, which requires the DIGITALPTZ feature of the
+    -- CameraAvSettingsUserLevelManagement cluster (false if the cluster itself is absent).
+    if camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID,
+      clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ) then
+      table.insert(supported_features, "perStreamViewports")
+    end
   end
   if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
     table.insert(supported_features, "watermark")

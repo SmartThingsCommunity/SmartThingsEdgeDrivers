@@ -362,14 +362,16 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
 
   local watermark_enabled, on_screen_display_enabled
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
-    clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+  local watermark_supported = camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.WATERMARK)
+  local on_screen_display_supported = camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY)
+  if watermark_supported then
     if cmd.args.watermark ~= nil then
       watermark_enabled = cmd.args.watermark == "enabled"
     end
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
-    clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+  if on_screen_display_supported then
     if cmd.args.onScreenDisplay ~= nil then
       on_screen_display_enabled = cmd.args.onScreenDisplay == "enabled"
     end
@@ -429,13 +431,14 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     end
   end
 
-  local label_changed = cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
+  local label_changed = current_stream ~= nil and cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
 
   if viewport_changed or label_changed then
     update_viewport_or_label(device, current_streams, cmd.args.streamId, cmd.args.label, cmd.args.viewport)
   end
 
   if not needs_reallocation then
+    if current_stream == nil then return end
     local watermark_changed = watermark_enabled ~= nil and current_stream.watermark ~= nil and
       ((watermark_enabled and current_stream.watermark == "disabled") or
       (not watermark_enabled and current_stream.watermark == "enabled"))
@@ -469,11 +472,21 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     })
   end
 
-  if watermark_enabled == nil then
+  local max_frame_rate = math.min(
+    device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or camera_fields.video_stream_defaults.max_frame_rate,
+    camera_fields.video_stream_defaults.max_frame_rate
+  )
+  -- Use the requested fps as the MinFrameRate, capped so that it never exceeds MaxFrameRate.
+  local requested_fps = cmd.args.resolution ~= nil and cmd.args.resolution.fps or nil
+  local min_frame_rate = math.min(requested_fps or camera_fields.video_stream_defaults.min_frame_rate, max_frame_rate)
+
+  -- WatermarkEnabled and OSDEnabled are only permitted in VideoStreamAllocate when the corresponding
+  -- feature is supported, so leave them nil (omitted) otherwise.
+  if watermark_supported and watermark_enabled == nil then
     watermark_enabled = camera_fields.video_stream_defaults.watermark_enabled
   end
 
-  if on_screen_display_enabled == nil then
+  if on_screen_display_supported and on_screen_display_enabled == nil then
     on_screen_display_enabled = camera_fields.video_stream_defaults.on_screen_display_enabled
   end
 
@@ -482,9 +495,8 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
     stream_usage,
     camera_fields.video_stream_defaults.codec,
-    camera_fields.video_stream_defaults.min_frame_rate,
-    math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or camera_fields.video_stream_defaults.max_frame_rate,
-      camera_fields.video_stream_defaults.max_frame_rate),
+    min_frame_rate,
+    max_frame_rate,
     min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or camera_fields.video_stream_defaults.min_resolution,
     max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or camera_fields.video_stream_defaults.max_resolution,
     camera_fields.video_stream_defaults.min_bitrate,
