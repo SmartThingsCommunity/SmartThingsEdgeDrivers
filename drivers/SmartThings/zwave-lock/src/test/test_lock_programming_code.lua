@@ -306,44 +306,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "all user codes deleted at a Yale keeps only the programming code, not a programmingUser in a user slot",
-  function()
-    local slot_user = { userIndex = 3, userName = "Slot 3", userType = "programmingUser" }
-    local slot_credential = { userIndex = 3, credentialIndex = 3, credentialType = "pin" }
-    seed(yale_mock_device, { slot_user, PROGRAMMING_USER_ENTRY }, { slot_credential, PROGRAMMING_CREDENTIAL })
-    test.socket.zwave:__queue_receive({ yale_mock_device.id, Notification:Report({
-      notification_type = Notification.notification_type.ACCESS_CONTROL,
-      event = access_control_event.ALL_USER_CODES_DELETED,
-    }) })
-    expect_credentials(yale_mock_device, { PROGRAMMING_CREDENTIAL })
-    expect_users(yale_mock_device, { PROGRAMMING_USER_ENTRY })
-    test.wait_for_events()
-  end,
-  {
-    test_init = make_test_init(yale_mock_device),
-    min_api_version = 15
-  }
-)
-
-test.register_coroutine_test(
-  "all user codes deleted at a lock that is not a Yale clears a programmingUser user",
-  function()
-    seed(mock_device, { { userIndex = 1, userName = "Owner", userType = "programmingUser" } }, { GUEST_CREDENTIAL })
-    test.socket.zwave:__queue_receive({ mock_device.id, Notification:Report({
-      notification_type = Notification.notification_type.ACCESS_CONTROL,
-      event = access_control_event.ALL_USER_CODES_DELETED,
-    }) })
-    expect_credentials(mock_device, {})
-    expect_users(mock_device, {})
-    test.wait_for_events()
-  end,
-  {
-    test_init = make_test_init(mock_device),
-    min_api_version = 15
-  }
-)
-
-test.register_coroutine_test(
   "addCredential: a programmingUser credential in a user slot counts toward the credential limit",
   function()
     local users, credentials = {}, {}

@@ -49,24 +49,18 @@ function CapabilityHandlers.update_user(driver, device, command)
   end
 
   -- a user cannot be made a programming user, and a programming user cannot be changed to another type
-  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= lock_utils.is_programming_user(device, command.args.userIndex) then
+  local found_user = tables.find_entry(device, "users", command.args.userIndex)
+  local is_programming_user = found_user ~= nil and found_user.userType == consts.PROGRAMMING_USER.USER_TYPE
+  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= is_programming_user then
     lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
-  local result_status
-  if not tables.find_entry(device, "users", command.args.userIndex) then
-    result_status = tables.add_entry(device, "users", {
-      userIndex = command.args.userIndex,
-      userName  = command.args.userName,
-      userType  = command.args.userType,
-    })
-  else
-    result_status = tables.update_entry(device, "users",
-      command.args.userIndex,
-      { userName = command.args.userName, userType = command.args.userType }
-    )
-  end
+  -- a user that does not exist is not created here, so this fails for it
+  local result_status = tables.update_entry(device, "users",
+    command.args.userIndex,
+    { userName = command.args.userName, userType = command.args.userType }
+  )
 
   local additional_info = result_status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex }
   lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, result_status, additional_info)
