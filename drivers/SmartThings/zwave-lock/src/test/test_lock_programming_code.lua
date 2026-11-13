@@ -305,22 +305,46 @@ test.register_coroutine_test(
   }
 )
 
+-- the default limit is 20 when the lock has not reported one
+local function seed_guests_and_programming_code(device, guest_count)
+  local users, credentials = { PROGRAMMING_USER_ENTRY }, { PROGRAMMING_CREDENTIAL }
+  for i = 1, guest_count do
+    table.insert(users, { userIndex = i, userName = "User " .. i, userType = "guest" })
+    table.insert(credentials, { userIndex = i, credentialIndex = i, credentialType = "pin" })
+  end
+  seed(device, users, credentials)
+end
+
 test.register_coroutine_test(
-  "addCredential: a programmingUser credential in a user slot counts toward the credential limit",
+  "addCredential: the programming code does not count toward the credential limit",
   function()
-    local users, credentials = {}, {}
-    for i = 1, 20 do
-      table.insert(users, { userIndex = i, userName = "User " .. i, userType = i == 1 and "programmingUser" or "guest" })
-      table.insert(credentials, { userIndex = i, credentialIndex = i, credentialType = "pin" })
-    end
-    seed(mock_device, users, credentials)
-    test.socket.capability:__queue_receive({ mock_device.id,
+    seed_guests_and_programming_code(yale_mock_device, 19)
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234" } } })
-    expect_credential_result(mock_device, { commandName = "addCredential", statusCode = "resourceExhausted" })
+    test.socket.zwave:__expect_send(UserCode:Set({
+      user_identifier = 20,
+      user_code = "1234",
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+    }):build_test_tx(yale_mock_device.id))
     test.wait_for_events()
   end,
   {
-    test_init = make_test_init(mock_device),
+    test_init = make_test_init(yale_mock_device),
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: a full lock is still full with a programming code",
+  function()
+    seed_guests_and_programming_code(yale_mock_device, 20)
+    test.socket.capability:__queue_receive({ yale_mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234" } } })
+    expect_credential_result(yale_mock_device, { commandName = "addCredential", statusCode = "resourceExhausted" })
+    test.wait_for_events()
+  end,
+  {
+    test_init = make_test_init(yale_mock_device),
     min_api_version = 15
   }
 )

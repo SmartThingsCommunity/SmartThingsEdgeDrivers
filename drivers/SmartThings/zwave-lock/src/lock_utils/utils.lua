@@ -114,8 +114,6 @@ end
 
 
 -- [[ PROGRAMMING CODE MANAGEMENT ]] --
---
--- The programming code credential is found with tables.get_programming_credential.
 
 -- Whether the user at user_index is a programming user.
 function lock_utils.is_programming_user(device, user_index)
