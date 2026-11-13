@@ -186,6 +186,38 @@ matterManufacturer:
     vendorId: 0x101D
     productId: 0x8110
     deviceProfileName: lock-user-pin-schedule-battery
+  #ASSA Abloy AB / Yale Polaris (VID 0x144F)
+  # PIDs from Polaris factory provisioning data
+  - id: "5199/16390"
+    deviceLabel: Yale Polaris Premium Scan
+    vendorId: 0x144F
+    productId: 0x4006
+    deviceProfileName: lock-modular
+  - id: "5199/16391"
+    deviceLabel: Yale Polaris Premium Fin
+    vendorId: 0x144F
+    productId: 0x4007
+    deviceProfileName: lock-modular
+  - id: "5199/16392"
+    deviceLabel: Yale Polaris Midrange Scan
+    vendorId: 0x144F
+    productId: 0x4008
+    deviceProfileName: lock-modular
+  - id: "5199/16393"
+    deviceLabel: Yale Polaris Midrange Fin
+    vendorId: 0x144F
+    productId: 0x4009
+    deviceProfileName: lock-modular
+  - id: "5199/16396"
+    deviceLabel: Yale Polaris Entry Scan
+    vendorId: 0x144F
+    productId: 0x400C
+    deviceProfileName: lock-modular
+  - id: "5199/16397"
+    deviceLabel: Yale Polaris Entry Fin
+    vendorId: 0x144F
+    productId: 0x400D
+    deviceProfileName: lock-modular
   #Dreame
   - id: "5420/38144"
     deviceLabel: Dreame NAVO Smart Lock A10
