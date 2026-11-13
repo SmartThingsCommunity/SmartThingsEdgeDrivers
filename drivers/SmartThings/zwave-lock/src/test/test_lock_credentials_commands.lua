@@ -144,11 +144,11 @@ end
 test.register_coroutine_test(
   "addCredential: sends SetPINCode to the lock and emits success when the lock acknowledges",
   function()
-    -- Queue the capability command: userIndex=1, userType="guest", credentialType="pin", credentialData="1234"
+    -- Queue the capability command: userIndex=0 (new user), userType="guest", credentialType="pin", credentialData="1234"
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 1, "guest", "pin", "1234" } },
+        args = { 0, "guest", "pin", "1234" } },
     })
 
     -- Expect SetPINCode to be sent to the lock
@@ -158,11 +158,18 @@ test.register_coroutine_test(
     -- Lock responds with SUCCESS
     queue_user_code_added(1)
 
-    -- Handler adds the credential to the credentials table.
+    -- Handler adds the credential, then a new user, to the tables.
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin" } },
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -187,7 +194,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 1, "guest", "pin", "1234" } },
+        args = { 0, "guest", "pin", "1234" } },
     })
 
     expect_set_pin_code(1, "1234")
@@ -216,7 +223,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 1, "guest", "pin", "1234" } },
+        args = { 0, "guest", "pin", "1234" } },
     })
     expect_set_pin_code(1, "1234")
     test.wait_for_events()
@@ -225,7 +232,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 2, "guest", "pin", "5678" } },
+        args = { 0, "guest", "pin", "5678" } },
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -308,6 +315,200 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult(
           { commandName = "updateCredential", statusCode = "busy" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: names the new user and credential after credentialName when one is given",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 0, "guest", "pin", "1234", "Front Door" } },
+    })
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+
+    queue_user_code_added(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Front Door" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Front Door", userType = "guest" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: attaches the next free credential slot to an existing user without a credential when userIndex is non-zero",
+  function()
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+    })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 2, "guest", "pin", "5678" } },
+    })
+    -- slot 1 is taken, so the next available credential slot, 2, is used
+    expect_set_pin_code(2, "5678")
+    test.wait_for_events()
+
+    queue_user_code_added(2)
+    -- the credential is attached to the existing user 2; no user is added
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          {
+            { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 2" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "success", userIndex = 2, credentialIndex = 2 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: fails without contacting the lock when the user already has a credential",
+  function()
+    seed_users({ { userIndex = 1, userName = "Alice", userType = "guest" } })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 1, "guest", "pin", "5678" } },
+    })
+    -- No Z-Wave message should be sent
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "addCredential: fails without contacting the lock when userIndex does not map to an existing user",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 5, "guest", "pin", "1234" } },
+    })
+    -- No Z-Wave message should be sent
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "updateCredential: rejects the command when userIndex is not the credential's current user",
+  function()
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "updateCredential",
+        args = { 2, 1, "pin", "newPin9" } },
+    })
+    -- No Z-Wave message should be sent
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "updateCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_coroutine_test(
+  "updateCredential: applies a changed credentialName to the credentials table",
+  function()
+    seed_users({ { userIndex = 1, userName = "Alice", userType = "guest" } })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Old" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "updateCredential",
+        args = { 1, 1, "pin", "newPin9", "New" } },
+    })
+    expect_set_pin_code(1, "newPin9")
+    test.wait_for_events()
+
+    queue_user_code_added(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "New" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "updateCredential", statusCode = "success", userIndex = 1, credentialIndex = 1 },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
