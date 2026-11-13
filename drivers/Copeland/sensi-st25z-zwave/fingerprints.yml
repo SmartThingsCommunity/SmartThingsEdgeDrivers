@@ -1,0 +1,7 @@
+zwaveManufacturer:
+  - id: sensi-thermostat-zwave
+    deviceLabel: Sensi Lite Smart Thermostat Z-Wave
+    manufacturerId: 0x046B
+    productType: 0x0004
+    productId: 0x0002
+    deviceProfileName: thermostat-sensi-st25z
