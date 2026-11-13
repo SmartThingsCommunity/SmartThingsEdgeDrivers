@@ -57,6 +57,5 @@ lock_constants.DEFAULT_MAX_PIN_LENGTH = 10
 lock_constants.DELAY_LOCK_EVENT = "_delay_lock_event"
 lock_constants.DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
 lock_constants.MAX_DELAY = 10
--- Seconds to wait for a delete to be confirmed before reading the slot back
 
 return lock_constants
