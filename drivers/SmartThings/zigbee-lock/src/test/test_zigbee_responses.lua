@@ -763,4 +763,135 @@ test.register_coroutine_test(
   end
 )
 
+-- ============================================================================
+-- Programming Codes: represented as a programmingUser user + credential
+-- ============================================================================
+
+local PROGRAMMING_USERS = { { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } }
+local PROGRAMMING_CREDENTIALS = { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Programming Code" } }
+
+test.register_coroutine_test(
+  "programming_event_notification: MASTER_CODE_CHANGED adds a programming user and credential if unknown",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    test.socket.zigbee:__queue_receive(
+      build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "programming_event_notification: MASTER_CODE_CHANGED is a no-op if the credential is already known",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "users", PROGRAMMING_USERS[1])
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "credentials", PROGRAMMING_CREDENTIALS[1])
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive(
+      build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "programming_event_notification: MASTER_CODE_CHANGED promotes a known guest credential's user to programmingUser",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    local guest_users = { { userIndex = 1, userName = "Guest 1", userType = "guest" } }
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(guest_users, { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "users", guest_users[1])
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } })))
+    table_utils.add_entry(mock_device, "credentials",
+      { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive(
+      build_programming_event(mock_device, ProgrammingEventCode.MASTER_CODE_CHANGED, 0)
+    )
+    -- the default-named guest credential is renamed along with its user
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "get_pin_code_response: a programmingUser type syncs as a programming user",
+  function()
+    mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+    mock_device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+    mock_device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+    mock_device:set_field(constants.SYNC.CODE_INDEX, 0, {})
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+        mock_device, 0, DoorLockUserStatus.OCCUPIED_ENABLED, DoorLockUserType.MASTER_USER, "1234"),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(PROGRAMMING_CREDENTIALS, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(PROGRAMMING_USERS, { visibility = { displayed = false } })))
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
+    test.wait_for_events()
+  end
+)
+
+local function sync_slot_zero(device, user_type, expected_users, expected_credentials)
+  device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+  device:set_field(constants.DRIVER_STATE.BUSY, os.time(), {})
+  device:set_field(constants.DRIVER_STATE.COMMAND_IN_PROGRESS, constants.SYNC.CODES_FROM_LOCK, {})
+  device:set_field(constants.SYNC.CODE_INDEX, 0, {})
+
+  test.socket.zigbee:__queue_receive({
+    device.id,
+    DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+      device, 0, DoorLockUserStatus.OCCUPIED_ENABLED, user_type, "1234"),
+  })
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main",
+      capabilities.lockCredentials.credentials(expected_credentials, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main",
+      capabilities.lockUsers.users(expected_users, { visibility = { displayed = false } })))
+  test.socket.zigbee:__expect_send({ device.id, DoorLock.server.commands.GetPINCode(device, 1) })
+  test.wait_for_events()
+end
+
+test.register_coroutine_test(
+  "get_pin_code_response: on non-Yale locks, an occupied slot 0 syncs as a guest with the next free user index",
+  function()
+    sync_slot_zero(mock_device, DoorLockUserType.UNRESTRICTED,
+      { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+      { { userIndex = 1, credentialIndex = 0, credentialType = "pin", credentialName = "Guest 1" } })
+  end
+)
+
 test.run_registered_tests()
