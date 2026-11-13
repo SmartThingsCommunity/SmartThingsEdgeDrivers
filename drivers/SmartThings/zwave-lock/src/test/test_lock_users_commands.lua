@@ -298,6 +298,37 @@ test.register_coroutine_test(
       min_api_version = 15
     })
 
+test.register_coroutine_test(
+  "addCredential: returns resourceExhausted for a new user when totalUsersSupported has been reached",
+  function()
+    -- Both supported users exist but only one has a credential, so the credentials table is not full.
+    set_total_users_supported(2)
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+    })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 0, "guest", "pin", "1234" } },
+    })
+    -- No Z-Wave message should be sent
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "resourceExhausted" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+,
+    {
+      min_api_version = 15
+    })
+
 -- ============================================================================
 -- updateUser
 -- ============================================================================

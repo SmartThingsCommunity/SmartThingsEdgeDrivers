@@ -342,13 +342,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03", "Guest 3" } },
+        args = { 0, "guest", "pin", "pin03", "Guest 3" } },
     })
 
     expect_set_pin_code(3, "pin03")
     test.wait_for_events()
 
-    queue_user_code_added(1)
+    queue_user_code_added(3)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
@@ -356,6 +356,18 @@ test.register_coroutine_test(
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
             { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    -- userIndex 0 creates a new user, which takes the next free user index; the credential takes the next free slot
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",   userType = "guest" },
+            { userIndex = 3, userName = "Guest 3", userType = "guest" },
           },
           { visibility = { displayed = false } }
         ))
@@ -382,7 +394,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin01" } },
+        args = { 0, "guest", "pin", "pin01" } },
     })
 
     expect_set_pin_code(3, "pin01")
@@ -412,7 +424,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     expect_set_pin_code(3, "pin03")
