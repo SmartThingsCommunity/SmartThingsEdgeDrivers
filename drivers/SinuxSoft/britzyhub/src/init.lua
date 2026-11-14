@@ -4,7 +4,14 @@
 local MatterDriver = require "st.matter.driver"
 local log = require "log"
 
+local function bridge_init(driver, device)
+  device:subscribe()
+end
+
 local matter_driver = MatterDriver("britzyhub-matter", {
+  lifecycle_handlers = {
+    init = bridge_init,
+  },
   sub_drivers = {
     require ("elevator"),
     require ("gas-valve"),

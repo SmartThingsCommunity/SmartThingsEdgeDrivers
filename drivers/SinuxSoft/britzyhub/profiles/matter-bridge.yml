@@ -1,0 +1,10 @@
+name: matter-bridge
+components:
+  - id: main
+    capabilities:
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Bridges
