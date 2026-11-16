@@ -77,7 +77,7 @@ local function migrate(driver, device, cmd)
   for _, code in ipairs(ordered_codes) do
     local user_index = #lock_users + 1
     table.insert(lock_users, {userIndex = user_index, userType = "guest", userName = lock_codes[code.slot]})
-    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin"})
+    table.insert(lock_credentials, {userIndex = user_index, credentialIndex = code.index, credentialType = "pin", credentialName = lock_codes[code.slot]})
   end
   device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
@@ -96,14 +96,17 @@ local function migrate(driver, device, cmd)
   if max_codes then
     device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
     device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
-  else
-    -- if we don't have a code length, request it from the device
-    device:send(UserCode:UsersNumberGet({}))
   end
 
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
+
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
 end
 
 local legacy_capabilities = {

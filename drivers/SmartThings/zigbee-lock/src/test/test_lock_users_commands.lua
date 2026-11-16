@@ -628,4 +628,119 @@ test.register_coroutine_test(
   end
 )
 
+-- ============================================================================
+-- Programming Codes: the programmingUser userType cannot be set or cleared via addUser/updateUser
+-- ============================================================================
+
+local function expect_invalid(command_name)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.lockUsers.commandResult(
+        { commandName = command_name, statusCode = "invalidCommand" },
+        { state_change = true, visibility = { displayed = false } }
+      ))
+  )
+end
+
+test.register_coroutine_test(
+  "addUser: rejects the programmingUser userType",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Programming Code", "programmingUser" } },
+    })
+    expect_invalid("addUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "addCredential: rejects the programmingUser userType",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "programmingUser", "pin", "1234" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "addCredential: rejects adding a credential to a programming user",
+  function()
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 1, "guest", "pin", "1234" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "invalidCommand" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a guest to the programmingUser userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Guest 1", "programmingUser" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: rejects changing a programming user to another userType",
+  function()
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Programming Code", "guest" } },
+    })
+    expect_invalid("updateUser")
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "updateUser: allows renaming a programming user",
+  function()
+    seed_users({ { userIndex = 1, userName = "Programming Code", userType = "programmingUser" } })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 1, "Front Door", "programmingUser" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Front Door", userType = "programmingUser" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "updateUser", statusCode = "success", userIndex = 1 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
