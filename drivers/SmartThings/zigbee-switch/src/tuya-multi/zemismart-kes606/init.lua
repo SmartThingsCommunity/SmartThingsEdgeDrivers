@@ -37,6 +37,11 @@ local function is_relay(parent, child)
     and parent:get_field(mode_field(endpoint)) == "switch"
 end
 
+local function is_relay_child(parent, child)
+  -- A confirmed relay mode can arrive before its child Switch profile finishes updating.
+  return is_relay(parent, child) and child:supports_capability(capabilities.switch)
+end
+
 local function update_parent_switch(parent)
   local state, unknown = "off", false
   for endpoint = 1, 4 do
@@ -123,11 +128,11 @@ local function switch_command(handler)
     if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
       for endpoint = 1, 4 do
         local child = find_child(device, endpoint)
-        if is_relay(device, child) and child:supports_capability(capabilities.switch) then
+        if is_relay_child(device, child) then
           handler(driver, child, command, false)
         end
       end
-    elseif is_relay(device:get_parent_device(), device) and device:supports_capability(capabilities.switch) then
+    elseif is_relay_child(device:get_parent_device(), device) then
       handler(driver, device, command, false)
     end
   end
@@ -135,7 +140,7 @@ end
 
 local function onoff_report(driver, device, value, zb_rx)
   local child = find_child(device, zb_rx.address_header.src_endpoint.value)
-  if is_relay(device, child) and child:supports_capability(capabilities.switch) then
+  if is_relay_child(device, child) then
     -- Native handling would bypass the parent aggregation below.
     switch_defaults.on_off_attr_handler(driver, device, value, zb_rx, false)
     update_parent_switch(device)
@@ -144,7 +149,7 @@ end
 
 local function onoff_default_response(driver, device, zb_rx)
   local child = find_child(device, zb_rx.address_header.src_endpoint.value)
-  if is_relay(device, child) and child:supports_capability(capabilities.switch) then
+  if is_relay_child(device, child) then
     switch_defaults.default_response_handler(driver, device, zb_rx, false)
     update_parent_switch(device)
   end
@@ -246,7 +251,7 @@ local function info_changed(_, device, _, args)
   -- Reconcile a delayed profile update against the latest D020 mode.
   sync_child_profile(parent, device)
   if old_store.profile ~= nil and old_store.profile.id ~= device.profile.id
-      and is_relay(parent, device) and device:supports_capability(capabilities.switch) then
+      and is_relay_child(parent, device) then
     -- A read received while the old button profile was active could not emit switch state.
     device:send(OnOff.attributes.OnOff:read(device))
   end

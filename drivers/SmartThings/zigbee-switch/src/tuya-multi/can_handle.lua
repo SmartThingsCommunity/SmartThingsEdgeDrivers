@@ -21,7 +21,7 @@ return function(opts, driver, device)
 
   local TUYA_MFR_HEADER = "_TZ"
   local manufacturer = device:get_manufacturer()
-  if manufacturer ~= nil and string.sub(manufacturer,1,3) == TUYA_MFR_HEADER and is_multi_endpoint(device) then  -- if it is a tuya device, then send the magic packet
+  if string.sub(manufacturer,1,3) == TUYA_MFR_HEADER and is_multi_endpoint(device) then  -- if it is a tuya device, then send the magic packet
       local subdriver = require("tuya-multi")
       return true, subdriver
   end
