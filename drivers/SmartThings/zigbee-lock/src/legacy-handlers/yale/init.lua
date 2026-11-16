@@ -127,6 +127,10 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   end
 end
 
+local migrate = function(driver, device, command)
+  require("legacy-handlers.migrate")(driver, device, command, 0)
+end
+
 local yale_door_lock_driver = {
   NAME = "Yale Door Lock",
   zigbee_handlers = {
@@ -139,7 +143,8 @@ local yale_door_lock_driver = {
   capability_handlers = {
     [LockCodes.ID] = {
       [LockCodes.commands.reloadAllCodes.NAME] = reload_all_codes,
-      [LockCodes.commands.setCode.NAME] = set_code
+      [LockCodes.commands.setCode.NAME] = set_code,
+      [LockCodes.commands.migrate.NAME] = migrate
     }
   },
   can_handle = require("legacy-handlers.yale.can_handle")

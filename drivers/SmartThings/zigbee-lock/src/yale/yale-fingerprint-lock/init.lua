@@ -26,7 +26,7 @@ local yale_fingerprint_lock_driver = {
       }
     }
   },
-  can_handle = require("yale-fingerprint-lock.can_handle")
+  can_handle = require("yale.yale-fingerprint-lock.can_handle")
 }
 
 return yale_fingerprint_lock_driver

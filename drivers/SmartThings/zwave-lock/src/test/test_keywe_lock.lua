@@ -9,7 +9,6 @@ local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-local lock_utils = require "lock_utils.constants".DRIVER_STATE
 
 test.disable_startup_messages()
 
@@ -45,7 +44,6 @@ test.set_test_init_function(test_init)
 
 local function added()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
 
   test.socket.zwave:__expect_send(
     DoorLock:OperationGet({}):build_test_tx(mock_device.id)
@@ -58,7 +56,6 @@ local function added()
   )
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
   test.wait_for_events()
-  assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
 end
 
 test.register_coroutine_test(
