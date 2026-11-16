@@ -4368,5 +4368,33 @@ for _, case in ipairs(charge_state_cases) do
   )
 end
 
+test.register_coroutine_test(
+  "setDefaultViewport should write the Viewport attribute",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "cameraViewportSettings", component = "main", command = "setDefaultViewport",
+        args = { { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1920, y = 1080} } }
+      }
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.attributes.Viewport:write(mock_device, CAMERA_EP,
+        clusters.Global.types.ViewportStruct({
+          x1 = 0,
+          x2 = 1920,
+          y1 = 0,
+          y2 = 1080
+        })
+      )
+    })
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
 -- run the tests
 test.run_registered_tests()
