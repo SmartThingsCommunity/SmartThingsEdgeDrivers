@@ -227,7 +227,7 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({ yale_mock_device.id, UserCode:Report({
       user_identifier = 251, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS, user_code = "199111" }) })
     test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=251, userName="Programming Code", userType="programmingUser"}}, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Programming Code"}}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( yale_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1, credentialName="Zach"}, {credentialIndex=251, credentialType="pin", userIndex=251, credentialName="Programming Code"}}, { visibility = { displayed = false } })))
     test.wait_for_events()
   end
 )
