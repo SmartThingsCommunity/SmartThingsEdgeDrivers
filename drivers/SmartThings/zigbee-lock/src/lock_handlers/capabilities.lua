@@ -35,6 +35,12 @@ function CapabilityHandlers.add_user(driver, device, command)
     return
   end
 
+  -- programming users cannot be created through the capability
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   -- Find the smallest positive userIndex not already in the table
   local next_available_index = tables.next_index(device, "users")
   local status = tables.add_entry(device, "users", {
@@ -49,6 +55,12 @@ end
 function CapabilityHandlers.update_user(driver, device, command)
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.BUSY)
+    return
+  end
+
+  -- a user cannot be made a programming user, and a programming user cannot be changed to another type
+  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= lock_utils.is_programming_user(device, command.args.userIndex) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
@@ -127,14 +139,29 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- A userIndex of 0 means "auto-assign the next available slot"
-  local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
-  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  -- userIndex 0 means "create a new user for this credential" (its index is chosen when the lock confirms the
+  -- code). Any other userIndex must name an existing user that does not already have a credential (for now,
+  -- each user may have at most one credential).
+  -- A programming user cannot be created or given a credential through the capability.
+  local user_index = command.args.userIndex
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE
+      or user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+      or lock_utils.is_programming_user(device, user_index)
+      or tables.find_entry_by(device, "credentials", "userIndex", user_index)) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  local credentials_full = #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials")
+  -- if we are being asked to create a new user (index 0), this also needs a free user index.
+  local users_full = (user_index == 0) and #(tables.get_state(device, "users") or {}) >= tables.get_max_entries(device, "users")
+  if credentials_full or users_full then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
+
+  -- the credential always takes the next available slot.
+  local cred_index = tables.next_index(device, "credentials", 1)
 
   -- Set busy state and attempt to set the PIN on-device.
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
@@ -157,8 +184,15 @@ function CapabilityHandlers.update_credential(driver, device, command)
     return
   end
 
-  if not tables.find_entry(device, "credentials", command.args.credentialIndex) then
+  local existing = tables.find_entry(device, "credentials", command.args.credentialIndex)
+  if not existing then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.FAILURE)
+    return
+  end
+
+  -- a credential cannot be moved to another user: the given userIndex must already own this credential
+  if existing.userIndex ~= command.args.userIndex then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
@@ -171,9 +205,21 @@ function CapabilityHandlers.update_credential(driver, device, command)
   device:send(LockCluster.server.commands.SetPINCode(device,
     command.args.credentialIndex,
     UserStatusEnum.OCCUPIED_ENABLED,
-    UserTypeEnum.UNRESTRICTED,
+    -- the credential's stored owner decides its type, so a known programming code stays a programming code
+    lock_utils.is_programming_user(device, existing.userIndex) and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED,
     command.args.credentialData)
   )
+end
+
+-- Some locks report a successful ClearPINCode for a programming code but do not actually delete it,
+-- so refuse rather than dropping the credential from our tables.
+local function refuse_programming_credential_delete(device, injected_by_delete_user)
+  device.log.warn("ignoring deleteCredential for a programming code, it cannot be deleted")
+  if injected_by_delete_user then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+    lock_utils.clear_busy_state(device)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
 end
 
 function CapabilityHandlers.delete_credential(driver, device, command)
@@ -182,6 +228,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
   if cmd_in_progress == consts.LOCK_USERS.DELETE then
     -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+    if lock_utils.is_programming_user(device, credential_args.userIndex) then
+      refuse_programming_credential_delete(device, true)
+      return
+    end
     device:send(LockCluster.attributes.SendPINOverTheAir:write(device, true))
     device:send(LockCluster.server.commands.ClearPINCode(device, credential_args.credentialIndex))
   elseif lock_utils.is_device_busy(device) then
@@ -191,6 +241,10 @@ function CapabilityHandlers.delete_credential(driver, device, command)
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
     if not found_cred then
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+      return
+    end
+    if lock_utils.is_programming_user(device, found_cred.userIndex) then
+      refuse_programming_credential_delete(device, false)
       return
     end
     lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.DELETE, {
@@ -237,6 +291,9 @@ function CapabilityHandlers.refresh(driver, device, cmd)
        (device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME) == nil) then
       device:send(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device))
     end
+
+    -- Allow callers to try to sync device state- fails silently if the device is busy or already synced.
+    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
   elseif not device:supports_capability(capabilities.lockCodes) then
     -- Generically fingerprinted devices may support PINs even though the profile does not yet
     -- reflect it.  Read NumberOfPINUsersSupported so the response handler can trigger a profile
