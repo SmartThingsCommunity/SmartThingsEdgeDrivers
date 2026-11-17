@@ -80,7 +80,8 @@ def create_and_push_git_branch(new_branch):
         print(f"Dry run: Skipping push of {new_branch} to origin")
 
 def create_new_channel():
-    response = requests.post(
+    response = requests.request(
+        "POST",
         url=f"{ENVIRONMENT_URL}/channels",
         headers={
             "Accept": "application/vnd.smartthings+json;v=20200810",
@@ -88,12 +89,12 @@ def create_new_channel():
             "Content-Type": "application/json",
             "X-ST-LOG-LEVEL": "DEBUG"
         },
-        json={
+        data=json.dumps({
             "name": "SmartThings Drivers",
             "description": "Production driver channel",
             "type": "DRIVER",
             "termsOfServiceUrl": f"{GIT_URL}/tree/production"
-        }
+        })
     )
     if response.status_code != 200:
         print(f"Failed to create new channel:", file=sys.stderr)
