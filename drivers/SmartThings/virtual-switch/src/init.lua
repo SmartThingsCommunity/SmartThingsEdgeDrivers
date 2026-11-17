@@ -42,3 +42,4 @@ local virtual_driver = Driver("virtual-switch", {
 })
 
 virtual_driver:run()
+-- TEST ONLY: trigger changed-files workflows for #3360
