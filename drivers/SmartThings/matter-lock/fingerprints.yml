@@ -50,6 +50,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x280D
     deviceProfileName: lock-modular
+  - id: "4447/10257"
+    deviceLabel: Aqara Smart Lock U250
+    vendorId: 0x115F
+    productId: 0x2811
+    deviceProfileName: lock-modular
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
@@ -95,6 +100,11 @@ matterManufacturer:
     deviceLabel: eufy FamiLock E40
     vendorId: 0x1533
     productId: 0x0014
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/30"
+    deviceLabel: Smart Lock S4 Max
+    vendorId: 0x1533
+    productId: 0x001E
     deviceProfileName: lock-user-pin-battery
   #Kwikset
   - id: "5153/66"
