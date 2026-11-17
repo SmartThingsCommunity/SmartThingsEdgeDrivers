@@ -8,9 +8,9 @@ PROD_CHANNEL_ID = os.environ.get('PROD_CHANNEL_ID')
 NEW_BRANCH = os.environ.get("NEW_BRANCH")
 
 print(f"Environment: {ENVIRONMENT}")
-print(f"Dry Run: {ENVIRONMENT}")
+print(f"Dry Run: {DRY_RUN}")
 print(f"Token Present: {TOKEN != None}")
-print(f"Environment URL: {ENVIRONMENT}")
+print(f"Environment URL: {ENVIRONMENT_URL}")
 print(f"Production Channel ID: {PROD_CHANNEL_ID}")
 print(f"New Branch Channel Name: {NEW_BRANCH}")
 
@@ -223,12 +223,24 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
 
 def main():
 
+    # Get drivers currently on the source channel
+    response = requests.get(
+        f"{ENVIRONMENT_URL}/channels/{PROD_CHANNEL_ID}/drivers",
+        headers={
+            "Accept": "application/vnd.smartthings+json;v=20200810",
+            "Authorization": "Bearer "+TOKEN,
+            "Content-Type": "application/json",
+            "X-ST-LOG-LEVEL": "DEBUG"
+        }
+    )
+    print(response.text)
+
     # Creating new prod steps
-    pull_prod()
     new_prod_channel_id = create_new_channel()
     clone_drivers_from_channel(PROD_CHANNEL_ID, new_prod_channel_id)
 
     # Cutting over old prod into support
+    pull_prod()
     create_and_push_git_branch(NEW_BRANCH)
     update_old_channel(NEW_BRANCH)
 
