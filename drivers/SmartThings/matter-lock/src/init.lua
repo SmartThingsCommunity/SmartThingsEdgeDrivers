@@ -7,6 +7,7 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local utils = require "st.utils"
 local lock_utils = require "lock_utils"
+local lock_sync = require "lock_sync"
 
 local version = require "version"
 if version.api < 10 then
@@ -148,6 +149,10 @@ local function device_init(driver, device)
     end
   end
   device:subscribe()
+
+  -- retry the user/credential sync on each driver init until it has run to completion, in case it
+  -- was interrupted (network, power, driver restart, etc.)
+  lock_sync.sync_after_delay(device)
  end
 
 local function device_added(driver, device)
@@ -343,22 +348,6 @@ local function deep_equals(a, b, opts, seen)
   return deep_equals(mt_a, mt_b, opts, seen)
 end
 
-local function migrate_lock_codes(device)
-  local lockCodes = device:get_field(lock_utils.LOCK_CODES_FOR_MIGRATION) or {}
-  local user_table = {}
-  local credential_table = {}
-  for _, entry in ipairs(lockCodes) do
-    local index = tonumber(entry[1])
-    local code_name = entry[2]
-    table.insert(user_table, {userIndex = index, userType = "guest", userName = code_name})
-    table.insert(credential_table, {userIndex = index, credentialIndex = index, credentialType = "pin", credentialName = code_name })
-  end
-  if #user_table > 0 or #credential_table > 0 then
-    device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
-    device:emit_event(capabilities.lockCredentials.credentials(credential_table, {visibility = {displayed = false}}))
-  end
-end
-
 local function info_changed(driver, device, event, args)
   if deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     return
@@ -386,8 +375,9 @@ local function info_changed(driver, device, event, args)
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end
   if device:get_field(lock_utils.LOCK_CODES_COPY_REQUIRED) == true then
-    migrate_lock_codes(device)
+    -- the sync builds the users/credentials tables, carrying over the legacy lockCodes names
     device:set_field(lock_utils.LOCK_CODES_COPY_REQUIRED, false, {persist = true})
+    lock_sync.sync_after_delay(device)
   end
 end
 
@@ -1290,6 +1280,10 @@ local function handle_update_user(driver, device, command)
 end
 
 local function get_user_response_handler(driver, device, ib, response)
+  if lock_sync.is_syncing(device) then
+    lock_sync.get_user_response_handler(device, ib)
+    return
+  end
   local elements = ib.info_block.data.elements
   local userIdx = elements.user_index.value
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -2457,6 +2451,8 @@ local function handle_refresh(driver, device, command)
   else
     device:send(DoorLock.attributes.LockState:read(device))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    -- try to sync users/credentials; does nothing if the device is busy or already synced.
+    lock_sync.sync_after_delay(device)
   end
 end
 
