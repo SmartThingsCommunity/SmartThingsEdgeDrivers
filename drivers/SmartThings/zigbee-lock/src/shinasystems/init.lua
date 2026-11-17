@@ -17,20 +17,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local DoorState          = DoorLock.attributes.DoorState
 
 local PIN_USERS_SUPPORTED = 1
-local SYNC_DELAY = 15
-
-local function sync_after_delay(device)
-  device.thread:call_with_delay(SYNC_DELAY, function() lock_utils.sync_device_state(device) end)
-end
-
-local function refresh_and_sync(driver, device)
-  driver:inject_capability_command(device, {
-    capability = capabilities.refresh.ID,
-    command = capabilities.refresh.commands.refresh.NAME,
-    args = {}
-  })
-  sync_after_delay(device)
-end
 
 local function emit_pin_users_supported(device)
   device:emit_event(capabilities.lockCredentials.pinUsersSupported(PIN_USERS_SUPPORTED, { visibility = { displayed = false } }))
@@ -47,8 +33,8 @@ end
 local function device_init(driver, device)
   -- A newly joined device is migrated when it is added. A device that joined before this sub-driver
   -- existed is migrated here, as the DLM-300Z is always handled with lockUsers/lockCredentials.
-  local needs_sync = not device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED)
-  if needs_sync then
+  local newly_migrated = not device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED)
+  if newly_migrated then
     device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
   end
   driver.lifecycle_handlers.init(driver, device)
@@ -62,7 +48,13 @@ local function device_init(driver, device)
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
     emit_pin_users_supported(device)
   end
-  if needs_sync then refresh_and_sync(driver, device) end
+  if newly_migrated then
+    driver:inject_capability_command(device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
+  end
 end
 
 local function do_configure(driver, device)
@@ -83,8 +75,6 @@ local function do_configure(driver, device)
 
   device:emit_event(capabilities.battery.type("AA"))
   device:emit_event(capabilities.battery.quantity(4))
-
-  sync_after_delay(device)
 end
 
 local function refresh(driver, device, command)

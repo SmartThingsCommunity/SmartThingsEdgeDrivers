@@ -92,9 +92,16 @@ local function expect_init_events()
   )
 end
 
-local function expect_sync_device_state()
-  test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
-  test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
+local function expect_get_pin(index)
+  test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, index) })
+end
+
+local function receive_get_pin_response(index, user_status, pin)
+  test.socket.zigbee:__queue_receive({
+    mock_device.id,
+    DoorLock.client.commands.GetPINCodeResponse.build_test_rx(mock_device,
+      index, user_status, DoorLock.types.DrlkUserType.UNRESTRICTED_USER, pin),
+  })
 end
 
 local command_result_opts = { state_change = true, visibility = { displayed = false } }
@@ -200,9 +207,8 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "doConfigure should configure the DLM-300Z reporting, then sync the codes from the lock",
+  "doConfigure should configure the DLM-300Z reporting",
   function()
-    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__expect_send({
@@ -234,10 +240,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.quantity(4)))
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
-
-    test.mock_time.advance_time(15)
-    expect_sync_device_state()
-    test.wait_for_events()
   end
 )
 
@@ -258,28 +260,52 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "init: a device that was onboarded before should be migrated, refreshed and have its codes synced",
+  "init: a device that was onboarded before should be migrated and refreshed",
   function()
-    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     expect_init_events()
     expect_refresh(true)
     test.wait_for_events()
     assert_migrated()
-
-    test.mock_time.advance_time(15)
-    expect_sync_device_state()
-    test.wait_for_events()
   end,
   { test_init = make_test_init(false) }
 )
 
 test.register_coroutine_test(
-  "init: a migrated device should only report what the DLM-300Z supports, and not be refreshed or synced again",
+  "init: a migrated device should only report what the DLM-300Z supports, and not be refreshed",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     expect_init_events()
     test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "init: the code sync of the default handler should end at the single PIN of the DLM-300Z",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    expect_init_events()
+    test.wait_for_events()
+
+    -- the sync starts at the programming code, which the DLM-300Z does not have
+    test.mock_time.advance_time(15)
+    test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) })
+    expect_get_pin(0)
+    test.wait_for_events()
+
+    receive_get_pin_response(0, DoorLock.types.DrlkUserStatus.AVAILABLE, "")
+    expect_get_pin(1)
+    test.wait_for_events()
+
+    -- no PIN is requested after the single PIN
+    receive_get_pin_response(1, DoorLock.types.DrlkUserStatus.OCCUPIED_ENABLED, "1234")
+    expect_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } })
+    expect_users({ { userIndex = 1, userName = "Guest 1", userType = "guest" } })
+    test.wait_for_events()
+
+    assert(mock_device:get_field(constants.SYNC.CODES_SYNCED) == constants.SYNC.CODES_SYNC_VERSION,
+      "the code sync should be completed")
   end
 )
 
