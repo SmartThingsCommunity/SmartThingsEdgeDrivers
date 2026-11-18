@@ -2,10 +2,12 @@
 -- Licensed under the Apache License, Version 2.0
 
 local FINGERPRINTS = {
+  { mfr = "SONOFF", model = "SWV-ZF2U" },
+  { mfr = "SONOFF", model = "SWV-ZF2" },
   { mfr = "SONOFF", model = "SWV-ZFU" },
   { mfr = "SONOFF", model = "SWV-ZFE" },
   { mfr = "SONOFF", model = "SWV-ZNU" },
-  { mfr = "SONOFF", model = "SWV-ZNE" },
+  { mfr = "SONOFF", model = "SWV-ZNE" }
 }
 
 local function sonoff_can_handle(opts, driver, device, ...)

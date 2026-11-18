@@ -3,6 +3,7 @@
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
+local Identify = clusters.Identify
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
@@ -94,6 +95,17 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
+      }
+    }
+)
+
+test.register_message_test(
+    "Identify command should not trigger dual-channel reads on SWV1C",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Identify.server.commands.Identify.build_test_rx(mock_device, 1) }
       }
     }
 )

@@ -60,67 +60,84 @@ local function _emit_light_events_inner(light_device, light_repr)
       if light_repr.color_temperature.mirek_valid then
         mirek = light_repr.color_temperature.mirek
       end
-      local mirek_schema = light_repr.color_temperature.mirek_schema or {
-        mirek_minimum = Consts.DEFAULT_MIN_MIREK,
-        mirek_maximum = Consts.DEFAULT_MAX_MIREK
-      }
-
       -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
       -- if the below is not intuitive.
       local color_temp_range = light_device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME);
       local min_kelvin = (color_temp_range and color_temp_range.minimum)
-      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
       local max_kelvin = (color_temp_range and color_temp_range.maximum)
-      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
 
-      local update_range = false
-      if min_kelvin ~= api_min_kelvin then
-        update_range = true
-        min_kelvin = api_min_kelvin
-        light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
-      end
+      -- Updates (e.g. over SSE) usually carry no `mirek_schema`; keep the range learned from the
+      -- full resource rather than resetting it to the defaults.
+      local mirek_schema = light_repr.color_temperature.mirek_schema
+      if mirek_schema or not (min_kelvin and max_kelvin) then
+        mirek_schema = mirek_schema or {
+          mirek_minimum = Consts.DEFAULT_MIN_MIREK,
+          mirek_maximum = Consts.DEFAULT_MAX_MIREK
+        }
+        local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+        local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
 
-      if max_kelvin ~= api_max_kelvin then
-        update_range = true
-        max_kelvin = api_max_kelvin
-        light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
-      end
-
-      if update_range then
-        light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
-        light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
-      else
-        light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
-      end
-
-      -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
-      local kelvin = math.floor(
-        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min_kelvin, max_kelvin)
-      )
-      if utils.is_nan(kelvin) then
-        light_device.log.warn(
-          string.format(
-            "Non numeric value %s computed for colorTemperature Attribute Event, ignoring.",
-            kelvin
-          )
-        )
-      else
-        local last_kelvin_setpoint = light_device:get_field(Fields.COLOR_TEMP_SETPOINT)
-        if
-          last_kelvin_setpoint ~= nil and
-          last_kelvin_setpoint >= utils.mirek_to_kelvin(mirek + 1) and
-          last_kelvin_setpoint <= utils.mirek_to_kelvin(mirek - 1)
-        then
-          kelvin = last_kelvin_setpoint;
+        local update_range = false
+        if min_kelvin ~= api_min_kelvin then
+          update_range = true
+          min_kelvin = api_min_kelvin
+          light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
         end
-        light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+
+        if max_kelvin ~= api_max_kelvin then
+          update_range = true
+          max_kelvin = api_max_kelvin
+          light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
+        end
+
+        if update_range then
+          light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
+          light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+        else
+          light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
+        end
+      end
+
+      -- In xy colour mode the bridge reports `mirek_valid = false` (and `mirek = null`); there is
+      -- no colour temperature to report then.
+      if light_repr.color_temperature.mirek_valid == false then
+        light_device.log.debug("Light is in colour mode, not emitting a colour temperature")
+      else
+        -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+        local kelvin = math.floor(
+          st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min_kelvin, max_kelvin)
+        )
+        if utils.is_nan(kelvin) then
+          light_device.log.warn(
+            string.format(
+              "Non numeric value %s computed for colorTemperature Attribute Event, ignoring.",
+              kelvin
+            )
+          )
+        else
+          local last_kelvin_setpoint = light_device:get_field(Fields.COLOR_TEMP_SETPOINT)
+          if
+            last_kelvin_setpoint ~= nil and
+            last_kelvin_setpoint >= utils.mirek_to_kelvin(mirek + 1) and
+            last_kelvin_setpoint <= utils.mirek_to_kelvin(mirek - 1)
+          then
+            kelvin = last_kelvin_setpoint;
+          end
+          light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+        end
       end
       light_device:set_field(Fields.COLOR_TEMP_SETPOINT, nil);
     end
 
     if light_repr.color then
-      light_device:set_field(Fields.GAMUT, light_repr.color.gamut, { persist = true })
-      local r, g, b = HueColorUtils.safe_xy_to_rgb(light_repr.color.xy, light_repr.color.gamut)
+      -- Updates (e.g. over SSE) usually carry only `xy`; keep the gamut learned from the full resource.
+      local gamut = light_repr.color.gamut
+      if gamut ~= nil then
+        light_device:set_field(Fields.GAMUT, gamut, { persist = true })
+      else
+        gamut = light_device:get_field(Fields.GAMUT)
+      end
+      local r, g, b = HueColorUtils.safe_xy_to_rgb(light_repr.color.xy, gamut)
       local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
       -- We sent a command where hue == 100 and wrapped the value to 0, reverse that here
       if light_device:get_field(Fields.WRAPPED_HUE) == true and (hue + .05 >= 1 or hue - .05 <= 0) then
