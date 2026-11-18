@@ -123,9 +123,18 @@ local function merge_users(device, reported_users)
     end
   end
 
-  -- keep the entries of users that were not read
+  -- Keep the entries of users that were not read, except those already matched to a lock user (they moved)
+  -- and the COTA user stored by the old migration.
+  local cota_index = device:get_field(lock_utils.COTA_CRED_INDEX)
+  local dropped = {}
+  for _, user in ipairs(stored_users) do dropped[user.userIndex] = claimed[user.userIndex] or nil end
+  for _, cred in ipairs(stored_creds) do
+    if cota_index ~= nil and cred.credentialType == "pin" and cred.credentialIndex == cota_index then
+      dropped[cred.userIndex] = true
+    end
+  end
   for _, user in ipairs(stored_users) do
-    if not read_user_indices[user.userIndex] then
+    if not read_user_indices[user.userIndex] and not dropped[user.userIndex] then
       table.insert(user_table, {
         userIndex = user.userIndex,
         userName = user.userName,
@@ -134,7 +143,7 @@ local function merge_users(device, reported_users)
     end
   end
   for _, cred in ipairs(stored_creds) do
-    if not read_user_indices[cred.userIndex] then
+    if not read_user_indices[cred.userIndex] and not dropped[cred.userIndex] then
       table.insert(cred_table, {
         userIndex = cred.userIndex,
         credentialIndex = cred.credentialIndex,

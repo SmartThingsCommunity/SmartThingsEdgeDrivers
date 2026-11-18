@@ -472,4 +472,212 @@ test.register_coroutine_test(
   { min_api_version = 15 }
 )
 
+local REMOTE_ONLY = types.UserTypeEnum.REMOTE_ONLY_USER
+
+-- Run a full sync. `lock_users` is what the lock holds, as a list of
+-- {index = n, name = "...", type = <UserTypeEnum>, pins = {...}}, in index order.
+local function sync_with_lock(lock_users, expected_users, expected_creds)
+  refresh_and_wait_for_sync()
+  for i, user in ipairs(lock_users) do
+    expect_get_user(user.index)
+    test.wait_for_events()
+    local next_user = lock_users[i + 1]
+    local pins = {}
+    for _, p in ipairs(user.pins) do table.insert(pins, pin(p)) end
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(
+      user.index, user.name or "", OCCUPIED, user.type or UNRESTRICTED, pins, next_user and next_user.index or nil)})
+  end
+  expect_tables(expected_users, expected_creds)
+  test.wait_for_events()
+end
+
+-- Put the device in the state the old lockCodes migration left behind: one user per legacy slot, with
+-- userIndex == credentialIndex == slot, and every user a "guest". USERS_SYNCED is cleared afterwards so the
+-- next refresh syncs again.
+local function store_tables_like_old_migration(codes)
+  local lock_users, users, creds = {}, {}, {}
+  for _, code in ipairs(codes) do
+    local slot, name = code[1], code[2]
+    table.insert(lock_users, {index = slot, name = name, pins = {slot}})
+    table.insert(users, {userIndex = slot, userName = name, userType = "guest"})
+    table.insert(creds, {userIndex = slot, credentialIndex = slot, credentialType = "pin", credentialName = name})
+  end
+  sync_with_lock(lock_users, users, creds)
+  mock_device:set_field(lock_sync.USERS_SYNCED, nil, {persist = true})
+end
+
+test.register_coroutine_test(
+  "The COTA user stored by the old migration is removed by the sync",
+  function()
+    set_total_users_supported(5)
+    store_tables_like_old_migration({ {1, lock_utils.COTA_CODE_NAME}, {2, "Front Door"} })
+    mock_device:set_field(lock_utils.COTA_CRED, "123456", {persist = true})
+    mock_device:set_field(lock_utils.COTA_CRED_INDEX, 1, {persist = true})
+
+    sync_with_lock(
+      {
+        {index = 1, type = REMOTE_ONLY, pins = {1}}, -- the driver's COTA user
+        {index = 2, pins = {2}},
+      },
+      {{userIndex = 2, userName = "Front Door", userType = "guest"}},
+      {{userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Front Door"}}
+    )
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A user moved to its real lock index is not also left at its old index",
+  function()
+    set_total_users_supported(5)
+    store_tables_like_old_migration({ {1, "Alice"}, {2, "Bob"} })
+
+    sync_with_lock(
+      {
+        {index = 1, pins = {1}},
+        {index = 3, pins = {2}},
+      },
+      {
+        {userIndex = 1, userName = "Alice", userType = "guest"},
+        {userIndex = 3, userName = "Bob", userType = "guest"},
+      },
+      {
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
+        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Bob"},
+      }
+    )
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "When the COTA PIN is moved to index 2, the sync hides the COTA user, not the real user at index 1",
+  function()
+    set_total_users_supported(5)
+
+    -- the fields set_cota_credential(device, 1) sets just before it sends SetCredential at index 1
+    mock_device:set_field(lock_utils.COTA_CRED, "654123", {persist = true})
+    mock_device:set_field(lock_utils.COMMAND_NAME, "addCota")
+    mock_device:set_field(lock_utils.CRED_INDEX, 1)
+    mock_device:set_field(lock_utils.COTA_CRED_INDEX, 1, {persist = true})
+    mock_device:set_field(lock_utils.USER_TYPE, "remote")
+
+    -- the lock: index 1 is taken, try 2
+    test.socket.matter:__queue_receive({mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1, types.DlStatus.OCCUPIED, nil, 2)})
+    test.socket.matter:__expect_send({mock_device.id, DoorLock.server.commands.SetCredential(
+      mock_device, 1, types.DataOperationTypeEnum.ADD, pin(2), "654123", nil, nil, REMOTE_ONLY)})
+    test.wait_for_events()
+
+    -- the lock: COTA PIN stored at index 2, for a new user 2
+    test.socket.matter:__queue_receive({mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1, types.DlStatus.SUCCESS, 2, nil)})
+    test.wait_for_events()
+
+    sync_with_lock(
+      {
+        {index = 1, name = "Alice", pins = {1}},
+        {index = 2, type = REMOTE_ONLY, pins = {2}}, -- the driver's COTA user
+      },
+      {{userIndex = 1, userName = "Alice", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"}}
+    )
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A GetUser error status on the GetUser path makes the sync skip to the next user",
+  function()
+    set_total_users_supported(3)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({mock_device.id, DoorLock:build_test_command_response(
+      mock_device, 1, DoorLock.ID, DoorLock.server.commands.GetUser.ID, nil, im.InteractionResponse.Status.FAILURE)})
+    expect_get_user(2)
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "addUser is rejected as busy while a sync is in progress, even after a refresh",
+  function()
+    set_total_users_supported(3)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+    assert(lock_sync.is_syncing(mock_device), "precondition: sync in progress")
+
+    test.socket.capability:__queue_receive({mock_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}})
+    test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.LockState:read(mock_device)})
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({mock_device.id,
+      {capability = capabilities.lockUsers.ID, component = "main", command = "addUser", args = {"Carol", "guest"}}})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockUsers.commandResult({commandName = "addUser", statusCode = "busy"},
+        {state_change = true, visibility = {displayed = false}})))
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+-- A device paired with the "lock" profile, which has no lockUsers, as a newly paired lock has before
+-- match_profile runs.
+local new_lock = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock.yml"),
+  manufacturer_info = { vendor_id = 0x135D, product_id = 0x00C2 },
+  endpoints = mock_device.endpoints,
+})
+
+test.register_coroutine_test(
+  "A sync is scheduled when a profile change adds lockUsers",
+  function()
+    test.mock_device.add_test_device(new_lock)
+
+    -- init on the "lock" profile; the sync scheduled from init runs 15s later and does nothing
+    local lock_only_subscribe = DoorLock.attributes.LockState:subscribe(new_lock)
+    lock_only_subscribe:merge(DoorLock.attributes.OperatingMode:subscribe(new_lock))
+    lock_only_subscribe:merge(cluster_base.subscribe(new_lock, nil, DoorLock.ID, 0xFFFC))
+    lock_only_subscribe:merge(DoorLock.events.LockOperation:subscribe(new_lock))
+    lock_only_subscribe:merge(DoorLock.events.DoorLockAlarm:subscribe(new_lock))
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({new_lock.id, "init"})
+    test.socket.matter:__expect_send({new_lock.id, lock_only_subscribe})
+    test.wait_for_events()
+    test.mock_time.advance_time(15)
+    test.wait_for_events()
+
+    -- match_profile switches to a profile with lockUsers
+    test.timer.__create_and_queue_test_time_advance_timer(15, "oneshot")
+    test.socket.device_lifecycle:__queue_receive(new_lock:generate_info_changed({profile = t_utils.get_profile_definition("lock-user-pin.yml")}))
+    local full_subscribe = DoorLock.attributes.LockState:subscribe(new_lock)
+    full_subscribe:merge(DoorLock.attributes.OperatingMode:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.attributes.NumberOfPINUsersSupported:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.attributes.MinPINCodeLength:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(new_lock))
+    full_subscribe:merge(cluster_base.subscribe(new_lock, nil, DoorLock.ID, 0xFFFC))
+    full_subscribe:merge(DoorLock.events.LockOperation:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.events.DoorLockAlarm:subscribe(new_lock))
+    full_subscribe:merge(DoorLock.events.LockUserChange:subscribe(new_lock))
+    test.socket.matter:__expect_send({new_lock.id, full_subscribe})
+    test.socket.capability:__expect_send(new_lock:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true})))
+    test.socket.capability:__expect_send(new_lock:generate_test_message("main",
+      capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})))
+    test.wait_for_events()
+
+    -- a sync should now start
+    test.mock_time.advance_time(15)
+    test.socket.matter:__expect_send({new_lock.id, DoorLock.server.commands.GetUser(new_lock, 1, 1)})
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
 test.run_registered_tests()
