@@ -288,6 +288,33 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Remote-only (COTA) users are not shown, whatever credential index they hold",
+  function()
+    -- the stored COTA index (1) is stale: the COTA actually lives at credential 12, owned by user 13
+    mock_device:set_field(lock_utils.COTA_CRED_INDEX, 1, {persist = true})
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(
+      1, "Alice", types.UserStatusEnum.OCCUPIED_ENABLED, types.UserTypeEnum.UNRESTRICTED_USER, {pin(1)}, 13
+    )})
+    expect_get_user(13)
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(
+      13, "", types.UserStatusEnum.OCCUPIED_ENABLED, types.UserTypeEnum.REMOTE_ONLY_USER, {pin(12)}, nil
+    )})
+    expect_tables(
+      {{userIndex = 1, userName = "Alice", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"}}
+    )
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
   "Without the number of users supported, a user that fails ends the attempt and the next refresh resumes",
   function()
     refresh_and_wait_for_sync()

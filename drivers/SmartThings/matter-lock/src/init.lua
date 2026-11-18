@@ -1701,6 +1701,10 @@ local function set_pin_response_handler(driver, device, ib, response)
     end
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+    if cmdName == "addCota" then
+      -- the COTA credential now lives at the next index; keep the stored index in step
+      device:set_field(lock_utils.COTA_CRED_INDEX, credIdx, {persist = true})
+    end
 
     -- Send command
     local ep = find_default_endpoint(device, DoorLock.ID)
