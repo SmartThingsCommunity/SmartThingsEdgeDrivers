@@ -377,8 +377,8 @@ local function info_changed(driver, device, event, args)
   if device:get_field(lock_utils.LOCK_CODES_COPY_REQUIRED) == true then
     -- the sync builds the users/credentials tables, carrying over the legacy lockCodes names
     device:set_field(lock_utils.LOCK_CODES_COPY_REQUIRED, false, {persist = true})
-    lock_sync.sync_after_delay(device)
   end
+  lock_sync.sync_after_delay(device)
 end
 
 local function profiling_data_still_required(device)
@@ -1277,6 +1277,13 @@ local function handle_update_user(driver, device, command)
       nil  -- Credential Rule
     )
   )
+end
+
+-- An error status for GetUser carries the path of the request command, not GetUserResponse.
+local function get_user_error_handler(driver, device, ib, response)
+  if lock_sync.is_syncing(device) then
+    lock_sync.get_user_response_handler(device, ib)
+  end
 end
 
 local function get_user_response_handler(driver, device, ib, response)
@@ -2454,7 +2461,6 @@ local function handle_refresh(driver, device, command)
     match_profile(driver, device, true)
   else
     device:send(DoorLock.attributes.LockState:read(device))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     -- try to sync users/credentials; does nothing if the device is busy or already synced.
     lock_sync.sync_after_delay(device)
   end
@@ -2845,6 +2851,7 @@ local matter_lock_driver = {
       [DoorLock.ID] = {
         [DoorLock.server.commands.SetUser.ID] = set_user_response_handler,
         [DoorLock.client.commands.GetUserResponse.ID] = get_user_response_handler,
+        [DoorLock.server.commands.GetUser.ID] = get_user_error_handler,
         [DoorLock.server.commands.ClearUser.ID] = clear_user_response_handler,
         [DoorLock.client.commands.SetCredentialResponse.ID] = set_credential_response_handler,
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
