@@ -349,8 +349,9 @@ local function migrate_lock_codes(device)
   local credential_table = {}
   for _, entry in ipairs(lockCodes) do
     local index = tonumber(entry[1])
-    table.insert(user_table, {userIndex = index, userType = "guest", userName = entry[2]})
-    table.insert(credential_table, {userIndex = index, credentialIndex = index, credentialType = "pin"})
+    local code_name = entry[2]
+    table.insert(user_table, {userIndex = index, userType = "guest", userName = code_name})
+    table.insert(credential_table, {userIndex = index, credentialIndex = index, credentialType = "pin", credentialName = code_name })
   end
   if #user_table > 0 or #credential_table > 0 then
     device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
