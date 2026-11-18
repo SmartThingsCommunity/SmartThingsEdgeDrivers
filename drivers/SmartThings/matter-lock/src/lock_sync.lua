@@ -68,14 +68,11 @@ local function merge_users(device, reported_users)
     if index then legacy_name_by_index[index] = entry[2] end
   end
 
-  -- the COTA credential's user is managed by the driver and should not be shown in the tables
+  -- COTA users are managed by the driver and should not be shown in the tables. The driver only ever creates
+  -- remote-only users for the COTA credential, so skip those.
   local users = {}
   for _, user in ipairs(reported_users) do
-    local is_cota_user = false
-    for _, pin in ipairs(user.pins or {}) do
-      if pin ~= nil and pin == device:get_field(lock_utils.COTA_CRED_INDEX) then is_cota_user = true end
-    end
-    if not is_cota_user then table.insert(users, user) end
+    if not user.remoteOnly then table.insert(users, user) end
   end
 
   -- match each lock user to the stored user entry that holds its name
@@ -269,6 +266,7 @@ function sync.get_user_response_handler(device, ib)
       userIndex = user_index,
       userName = (user_name ~= nil and user_name ~= "") and user_name or nil,
       pins = pins,
+      remoteOnly = elements.user_type ~= nil and elements.user_type.value == clusters.DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER,
     })
     device:set_field(REPORTED_USERS, reported_users, {persist = true})
   end
