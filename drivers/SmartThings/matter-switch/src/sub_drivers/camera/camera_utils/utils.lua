@@ -105,7 +105,7 @@ function CameraUtils.update_supported_attributes(device, ib, capability, attribu
 end
 
 function CameraUtils.compute_fps(max_encoded_pixel_rate, width, height, max_fps)
-  local fps_step = 15.0
+  local fps_step = 5.0
   local fps = math.min(max_encoded_pixel_rate / (width * height), max_fps)
   return math.tointeger(math.floor(fps / fps_step) * fps_step)
 end
