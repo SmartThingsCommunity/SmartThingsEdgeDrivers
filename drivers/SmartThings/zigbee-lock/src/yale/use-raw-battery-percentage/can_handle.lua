@@ -2,10 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 return function(opts, driver, device)
-  local fingerprints = require("bad-battery-reporter.fingerprints")
+  local fingerprints = require("yale.use-raw-battery-percentage.fingerprints")
   for _, fingerprint in ipairs(fingerprints) do
       if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-        local subdriver = require("bad-battery-reporter")
+        local subdriver = require("yale.use-raw-battery-percentage")
         return true, subdriver
       end
   end

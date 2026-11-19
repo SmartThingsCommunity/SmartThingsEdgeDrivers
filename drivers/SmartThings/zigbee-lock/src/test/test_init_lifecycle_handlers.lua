@@ -211,7 +211,7 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure and does not start a sync (init handles it)",
+  "doConfigure: SLGA_MIGRATED device with lockCredentials sends bind/configure",
   function()
     -- Pre-seed SLGA_MIGRATED so the main driver's do_configure fires (not legacy-handlers).
     mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })

@@ -9,6 +9,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local PowerConfiguration = clusters.PowerConfiguration
+local consts = require "lock_utils.constants"
 
 local mock_device = test.mock_device.build_test_zigbee_device({
   profile = t_utils.get_profile_definition("base-lock.yml"),
@@ -24,7 +25,12 @@ local mock_device = test.mock_device.build_test_zigbee_device({
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+  mock_device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  -- init emits migrated state for SLGA-migrated devices
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
+end
 
 test.set_test_init_function(test_init)
 
@@ -64,6 +70,10 @@ local mock_device_yrd = test.mock_device.build_test_zigbee_device({
 
 local function test_init_yrd()
   test.mock_device.add_test_device(mock_device_yrd)
+  mock_device_yrd:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  -- init emits migrated state for SLGA-migrated devices
+  test.socket.capability:__expect_send(mock_device_yrd:generate_test_message("main", capabilities.lockCodes.migrated(true, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device_yrd:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } })))
 end
 
 test.register_message_test(

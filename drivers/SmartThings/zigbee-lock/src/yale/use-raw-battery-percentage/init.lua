@@ -1,18 +1,15 @@
 -- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-
-
 
 local battery_report_handler = function(driver, device, value)
    device:emit_event(capabilities.battery.battery(value.value))
 end
 
-local bad_battery_reporter_driver = {
-  NAME = "Bad Battery Reporter Driver",
+local raw_battery_percentage_driver = {
+  NAME = "Yale Raw Battery Percentage",
   zigbee_handlers = {
     attr = {
       [clusters.PowerConfiguration.ID] = {
@@ -20,7 +17,7 @@ local bad_battery_reporter_driver = {
       }
     }
   },
-  can_handle = require("bad-battery-reporter.can_handle")
+  can_handle = require("yale.use-raw-battery-percentage.can_handle")
 }
 
-return bad_battery_reporter_driver
+return raw_battery_percentage_driver
