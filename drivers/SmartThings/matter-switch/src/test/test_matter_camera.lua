@@ -4013,5 +4013,195 @@ test.register_coroutine_test(
   }
 )
 
+-- Battery / batteryLevel / chargingState profile and handler tests. These use a fake device
+-- (like the volume range tests above) so that PowerSource combinations can be varied freely.
+local function build_fake_power_source_device(opts)
+  local fields_store = {}
+  if opts.percent ~= nil or opts.level ~= nil then
+    fields_store[camera_fields.BATTERY_SUPPORT_BY_ENDPOINT] = { ["0"] = { percent = opts.percent, level = opts.level } }
+  end
+  return {
+    profile = { components = {} },
+    endpoints = {},
+    emitted_events = {},
+    get_field = function(_, field) return fields_store[field] end,
+    set_field = function(_, field, value) fields_store[field] = value end,
+    get_endpoints = function(_, cluster_id, filter)
+      if cluster_id == clusters.PowerSource.ID and filter and filter.feature_bitmap ==
+        clusters.PowerSource.types.PowerSourceFeature.RECHARGEABLE and opts.rechargeable then
+        return { 0 }
+      end
+      return {}
+    end,
+    supports_capability = function() return false end,
+    try_update_metadata = function(self, metadata) self.updated_metadata = metadata end,
+    emit_event_for_endpoint = function(self, _, event) table.insert(self.emitted_events, event) end,
+  }
+end
+
+local function power_source_attribute_list_ib(attribute_ids, endpoint_id)
+  local elements = {}
+  for _, id in ipairs(attribute_ids) do table.insert(elements, { value = id }) end
+  return { endpoint_id = endpoint_id or 0, data = { elements = elements } }
+end
+
+local BAT_PERCENT_ID = clusters.PowerSource.attributes.BatPercentRemaining.ID
+local BAT_LEVEL_ID = clusters.PowerSource.attributes.BatChargeLevel.ID
+local BAT_STATE_ID = clusters.PowerSource.attributes.BatChargeState.ID
+
+local power_source_profile_cases = {
+  { name = "neither battery attribute nor RECHG", opts = {}, battery = false, batteryLevel = false, chargingState = false },
+  { name = "battery percentage only", opts = { percent = true }, battery = true, batteryLevel = false, chargingState = false },
+  { name = "battery level only", opts = { level = true }, battery = false, batteryLevel = true, chargingState = false },
+  { name = "percentage and level (percentage preferred)", opts = { percent = true, level = true }, battery = true, batteryLevel = false, chargingState = false },
+  { name = "RECHG only", opts = { rechargeable = true }, battery = false, batteryLevel = false, chargingState = true },
+  { name = "percentage and RECHG", opts = { percent = true, rechargeable = true }, battery = true, batteryLevel = false, chargingState = true },
+  { name = "level and RECHG", opts = { level = true, rechargeable = true }, battery = false, batteryLevel = true, chargingState = true },
+  { name = "percentage, level and RECHG", opts = { percent = true, level = true, rechargeable = true }, battery = true, batteryLevel = false, chargingState = true },
+}
+
+for _, case in ipairs(power_source_profile_cases) do
+  test.register_coroutine_test(
+    "match_profile should set battery capabilities correctly for: " .. case.name,
+    function()
+      local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+      local fake_device = build_fake_power_source_device(case.opts)
+
+      camera_cfg.match_profile(fake_device)
+
+      assert(fake_device.updated_metadata ~= nil, "profile update should be requested")
+      local main_capabilities = component_capabilities(fake_device.updated_metadata, "main")
+      assert(list_contains(main_capabilities, capabilities.battery.ID) == case.battery, "unexpected battery presence")
+      assert(list_contains(main_capabilities, capabilities.batteryLevel.ID) == case.batteryLevel, "unexpected batteryLevel presence")
+      assert(list_contains(main_capabilities, capabilities.chargingState.ID) == case.chargingState, "unexpected chargingState presence")
+    end,
+    {
+      min_api_version = 14
+    }
+  )
+end
+
+local attribute_list_cases = {
+  { name = "percentage then level", ids = { BAT_PERCENT_ID, BAT_LEVEL_ID }, percent = true, level = true },
+  { name = "level then percentage (out of order)", ids = { 0x00, BAT_LEVEL_ID, 0x01, BAT_PERCENT_ID }, percent = true, level = true },
+  { name = "percentage only", ids = { 0x00, BAT_PERCENT_ID, BAT_STATE_ID }, percent = true, level = false },
+  { name = "level only", ids = { 0x00, BAT_LEVEL_ID, BAT_STATE_ID }, percent = false, level = true },
+  { name = "neither", ids = { 0x00, 0x01, BAT_STATE_ID }, percent = false, level = false },
+}
+
+for _, case in ipairs(attribute_list_cases) do
+  test.register_coroutine_test(
+    "PowerSource AttributeList handler should record battery attribute support for: " .. case.name,
+    function()
+      local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+      local fake_device = build_fake_power_source_device({})
+
+      attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib(case.ids))
+
+      local stored = (fake_device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT) or {})["0"] or {}
+      assert((stored.percent or false) == case.percent, "unexpected percentage support")
+      assert((stored.level or false) == case.level, "unexpected level support")
+      if case.percent or case.level then
+        local main_capabilities = component_capabilities(fake_device.updated_metadata, "main")
+        assert(list_contains(main_capabilities, capabilities.battery.ID) == case.percent, "battery should follow percentage support")
+        assert(list_contains(main_capabilities, capabilities.batteryLevel.ID) == (case.level and not case.percent), "batteryLevel only used without percentage")
+      end
+    end,
+    {
+      min_api_version = 14
+    }
+  )
+end
+
+test.register_coroutine_test(
+  "PowerSource AttributeList handler should not request a profile update when support is unchanged",
+  function()
+    local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+    local fake_device = build_fake_power_source_device({ percent = true, level = false })
+
+    attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ BAT_PERCENT_ID }))
+
+    assert(fake_device.updated_metadata == nil, "no profile update expected when support is unchanged")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+local multi_endpoint_cases = {
+  { name = "battery endpoint reports before wired endpoint", order = { 2, 1 } },
+  { name = "wired endpoint reports before battery endpoint", order = { 1, 2 } },
+}
+
+for _, case in ipairs(multi_endpoint_cases) do
+  test.register_coroutine_test(
+    "PowerSource AttributeList reports from multiple endpoints should not overwrite each other: " .. case.name,
+    function()
+      local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+      local fake_device = build_fake_power_source_device({})
+      local reports = {
+        [1] = power_source_attribute_list_ib({ 0x00, 0x01 }, 1), -- wired: no battery attributes
+        [2] = power_source_attribute_list_ib({ 0x00, BAT_LEVEL_ID, BAT_PERCENT_ID }, 2), -- battery
+      }
+
+      for _, ep in ipairs(case.order) do
+        attribute_handlers.power_source_attribute_list_handler({}, fake_device, reports[ep])
+      end
+
+      -- re-evaluate the profile from the stored state, as any later reconcile would
+      fake_device.updated_metadata = nil
+      require("sub_drivers.camera.camera_utils.device_configuration").match_profile(fake_device)
+      local main_capabilities = component_capabilities(fake_device.updated_metadata, "main")
+      assert(list_contains(main_capabilities, capabilities.battery.ID), "battery should be supported regardless of report order")
+      assert(not list_contains(main_capabilities, capabilities.batteryLevel.ID), "batteryLevel should not be used when percentage is supported")
+    end,
+    {
+      min_api_version = 14
+    }
+  )
+end
+
+test.register_coroutine_test(
+  "PowerSource AttributeList should clear support when the same endpoint later drops the attributes",
+  function()
+    local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+    local fake_device = build_fake_power_source_device({})
+
+    attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ BAT_PERCENT_ID }, 2))
+    attribute_handlers.power_source_attribute_list_handler({}, fake_device, power_source_attribute_list_ib({ 0x00 }, 2))
+
+    local stored = fake_device:get_field(camera_fields.BATTERY_SUPPORT_BY_ENDPOINT)["2"]
+    assert(stored.percent == false and stored.level == false, "support should be cleared for that endpoint")
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+local charge_state_cases = {
+  { value = clusters.PowerSource.types.BatChargeStateEnum.IS_CHARGING, expected = "charging" },
+  { value = clusters.PowerSource.types.BatChargeStateEnum.IS_AT_FULL_CHARGE, expected = "fullyCharged" },
+  { value = clusters.PowerSource.types.BatChargeStateEnum.IS_NOT_CHARGING, expected = "stopped" },
+  { value = clusters.PowerSource.types.BatChargeStateEnum.UNKNOWN, expected = "error" },
+}
+
+for _, case in ipairs(charge_state_cases) do
+  test.register_coroutine_test(
+    "BatChargeState " .. case.expected .. " should emit chargingState " .. case.expected,
+    function()
+      local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+      local fake_device = build_fake_power_source_device({ rechargeable = true })
+
+      attribute_handlers.bat_charge_state_handler({}, fake_device, { endpoint_id = 0, data = { value = case.value } })
+
+      assert(#fake_device.emitted_events == 1, "exactly one event expected")
+      assert(fake_device.emitted_events[1].value.value == case.expected, "unexpected chargingState value")
+    end,
+    {
+      min_api_version = 14
+    }
+  )
+end
+
 -- run the tests
 test.run_registered_tests()
