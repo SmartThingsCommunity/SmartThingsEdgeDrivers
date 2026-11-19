@@ -7,6 +7,7 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local json = require "st.json"
 local clusters = require "st.matter.clusters"
+local lock_utils = require "lock_utils"
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
 
@@ -210,6 +211,9 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
+    test.wait_for_events()
+    assert(mock_device:get_field(lock_utils.COTA_CRED_INDEX) == next_credential_index,
+      "COTA credential index should follow the retry")
   end,
   {
      min_api_version = 15
