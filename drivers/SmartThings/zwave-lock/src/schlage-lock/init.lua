@@ -71,16 +71,15 @@ local function is_user_code_report_mfr_specific(device, cmd)
   end
 end
 
--- Schlage refuses a PIN that is already in use by answering the Set with STATUS_NOT_AVAILABLE (and a code of
--- zeros) for the slot, and sends no notification. The slot keeps whatever it held before.
-local function is_set_rejected(device, cmd)
+-- Returns true when an addCredential or updateCredential is in progress and `cmd` reports the slot that command
+-- is setting, with the given user ID status.
+local function is_pending_set_report(device, cmd, status)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
   if command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and command_in_progress ~= consts.LOCK_CREDENTIALS.UPDATE then
     return false
   end
   local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-  return cmd.args.user_id_status == user_id_status.STATUS_NOT_AVAILABLE and
-    cmd.args.user_identifier == credential_args.credentialIndex
+  return cmd.args.user_id_status == status and cmd.args.user_identifier == credential_args.credentialIndex
 end
 
 local function user_code_report_handler(self, device, cmd)
@@ -89,10 +88,18 @@ local function user_code_report_handler(self, device, cmd)
     zwave_handlers.user_code_report(self, device, cmd)
     return
   end
-  if is_set_rejected(device, cmd) then
+  -- Schlage refuses a PIN that is already in use by answering the Set with STATUS_NOT_AVAILABLE (and a code of
+  -- zeros) for the slot, and sends no notification. The slot keeps whatever it held before.
+  if is_pending_set_report(device, cmd, user_id_status.STATUS_NOT_AVAILABLE) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress,
       consts.COMMAND_RESULT.DUPLICATE)
     lock_utils.clear_busy_state(device)
+    return
+  end
+  -- Some Schlage locks mask the code in this report, which the mfr-specific check below would ignore, so pass it
+  -- to the generic handler here.
+  if is_pending_set_report(device, cmd, user_id_status.ENABLED_GRANT_ACCESS) then
+    zwave_handlers.user_code_report(self, device, cmd)
     return
   end
   local credential_index = cmd.args.user_identifier

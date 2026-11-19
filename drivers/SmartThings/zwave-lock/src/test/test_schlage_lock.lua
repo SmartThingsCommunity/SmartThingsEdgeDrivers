@@ -115,6 +115,47 @@ local function add_credential(pin)
   })
 end
 
+-- How the lock confirms a Set: the slot is reported occupied, with the code masked unless `user_code` is given.
+local function queue_occupied_report(user_identifier, user_code)
+  test.socket.zwave:__queue_receive({
+    mock_device.id,
+    UserCode:Report({
+      user_identifier = user_identifier,
+      user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
+      user_code       = user_code,
+    }),
+  })
+end
+
+local function queue_masked_occupied_report(user_identifier)
+  queue_occupied_report(user_identifier, "**********")
+end
+
+local function update_credential(pin)
+  test.socket.capability:__queue_receive({
+    mock_device.id,
+    { capability = capabilities.lockCredentials.ID, command = "updateCredential", args = { 1, 1, "pin", pin } },
+  })
+end
+
+local function expect_guest_1_added()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.lockCredentials.credentials(
+        { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+        { visibility = { displayed = false } }
+      ))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main",
+      capabilities.lockUsers.users(
+        { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+        { visibility = { displayed = false } }
+      ))
+  )
+  expect_command_result("addCredential", "success", { userIndex = 1, credentialIndex = 1 })
+end
+
 test.register_coroutine_test(
   "addCredential: a STATUS_NOT_AVAILABLE answer for the new slot is a duplicate PIN, and nothing is added",
   function()
@@ -136,6 +177,52 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "addCredential for an existing user: a STATUS_NOT_AVAILABLE answer keeps the user and adds no credential",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockUsers.ID, command = "addUser", args = { "Alice", "guest" } },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Alice", userType = "guest" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "addUser", statusCode = "success", userIndex = 1 },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 1, "guest", "pin", "1234" } },
+    })
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+
+    queue_set_rejected(1)
+    expect_command_result("addCredential", "duplicate")
+    test.wait_for_events()
+
+    -- user 1 still exists and has no credential, so another PIN can be added for it
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 1, "guest", "pin", "5678" } },
+    })
+    expect_set_pin_code(1, "5678")
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
   "updateCredential: a STATUS_NOT_AVAILABLE answer is a duplicate PIN, and the credential is unchanged",
   function()
     mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
@@ -143,40 +230,120 @@ test.register_coroutine_test(
     expect_set_pin_code(1, "1234")
     test.wait_for_events()
 
-    test.socket.zwave:__queue_receive({
-      mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status  = UserCode.user_id_status.ENABLED_GRANT_ACCESS,
-        user_code       = "1234\n\r",
-      }),
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
-          { visibility = { displayed = false } }
-        ))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
-          { visibility = { displayed = false } }
-        ))
-    )
-    expect_command_result("addCredential", "success", { userIndex = 1, credentialIndex = 1 })
+    queue_occupied_report(1, "1234\n\r")
+    expect_guest_1_added()
     test.wait_for_events()
 
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockCredentials.ID, command = "updateCredential", args = { 1, 1, "pin", "5678" } },
-    })
+    update_credential("5678")
     expect_set_pin_code(1, "5678")
     test.wait_for_events()
 
     queue_set_rejected(1)
     expect_command_result("updateCredential", "duplicate")
+    test.wait_for_events()
+
+    -- the driver is no longer busy, so the update can be retried with another PIN
+    update_credential("2468")
+    expect_set_pin_code(1, "2468")
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "addCredential: a masked occupied report for the new slot confirms the add",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+
+    queue_masked_occupied_report(1)
+    expect_guest_1_added()
+    test.wait_for_events()
+
+    -- slot 1 is now recorded, so the next add goes to slot 2 instead of overwriting it
+    add_credential("5678")
+    expect_set_pin_code(2, "5678")
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "addCredential: a masked occupied report for another slot does not confirm the add",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+
+    queue_masked_occupied_report(7)
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "updateCredential: a masked occupied report for the slot confirms the update",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+    queue_masked_occupied_report(1)
+    expect_guest_1_added()
+    test.wait_for_events()
+
+    update_credential("5678")
+    expect_set_pin_code(1, "5678")
+    test.wait_for_events()
+
+    queue_masked_occupied_report(1)
+    expect_command_result("updateCredential", "success", { userIndex = 1, credentialIndex = 1 })
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+-- A blank code is not consumed as manufacturer-specific, so it confirms the add with or without the masked-code check.
+test.register_coroutine_test(
+  "addCredential: an occupied report with a blank code for the new slot confirms the add",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+
+    queue_occupied_report(1, "")
+    expect_guest_1_added()
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "updateCredential: a masked occupied report for another slot does not confirm the update",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+    queue_masked_occupied_report(1)
+    expect_guest_1_added()
+    test.wait_for_events()
+
+    update_credential("5678")
+    expect_set_pin_code(1, "5678")
+    test.wait_for_events()
+
+    -- not the slot being updated, so nothing is emitted
+    queue_masked_occupied_report(7)
+    test.wait_for_events()
+
+    -- the update is still waiting, and the report for its own slot confirms it
+    queue_masked_occupied_report(1)
+    expect_command_result("updateCredential", "success", { userIndex = 1, credentialIndex = 1 })
     test.wait_for_events()
   end,
   { min_api_version = 15 }
