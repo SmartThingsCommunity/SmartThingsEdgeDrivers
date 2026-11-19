@@ -12,13 +12,18 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.defaults.lockCodes
 local lock_code_defaults = require "st.zwave.defaults.lockCodes"
 local json = require "dkjson"
+local lock_utils = require "lock_utils.utils"
 
 local METHOD = {
   KEYPAD = "keypad",
   MANUAL = "manual",
   COMMAND = "command",
-  AUTO = "auto"
+  AUTO = "auto",
+  RFID = "rfid"
 }
+
+-- Yale reports a key tag/card unlock as alarm type 144, with the tag slot in the alarm level
+local YALE_TAG_UNLOCK = 144
 
 --- Default handler for alarm command class reports, these were largely OEM-defined
 ---
@@ -49,9 +54,17 @@ local function alarm_report_handler(driver, device, cmd)
       local code_name = lock_code_defaults.get_code_name(device, code_id)
       event.data = {codeId = code_id, codeName = code_name, method = METHOD.KEYPAD}
     end
+  elseif (alarm_type == YALE_TAG_UNLOCK and lock_utils.is_yale(device)) then
+    event = capabilities.lock.lock.unlocked()
+    if (code_id ~= nil) then
+      event.data = {codeId = code_id, method = METHOD.RFID}
+    else
+      event.data = {method = METHOD.RFID}
+    end
   elseif (alarm_type == 21) then
     event = capabilities.lock.lock.locked()
-    if (cmd.args.alarm_level == 2) then
+    -- the Yale Conexis has no keypad: alarm 21 level 1 is the handle being lifted
+    if (cmd.args.alarm_level == 2 or lock_utils.is_yale_conexis(device)) then
       event["data"] = {method = METHOD.MANUAL}
     else
       event["data"] = {method = METHOD.KEYPAD}
@@ -129,6 +142,7 @@ local function alarm_report_handler(driver, device, cmd)
   end
 
   if (event ~= nil) then
+    lock_utils.handle_alarm_lock_event_delay(device, event)
     device:emit_event(event)
   end
 end
