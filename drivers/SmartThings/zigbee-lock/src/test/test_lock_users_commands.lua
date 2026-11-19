@@ -199,9 +199,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "updateUser: adds user and returns success when the target userIndex does not exist",
+  "updateUser: does not create a user and returns failure when the target userIndex does not exist",
   function()
-    -- empty table, add user
+    -- empty table: updateUser must not add a user
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 99, "Ghost", "guest" } },
@@ -209,18 +209,8 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          {
-            { userIndex = 99, userName = "Ghost", userType = "guest" },
-          },
-          { visibility = { displayed = false } }
-        ))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
-          { commandName = "updateUser", statusCode = "success", userIndex = 99 },
+          { commandName = "updateUser", statusCode = "failure" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
