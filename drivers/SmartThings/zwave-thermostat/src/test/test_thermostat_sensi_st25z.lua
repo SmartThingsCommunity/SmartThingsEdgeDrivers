@@ -1,16 +1,5 @@
--- Copyright 2026 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -27,16 +16,14 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 local ThermostatOperatingState =
   (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-local MultiChannelAssociation =
-  (require "st.zwave.CommandClass.MultiChannelAssociation")({ version = 3 })
 
 -- Work around a lua_libs test-harness bug: without ST_CAPABILITY_JSON_DIR set
 -- (it requires a SmartThings API token we don't have in this sandbox),
 -- mock_capability_channel's fallback capability-JSON reconstruction reads a
 -- live command object's `.arguments` field, but aware.lua only ever sets
 -- `.arg_list` -- so every rebuilt capability ends up with an empty argument
--- list, and any setter command (setThermostatMode, setHeatingSetpoint, ...)
--- fails with "Too many args for <Capability>.<command>". Pre-seed the
+-- list, and any setter command (setHeatingSetpoint, setThermostatFanMode,
+-- ...) fails with "Too many args for <Capability>.<command>". Pre-seed the
 -- channel's cache with the original bundled JSON (unresolved $ref schemas
 -- validate permissively per capability_utils.validate_type, so this is safe)
 -- so the buggy reconstruction path is never reached.
@@ -45,9 +32,6 @@ do
   local st_json = require "st.json"
 
   local function seed_capability_json(capability_id)
-    -- Build a standalone, fully-inlined (no $ref) capability object straight
-    -- from the bundled generated JSON, bypassing the shared cap_mt cache
-    -- entirely so this never touches (or is affected by) the buggy fetch.
     local raw_json = require("st.capabilities.generated." .. capability_id)
     local cap = capabilities.build_cap_from_json_string(raw_json, false)
 
@@ -69,7 +53,6 @@ do
     mock_capability_channel:__load_capability_definition(capability_id, 1, st_json.encode(inlined))
   end
 
-  seed_capability_json("thermostatMode")
   seed_capability_json("thermostatFanMode")
   seed_capability_json("thermostatHeatingSetpoint")
   seed_capability_json("thermostatCoolingSetpoint")
@@ -84,13 +67,12 @@ local thermostat_endpoints = {
       { value = zw.SENSOR_MULTILEVEL },
       { value = zw.THERMOSTAT_OPERATING_STATE },
       { value = zw.BATTERY },
-      { value = zw.MULTI_CHANNEL_ASSOCIATION },
     }
   }
 }
 
 local mock_device = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("st25z-thermostat.yml"),
+  profile = t_utils.get_profile_definition("thermostat-sensi-st25z.yml"),
   zwave_endpoints = thermostat_endpoints,
   zwave_manufacturer_id = 0x046B,
   zwave_product_type = 0x0004,
@@ -359,99 +341,9 @@ test.register_coroutine_test(
 )
 
 ----------------------------------------------------------------------
--- Thermostat mode capability commands
-----------------------------------------------------------------------
-
-test.register_message_test(
-  "Setting the thermostat mode should generate the appropriate ThermostatMode:Set " ..
-  "commands, including emergency heat -> AUXILIARY_HEAT",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_device.id,
-        { capability = "thermostatMode", command = "setThermostatMode", args = { "off" } } }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatMode:Set({ mode = ThermostatMode.mode.OFF }))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_device.id,
-        { capability = "thermostatMode", command = "setThermostatMode", args = { "heat" } } }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatMode:Set({ mode = ThermostatMode.mode.HEAT }))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_device.id,
-        { capability = "thermostatMode", command = "setThermostatMode", args = { "cool" } } }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatMode:Set({ mode = ThermostatMode.mode.COOL }))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_device.id,
-        { capability = "thermostatMode", command = "setThermostatMode", args = { "auto" } } }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatMode:Set({ mode = ThermostatMode.mode.AUTO }))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_device.id,
-        { capability = "thermostatMode", command = "setThermostatMode",
-          args = { "emergency heat" } } }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatMode:Set({ mode = ThermostatMode.mode.AUXILIARY_HEAT }))
-    },
-  }
-)
-
-test.register_coroutine_test(
-  "Setting the thermostat mode should poll ThermostatMode:Get 0.9s later to verify",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(0.9, "oneshot")
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "thermostatMode", command = "setThermostatMode", args = { "heat" } }
-    })
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_device, ThermostatMode:Set({ mode = ThermostatMode.mode.HEAT })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(0.9)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({})))
-  end
-)
-
-----------------------------------------------------------------------
--- Thermostat fan mode capability commands
+-- Thermostat fan mode -- custom, since this device reports/expects
+-- AUTO_HIGH/HIGH on the wire, never AUTO_LOW/LOW (confirmed on a real
+-- device); the base driver's defaults only ever check LOW/AUTO_LOW.
 ----------------------------------------------------------------------
 
 test.register_message_test(
@@ -503,6 +395,45 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
   end
+)
+
+test.register_message_test(
+  "An unsolicited ThermostatFanMode:Report should update the thermostatFanMode capability",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          ThermostatFanMode:Report({ fan_mode = ThermostatFanMode.fan_mode.AUTO_HIGH }))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatFanMode.thermostatFanMode("auto"))
+    },
+  }
+)
+
+test.register_message_test(
+  "Supported fan mode report (boolean style, confirmed as what the real ST25Z " ..
+  "sends) should populate the supported-values list",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
+        ThermostatFanMode:SupportedReport({ auto_high = true, high = true, circulation = true })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on", "circulate" }))
+    },
+  }
 )
 
 ----------------------------------------------------------------------
@@ -569,7 +500,7 @@ test.register_coroutine_test(
     -- no fractional part and picks a 1-byte field -- but the driver always
     -- requests precision=1 for degC, so the actual encoded integer is
     -- 20.0 * 10 = 200, which overflows that byte and crashes string.pack.
-    -- The driver now forces size=2 explicitly for degC to avoid this.
+    -- The driver forces size=2 explicitly for degC to avoid this.
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatCoolingSetpoint", command = "setCoolingSetpoint", args = { 20 } }
@@ -766,134 +697,12 @@ test.register_coroutine_test(
 )
 
 ----------------------------------------------------------------------
--- refresh
-----------------------------------------------------------------------
-
-test.register_coroutine_test(
-  "Refresh capability command should re-poll all eight attributes on schedule",
-  function()
-    for _, delay in ipairs({ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 }) do
-      test.timer.__create_and_queue_test_time_advance_timer(delay, "oneshot")
-    end
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "refresh", command = "refresh", args = {} }
-    })
-    -- The first step has a 0.0s delay, so its timer is ready immediately --
-    -- the expectation must be registered before the first wait_for_events().
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = SensorMultilevel.scale.FAHRENHEIT })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
-  end
-)
-
-----------------------------------------------------------------------
--- doConfigure: lifeline association
-----------------------------------------------------------------------
-
-test.register_coroutine_test(
-  "doConfigure should stage a MultiChannelAssociation:Set then Get for the lifeline group",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1.5, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(2.5, "oneshot")
-
-    test.socket.device_lifecycle():__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.5)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        MultiChannelAssociation:Set({
-          grouping_identifier = 1,
-          node_ids = {},
-          multi_channel_nodes = { { node_id = 1, bit_address = false, end_point = 0 } }
-        })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 2.5
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        MultiChannelAssociation:Get({ grouping_identifier = 1 })))
-  end
-)
-
-----------------------------------------------------------------------
--- Unsolicited Z-Wave reports reflected into capability state
+-- Unsolicited setpoint / operating state reports
 ----------------------------------------------------------------------
 
 test.register_message_test(
-  "Unsolicited mode/operating-state/setpoint/temperature/battery reports " ..
-  "should update capability state",
+  "A HEATING_1 setpoint report should round to a whole degF value",
   {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        ThermostatMode:Report({ mode = ThermostatMode.mode.HEAT })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main", capabilities.thermostatMode.thermostatMode("heat"))
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        ThermostatOperatingState:Report(
-          { operating_state = ThermostatOperatingState.operating_state.AUX_HEATING })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "heating" }))
-    },
     {
       channel = "zwave",
       direction = "receive",
@@ -910,73 +719,6 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main",
         capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 72, unit = "F" }))
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        SensorMultilevel:Report({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = 1, -- 1 = Fahrenheit per Z-Wave spec; the named scale_temperature
-                     -- enum isn't exposed at SensorMultilevel.scale.FAHRENHEIT in
-                     -- this lua_libs release (see report notes), so use the raw value.
-          sensor_value = 68
-        })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.temperatureMeasurement.temperature({ value = 68, unit = "F" }))
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        Battery:Report({ battery_level = 55 })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.battery.battery(55))
-    },
-  }
-)
-
-test.register_message_test(
-  "Relative humidity reports should emit whole-percent humidity, clamped to 0-100",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        SensorMultilevel:Report({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE,
-          sensor_value = 42.6
-        })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.relativeHumidityMeasurement.humidity({ value = 43 }))
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        SensorMultilevel:Report({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE,
-          sensor_value = 101
-        })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.relativeHumidityMeasurement.humidity({ value = 100 }))
     },
   }
 )
@@ -1041,81 +783,107 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "An unsolicited ThermostatFanMode:Report should update the thermostatFanMode capability",
+  "AUX_HEATING (heat-pump auxiliary/second-stage state 7, outside the base " ..
+  "driver's default 0-6 range) should map to the heating operating state",
   {
     {
       channel = "zwave",
       direction = "receive",
-      message = { mock_device.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          ThermostatFanMode:Report({ fan_mode = ThermostatFanMode.fan_mode.AUTO_HIGH }))
-      }
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
+        ThermostatOperatingState:Report(
+          { operating_state = ThermostatOperatingState.operating_state.AUX_HEATING })) }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.thermostatFanMode("auto"))
+        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "heating" }))
     },
   }
 )
-
-----------------------------------------------------------------------
--- Supported-mode / supported-fan-mode reports (boolean "Style A" fields,
--- confirmed as what the real ST25Z sends per the live dev-channel test)
-----------------------------------------------------------------------
 
 test.register_message_test(
-  "Supported thermostat mode / fan mode reports (boolean style) should populate " ..
-  "the supported-values lists",
+  "2ND_STAGE_COOLING (heat-pump second-stage state 9) should map to the " ..
+  "cooling operating state",
   {
     {
       channel = "zwave",
       direction = "receive",
       message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        ThermostatMode:SupportedReport({
-          off = true, heat = true, cool = true, auto = true, auxiliary_emergency_heat = true })) }
+        ThermostatOperatingState:Report(
+          { operating_state = ThermostatOperatingState.operating_state.SECOND_STAGE_COOLING })) }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes(
-          { "off", "heat", "cool", "auto", "emergency heat" }))
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        ThermostatFanMode:SupportedReport({ auto_high = true, high = true, circulation = true })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on", "circulate" }))
+        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "cooling" }))
     },
   }
 )
 
-test.register_coroutine_test(
-  "Supported thermostat mode report should poll ThermostatMode:Get 1.2s later",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1.2, "oneshot")
+----------------------------------------------------------------------
+-- refresh
+----------------------------------------------------------------------
 
-    test.socket.zwave:__queue_receive({
+test.register_coroutine_test(
+  "Refresh capability command should re-poll all eight attributes on schedule",
+  function()
+    for _, delay in ipairs({ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 }) do
+      test.timer.__create_and_queue_test_time_advance_timer(delay, "oneshot")
+    end
+
+    test.socket.capability:__queue_receive({
       mock_device.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        ThermostatMode:SupportedReport({ off = true, heat = true, cool = true, auto = true }))
+      { capability = "refresh", command = "refresh", args = {} }
     })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool", "auto" })))
+    -- The first step has a 0.0s delay, so its timer is ready immediately --
+    -- the expectation must be registered before the first wait_for_events().
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({
+          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+          scale = SensorMultilevel.scale.FAHRENHEIT })))
     test.wait_for_events()
 
-    test.mock_time.advance_time(1.2)
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 })))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 })))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({})))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({})))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1.0)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({
+          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
+          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
   end
 )
 

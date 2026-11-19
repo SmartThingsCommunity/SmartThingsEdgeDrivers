@@ -1,4 +1,10 @@
 zwaveManufacturer:
+  - id: "copeland/sensi-st25z"
+    deviceLabel: Sensi Lite Smart Thermostat Z-Wave
+    manufacturerId: 0x046B
+    productId: 0x0002
+    productType: 0x0004
+    deviceProfileName: thermostat-sensi-st25z
   - id: "honeywell/t6"
     deviceLabel: Honeywell Thermostat
     manufacturerId: 0x0039
