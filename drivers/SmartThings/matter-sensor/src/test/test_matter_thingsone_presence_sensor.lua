@@ -5,10 +5,16 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
+local version = require "version"
 
 local MODE = clusters.OccupancySensing.attributes.PIRUnoccupiedToOccupiedThreshold
--- nil on hub libraries that predate this attribute, as the sub-driver allows
-local HOLD_TIME = clusters.OccupancySensing.attributes.HoldTime
+-- HoldTime and the OccupancySensing features come with lua libs api 13; on older libs even looking them up raises
+-- an error, so they are only looked up from api 13 and the HoldTime tests set min_api_version = 13
+local HOLD_TIME = version.api >= 13 and clusters.OccupancySensing.attributes.HoldTime or nil
+local OCCUPANCY_FEATURES = 0
+if version.api >= 13 then
+  OCCUPANCY_FEATURES = clusters.OccupancySensing.types.Feature.PASSIVE_INFRARED | clusters.OccupancySensing.types.Feature.RADAR
+end
 
 -- Endpoint and cluster layout of the device firmware
 local matter_endpoints = {
@@ -29,7 +35,7 @@ local matter_endpoints = {
       {
         cluster_id = clusters.OccupancySensing.ID,
         cluster_type = "SERVER",
-        feature_map = clusters.OccupancySensing.types.Feature.PASSIVE_INFRARED | clusters.OccupancySensing.types.Feature.RADAR
+        feature_map = OCCUPANCY_FEATURES
       },
     },
     device_types = {
@@ -79,10 +85,6 @@ local function subscribe_request(dev)
   request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev))
   request:merge(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(dev))
   request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(dev))
-  request:merge(MODE:subscribe(dev))
-  if HOLD_TIME ~= nil then
-    request:merge(HOLD_TIME:subscribe(dev))
-  end
   return request
 end
 
@@ -98,7 +100,6 @@ end
 
 local function expect_write(attr, value)
   test.socket.matter:__expect_send({mock_device.id, attr:write(mock_device, 1, value)})
-  test.socket.matter:__expect_send({mock_device.id, attr:read(mock_device)})
 end
 
 local function report(attr, value)
@@ -161,53 +162,22 @@ test.register_message_test(
   }
 )
 
-local function expect_no_write(attr, value)
-  test.socket.matter:__queue_receive(report(attr, value))
-  test.wait_for_events()
-end
-
-local function expect_rewrites_then_give_up(attr, wanted, other)
-  for _ = 1, 3 do
-    test.socket.matter:__queue_receive(report(attr, other))
-    expect_write(attr, wanted)
-    test.wait_for_events()
-  end
-  expect_no_write(attr, other)
-end
-
 test.register_coroutine_test(
-  "The first and later tempOffset changes should re-read only the temperature",
+  "Offset changes should send nothing to the device, the platform applies the offsets",
   function()
     test.socket.device_lifecycle:__queue_receive(preference("tempOffset", "1"))
-    test.socket.matter:__expect_send({mock_device.id, clusters.TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)})
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("tempOffset", "2"))
-    test.socket.matter:__expect_send({mock_device.id, clusters.TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)})
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("tempOffset", "2"))
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "The first and later humidityOffset changes should re-read only the humidity",
-  function()
     test.socket.device_lifecycle:__queue_receive(preference("humidityOffset", "-3"))
-    test.socket.matter:__expect_send({mock_device.id, clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(mock_device)})
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("humidityOffset", "2"))
-    test.socket.matter:__expect_send({mock_device.id, clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(mock_device)})
     test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
-  "A sensitivity change should write the operation mode on EP1 and read it back",
+  "A sensitivity change should write the operation mode on EP1",
   function()
     test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
     expect_write(MODE, 3)
     test.wait_for_events()
-    expect_no_write(MODE, 3)
     test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "1"))
     expect_write(MODE, 1)
     test.wait_for_events()
@@ -215,14 +185,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "A sensitivity that maps to the current target should not be written",
+  "A first choice of the default sensitivity should be written, and an unchanged one should not",
   function()
     test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "2"))
+    expect_write(MODE, 2)
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
-    expect_write(MODE, 3)
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
+    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "2"))
     test.wait_for_events()
   end
 )
@@ -240,105 +208,62 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "A write that does not take should be retried three times, then given up",
+  "A presence hold time change should write HoldTime as 20 s plus the setting on EP1",
   function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
-    expect_write(MODE, 3)
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
+    expect_write(HOLD_TIME, 80)
     test.wait_for_events()
-    expect_rewrites_then_give_up(MODE, 3, 2)
-  end
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "5"))
+    expect_write(HOLD_TIME, 25)
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 13
+  }
 )
 
 test.register_coroutine_test(
-  "A new setting after giving up should be written and retried again",
+  "A first choice of the default presence hold time of 0 should write HoldTime 20, and an unchanged one should not",
   function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
-    expect_write(MODE, 3)
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
+    expect_write(HOLD_TIME, 20)
     test.wait_for_events()
-    expect_rewrites_then_give_up(MODE, 3, 2)
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "1"))
-    expect_write(MODE, 1)
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
     test.wait_for_events()
-    test.socket.matter:__queue_receive(report(MODE, 2))
-    expect_write(MODE, 1)
-    test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 13
+  }
 )
 
 test.register_coroutine_test(
-  "A value written by another controller should be left alone",
+  "A numeric or fractional presence hold time should be written as whole seconds",
   function()
-    expect_no_write(MODE, 3)
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "1"))
-    expect_write(MODE, 1)
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 15))
+    expect_write(HOLD_TIME, 35)
     test.wait_for_events()
-    expect_no_write(MODE, 1)
-    expect_no_write(MODE, 3)
-  end
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 30.0))
+    expect_write(HOLD_TIME, 50)
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 13
+  }
 )
 
-if HOLD_TIME ~= nil then
-  test.register_coroutine_test(
-    "A presence hold time change should write HoldTime as 20 s plus the setting on EP1 and read it back",
-    function()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
-      expect_write(HOLD_TIME, 80)
-      test.wait_for_events()
-      expect_no_write(HOLD_TIME, 80)
-      expect_no_write(HOLD_TIME, 120)
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "5"))
-      expect_write(HOLD_TIME, 25)
-      test.wait_for_events()
-    end
-  )
-
-  test.register_coroutine_test(
-    "The default presence hold time of 0 should not be written, the device already holds 20 s",
-    function()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "30"))
-      expect_write(HOLD_TIME, 50)
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "0"))
-      expect_write(HOLD_TIME, 20)
-      test.wait_for_events()
-    end
-  )
-
-  test.register_coroutine_test(
-    "A numeric or fractional presence hold time should be written as whole seconds",
-    function()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 15))
-      expect_write(HOLD_TIME, 35)
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", 30.0))
-      expect_write(HOLD_TIME, 50)
-      test.wait_for_events()
-    end
-  )
-
-  test.register_coroutine_test(
-    "A presence hold time outside 0..280 s should be clamped so HoldTime stays within 20..300 s",
-    function()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "600"))
-      expect_write(HOLD_TIME, 300)
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "-5"))
-      expect_write(HOLD_TIME, 20)
-      test.wait_for_events()
-    end
-  )
-
-  test.register_coroutine_test(
-    "A HoldTime write that does not take should be retried three times, then given up",
-    function()
-      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
-      expect_write(HOLD_TIME, 80)
-      test.wait_for_events()
-      expect_rewrites_then_give_up(HOLD_TIME, 80, 10)
-    end
-  )
-end
+test.register_coroutine_test(
+  "A presence hold time outside 0..280 s should be clamped so HoldTime stays within 20..300 s",
+  function()
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "600"))
+    expect_write(HOLD_TIME, 300)
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "-5"))
+    expect_write(HOLD_TIME, 20)
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 13
+  }
+)
 
 test.run_registered_tests()
