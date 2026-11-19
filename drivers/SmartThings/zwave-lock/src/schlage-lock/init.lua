@@ -70,8 +70,25 @@ local function is_user_code_report_mfr_specific(device, cmd)
   end
 end
 
+-- Schlage confirms a Set by reporting the slot as occupied with a masked ("**********") or blank code, which
+-- is_user_code_report_mfr_specific would otherwise consume. While an add or update is waiting on that slot,
+-- the report is the lock's confirmation of the new PIN.
+local function is_set_confirmed(device, cmd)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  if command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and command_in_progress ~= consts.LOCK_CREDENTIALS.UPDATE then
+    return false
+  end
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return cmd.args.user_id_status == user_id_status.ENABLED_GRANT_ACCESS and
+    cmd.args.user_identifier == credential_args.credentialIndex
+end
+
 local function user_code_report_handler(self, device, cmd)
   if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.SYNC.CODES_FROM_LOCK then
+    zwave_handlers.user_code_report(self, device, cmd)
+    return
+  end
+  if is_set_confirmed(device, cmd) then
     zwave_handlers.user_code_report(self, device, cmd)
     return
   end
