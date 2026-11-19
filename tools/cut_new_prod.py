@@ -19,52 +19,6 @@ GIT_URL = "https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers"
 DRIVERID = "driverId"
 VERSION = "version"
 
-# checks out production branch
-def checkout_prod():
-    result = subprocess.run("git checkout origin/production", shell=True)
-    if result.returncode != 0:
-        print("Failed to checkout origin/production", file=sys.stderr)
-        exit(1)
-
-def create_and_push_git_branch(new_branch):
-    # Valid name for the branch?
-    result = subprocess.run(
-        f"git check-ref-format --branch '{new_branch}'",
-        shell=True
-    )
-    if result.returncode != 0:
-        print(f"Invalid branch name: {new_branch}", file=sys.stderr)
-        exit(1)
-
-    # Does the branch already exist at origin?
-    result = subprocess.run(
-        f"git ls-remote --exit-code --heads origin '{new_branch}'",
-        shell=True
-    )
-    if result.returncode == 0:
-        print(f"Branch '{new_branch}' already exists at origin", file=sys.stderr)
-        exit(1)
-
-    # Check out the new branch
-    result = subprocess.run(
-        f"git checkout -b {new_branch}",
-        shell=True,
-    )
-    if result.returncode != 0:
-        print(f"Failed to create new git branch: {new_branch}", file=sys.stderr)
-        exit(1)
-
-    if ENVIRONMENT == 'PROD' and not DRY_RUN:
-        result = subprocess.run(
-            f"git push origin {new_branch}",
-            shell=True,
-        )
-        if result.returncode != 0:
-            print(f"Failed to push {new_branch} to origin", file=sys.stderr)
-            exit(1)
-    else:
-        print(f"Dry run: Skipping push of {new_branch} to origin")
-
 def create_new_channel():
     response = requests.request(
         "POST",
@@ -180,13 +134,8 @@ def clone_drivers_from_channel(source_channel_id, dest_channel_id):
 
 def main():
 
-    # Creating new prod steps
     new_prod_channel_id = create_new_channel()
     clone_drivers_from_channel(PROD_CHANNEL_ID, new_prod_channel_id)
-
-    # Cutting over old prod into support
-    checkout_prod()
-    create_and_push_git_branch(NEW_BRANCH)
     update_old_channel(NEW_BRANCH)
 
     print(f"\n\nNew production channel ID: {new_prod_channel_id}\n\n")
