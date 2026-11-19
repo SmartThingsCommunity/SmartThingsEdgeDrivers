@@ -349,4 +349,64 @@ test.register_coroutine_test(
   { min_api_version = 15 }
 )
 
+test.register_coroutine_test(
+  "A masked occupied report with no command pending is ignored",
+  function()
+    queue_masked_occupied_report(4)
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "An occupied report with the code in clear and no command pending is recorded out-of-band",
+  function()
+    queue_occupied_report(1, "1234\n\r")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A report that the master code slot is available clears all credentials and users",
+  function()
+    mock_device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    add_credential("1234")
+    expect_set_pin_code(1, "1234")
+    test.wait_for_events()
+    queue_masked_occupied_report(1)
+    expect_guest_1_added()
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      UserCode:Report({ user_identifier = 0, user_id_status = UserCode.user_id_status.AVAILABLE }),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users({}, { visibility = { displayed = false } }))
+    )
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
 test.run_registered_tests()
