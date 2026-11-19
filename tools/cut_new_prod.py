@@ -5,36 +5,30 @@ DRY_RUN = bool(os.environ.get('DRY_RUN'))
 TOKEN = os.environ.get('TOKEN')
 ENVIRONMENT_URL = os.environ.get('ENVIRONMENT_URL')
 PROD_CHANNEL_ID = os.environ.get('PROD_CHANNEL_ID')
-NEW_BRANCH = os.environ.get("NEW_BRANCH")
+CHANNEL_TAG = os.environ.get("CHANNEL_TAG")
 
 print(f"Environment: {ENVIRONMENT}")
 print(f"Dry Run: {DRY_RUN}")
 print(f"Token Present: {TOKEN != None}")
 print(f"Environment URL: {ENVIRONMENT_URL}")
 print(f"Production Channel ID: {PROD_CHANNEL_ID}")
-print(f"New Branch Channel Name: {NEW_BRANCH}")
+print(f"New Channel Tag: {CHANNEL_TAG}")
 
 GIT_URL = "https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers"
 
 DRIVERID = "driverId"
 VERSION = "version"
 
-def create_new_channel():
+def clone_new_channel(source_channel_id):
     response = requests.request(
         "POST",
-        url=f"{ENVIRONMENT_URL}/channels",
+        url=f"{ENVIRONMENT_URL}/channels/clone/{source_channel_id}",
         headers={
             "Accept": "application/vnd.smartthings+json;v=20200810",
             "Authorization": "Bearer "+TOKEN,
             "Content-Type": "application/json",
             "X-ST-LOG-LEVEL": "DEBUG"
-        },
-        data=json.dumps({
-            "name": "SmartThings Drivers",
-            "description": "Production driver channel",
-            "type": "DRIVER",
-            "termsOfServiceUrl": f"{GIT_URL}"
-        })
+        }
     )
     if response.status_code != 200:
         print(f"Failed to create new channel:", file=sys.stderr)
@@ -49,7 +43,7 @@ def create_new_channel():
     print(f"New channel created: {new_channel_id}")
     return new_channel_id
 
-def update_old_channel(channel_name):
+def update_old_channel(channel_tag):
     if DRY_RUN:
         print("Skipping update of old PROD channel")
         return
@@ -63,9 +57,9 @@ def update_old_channel(channel_name):
             "X-ST-LOG-LEVEL": "DEBUG"
         },
         json={
-            "name": f"SmartThings Drivers - {channel_name}",
-            "description": f"SmartThings Driver - {channel_name}",
-            "termsOfServiceUrl": f"{GIT_URL}/tree/{channel_name}"
+            "name": f"SmartThings Drivers - {channel_tag}",
+            "description": f"SmartThings Driver - {channel_tag}",
+            "termsOfServiceUrl": f"{GIT_URL}"
         }
     )
     if response.status_code != 200:
@@ -78,65 +72,11 @@ def update_old_channel(channel_name):
         print(f"Response: {json.dumps(response.json(),indent=2)}", file=sys.stderr)
         exit(1)
 
-def clone_drivers_from_channel(source_channel_id, dest_channel_id):
-
-    # Get drivers currently on the source channel
-    response = requests.get(
-        f"{ENVIRONMENT_URL}/channels/{source_channel_id}/drivers",
-        headers={
-            "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN,
-            "Content-Type": "application/json",
-            "X-ST-LOG-LEVEL": "DEBUG"
-        }
-    )
-    if response.status_code != 200:
-        print("Failed to retrieve channel's current drivers", file=sys.stderr)
-        print(f"Request:", file=sys.stderr)
-        print(f"- URL: {response.request.url}", file=sys.stderr)
-        print(f"- Method: {response.request.method}", file=sys.stderr)
-        print(f"- Body: {response.request.body}", file=sys.stderr)
-        print(f"Status Code: {response.status_code}", file=sys.stderr)
-        print(f"Response: {json.dumps(response.json(),indent=2)}", file=sys.stderr)
-        exit(1)
-    print(json.dumps(response.text, indent=3))
-    response_json = json.loads(response.text)["items"]
-
-    # Upload the driver ID and version to the destination channel
-    failures = {}
-    for driver in response_json:
-        driverId = driver[DRIVERID]
-        version = driver[VERSION]
-        print(f"Posting driverID: {driverId}-v{version}")
-        response = requests.post(
-            f"{ENVIRONMENT_URL}/channels/{dest_channel_id}/drivers",
-            headers = {
-                "Accept": "application/vnd.smartthings+json;v=20200810",
-                "Authorization": "Bearer "+TOKEN,
-                "Content-Type": "application/json",
-                "X-ST-LOG-LEVEL": "DEBUG",
-                "X-ST-CORRELATION": "driver-legacy-deployment-PROD-"+ENVIRONMENT+"-"+str(time.time())
-            },
-            json={
-                "driverId": driverId,
-                "version": version
-            }
-        )
-        if response.status_code != 200:
-            print(f"Failed to post driver to new channel: {driverId}: v{version}", file=sys.stderr)
-            failures[driverId] = json.loads(response.text)
-
-    if len(failures) > 0:
-        print(f"One or more drivers failed to post to the new channel: {dest_channel_id}", file=sys.stderr)
-        json.dump(failures, fp=sys.stderr)
-        exit(1)
-
 
 def main():
 
-    new_prod_channel_id = create_new_channel()
-    clone_drivers_from_channel(PROD_CHANNEL_ID, new_prod_channel_id)
-    update_old_channel(NEW_BRANCH)
+    new_prod_channel_id = clone_new_channel(PROD_CHANNEL_ID)
+    update_old_channel(CHANNEL_TAG)
 
     print(f"\n\nNew production channel ID: {new_prod_channel_id}\n\n")
     
