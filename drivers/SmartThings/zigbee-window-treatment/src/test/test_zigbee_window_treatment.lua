@@ -27,6 +27,17 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+    "Driver switched accepts the window treatment profile with refresh",
+    function()
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end,
+    {
+       min_api_version = 14
+    }
+)
+
+test.register_coroutine_test(
     "State transnsition from opening to partially open",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
