@@ -3,7 +3,6 @@
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
-local constants = require "st.zwave.constants"
 
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local user_id_status = UserCode.user_id_status
@@ -13,6 +12,7 @@ local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local consts          = require "lock_utils.constants"
 local tables          = require "lock_utils.tables"
+local lock_utils      = require "lock_utils.utils"
 local zwave_handlers  = require "lock_handlers.zwave_responses"
 local cap_handlers    = require "lock_handlers.capabilities"
 
@@ -55,38 +55,45 @@ local function configuration_report(self, device, cmd)
   end
 end
 
-local function is_user_code_report_mfr_specific(device, cmd)
-  local reported_user_id_status = cmd.args.user_id_status
-  local user_code = cmd.args.user_code
-  local code_id = cmd.args.user_identifier
+-- Some Schlage locks mask the code ("**********") or leave it out of an occupied report.
+local function is_code_masked(cmd)
+  return cmd.args.user_code == nil or cmd.args.user_code == "**********"
+end
 
-  if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-      (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
-    local code_state = device:get_field(constants.CODE_STATE)
-    return user_code == "**********" or user_code == nil or (code_state ~= nil and code_state["setName"..cmd.args.user_identifier] ~= nil)
-  else
-    return (code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE) or
-          reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE
+-- Returns true when `command_in_progress` is an addCredential or updateCredential and `cmd` reports the slot that
+-- command is setting, with the given user ID status.
+local function is_pending_set_report(device, cmd, command_in_progress, status)
+  if command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and command_in_progress ~= consts.LOCK_CREDENTIALS.UPDATE then
+    return false
   end
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return cmd.args.user_id_status == status and cmd.args.user_identifier == credential_args.credentialIndex
 end
 
 local function user_code_report_handler(self, device, cmd)
-  if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.SYNC.CODES_FROM_LOCK then
-    zwave_handlers.user_code_report(self, device, cmd)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  if cmd.args.user_identifier == 0 and cmd.args.user_id_status == user_id_status.AVAILABLE then
+    -- the master code changed, which wipes every code on the lock
+    tables.delete_all_entries(device, "credentials")
+    tables.delete_all_entries(device, "users")
     return
   end
-  local credential_index = cmd.args.user_identifier
-  if is_user_code_report_mfr_specific(device, cmd) then
-    local reported_user_id_status = cmd.args.user_id_status
-
-    if credential_index == 0 and reported_user_id_status == user_id_status.AVAILABLE then
-      -- master code changed, clear all credentials
-      tables.delete_all_entries(device, "credentials")
-      tables.delete_all_entries(device, "users")
-    end
-  else
-    zwave_handlers.user_code_report(self, device, cmd)
+  -- Schlage refuses a PIN that is already in use by answering the Set with STATUS_NOT_AVAILABLE (and a code of
+  -- zeros) for the slot, and sends no notification. The slot keeps whatever it held before.
+  if is_pending_set_report(device, cmd, command_in_progress, user_id_status.STATUS_NOT_AVAILABLE) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress,
+      consts.COMMAND_RESULT.DUPLICATE)
+    lock_utils.clear_busy_state(device)
+    return
   end
+  -- A masked occupied report is only used by a sync or by the add or update pending on that slot. Any other one
+  -- is ignored, as the generic handler would apply it to whatever command is pending, whichever slot it names.
+  if lock_utils.is_code_occupied(cmd) and is_code_masked(cmd)
+      and command_in_progress ~= consts.SYNC.CODES_FROM_LOCK
+      and not is_pending_set_report(device, cmd, command_in_progress, user_id_status.ENABLED_GRANT_ACCESS) then
+    return
+  end
+  zwave_handlers.user_code_report(self, device, cmd)
 end
 
 local function add_credential_handler(self, device, cmd)
