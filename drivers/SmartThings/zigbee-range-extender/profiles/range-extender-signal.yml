@@ -1,0 +1,10 @@
+name: range-extender-signal
+components:
+- id: main
+  capabilities:
+  - id: signalStrength
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Networking

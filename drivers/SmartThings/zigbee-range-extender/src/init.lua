@@ -15,7 +15,8 @@ end
 local zigbee_range_driver_template = {
   supported_capabilities = {
     capabilities.refresh,
-    capabilities.battery
+    capabilities.battery,
+    capabilities.signalStrength
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
