@@ -55,7 +55,7 @@ test.register_coroutine_test("Other Tuya switches retain their generic lifecycle
   assert(#dispatchers[1]:find_child_dispatchers(driver, mock_device, "doConfigure") == 0,
     "Generic Tuya devices must not enter the KES606 sub-driver")
   assert(not require("tuya-multi.zemismart-kes606.can_handle")({}, driver, mock_device))
-end)
+end, { min_api_version = 14 })
 
 test.register_message_test("Other Tuya switches retain standard switch commands and reports", {
   { channel = "capability", direction = "receive", message = {
@@ -77,7 +77,7 @@ test.register_message_test("Other Tuya switches retain standard switch commands 
     "register_native_capability_attr_handler",
     { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
   } },
-})
+}, { min_api_version = 14 })
 
 test.register_coroutine_test("Generic Tuya children configure through the root without the Tuya magic packet", function()
   local driver = test.driver_wrapper.driver_under_test
@@ -87,14 +87,14 @@ test.register_coroutine_test("Generic Tuya children configure through the root w
     OnOffCluster.attributes.OnOff:read(mock_device):to_endpoint(0x02) })
   mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Generic Tuya children retain the root driver-switch decision", function()
   local driver = test.driver_wrapper.driver_under_test
   assert(#driver.lifecycle_dispatcher:find_child_dispatchers(driver, mock_child, "driverSwitched") == 0)
   mock_child:expect_metadata_update({ provisioning_state = "NONFUNCTIONAL" })
   test.socket.device_lifecycle:__queue_receive({ mock_child.id, "driverSwitched" })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Generic Tuya child commands and reports retain their own endpoint", function()
   mock_child:expect_native_cmd_handler_registration("switch", "on")
@@ -107,7 +107,7 @@ test.register_coroutine_test("Generic Tuya child commands and reports retain the
   test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
   test.socket.zigbee:__queue_receive({ mock_device.id,
     OnOffCluster.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
-end)
+end, { min_api_version = 14 })
 
 do
   local sample = test.mock_device.build_test_zigbee_device({
@@ -130,6 +130,7 @@ do
     sample:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.socket.device_lifecycle:__queue_receive({ sample.id, "doConfigure" })
   end, {
+    min_api_version = 14,
     test_init = function()
       sample:set_field("_configuration_version", 1, {persist = true})
       test.mock_device.add_test_device(sample)

@@ -159,7 +159,7 @@ test.register_coroutine_test("Only the exact four-gang fingerprint and its child
     assert(not matches({}, nil, test.mock_device.build_test_zigbee_device(fingerprint)))
   end
   assert(not matches({}, nil, nil))
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Parent and children dispatch through the nested Tuya handler", function()
   local driver = test.driver_wrapper.driver_under_test
@@ -170,7 +170,7 @@ test.register_coroutine_test("Parent and children dispatch through the nested Tu
       assert_nested_dispatch(driver.lifecycle_dispatcher, device, "init")
     end
   end
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Unknown modes ignore commands and reports without declaring all off", function()
   for _, device in ipairs({ parent, scene_parent, children[1], scene_children[1] }) do
@@ -179,7 +179,7 @@ test.register_coroutine_test("Unknown modes ignore commands and reports without 
   receive_relay_report(parent, nil, 1, true)
   test.socket.zigbee:__queue_receive({ scene_parent.id,
     zb_utils.build_custom_command_id(scene_parent, 0x0006, 0xFD, nil, "", 1) })
-end)
+end, { min_api_version = 14 })
 
 for _, key in ipairs({ "00", "05", "01-extra", "gang1", "invalid" }) do
   local malformed = test.mock_device.build_test_child_device({
@@ -193,7 +193,7 @@ for _, key in ipairs({ "00", "05", "01-extra", "gang1", "invalid" }) do
     test.socket.device_lifecycle:__queue_receive(malformed:generate_info_changed({
       preferences = { ["stse.changeToWirelessSwitch"] = true, countdownSeconds = 30 }
     }))
-  end, { test_init = function()
+  end, { min_api_version = 14, test_init = function()
     initialize_devices()
     test.mock_device.add_test_device(malformed)
   end })
@@ -202,6 +202,7 @@ end
 test.register_coroutine_test("Added creates four children with standard endpoint keys", function()
   test.socket.device_lifecycle:__queue_receive({ parent.id, "added" })
 end, {
+  min_api_version = 14,
   test_init = function()
     test.mock_device.add_test_device(parent)
     expect_button_metadata(parent)
@@ -223,7 +224,7 @@ test.register_coroutine_test("Repeated initialization preserves children and doe
     expect_button_metadata(scene_children[ep])
     test.socket.device_lifecycle:__queue_receive({ scene_children[ep].id, "init" })
   end
-end)
+end, { min_api_version = 14 })
 
 for ep = 1, 4 do
   for _, on in ipairs({ true, false }) do
@@ -232,11 +233,11 @@ for ep = 1, 4 do
       confirm_switch_modes()
       expect_relay_command(parent, ep, on)
       send_switch_command(children[ep], name)
-    end)
+    end, { min_api_version = 14 })
     test.register_coroutine_test("Relay report " .. ep .. " " .. name .. " updates its child and aggregate", function()
       confirm_switch_modes()
       receive_relay_report(parent, children[ep], ep, on, on and "on" or nil)
-    end)
+    end, { min_api_version = 14 })
   end
 
   test.register_coroutine_test("Scene endpoint " .. ep .. " emits physical presses and ignores relay traffic", function()
@@ -252,13 +253,13 @@ for ep = 1, 4 do
         zb_utils.build_custom_command_id(scene_parent, 0x0006, 0xFD, nil, "", ep) })
       test.wait_for_events()
     end
-  end)
+  end, { min_api_version = 14 })
 
   test.register_coroutine_test("Relay endpoint " .. ep .. " ignores scene commands", function()
     confirm_switch_modes()
     test.socket.zigbee:__queue_receive({ parent.id,
       zb_utils.build_custom_command_id(parent, 0x0006, 0xFD, nil, "", ep) })
-  end)
+  end, { min_api_version = 14 })
 
   test.register_coroutine_test("Mode preference " .. ep .. " waits for D020 before changing profile", function()
     confirm_switch_modes()
@@ -273,7 +274,7 @@ for ep = 1, 4 do
     children[ep]:expect_metadata_update({ profile = "scene-switch-child-scene" })
     receive_mode_report(parent, ep, "scene")
     send_switch_command(children[ep], "on")
-  end)
+  end, { min_api_version = 14 })
 
   test.register_coroutine_test("Countdown " .. ep .. " targets its endpoint", function()
     test.socket.zigbee:__expect_send({ parent.id, OnOff.server.commands.OnWithTimedOff(parent,
@@ -281,7 +282,7 @@ for ep = 1, 4 do
     test.socket.device_lifecycle:__queue_receive(children[ep]:generate_info_changed({
       preferences = { countdownSeconds = 30 }
     }))
-  end)
+  end, { min_api_version = 14 })
 end
 
 test.register_coroutine_test("Invalid D020 values and endpoints cannot change profiles or press buttons", function()
@@ -291,7 +292,7 @@ test.register_coroutine_test("Invalid D020 values and endpoints cannot change pr
   end
   test.socket.zigbee:__queue_receive({ scene_parent.id,
     zb_utils.build_custom_command_id(scene_parent, 0x0006, 0xFD, nil, "", 5) })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Indicator and power-on preferences retain their documented writes", function()
   test.socket.zigbee:__expect_send({ parent.id, enum_write(parent, 0x8001, 2, 1, 0x0006) })
@@ -300,7 +301,7 @@ test.register_coroutine_test("Indicator and power-on preferences retain their do
   test.socket.device_lifecycle:__queue_receive(parent:generate_info_changed({
     preferences = { lightMode = "pos", relayStatus = "off", relayStatus3 = "on" }
   }))
-end)
+end, { min_api_version = 14 })
 
 for _, on in ipairs({ true, false }) do
   local name = on and "on" or "off"
@@ -308,7 +309,7 @@ for _, on in ipairs({ true, false }) do
     confirm_switch_modes()
     for ep = 1, 4 do expect_relay_command(parent, ep, on) end
     send_switch_command(parent, name)
-  end)
+  end, { min_api_version = 14 })
   test.register_coroutine_test("Parent " .. name .. " excludes confirmed scene endpoints", function()
     confirm_switch_modes()
     for _, ep in ipairs({ 2, 4 }) do
@@ -317,11 +318,11 @@ for _, on in ipairs({ true, false }) do
     end
     for _, ep in ipairs({ 1, 3 }) do expect_relay_command(parent, ep, on) end
     send_switch_command(parent, name)
-  end)
+  end, { min_api_version = 14 })
   test.register_coroutine_test("Parent " .. name .. " is inert with all scene endpoints", function()
     confirm_scene_modes()
     send_switch_command(scene_parent, name)
-  end)
+  end, { min_api_version = 14 })
 end
 
 test.register_coroutine_test("Parent waits for unknown child states before all-off and deduplicates aggregate events", function()
@@ -336,7 +337,7 @@ test.register_coroutine_test("Parent waits for unknown child states before all-o
   receive_relay_report(parent, children[4], 4, true)
   receive_relay_report(parent, children[1], 1, false)
   receive_relay_report(parent, children[4], 4, false, "off")
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Unknown mode prevents all-off even when confirmed relays are off", function()
   for ep = 1, 3 do
@@ -347,7 +348,7 @@ test.register_coroutine_test("Unknown mode prevents all-off even when confirmed 
   children[4]:expect_metadata_update({ profile = "scene-switch-child-scene" })
   expect_parent_switch(parent, "off")
   receive_mode_report(parent, 4, "scene")
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Changing the only on relay to scene recomputes aggregate from remaining children", function()
   confirm_switch_modes()
@@ -362,7 +363,7 @@ test.register_coroutine_test("Changing the only on relay to scene recomputes agg
     capabilities.button.button.pushed({ state_change = true })))
   test.socket.zigbee:__queue_receive({ parent.id,
     zb_utils.build_custom_command_id(parent, 0x0006, 0xFD, nil, "", 2) })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Physical scene presses still reach the parent when the child is unavailable", function()
   confirm_scene_modes()
@@ -379,7 +380,7 @@ test.register_coroutine_test("Physical scene presses still reach the parent when
     zb_utils.build_custom_command_id(scene_parent, 0x0006, 0xFD, nil, "", 4) })
   test.wait_for_events()
   rawset(actual, "get_child_by_parent_assigned_key", original)
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Reinitialization retains confirmed modes for parent routing", function()
   confirm_switch_modes()
@@ -390,7 +391,7 @@ test.register_coroutine_test("Reinitialization retains confirmed modes for paren
   test.wait_for_events()
   for _, ep in ipairs({ 1, 3, 4 }) do expect_relay_command(parent, ep, true) end
   send_switch_command(parent, "on")
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("A child added after its scene mode report adopts the confirmed profile", function()
   receive_mode_report(parent, 2, "scene")
@@ -403,7 +404,7 @@ test.register_coroutine_test("A child added after its scene mode report adopts t
     capabilities.button.button.pushed({ state_change = true })))
   test.socket.zigbee:__queue_receive({ parent.id,
     zb_utils.build_custom_command_id(parent, 0x0006, 0xFD, nil, "", 2) })
-end, { test_init = function()
+end, { min_api_version = 14, test_init = function()
   test.mock_device.add_test_device(parent)
   expect_button_metadata(parent)
 end })
@@ -415,7 +416,7 @@ test.register_coroutine_test("Standard relay command IDs do not synthesize scene
       zb_utils.build_custom_command_id(scene_parent, 0x0006, command_id, nil, "", 1) })
     test.wait_for_events()
   end
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("A late scene profile is corrected to the newer confirmed switch mode", function()
   confirm_switch_modes()
@@ -441,7 +442,7 @@ test.register_coroutine_test("A late scene profile is corrected to the newer con
   receive_relay_report(parent, children[2], 2, true, "on")
   expect_relay_command(parent, 2, false)
   send_switch_command(children[2], "off")
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Returning to switch refreshes again when the child profile finishes", function()
   confirm_scene_modes()
@@ -463,7 +464,7 @@ test.register_coroutine_test("Returning to switch refreshes again when the child
   test.socket.device_lifecycle:__queue_receive({ scene_children[2].id, "infoChanged", json.encode(info) })
   test.wait_for_events()
   receive_relay_report(scene_parent, scene_children[2], 2, true, "on")
-end)
+end, { min_api_version = 14 })
 
 local function expect_reads(device, endpoint)
   for ep = endpoint or 1, endpoint or 4 do
@@ -493,12 +494,12 @@ end
 test.register_coroutine_test("Tuya configuration binds and configures OnOff and D020 once per endpoint", function()
   expect_configuration()
   test.socket.device_lifecycle:__queue_receive({ parent.id, "doConfigure" })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Driver switch configures and provisions the aggregate parent", function()
   expect_configuration()
   test.socket.device_lifecycle:__queue_receive({ parent.id, "driverSwitched" })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Child configure has no Zigbee traffic and driver switch provisions both profiles", function()
   for _, device in ipairs({ children[2], scene_children[3] }) do
@@ -509,7 +510,7 @@ test.register_coroutine_test("Child configure has no Zigbee traffic and driver s
     test.socket.device_lifecycle:__queue_receive({ device.id, "driverSwitched" })
     test.wait_for_events()
   end
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Inherited parent refresh reads OnOff and D020 without synthetic presses", function()
   confirm_scene_modes()
@@ -517,14 +518,14 @@ test.register_coroutine_test("Inherited parent refresh reads OnOff and D020 with
   expect_reads(scene_parent)
   test.socket.capability:__queue_receive({ scene_parent.id,
     { capability = "refresh", component = "main", command = "refresh", args = {} } })
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Inherited child refresh reads only its endpoint", function()
   test.socket.zigbee:__set_channel_ordering("relaxed")
   expect_reads(parent, 3)
   test.socket.capability:__queue_receive({ children[3].id,
     { capability = "refresh", component = "main", command = "refresh", args = {} } })
-end)
+end, { min_api_version = 14 })
 
 local function build_default_response(device, ep, command_id, status)
   local body = default_response.DefaultResponse(command_id, status)
@@ -548,13 +549,13 @@ for _, on in ipairs({ true, false }) do
       test.socket.zigbee:__queue_receive({ parent.id, build_default_response(parent, ep, command_id, Status.SUCCESS) })
       test.wait_for_events()
     end
-  end)
+  end, { min_api_version = 14 })
   test.register_coroutine_test("Failed " .. name .. " DefaultResponse does not claim relay state", function()
     confirm_switch_modes()
     test.socket.zigbee:__queue_receive({ parent.id, build_default_response(parent, 2, command_id, Status.FAILURE) })
     test.wait_for_events()
     receive_relay_report(parent, children[2], 2, on, on and "on" or nil)
-  end)
+  end, { min_api_version = 14 })
 end
 
 test.register_coroutine_test("Scene and unknown-mode DefaultResponses cannot emit switch events", function()
@@ -565,12 +566,12 @@ test.register_coroutine_test("Scene and unknown-mode DefaultResponses cannot emi
     test.socket.zigbee:__queue_receive({ scene_parent.id,
       build_default_response(scene_parent, ep, OnOff.server.commands.On.ID, Status.SUCCESS) })
   end
-end)
+end, { min_api_version = 14 })
 
 test.register_coroutine_test("Unrelated successful DefaultResponse does not claim relay state", function()
   confirm_switch_modes()
   test.socket.zigbee:__queue_receive({ parent.id,
     build_default_response(parent, 1, OnOff.server.commands.Toggle.ID, Status.SUCCESS) })
-end)
+end, { min_api_version = 14 })
 
 test.run_registered_tests()
