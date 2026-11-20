@@ -11,6 +11,7 @@ local ZwaveDriver = require "st.zwave.driver"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local preferencesMap = require "preferences"
 local window_preset_defaults = require "window_preset_defaults"
+local window_shade_level_step = require "window_shade_level_step"
 
 local function init_handler(self, device)
   if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
@@ -60,6 +61,7 @@ local driver_template = {
     capabilities.windowShade,
     capabilities.windowShadeLevel,
     capabilities.windowShadePreset,
+    capabilities.statelessWindowShadeLevelStep,
     capabilities.statelessCurtainPowerButton,
     capabilities.battery
   },
@@ -72,6 +74,9 @@ local driver_template = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = window_preset_defaults.set_preset_position_cmd,
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_preset_defaults.window_shade_preset_cmd,
+    },
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = window_shade_level_step.step_shade_level_handler,
     }
   },
   sub_drivers = require("sub_drivers"),
