@@ -511,10 +511,10 @@ function CameraCapabilityHandlers.handle_set_default_viewport(driver, device, cm
   local endpoint_id = device:component_to_endpoint(cmd.component)
   device:send(clusters.CameraAvStreamManagement.attributes.Viewport:write(
     device, endpoint_id, clusters.Global.types.ViewportStruct({
-      x1 = cmd.args.upperLeftVertex.x,
-      x2 = cmd.args.lowerRightVertex.x,
-      y1 = cmd.args.upperLeftVertex.y,
-      y2 = cmd.args.lowerRightVertex.y
+      x1 = cmd.args.viewport.upperLeftVertex.x,
+      x2 = cmd.args.viewport.lowerRightVertex.x,
+      y1 = cmd.args.viewport.upperLeftVertex.y,
+      y2 = cmd.args.viewport.lowerRightVertex.y
     })
   ))
 end
