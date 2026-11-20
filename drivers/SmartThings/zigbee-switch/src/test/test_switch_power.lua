@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -53,14 +54,30 @@ local mock_vimar_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
+local mock_climax_device = test.mock_device.build_test_zigbee_device(
+  { profile = t_utils.get_profile_definition("switch-power-smartplug.yml"),
+    fingerprinted_endpoint_id = 0x01,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "ClimaxTechnology",
+        model = "PSM_00.00.00.35TC",
+        server_clusters = {0x0006, 0x0B04, 0x0702}
+      }
+    }
+  }
+)
+
 
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   mock_device:set_field("_configuration_version", 1, {persist = true})
+  mock_climax_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_aurora_relay_device)
   test.mock_device.add_test_device(mock_vimar_device)
+  test.mock_device.add_test_device(mock_climax_device)
 end
 
 test.set_test_init_function(test_init)
@@ -313,6 +330,183 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 15
+  }
+)
+
+test.register_message_test(
+  "Climax ActivePower should apply multiplier and divisor",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerMultiplier:build_test_attr_report(mock_climax_device, 3)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerDivisor:build_test_attr_report(mock_climax_device, 10)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_climax_device, 20)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_climax_device:generate_test_message(
+        "main",
+        capabilities.powerMeter.power({ value = 6.0, unit = "W" })
+      )
+    }
+  },
+  {
+    min_api_version = 14,
+    max_api_version = 14
+  }
+)
+
+test.register_message_test(
+  "Climax ActivePower should apply multiplier and divisor with native registration",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerMultiplier:build_test_attr_report(mock_climax_device, 3)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ACPowerDivisor:build_test_attr_report(mock_climax_device, 10)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_climax_device, 20)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_climax_device:generate_test_message(
+        "main",
+        capabilities.powerMeter.power({ value = 6.0, unit = "W" })
+      )
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        {
+          device_uuid = mock_climax_device.id,
+          capability_id = "powerMeter",
+          capability_attr_id = "power"
+        }
+      }
+    }
+  },
+  {
+    min_api_version = 15
+  }
+)
+
+test.register_message_test(
+  "Climax InstantaneousDemand should convert kilowatts to watts",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.Multiplier:build_test_attr_report(mock_climax_device, 1)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.Divisor:build_test_attr_report(mock_climax_device, 1000)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_climax_device, 800)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_climax_device:generate_test_message(
+        "main",
+        capabilities.powerMeter.power({ value = 800.0, unit = "W" })
+      )
+    }
+  },
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_message_test(
+  "Climax InstantaneousDemand should apply multiplier",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.Multiplier:build_test_attr_report(mock_climax_device, 2)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.Divisor:build_test_attr_report(mock_climax_device, 1000)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_climax_device.id,
+        SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_climax_device, 800)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_climax_device:generate_test_message(
+        "main",
+        capabilities.powerMeter.power({ value = 1600.0, unit = "W" })
+      )
+    }
+  },
+  {
+    min_api_version = 14
   }
 )
 
