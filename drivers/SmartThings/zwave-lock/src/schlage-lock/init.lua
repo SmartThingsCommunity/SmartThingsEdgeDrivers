@@ -60,10 +60,9 @@ local function is_code_masked(cmd)
   return cmd.args.user_code == nil or cmd.args.user_code == "**********"
 end
 
--- Returns true when an addCredential or updateCredential is in progress and `cmd` reports the slot that command
--- is setting, with the given user ID status.
-local function is_pending_set_report(device, cmd, status)
-  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+-- Returns true when `command_in_progress` is an addCredential or updateCredential and `cmd` reports the slot that
+-- command is setting, with the given user ID status.
+local function is_pending_set_report(device, cmd, command_in_progress, status)
   if command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and command_in_progress ~= consts.LOCK_CREDENTIALS.UPDATE then
     return false
   end
@@ -81,7 +80,7 @@ local function user_code_report_handler(self, device, cmd)
   end
   -- Schlage refuses a PIN that is already in use by answering the Set with STATUS_NOT_AVAILABLE (and a code of
   -- zeros) for the slot, and sends no notification. The slot keeps whatever it held before.
-  if is_pending_set_report(device, cmd, user_id_status.STATUS_NOT_AVAILABLE) then
+  if is_pending_set_report(device, cmd, command_in_progress, user_id_status.STATUS_NOT_AVAILABLE) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress,
       consts.COMMAND_RESULT.DUPLICATE)
     lock_utils.clear_busy_state(device)
@@ -91,7 +90,7 @@ local function user_code_report_handler(self, device, cmd)
   -- is ignored, as the generic handler would apply it to whatever command is pending, whichever slot it names.
   if lock_utils.is_code_occupied(cmd) and is_code_masked(cmd)
       and command_in_progress ~= consts.SYNC.CODES_FROM_LOCK
-      and not is_pending_set_report(device, cmd, user_id_status.ENABLED_GRANT_ACCESS) then
+      and not is_pending_set_report(device, cmd, command_in_progress, user_id_status.ENABLED_GRANT_ACCESS) then
     return
   end
   zwave_handlers.user_code_report(self, device, cmd)
