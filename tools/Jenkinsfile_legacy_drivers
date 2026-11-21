@@ -42,14 +42,13 @@ pipeline {
     }
   }
   environment {
-    NEW_BRANCH = "${env.NEW_BRANCH_CHANNEL}"
     ENVIRONMENT = "${env.NODE_LABEL.toUpperCase()}"
   }
   stages {
     stage('requirements') {
       steps {
         script {
-          currentBuild.description = "Driver support channel release: " + env.NEW_BRANCH_CHANNEL
+          currentBuild.description = "Driver support channel release: " + env.CHANNEL_TAG
         }
         sh 'git config --global --add safe.directory "*"'
         sh 'git clean -xfd'
