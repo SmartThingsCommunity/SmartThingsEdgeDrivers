@@ -46,6 +46,10 @@ function LockLifecycle.init(driver, device)
     -- We should check its PIN users if it should be re-profiled.
     device:send(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device))
   end
+
+  -- retry sync on each driver init until it has been run to completion, in case of some kind of interruption (network, power, etc.)
+  -- ensure our user/credential state is accurate to the current device state
+  device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.do_configure(driver, device)
@@ -57,11 +61,6 @@ function LockLifecycle.do_configure(driver, device)
 
   device:send(device_management.build_bind_request(device, clusters.Alarms.ID, driver.environment_info.hub_zigbee_eui))
   device:send(clusters.Alarms.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
-
-  if device:supports_capability(capabilities.lockCredentials) then
-    -- ensure our user/credential state is accurate to the current device state
-    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
-  end
 end
 
 function LockLifecycle.info_changed(driver, device, event, args)
@@ -100,6 +99,11 @@ local zigbee_lock_driver = {
     infoChanged = LockLifecycle.info_changed,
   },
   zigbee_handlers = {
+    global = {
+      [clusters.DoorLock.ID] = {
+        [0x0B] = zigbee_handlers.default_response, -- ZCL Default Response
+      }
+    },
     cluster = {
       [clusters.Alarms.ID] = {
         [clusters.Alarms.client.commands.Alarm.ID] = zigbee_handlers.alarm

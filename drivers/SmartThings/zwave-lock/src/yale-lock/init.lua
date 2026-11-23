@@ -1,0 +1,112 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+local cc             = require "st.zwave.CommandClass"
+local Notification   = (require "st.zwave.CommandClass.Notification")({version=3})
+local UserCode       = (require "st.zwave.CommandClass.UserCode")({version=1})
+
+local consts         = require "lock_utils.constants"
+local lock_utils     = require "lock_utils.utils"
+local tables         = require "lock_utils.tables"
+local yale_programming_code     = require "yale-lock.programming_code"
+local zwave_handlers = require "lock_handlers.zwave_responses"
+
+-- Yale locks keep their programming code in a user code slot that is not one of the lock's user slots. It is exposed
+-- like any other credential, owned by a user that has the same index and the programming code userType.
+local function is_programming_credential(device, credential_index)
+  return credential_index ~= nil and credential_index == yale_programming_code.credential_index(device)
+end
+
+-- Add the programming code credential and the user that owns it. Both use the programming code slot as their index,
+-- since the user index only has meaning inside the capability state.
+local function add_programming_entries(device, credential_index, name)
+  name = name or consts.PROGRAMMING_USER.DEFAULT_NAME
+  local status = tables.add_entry(device, "users", {
+    userIndex = credential_index,
+    userName  = name,
+    userType  = consts.PROGRAMMING_USER.USER_TYPE,
+  }, true)
+  if status ~= consts.COMMAND_RESULT.SUCCESS and status ~= consts.COMMAND_RESULT.OCCUPIED then return status end
+  return tables.add_entry(device, "credentials", {
+    userIndex       = credential_index,
+    credentialIndex = credential_index,
+    credentialType  = consts.CRED_TYPE_PIN,
+    credentialName  = name,
+  }, true)
+end
+
+-- Record the programming code the lock reported: the programming code credential and the user that owns it.
+local function programming_code_reported(device)
+  add_programming_entries(device, yale_programming_code.credential_index(device))
+end
+
+-- True if an update of the programming code is waiting on the lock. The lock confirms it like any other
+-- credential, so its reports go to the generic handlers.
+local function is_programming_change_in_progress(device)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return command_in_progress == consts.LOCK_CREDENTIALS.UPDATE and
+    is_programming_credential(device, credential_args.credentialIndex)
+end
+
+local function user_code_report(driver, device, cmd)
+  local credential_index = cmd.args.user_identifier
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  local occupied = lock_utils.is_code_occupied(cmd)
+
+  -- The generic sync handler treats a report for any other index as an empty slot and moves on, which would skip
+  -- an index. The programming code slot is outside the sync's range and is read separately, so its reports must
+  -- not reach the sync unless the sync asked for that slot.
+  local syncing = command_in_progress == consts.SYNC.CODES_FROM_LOCK
+  local sync_asked_for_slot = syncing and credential_index == device:get_field(consts.SYNC.CODE_INDEX)
+
+  if is_programming_credential(device, credential_index) then
+    if occupied and not is_programming_change_in_progress(device) then
+      -- a report of the programming code slot records the programming code, unless it answers an update of the
+      -- programming code (handled like any other credential). The programming code is already recorded, so a
+      -- sync does not add it again.
+      programming_code_reported(device)
+      if not sync_asked_for_slot then return end
+    elseif syncing and not sync_asked_for_slot then
+      -- an unrequested report that the programming code slot is empty must not move the sync on, or it would skip
+      -- the index the sync is waiting for
+      return
+    end
+  end
+
+  zwave_handlers.user_code_report(driver, device, cmd)
+  if syncing and device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) ~= consts.SYNC.CODES_FROM_LOCK then
+    -- the sync is finished. The programming code slot is outside the lock's user code slots, so it is read separately.
+    yale_programming_code.read_programming_code(device)
+  end
+end
+
+local function notification_report(driver, device, cmd)
+  if cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL then
+    local access_control_event = Notification.event.access_control
+    if cmd.args.event == access_control_event.NEW_USER_CODE_ADDED and
+       is_programming_credential(device, tonumber(lock_utils.get_code_id_from_notification_event(
+         cmd.args.event_parameter, cmd.args.v1_alarm_level))) and not is_programming_change_in_progress(device) then
+      -- the lock confirms a write to the programming code slot like any other user code (ZW2). An update of the
+      -- programming code is completed by the generic handler.
+      programming_code_reported(device)
+      return
+    end
+  end
+  zwave_handlers.notification_report(driver, device, cmd)
+end
+
+local yale_lock = {
+  zwave_handlers = {
+    [cc.USER_CODE] = {
+      [UserCode.REPORT] = user_code_report
+    },
+    [cc.NOTIFICATION] = {
+      [Notification.REPORT] = notification_report
+    },
+  },
+  NAME = "Yale Lock",
+  can_handle = require("yale-lock.can_handle"),
+}
+
+return yale_lock

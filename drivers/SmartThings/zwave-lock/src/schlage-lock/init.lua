@@ -3,7 +3,6 @@
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
-local constants = require "st.zwave.constants"
 
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local user_id_status = UserCode.user_id_status
@@ -11,10 +10,21 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
+local consts          = require "lock_utils.constants"
 local tables          = require "lock_utils.tables"
+local lock_utils      = require "lock_utils.utils"
 local zwave_handlers  = require "lock_handlers.zwave_responses"
 local cap_handlers    = require "lock_handlers.capabilities"
 
+-- If the code length reported by the lock differs from the last known length, the
+-- driver assumes the lock wiped all of its codes (as the legacy Schlage handler did
+-- by synthesizing an ALL_USER_CODES_DELETED notification) and clears its own records.
+--
+-- Before the lock reports its PIN length, the driver emits the default bounds of 4-10.
+-- Many devices do not report PIN length, so this is specific to Schlage.
+-- PIN_LENGTH_FROM_DEVICE is set to true once the lock itself has reported its length,
+-- so the default bounds are never mistaken for a reported length and treated as a change.
+local PIN_LENGTH_FROM_DEVICE         = "pinLengthFromDevice"
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
 local function do_configure(self, device)
@@ -32,7 +42,10 @@ local function configuration_report(self, device, cmd)
   if parameter_number == SCHLAGE_LOCK_CODE_LENGTH_PARAM.number then
     local reported_code_length = cmd.args.configuration_value
     local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
-    if current_code_length ~= nil and current_code_length ~= reported_code_length then
+    -- only a length previously reported by the lock counts; the spec default emitted at startup does not
+    local previously_reported = device:get_field(PIN_LENGTH_FROM_DEVICE) == true
+    device:set_field(PIN_LENGTH_FROM_DEVICE, true, { persist = true })
+    if previously_reported and current_code_length ~= nil and current_code_length ~= reported_code_length then
       -- when the code length is changed, all the codes have been wiped
       tables.delete_all_entries(device, "credentials")
       tables.delete_all_entries(device, "users")
@@ -42,43 +55,54 @@ local function configuration_report(self, device, cmd)
   end
 end
 
-local function is_user_code_report_mfr_specific(device, cmd)
-  local reported_user_id_status = cmd.args.user_id_status
-  local user_code = cmd.args.user_code
-  local code_id = cmd.args.user_identifier
+-- Some Schlage locks mask the code ("**********") or leave it out of an occupied report.
+local function is_code_masked(cmd)
+  return cmd.args.user_code == nil or cmd.args.user_code == "**********"
+end
 
-  if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-      (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
-    local code_state = device:get_field(constants.CODE_STATE)
-    return user_code == "**********" or user_code == nil or (code_state ~= nil and code_state["setName"..cmd.args.user_identifier] ~= nil)
-  else
-    return (code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE) or
-          reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE
+-- Returns true when `command_in_progress` is an addCredential or updateCredential and `cmd` reports the slot that
+-- command is setting, with the given user ID status.
+local function is_pending_set_report(device, cmd, command_in_progress, status)
+  if command_in_progress ~= consts.LOCK_CREDENTIALS.ADD and command_in_progress ~= consts.LOCK_CREDENTIALS.UPDATE then
+    return false
   end
+  local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
+  return cmd.args.user_id_status == status and cmd.args.user_identifier == credential_args.credentialIndex
 end
 
 local function user_code_report_handler(self, device, cmd)
-  local credential_index = cmd.args.user_identifier
-  if is_user_code_report_mfr_specific(device, cmd) then
-    local reported_user_id_status = cmd.args.user_id_status
-
-    if credential_index == 0 and reported_user_id_status == user_id_status.AVAILABLE then
-      -- master code changed, clear all credentials
-      tables.delete_all_entries(device, "credentials")
-      tables.delete_all_entries(device, "users")
-    end
-  else
-    zwave_handlers.user_code_report(self, device, cmd)
+  local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  if cmd.args.user_identifier == 0 and cmd.args.user_id_status == user_id_status.AVAILABLE then
+    -- the master code changed, which wipes every code on the lock
+    tables.delete_all_entries(device, "credentials")
+    tables.delete_all_entries(device, "users")
+    return
   end
+  -- Schlage refuses a PIN that is already in use by answering the Set with STATUS_NOT_AVAILABLE (and a code of
+  -- zeros) for the slot, and sends no notification. The slot keeps whatever it held before.
+  if is_pending_set_report(device, cmd, command_in_progress, user_id_status.STATUS_NOT_AVAILABLE) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, command_in_progress,
+      consts.COMMAND_RESULT.DUPLICATE)
+    lock_utils.clear_busy_state(device)
+    return
+  end
+  -- A masked occupied report is only used by a sync or by the add or update pending on that slot. Any other one
+  -- is ignored, as the generic handler would apply it to whatever command is pending, whichever slot it names.
+  if lock_utils.is_code_occupied(cmd) and is_code_masked(cmd)
+      and command_in_progress ~= consts.SYNC.CODES_FROM_LOCK
+      and not is_pending_set_report(device, cmd, command_in_progress, user_id_status.ENABLED_GRANT_ACCESS) then
+    return
+  end
+  zwave_handlers.user_code_report(self, device, cmd)
 end
 
 local function add_credential_handler(self, device, cmd)
   local DEFAULT_COMMANDS_DELAY = 4.2
-  local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
   local base_handler = function()
     cap_handlers.add_credential(self, device, cmd)
   end
-  if current_code_length == nil then
+  -- the default PIN length is not authoritative; wait for the lock's own value if we don't have it yet
+  if device:get_field(PIN_LENGTH_FROM_DEVICE) ~= true then
     device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
     device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, base_handler)
   else

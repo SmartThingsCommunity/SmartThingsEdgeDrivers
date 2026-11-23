@@ -15,6 +15,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local capabilities = require "st.capabilities"
 
 local consts              = require "lock_utils.constants"
+local lock_utils          = require "lock_utils.utils"
 local table_utils         = require "lock_utils.tables"
 local zwave_handlers      = require "lock_handlers.zwave_responses"
 local capability_handlers = require "lock_handlers.capabilities"
@@ -46,10 +47,17 @@ function LockLifecycle.init(driver, device)
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
   end
 
+  -- existing devices may predate the default PIN length being set
+  lock_utils.ensure_pin_length_bounds(device)
+
   if device:supports_capability(capabilities.tamperAlert) then
     -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+
+  -- ensure our user/credential state is accurate to the current device state.
+  -- the delay allows the number of supported users to be read first.
+  device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.driver_switched(driver, device)

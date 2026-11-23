@@ -43,6 +43,8 @@ local device_init = function(driver, device)
     end
   end
 
+  configurationMap.set_metering_fields(device)
+
   local ias_zone_config_method = configurationMap.get_ias_zone_config_method(device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)

@@ -19,17 +19,6 @@ local json              = require "st.json"
 
 
 test.disable_startup_messages()
-if table_utils.find_all_entries_by == nil then
-  function table_utils.find_all_entries_by(device, table_name, key, value)
-    local entries = table_utils.get_state(device, table_name) or {}
-    local matches = {}
-    for _, entry in ipairs(entries) do
-      if entry[key] == value then table.insert(matches, entry) end
-    end
-    return matches
-  end
-end
-
 
 -- ── Shared device ──────────────────────────────────────────────────────────
 
@@ -70,8 +59,11 @@ local function install_state_mocks()
     error = function() end,
   })
 
-  -- get_state guards with device:supports_capability; always return true here.
-  rawset(mock_device, "supports_capability", function() return true end)
+  -- get_state guards with device:supports_capability; only the seeded capabilities are supported.
+  rawset(mock_device, "supports_capability", function(_, capability)
+    local id = type(capability) == "table" and capability.ID or capability
+    return id == capabilities.lockUsers.ID or id == capabilities.lockCredentials.ID
+  end)
 
   -- get_state / get_max_entries use device:get_latest_state to read
   -- capability attribute values from the state cache.
@@ -260,20 +252,8 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          {
-            { userIndex = 1, userName = "Alice", userType = "guest" },
-            { userIndex = 2, userName = "Bob",   userType = "guest" },
-            { userIndex = 10, userName = "Ghost", userType = "guest" },
-          },
-          { visibility = { displayed = false } }
-        ))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
-          { commandName = "updateUser", statusCode = "success", userIndex = 10 },
+          { commandName = "updateUser", statusCode = "failure" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
@@ -350,13 +330,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03", "Guest 3" } },
+        args = { 0, "guest", "pin", "pin03", "Guest 3" } },
     })
 
     expect_set_pin_code(3, "pin03")
     test.wait_for_events()
 
-    queue_user_code_added(1)
+    queue_user_code_added(3)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
@@ -364,6 +344,18 @@ test.register_coroutine_test(
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
             { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    -- userIndex 0 creates a new user, which takes the next free user index; the credential takes the next free slot
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",   userType = "guest" },
+            { userIndex = 3, userName = "Guest 3", userType = "guest" },
           },
           { visibility = { displayed = false } }
         ))
@@ -390,7 +382,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin01" } },
+        args = { 0, "guest", "pin", "pin01" } },
     })
 
     expect_set_pin_code(3, "pin01")
@@ -420,7 +412,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = capabilities.lockCredentials.ID, command = "addCredential",
-        args = { 3, "guest", "pin", "pin03" } },
+        args = { 0, "guest", "pin", "pin03" } },
     })
 
     expect_set_pin_code(3, "pin03")

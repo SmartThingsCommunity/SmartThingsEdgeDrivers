@@ -31,44 +31,22 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   -- Determine boolean states of user code slot
-  local user_code_occupied = user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
-    (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)
+  local user_code_occupied = lock_utils.is_code_occupied(cmd)
   local user_code_available = user_id_status == UserCode.user_id_status.AVAILABLE
 
   if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
-    if user_code_occupied then
-      -- If an entry already exists at this index, this will be a no-op.
-      tables.add_entry(device, "users", {
-        userIndex = credential_index,
-        userName = "Guest " .. credential_index,
-        userType = "guest",
-      })
-      tables.add_entry(device, "credentials", {
-        userIndex = credential_index,
-        credentialIndex = credential_index,
-        credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "Guest " .. credential_index,
-      })
-      -- reset the consecutive unoccupied codes counter since we found an occupied code
-      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
-    elseif user_code_available then
-      local consecutive_unoccupied_codes = (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1
-      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
+    local code_index = device:get_field(consts.SYNC.CODE_INDEX)
+    if code_index == nil then return end
+    if credential_index < code_index then
+      device.log.warn_with({ hub_logs = true }, "UserCode Report for index %s already processed, expected %s", credential_index, code_index)
+      return -- return early if we've already processed this report.
+    elseif credential_index ~= code_index then
+      device.log.warn_with({ hub_logs = true }, "Unexpected UserCode Report for index %s, expected %s", credential_index, code_index)
+      -- treat this as an unoccupied slot to continue the sync
+      user_code_occupied = false
+      user_code_available = true
     end
-
-    -- Sync: continue to next code or finish
-    if credential_index >= tables.get_max_entries(device, "credentials") or
-     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
-      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
-      device:set_field(consts.SYNC.CODE_INDEX, nil)
-      lock_utils.clear_busy_state(device)
-    else
-      local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
-      device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
-      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = synced_code_index })
-      device:send(UserCode:Get({user_identifier = synced_code_index}))
-    end
-    return
+    lock_utils.continue_code_sync(device, user_code_occupied, user_code_available)
   elseif user_code_occupied then
       -- Code slot is now occupied: add or update credential and associated user
       lock_utils.set_credential_report_helper(device, credential_index)
@@ -108,8 +86,9 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
   local access_control_event = Notification.event.access_control
 
   if event == access_control_event.ALL_USER_CODES_DELETED then
-    tables.delete_all_entries(device, "credentials")
-    tables.delete_all_entries(device, "users")
+    -- Deleting all user codes does not affect the programming code.
+    lock_utils.delete_all_non_programming_entries(device, "credentials")
+    lock_utils.delete_all_non_programming_entries(device, "users")
 
   elseif event == access_control_event.SINGLE_USER_CODE_DELETED then
     lock_utils.delete_credential_report_helper(device, credential_index)
@@ -118,7 +97,7 @@ function ZwaveHandlers.user_code_event_handler(driver, device, cmd)
     lock_utils.set_credential_report_helper(device, credential_index)
 
   elseif event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
-    -- aka "master code" changed
+    -- aka "programming code" changed
     if command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
       lock_utils.emit_command_result(device, capabilities.lockCredentials,
         consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.SUCCESS)
