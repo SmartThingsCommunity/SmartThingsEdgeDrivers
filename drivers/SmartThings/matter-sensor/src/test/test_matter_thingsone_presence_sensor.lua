@@ -7,7 +7,6 @@ local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local version = require "version"
 
-local MODE = clusters.OccupancySensing.attributes.PIRUnoccupiedToOccupiedThreshold
 -- HoldTime and the OccupancySensing features come with lua libs api 13; on older libs even looking them up raises
 -- an error, so they are only looked up from api 13 and the HoldTime tests set min_api_version = 13
 local HOLD_TIME = version.api >= 13 and clusters.OccupancySensing.attributes.HoldTime or nil
@@ -173,49 +172,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "A sensitivity change should write the operation mode on EP1",
+  "Every presence hold time option should write HoldTime as 20 s plus the option on EP1",
   function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "3"))
-    expect_write(MODE, 3)
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "1"))
-    expect_write(MODE, 1)
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "A first choice of the default sensitivity should be written, and an unchanged one should not",
-  function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "2"))
-    expect_write(MODE, 2)
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "2"))
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "A sensitivity outside 1..3 should be clamped",
-  function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "5"))
-    expect_write(MODE, 3)
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.sensitivity", "0"))
-    expect_write(MODE, 1)
-    test.wait_for_events()
-  end
-)
-
-test.register_coroutine_test(
-  "A presence hold time change should write HoldTime as 20 s plus the setting on EP1",
-  function()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "60"))
-    expect_write(HOLD_TIME, 80)
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", "5"))
-    expect_write(HOLD_TIME, 25)
-    test.wait_for_events()
+    -- stse.presenceHoldTime is an enumeration of these strings, each paired with the HoldTime it writes; the default "0"
+    -- comes last so that every step is a change
+    local options = {{"5", 25}, {"10", 30}, {"15", 35}, {"30", 50}, {"60", 80}, {"0", 20}}
+    for _, option in ipairs(options) do
+      test.socket.device_lifecycle:__queue_receive(preference("stse.presenceHoldTime", option[1]))
+      expect_write(HOLD_TIME, option[2])
+      test.wait_for_events()
+    end
   end,
   {
     min_api_version = 13
@@ -236,6 +202,7 @@ test.register_coroutine_test(
   }
 )
 
+-- The app offers only the options above; the next two tests cover the guards for any other value
 test.register_coroutine_test(
   "A numeric or fractional presence hold time should be written as whole seconds",
   function()

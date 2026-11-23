@@ -23,7 +23,5 @@ preferences:
     explicit: true
   - preferenceId: humidityOffset
     explicit: true
-  - preferenceId: stse.sensitivity
-    explicit: true
   - preferenceId: stse.presenceHoldTime
     explicit: true

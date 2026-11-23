@@ -6,40 +6,22 @@ local st_utils = require "st.utils"
 local version = require "version"
 
 local PROFILE = "thingsone-presence-sensor"
+local PRESENCE_HOLD_TIME = "stse.presenceHoldTime"
 
-local settings = {
-  {
-    -- Not the attribute's standard use, kept on purpose: the certified device firmware reads it as its operation
-    -- mode: 1 low power, 2 normal, 3 high power
-    attr = clusters.OccupancySensing.attributes.PIRUnoccupiedToOccupiedThreshold,
-    pref = "stse.sensitivity",
-    min = 1, max = 3,
-  },
-}
--- HoldTime comes with lua libs api 13 (OccupancySensing revision 5); on older libs even looking it up raises an error
-if version.api >= 13 then
-  table.insert(settings, {
-    -- HoldTime is the device's shipped 20 s (a 10 s rest after motion, then 10 s of radar check that each radar detection restarts) plus the presence hold time; max keeps it within HoldTimeLimits 1..300
-    attr = clusters.OccupancySensing.attributes.HoldTime,
-    pref = "stse.presenceHoldTime",
-    min = 0, max = 280,
-    to_device = function(seconds) return 20 + seconds end,
-  })
-end
-
-local function write_setting(device, setting, preference)
-  local value = tonumber(preference)
+-- HoldTime is the device's shipped 20 s (a 10 s rest after motion, then 10 s of radar check that each radar detection restarts) plus the presence hold time; 280 keeps it within HoldTimeLimits 1..300
+local function write_presence_hold_time(device, preference)
+  local seconds = tonumber(preference)
   local ep = device:get_endpoints(clusters.OccupancySensing.ID)[1]
-  if value == nil or ep == nil then
+  if seconds == nil or ep == nil then
     return
   end
-  value = st_utils.clamp_value(math.floor(value), setting.min, setting.max)
-  device:send(setting.attr:write(device, ep, setting.to_device and setting.to_device(value) or value))
+  seconds = st_utils.clamp_value(math.floor(seconds), 0, 280)
+  device:send(clusters.OccupancySensing.attributes.HoldTime:write(device, ep, 20 + seconds))
 end
 
 local ThingsOneLifecycleHandlers = {}
 
--- Keeps the base driver from re-matching the device to a profile without these settings
+-- Keeps the base driver from re-matching the device to a profile without the presence hold time setting
 function ThingsOneLifecycleHandlers.do_configure(driver, device)
   device:try_update_metadata({profile = PROFILE})
 end
@@ -62,10 +44,9 @@ function ThingsOneLifecycleHandlers.info_changed(driver, device, event, args)
   end
   local old = args.old_st_store.preferences or {}
   local new = device.preferences or {}
-  for _, setting in ipairs(settings) do
-    if new[setting.pref] ~= nil and new[setting.pref] ~= old[setting.pref] then
-      write_setting(device, setting, new[setting.pref])
-    end
+  -- HoldTime comes with lua libs api 13 (OccupancySensing revision 5); on older libs even looking it up raises an error
+  if version.api >= 13 and new[PRESENCE_HOLD_TIME] ~= nil and new[PRESENCE_HOLD_TIME] ~= old[PRESENCE_HOLD_TIME] then
+    write_presence_hold_time(device, new[PRESENCE_HOLD_TIME])
   end
 end
 
