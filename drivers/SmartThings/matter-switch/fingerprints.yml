@@ -4367,6 +4367,12 @@ matterManufacturer:
     vendorId: 0x128F
     productId: 0x80A1
     deviceProfileName: light-color-level
+#Xiaolei
+  - id: "5535/47363"
+    deviceLabel: MA-C5
+    vendorId: 0x159F
+    productId: 0xB903
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
