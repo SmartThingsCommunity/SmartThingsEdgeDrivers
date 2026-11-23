@@ -45,7 +45,7 @@ deviceConfig:
         "value": "lock.value",
         "operator": "DOES_NOT_EQUAL",
         "operand": "unlatched"
-      }
+        }
   detailView:
   - component: main
     capability: lock

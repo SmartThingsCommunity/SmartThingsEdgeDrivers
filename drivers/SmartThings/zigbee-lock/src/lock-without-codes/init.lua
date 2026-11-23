@@ -2,9 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 
-local configurationMap = require "configurations"
+local configurationMap = require "lock-without-codes.configurations"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
+local consts = require "lock_utils.constants"
 
 local DoorLock = clusters.DoorLock
 local PowerConfiguration = clusters.PowerConfiguration
@@ -12,6 +13,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 
 
 local function device_init(driver, device)
+  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- these locks have no codes, so they do not require any legacy functionality.
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
@@ -73,7 +75,7 @@ local lock_without_codes = {
       }
     }
   },
-  can_handle = require("legacy-handlers.lock-without-codes.can_handle")
+  can_handle = require("lock-without-codes.can_handle")
 }
 
 return lock_without_codes
