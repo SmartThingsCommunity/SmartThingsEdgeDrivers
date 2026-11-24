@@ -7,6 +7,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local LockDefaults = require "st.zwave.defaults.lock"
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
+local migrate_codes = require "legacy-handlers.migrate"
 
 local init_handler = function(driver, device, event)
   local constants = require "st.zwave.constants"
@@ -49,50 +50,8 @@ local function update_codes(driver, device, cmd)
   end
 end
 
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd table
 local function migrate(driver, device, cmd)
-  local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
-  local get_lock_codes = LockCodesDefaults.get_lock_codes
-  local lock_users = {}
-  local lock_credentials = {}
-  local lock_codes = get_lock_codes(device)
-  local ordered_codes = {}
-
-  for code in pairs(lock_codes) do
-    table.insert(ordered_codes, code)
-  end
-
-  table.sort(ordered_codes)
-  for index = 1, #ordered_codes do
-    local code_slot, code_name = ordered_codes[index], lock_codes[ ordered_codes[index] ]
-    table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
-    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
-  end
-  device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
-
-  local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  if code_length then
-    device:emit_event(capabilities.lockCredentials.minPinCodeLen(code_length, { visibility = { displayed = false } }))
-    device:emit_event(capabilities.lockCredentials.maxPinCodeLen(code_length, { visibility = { displayed = false } }))
-  end
-
-  local max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
-  if max_codes then
-    device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
-    device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
-  else
-    -- if we don't have a code length, request it from the device
-    device:send(UserCode:UsersNumberGet({}))
-  end
-
-  device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-  local consts = require("lock_utils.constants")
-
-  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
+  migrate_codes(driver, device)
 end
 
 local legacy_capabilities = {

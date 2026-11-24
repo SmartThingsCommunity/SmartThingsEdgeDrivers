@@ -31,8 +31,6 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     }
   }
 )
-mock_device:set_field("preferences", {["stse.knobSensitivity"] = 2}, {persist = true})
-
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
@@ -132,37 +130,45 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "rotation_monitor_per_handler - sensitivity 0.5x",
   function()
-    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 1})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(
+      {preferences = {["stse.knobSensitivity"] = 1}}))
+    test.wait_for_events()
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 3 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
+    -- raw 3 * 0.5 = 1.5, rounded half-up to 2
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 3}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 2}, {state_change = true})))
   end
 )
 
 test.register_coroutine_test(
   "rotation_monitor_per_handler - sensitivity 2.0x",
   function()
-    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 3})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(
+      {preferences = {["stse.knobSensitivity"] = 3}}))
+    test.wait_for_events()
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 5 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
+    -- raw 5 * 2.0 = 10
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 5}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 10}, {state_change = true})))
   end
 )
 
 test.register_coroutine_test(
   "rotation_monitor_per_handler - held rotate amount",
   function()
-    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 2})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(
+      {preferences = {["stse.knobSensitivity"] = 2}}))
+    test.wait_for_events()
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 15 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,

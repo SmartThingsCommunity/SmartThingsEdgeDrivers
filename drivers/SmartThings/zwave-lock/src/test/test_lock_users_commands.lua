@@ -298,6 +298,37 @@ test.register_coroutine_test(
       min_api_version = 15
     })
 
+test.register_coroutine_test(
+  "addCredential: returns resourceExhausted for a new user when totalUsersSupported has been reached",
+  function()
+    -- Both supported users exist but only one has a credential, so the credentials table is not full.
+    set_total_users_supported(2)
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+    })
+    seed_credentials({ { userIndex = 1, credentialIndex = 1, credentialType = "pin" } })
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCredentials.ID, command = "addCredential",
+        args = { 0, "guest", "pin", "1234" } },
+    })
+    -- No Z-Wave message should be sent
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.commandResult(
+          { commandName = "addCredential", statusCode = "resourceExhausted" },
+          { state_change = true, visibility = { displayed = false } }
+        ))
+    )
+    test.wait_for_events()
+  end
+,
+    {
+      min_api_version = 15
+    })
+
 -- ============================================================================
 -- updateUser
 -- ============================================================================
@@ -340,7 +371,7 @@ test.register_coroutine_test(
     })
 
 test.register_coroutine_test(
-  "updateUser: creates user when userIndex does not exist",
+  "updateUser: fails for a userIndex that does not exist and does not create it",
   function()
     -- empty table — nothing to update
     test.socket.capability:__queue_receive({
@@ -350,18 +381,8 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockUsers.users(
-          {
-            { userIndex = 99, userName = "Ghost", userType = "guest" },
-          },
-          { visibility = { displayed = false } }
-        ))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
         capabilities.lockUsers.commandResult(
-          { commandName = "updateUser", statusCode = "success", userIndex = 99 },
+          { commandName = "updateUser", statusCode = "failure" },
           { state_change = true, visibility = { displayed = false } }
         ))
     )
@@ -469,7 +490,7 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "deleteAllUsers: sends ClearAllPINCodes and emits success for both users and credentials on PASS",
+  "deleteAllUsers: sends a single UserCode Set for identifier 0 and emits success for both users and credentials on PASS",
   function()
     seed_users({
       { userIndex = 1, userName = "Alice", userType = "guest" },
@@ -485,19 +506,13 @@ test.register_coroutine_test(
       { capability = capabilities.lockUsers.ID, command = "deleteAllUsers", args = {} },
     })
 
-    test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(0.5, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(8, "oneshot")
-    test.mock_time.advance_time(0)
-    expect_clear_pin_code(1)
-    test.wait_for_events()
-    test.mock_time.advance_time(0.5)
-    expect_clear_pin_code(2)
+    test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+    expect_clear_pin_code(0)
     test.wait_for_events()
 
     -- The legacy subdriver consumes deletion notifications for this mock profile; advance
     -- to the driver's cleanup timer, which clears both tables and reports success.
-    test.mock_time.advance_time(8)
+    test.mock_time.advance_time(4)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users({}, { visibility = { displayed = false } }))

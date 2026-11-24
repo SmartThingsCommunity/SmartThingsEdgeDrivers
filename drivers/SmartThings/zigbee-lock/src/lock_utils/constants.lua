@@ -12,8 +12,17 @@ lock_constants.DRIVER_STATE = {
 
 lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
-  CODE_INDEX = "syncCodeIndex",
+  CODE_INDEX = "syncCodeIndex", -- persisted until codesSynced is set
+  CODE_INDEX_VERSION = "syncCodeIndexVersion", -- persisted; the CODES_SYNC_VERSION under which CODE_INDEX was started
   CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
+  CODES_SYNCED = "codesSynced", -- persisted; holds the CODES_SYNC_VERSION of the last completed code sync
+  CODES_SYNC_VERSION = 1, -- bump to force every device to re-sync its codes (a mismatch with codesSynced triggers it; with syncCodeIndexVersion, restarts from index 0)
+}
+
+-- constants defining programming code representation in the lock's state tables.
+lock_constants.PROGRAMMING_USER = {
+  USER_TYPE = "programmingUser",
+  DEFAULT_NAME = "Programming Code"
 }
 
 lock_constants.COMMAND_RESULT = {
