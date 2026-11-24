@@ -7,14 +7,11 @@ local cc = require "st.zwave.CommandClass"
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 2 })
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 3 })
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local ThermostatOperatingState =
   (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
--- Short aliases: these setpoint_type values are referenced ~15 times below.
 local HEATING_1 = ThermostatSetpoint.setpoint_type.HEATING_1
 local COOLING_1 = ThermostatSetpoint.setpoint_type.COOLING_1
 
@@ -22,16 +19,18 @@ local COOLING_1 = ThermostatSetpoint.setpoint_type.COOLING_1
 -- Everything in this subdriver exists only where the base zwave-thermostat
 -- driver's default handlers (st.zwave.defaults.*) fall short for this device:
 --   * fan mode: this device reports/expects AUTO_HIGH/HIGH on the wire
---     (confirmed on a real device), but the default fan-mode handling only
---     ever checks AUTO_LOW/LOW/CIRCULATION -- relying on it would silently
---     stop fan mode from updating for this device.
+--     (confirmed on a real device). The default SupportedReport handler only
+--     checks low/auto/circulation (never high/auto_high), and the default
+--     Set handlers only ever send AUTO_LOW/LOW/CIRCULATION -- so the
+--     supported-list and the Set path still need overriding, even though
+--     the default Report parser already handles AUTO_HIGH/HIGH correctly.
 --   * setpoint deadband enforcement (the defaults have none)
 --   * setpoint report rounding/precision + a missing-HEAT-report retry
 --     (real quirks observed on this device)
 --   * heat-pump auxiliary/second-stage operating states 7-11 (the default
 --     operating-state handler only maps 0-6)
--- Thermostat mode, battery, and plain temperature/humidity reporting are
--- left to the base driver's defaults.
+-- Thermostat mode, battery, plain temperature/humidity reporting, fan-mode
+-- report parsing, and refresh are left to the base driver's defaults.
 ----------------------------------------------------------------------
 
 local function send_after(device, delay_s, fn)
@@ -98,27 +97,6 @@ local function setpoint_size_for(wire_scale)
   return (wire_scale == ThermostatSetpoint.scale.CELSIUS) and 2 or nil
 end
 
-local function poll_room_temp(device)
-  if not device:is_cc_supported(cc.SENSOR_MULTILEVEL) then return end
-  local wire_scale = get_wire_scale(device)
-  local sm_scale =
-    (wire_scale == ThermostatSetpoint.scale.FAHRENHEIT)
-      and SensorMultilevel.scale.FAHRENHEIT
-      or  SensorMultilevel.scale.CELSIUS
-  device:send(SensorMultilevel:Get({
-    sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-    scale       = sm_scale
-  }))
-end
-
-local function poll_humidity(device)
-  if not device:is_cc_supported(cc.SENSOR_MULTILEVEL) then return end
-  device:send(SensorMultilevel:Get({
-    sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-    scale       = SensorMultilevel.scale.relative_humidity.PERCENTAGE
-  }))
-end
-
 -- Read the *other* setpoint (cool when setting heat, or heat when setting cool)
 -- and express it in the same wire scale for deadband checks.
 local function latest_other_in_wire(device, attr_capability, attr_name, wire_scale)
@@ -131,22 +109,8 @@ local function latest_other_in_wire(device, attr_capability, attr_name, wire_sca
   end
 end
 
-local function clamp_and_round(value, min_v, max_v, precision)
-  local v = math.min(math.max(value, min_v), max_v)
-  if precision then
-    local p = 10 ^ precision
-    v = math.floor(v * p + 0.5) / p
-  end
-  return v
-end
-
--- Absolute limits expressed in the device's active wire scale
-local function abs_limits_in_wire(wire_scale)
-  if wire_scale == ThermostatSetpoint.scale.FAHRENHEIT then
-    return 45.0, 99.0  -- heat_abs_min, cool_abs_max
-  else
-    return utils.f_to_c(45.0), utils.f_to_c(99.0)
-  end
+local function clamp(value, min_v, max_v)
+  return math.min(math.max(value, min_v), max_v)
 end
 
 local HEAT_MIN_F, HEAT_MAX_F = 45.0, 97.0
@@ -167,17 +131,20 @@ end
 
 local function device_caps_in_wire(wire_scale)
   if wire_scale == ThermostatSetpoint.scale.FAHRENHEIT then
-    return math.max(HEAT_MIN_F, 45.0), HEAT_MAX_F, COOL_MIN_F, math.min(COOL_MAX_F, 99.0)
+    return HEAT_MIN_F, HEAT_MAX_F, COOL_MIN_F, COOL_MAX_F
   else
-    return utils.f_to_c(math.max(HEAT_MIN_F, 45.0)), utils.f_to_c(HEAT_MAX_F),
-           utils.f_to_c(COOL_MIN_F), utils.f_to_c(math.min(COOL_MAX_F, 99.0))
+    return utils.f_to_c(HEAT_MIN_F), utils.f_to_c(HEAT_MAX_F),
+           utils.f_to_c(COOL_MIN_F), utils.f_to_c(COOL_MAX_F)
   end
 end
 
 -- Shared by set_heating_setpoint/set_cooling_setpoint: enforce the deadband
 -- between the two setpoints, pushing the *other* one out of the way first
--- (sent before the requested one) when needed, or rejecting the request if
--- doing so would itself exceed the absolute limit.
+-- (sent before the requested one) when needed.
+--
+-- Note: with heat clamped to <=97 and cool clamped to >=47 (deadband 2), the
+-- pushed-other value can never itself exceed the opposing absolute limit
+-- (97+2=99, 47-2=45), so there is no separate "reject, out of range" case.
 --
 -- is_heat: true when setting the heating setpoint, false for cooling.
 local function enforce_deadband_and_set(device, cmd, is_heat)
@@ -199,7 +166,7 @@ local function enforce_deadband_and_set(device, cmd, is_heat)
       capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME
   end
 
-  local tgt_this = clamp_and_round(requested, this_min, this_max, nil)
+  local tgt_this = clamp(requested, this_min, this_max)
   local cur_other = latest_other_in_wire(device, other_capability, other_attr, wire_scale)
 
   local violates
@@ -224,28 +191,8 @@ local function enforce_deadband_and_set(device, cmd, is_heat)
     return
   end
 
-  -- Would violate -> compute the required OTHER setpoint and check its absolute limit
   local needed_other = is_heat and (tgt_this + db) or (tgt_this - db)
-  local heat_abs_min, cool_abs_max = abs_limits_in_wire(wire_scale)
-  local other_abs_limit_violated
-  if is_heat then
-    other_abs_limit_violated = needed_other > cool_abs_max
-  else
-    other_abs_limit_violated = needed_other < heat_abs_min
-  end
-
-  if other_abs_limit_violated then
-    log.warn(string.format(
-      "[%s set %.1f] Rejecting: other setpoint would need to be %.1f, out of range",
-      is_heat and "HEAT" or "COOL", tgt_this, needed_other))
-    request_sequence(device, {
-      function() device:send(ThermostatSetpoint:Get({ setpoint_type = this_type })) end,
-      function() device:send(ThermostatSetpoint:Get({ setpoint_type = other_type })) end,
-    }, 0.6, 0.2)
-    return
-  end
-
-  local tgt_other = clamp_and_round(needed_other, other_min, other_max, nil)
+  local tgt_other = clamp(needed_other, other_min, other_max)
   local val_other, prec_other = normalize_out(tgt_other, wire_scale)
   local val_this2, prec_this2 = normalize_out(tgt_this, wire_scale)
 
@@ -280,59 +227,24 @@ end
 
 ----------------------------------------------------------------------
 -- Fan mode -- this device reports/expects AUTO_HIGH/HIGH on the wire, never
--- AUTO_LOW/LOW, so the base driver's defaults (which never check
--- HIGH/AUTO_HIGH) are not sufficient here. Confirmed on a real device via
--- ThermostatFanMode SUPPORTED_REPORT (auto_high=true, high=true, on_high=true)
--- and REPORT (fan_mode="AUTO_HIGH"/"HIGH").
+-- AUTO_LOW/LOW (confirmed on a real device via SUPPORTED_REPORT auto_high=
+-- true, high=true, circulation=false, and REPORT fan_mode="AUTO_HIGH"/"HIGH").
+-- The default Report parser already handles AUTO_HIGH/HIGH, so it's left
+-- alone; only the SupportedReport parsing and the Set path need overriding.
 ----------------------------------------------------------------------
-
-local function zw_fan_mode_to_capability(val)
-  local fm = ThermostatFanMode.fan_mode or {}
-  local num = (type(val) == "number" and val) or (fm[val])
-  if num == nil then return nil end
-  if num == fm.AUTO_LOW or num == fm.AUTO_MEDIUM or num == fm.AUTO_HIGH then return "auto" end
-  if num == fm.LOW or num == fm.MEDIUM or num == fm.HIGH then return "on" end
-  if num == fm.CIRCULATION then return "circulate" end
-  return nil
-end
-
-local function fan_mode_report(_, device, cmd)
-  -- Examples seen: cmd.args.fan_mode = "HIGH" (string) or a number
-  local cap = zw_fan_mode_to_capability(cmd.args.fan_mode)
-  if cap then
-    device:emit_event_for_endpoint(
-      cmd.src_channel,
-      capabilities.thermostatFanMode.thermostatFanMode(cap)
-    )
-  end
-end
 
 local function fan_mode_supported_report(_, device, cmd)
   local a = cmd.args or {}
   local supported = {}
 
-  -- Style A: boolean fields (confirmed on a real device: auto_high=true, high=true, ...)
-  if type(a.auto_high) == "boolean" or type(a.auto_low) == "boolean" then
-    if a.auto_low or a.auto_medium or a.auto_high then
-      table.insert(supported, "auto")
-    end
-    if a.low or a.medium or a.high or a.on or a.on_high then
-      table.insert(supported, "on")
-    end
-    if a.circulation then
-      table.insert(supported, "circulate")
-    end
-  else
-    -- Style B: numeric bitmask
-    local sm = a.supported or {}
-    local tfm = ThermostatFanMode.fan_mode or {}
-    local auto_any = sm[tfm.AUTO_LOW] or sm[tfm.AUTO_MEDIUM] or sm[tfm.AUTO_HIGH]
-    local on_any = sm[tfm.LOW] or sm[tfm.MEDIUM] or sm[tfm.HIGH]
-    local circ = sm[tfm.CIRCULATION]
-
-    if auto_any then table.insert(supported, "auto") end
-    if on_any then table.insert(supported, "on") end
-    if circ then table.insert(supported, "circulate") end
+  if a.auto or a.auto_high then
+    table.insert(supported, "auto")
+  end
+  if a.low or a.high then
+    table.insert(supported, "on")
+  end
+  if a.circulation then
+    table.insert(supported, "circulate")
   end
 
   if #supported > 0 then
@@ -340,21 +252,11 @@ local function fan_mode_supported_report(_, device, cmd)
   end
 end
 
--- choose enums the device actually supports
-local function _pick_auto_enum()
-  local fm = ThermostatFanMode.fan_mode or {}
-  return fm.AUTO_HIGH or fm.AUTO_LOW            -- prefer AUTO_HIGH if available
-end
-
-local function _pick_on_enum()
-  local fm = ThermostatFanMode.fan_mode or {}
-  return fm.HIGH or fm.LOW                      -- prefer HIGH if available
-end
-
+-- This device only ever reports/accepts AUTO_HIGH and HIGH (confirmed on a
+-- real device; circulation is not supported).
 local FAN_MAP = {
-  ["auto"]      = _pick_auto_enum(),
-  ["on"]        = _pick_on_enum(),
-  ["circulate"] = (ThermostatFanMode.fan_mode and ThermostatFanMode.fan_mode.CIRCULATION) or 0x06,
+  ["auto"] = ThermostatFanMode.fan_mode.AUTO_HIGH,
+  ["on"]   = ThermostatFanMode.fan_mode.HIGH,
 }
 
 local function set_fan_mode(driver, device, cmd)
@@ -390,122 +292,23 @@ end
 -- Lifecycle
 ----------------------------------------------------------------------
 
-local function device_init(driver, device)
-  -- Force device scale to °F (persist). Reports can overwrite later if needed.
-  device:set_field(
-    constants.TEMPERATURE_SCALE, ThermostatSetpoint.scale.FAHRENHEIT, { persist = true })
-
-  -- Stagger Supported* and current-value requests: this radio can't handle
-  -- simultaneous requests at join.
-  request_sequence(device, {
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_MODE) then
-        device:send(ThermostatMode:SupportedGet({}))
-      end
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
-        device:send(ThermostatFanMode:SupportedGet({}))
-      end
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
-        device:send(ThermostatSetpoint:Get({ setpoint_type = HEATING_1 }))
-      end
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
-        device:send(ThermostatSetpoint:Get({ setpoint_type = COOLING_1 }))
-      end
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_MODE) then
-        device:send(ThermostatMode:Get({}))
-      end
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
-        device:send(ThermostatFanMode:Get({}))
-      end
-    end,
-    function()
-      poll_room_temp(device)
-    end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_OPERATING_STATE) then
-        device:send(ThermostatOperatingState:Get({}))
-      end
-    end,
-    function()
-      poll_humidity(device)
-    end,
-  }, 1.1, 1.2)
-
-  -- Single late retry for mode only — guarded so it only fires if mode is still unknown
-  device.thread:call_with_delay(15.0, function()
-    local cur = device:get_latest_state("main", capabilities.thermostatMode.ID, "thermostatMode")
-    if not cur and device:is_cc_supported(cc.THERMOSTAT_MODE) then
-      device:send(ThermostatMode:Get({}))
-    end
-  end)
-
-  -- Late guards: retry heating setpoint and temperature if still missing after
-  -- radio has fully settled. Handles the case where initial GETs failed and
-  -- the device didn't send unsolicited reports for these during join.
-  device.thread:call_with_delay(12.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.thermostatHeatingSetpoint.ID, "heatingSetpoint")
-    if not cur and device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
-      device:send(ThermostatSetpoint:Get({ setpoint_type = HEATING_1 }))
-    end
-  end)
-
-  device.thread:call_with_delay(14.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.thermostatCoolingSetpoint.ID, "coolingSetpoint")
-    if not cur and device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
-      device:send(ThermostatSetpoint:Get({ setpoint_type = COOLING_1 }))
-    end
-  end)
-
-  device.thread:call_with_delay(16.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.thermostatOperatingState.ID, "thermostatOperatingState")
-    if not cur and device:is_cc_supported(cc.THERMOSTAT_OPERATING_STATE) then
-      device:send(ThermostatOperatingState:Get({}))
-    end
-  end)
-
-  device.thread:call_with_delay(17.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.thermostatFanMode.ID, "thermostatFanMode")
-    if not cur and device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
-      device:send(ThermostatFanMode:Get({}))
-    end
-  end)
-
-  device.thread:call_with_delay(13.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.temperatureMeasurement.ID, "temperature")
-    if not cur then
-      poll_room_temp(device)
-    end
-  end)
-
-  device.thread:call_with_delay(18.0, function()
-    local cur = device:get_latest_state(
-      "main", capabilities.relativeHumidityMeasurement.ID, "humidity")
-    if not cur then
-      poll_humidity(device)
-    end
-  end)
-end
-
+-- Overriding `added` replaces the base driver's own added handler (which does
+-- ThermostatMode/ThermostatFanMode SupportedGet + device:refresh()), so we
+-- replicate that here and add our own seed for operating state.
 local function device_added(driver, device)
+  if device:is_cc_supported(cc.THERMOSTAT_MODE) then
+    device:send(ThermostatMode:SupportedGet({}))
+  end
+  if device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
+    device:send(ThermostatFanMode:SupportedGet({}))
+  end
+
   -- Seed operating state so the provisioning UI doesn't hang waiting for it.
   -- The real value arrives once the radio settles and the GET succeeds.
   device:emit_event(
     capabilities.thermostatOperatingState.thermostatOperatingState({ value = "idle" }))
+
+  device:refresh()
 end
 
 ----------------------------------------------------------------------
@@ -513,39 +316,24 @@ end
 -- driver's default only maps states 0-6)
 ----------------------------------------------------------------------
 
+local OS = ThermostatOperatingState.operating_state
 local OPERATING_STATE_MAP = {
-  -- string enum form (some SDK versions)
-  IDLE                       = "idle",
-  HEATING                    = "heating",
-  COOLING                    = "cooling",
-  FAN_ONLY                   = "fan only",
-  PENDING_HEAT               = "pending heat",
-  PENDING_COOL                = "pending cool",
-  VENT_ECONOMIZER            = "vent economizer",
-  AUX_HEATING                = "heating",
-  SECOND_STAGE_HEATING       = "heating",
-  SECOND_STAGE_COOLING       = "cooling",
-  SECOND_STAGE_AUX_HEAT      = "heating",
-  AUX_PLUS_SECOND_STAGE_HEAT = "heating",
-  -- numeric form (other SDK versions)
-  [0]  = "idle",
-  [1]  = "heating",
-  [2]  = "cooling",
-  [3]  = "fan only",
-  [4]  = "pending heat",
-  [5]  = "pending cool",
-  [6]  = "vent economizer",
-  [7]  = "heating",   -- AUX_HEATING
-  [8]  = "heating",   -- 2ND_STAGE_HEATING (heat pump second stage / aux)
-  [9]  = "cooling",   -- 2ND_STAGE_COOLING
-  [10] = "heating",   -- 2ND_STAGE_AUX_HEAT
-  [11] = "heating",   -- AUX_PLUS_2ND_STAGE_HEAT
+  [OS.IDLE]                  = "idle",
+  [OS.HEATING]               = "heating",
+  [OS.COOLING]               = "cooling",
+  [OS.FAN_ONLY]              = "fan only",
+  [OS.PENDING_HEAT]          = "pending heat",
+  [OS.PENDING_COOL]          = "pending cool",
+  [OS.VENT_ECONOMIZER]       = "vent economizer",
+  [OS.AUX_HEATING]           = "heating",
+  [OS.SECOND_STAGE_HEATING]  = "heating",
+  [OS.SECOND_STAGE_COOLING]  = "cooling",
+  [OS.SECOND_STAGE_AUX_HEAT] = "heating",
+  [OS.THIRD_STAGE_AUX_HEAT]  = "heating",
 }
 
 local function thermostat_operating_state_report(_, device, cmd)
   local state = OPERATING_STATE_MAP[cmd.args.operating_state]
-  log.debug(string.format(
-    "[OperatingState] raw=%s mapped=%s", tostring(cmd.args.operating_state), tostring(state)))
   if state then
     device:emit_event_for_endpoint(
       cmd.src_channel,
@@ -603,29 +391,6 @@ local function thermostat_setpoint_report(_, device, cmd)
 end
 
 ----------------------------------------------------------------------
--- Refresh (staggered, for the same radio-can't-handle-simultaneous-requests
--- reason as device_init; the base driver's default refresh batches all GETs
--- at once)
-----------------------------------------------------------------------
-
-local function refresh_all(self, device)
-  request_sequence(device, {
-    function() poll_room_temp(device) end,
-    function() device:send(ThermostatSetpoint:Get({ setpoint_type = HEATING_1 })) end,
-    function() device:send(ThermostatSetpoint:Get({ setpoint_type = COOLING_1 })) end,
-    function() device:send(ThermostatMode:Get({})) end,
-    function() device:send(ThermostatFanMode:Get({})) end,
-    function() device:send(Battery:Get({})) end,
-    function()
-      if device:is_cc_supported(cc.THERMOSTAT_OPERATING_STATE) then
-        device:send(ThermostatOperatingState:Get({}))
-      end
-    end,
-    function() poll_humidity(device) end,
-  }, 1.0, 0.0)
-end
-
-----------------------------------------------------------------------
 -- Sub-driver table
 ----------------------------------------------------------------------
 
@@ -633,7 +398,6 @@ return {
   NAME = "thermostat-sensi-st25z",
 
   lifecycle_handlers = {
-    init  = device_init,
     added = device_added,
   },
 
@@ -652,9 +416,6 @@ return {
       [capabilities.thermostatFanMode.commands.fanOn.NAME] = fan_on,
       [capabilities.thermostatFanMode.commands.fanCirculate.NAME] = fan_circulate
     },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = refresh_all
-    }
   },
 
   zwave_handlers = {
@@ -663,7 +424,6 @@ return {
     },
     [cc.THERMOSTAT_FAN_MODE] = {
       [ThermostatFanMode.SUPPORTED_REPORT] = fan_mode_supported_report,
-      [ThermostatFanMode.REPORT]           = fan_mode_report,
     },
     [cc.THERMOSTAT_OPERATING_STATE] = {
       [ThermostatOperatingState.REPORT] = thermostat_operating_state_report,

@@ -85,230 +85,33 @@ end
 test.set_test_init_function(test_init)
 
 ----------------------------------------------------------------------
--- Lifecycle: added
+-- Lifecycle: added -- overriding `added` replaces the base driver's own
+-- (Supported* + device:refresh()), so our handler replicates that and adds
+-- the idle-operating-state seed. Order among the refresh GETs isn't
+-- meaningful (unstaggered, hub-queued), so this uses relaxed ordering.
 ----------------------------------------------------------------------
-
-test.register_message_test(
-  "Added lifecycle event should seed an idle operating state so provisioning doesn't hang",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_device.id, "added" }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "idle" }))
-    }
-  }
-)
-
-----------------------------------------------------------------------
--- Lifecycle: init - staggered request_sequence + late-guard retries
---
--- device_init schedules, in this exact source order:
---   9 request_sequence steps at 1.2, 2.3, 3.4, 4.5, 5.6, 6.7, 7.8, 8.9, 10.0s
---   then 7 individual guarded retries at 15.0, 12.0, 14.0, 16.0, 17.0, 13.0, 18.0s
--- (that creation order matters because the test's mock timer queue is FIFO:
--- each device.thread:call_with_delay() pops the next queued timer regardless
--- of its delay value.)
-----------------------------------------------------------------------
-
-local INIT_TIMER_DELAYS = {
-  1.2, 2.3, 3.4, 4.5, 5.6, 6.7, 7.8, 8.9, 10.0, 15.0, 12.0, 14.0, 16.0, 17.0, 13.0, 18.0
-}
-
-local function queue_init_timers()
-  for _, delay in ipairs(INIT_TIMER_DELAYS) do
-    test.timer.__create_and_queue_test_time_advance_timer(delay, "oneshot")
-  end
-end
 
 test.register_coroutine_test(
-  "Device init should stage Supported/current-value GETs on schedule, then fire " ..
-  "every late-guard retry when state is still missing",
-  function()
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    queue_init_timers()
-
-    test.socket.device_lifecycle():__queue_receive({ mock_device.id, "init" })
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.2)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:SupportedGet({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 2.3
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:SupportedGet({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 3.4
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 4.5
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 5.6
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 6.7
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 7.8
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = SensorMultilevel.scale.CELSIUS }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 8.9
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.1) -- 10.0
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE }))
-    )
-    test.wait_for_events()
-
-    -- Nothing has reported state back yet, so every late guard should retry.
-    test.mock_time.advance_time(2.0) -- 12.0: heating setpoint retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 13.0: room temperature retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = SensorMultilevel.scale.FAHRENHEIT }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 14.0: cooling setpoint retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 }))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 15.0: mode retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 16.0: operating state retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 17.0: fan mode retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({}))
-    )
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0) -- 18.0: humidity retry
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Device init late-guard retries should NOT re-fire once the corresponding state is already known",
+  "Added lifecycle event should request Supported* reports, seed an idle " ..
+  "operating state, and refresh every other attribute",
   function()
     test.socket.zwave:__set_channel_ordering("relaxed")
 
-    -- Seed every piece of state a late guard checks for, via direct emit_event
-    -- (bypassing the protocol report handlers so we don't consume extra
-    -- entries from the shared mock timer queue, e.g. the COOLING_1 report
-    -- handler's own follow-up timer).
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 70, unit = "F" })))
-    mock_device:emit_event(
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 70, unit = "F" }))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 75, unit = "F" })))
-    mock_device:emit_event(
-      capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 75, unit = "F" }))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode("heat")))
-    mock_device:emit_event(capabilities.thermostatMode.thermostatMode("heat"))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "heating" })))
-    mock_device:emit_event(
-      capabilities.thermostatOperatingState.thermostatOperatingState({ value = "heating" }))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.thermostatFanMode("auto")))
-    mock_device:emit_event(capabilities.thermostatFanMode.thermostatFanMode("auto"))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.temperatureMeasurement.temperature({ value = 68, unit = "F" })))
-    mock_device:emit_event(
-      capabilities.temperatureMeasurement.temperature({ value = 68, unit = "F" }))
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.relativeHumidityMeasurement.humidity({ value = 45 })))
-    mock_device:emit_event(capabilities.relativeHumidityMeasurement.humidity({ value = 45 }))
-
-    test.wait_for_events()
-
-    queue_init_timers()
-    test.socket.device_lifecycle():__queue_receive({ mock_device.id, "init" })
-    test.wait_for_events()
-
-    -- The first pass of GETs is unconditional (not guarded), so it still fires.
-    test.mock_time.advance_time(10.0)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:SupportedGet({})))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:SupportedGet({})))
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.thermostatOperatingState.thermostatOperatingState({ value = "idle" })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({
+          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
+          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device,
         ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 })))
@@ -320,30 +123,20 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
     test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = SensorMultilevel.scale.CELSIUS })))
+      zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({})))
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-      SensorMultilevel:Get({
-        sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-        scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
-    test.wait_for_events()
 
-    -- Every late guard (12, 13, 14, 15, 16, 17, 18s) should now see state already
-    -- present and skip its retry: no further zwave sends are expected at all.
-    test.mock_time.advance_time(8.0) -- through 18.0
+    test.socket.device_lifecycle():__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
   end
 )
 
 ----------------------------------------------------------------------
--- Thermostat fan mode -- custom, since this device reports/expects
--- AUTO_HIGH/HIGH on the wire, never AUTO_LOW/LOW (confirmed on a real
--- device); the base driver's defaults only ever check LOW/AUTO_LOW.
+-- Thermostat fan mode -- this device reports/expects AUTO_HIGH/HIGH on the
+-- wire, never AUTO_LOW/LOW (confirmed on a real device). The default Report
+-- parser already handles AUTO_HIGH/HIGH, so only SupportedReport parsing and
+-- the Set path are overridden here.
 ----------------------------------------------------------------------
 
 test.register_message_test(
@@ -398,7 +191,8 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "An unsolicited ThermostatFanMode:Report should update the thermostatFanMode capability",
+  "An unsolicited ThermostatFanMode:Report should update the thermostatFanMode " ..
+  "capability (via the base driver's default Report parser)",
   {
     {
       channel = "zwave",
@@ -419,19 +213,19 @@ test.register_message_test(
 
 test.register_message_test(
   "Supported fan mode report (boolean style, confirmed as what the real ST25Z " ..
-  "sends) should populate the supported-values list",
+  "sends: auto_high/high, no circulation) should populate the supported-values list",
   {
     {
       channel = "zwave",
       direction = "receive",
       message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-        ThermostatFanMode:SupportedReport({ auto_high = true, high = true, circulation = true })) }
+        ThermostatFanMode:SupportedReport({ auto_high = true, high = true })) }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on", "circulate" }))
+        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on" }))
     },
   }
 )
@@ -820,71 +614,6 @@ test.register_message_test(
         capabilities.thermostatOperatingState.thermostatOperatingState({ value = "cooling" }))
     },
   }
-)
-
-----------------------------------------------------------------------
--- refresh
-----------------------------------------------------------------------
-
-test.register_coroutine_test(
-  "Refresh capability command should re-poll all eight attributes on schedule",
-  function()
-    for _, delay in ipairs({ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 }) do
-      test.timer.__create_and_queue_test_time_advance_timer(delay, "oneshot")
-    end
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "refresh", command = "refresh", args = {} }
-    })
-    -- The first step has a 0.0s delay, so its timer is ready immediately --
-    -- the expectation must be registered before the first wait_for_events().
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          scale = SensorMultilevel.scale.FAHRENHEIT })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 })))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({})))
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1.0)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(mock_device,
-        SensorMultilevel:Get({
-          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
-  end
 )
 
 test.run_registered_tests()
