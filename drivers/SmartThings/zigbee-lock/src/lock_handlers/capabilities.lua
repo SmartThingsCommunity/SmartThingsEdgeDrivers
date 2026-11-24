@@ -64,19 +64,10 @@ function CapabilityHandlers.update_user(driver, device, command)
     return
   end
 
-  local result_status
-  if not tables.find_entry(device, "users", command.args.userIndex) then
-    result_status = tables.add_entry(device, "users", {
-      userIndex = command.args.userIndex,
-      userName  = command.args.userName,
-      userType  = command.args.userType,
-    })
-  else
-    result_status = tables.update_entry(device, "users",
-      command.args.userIndex,
-      { userName = command.args.userName, userType = command.args.userType }
-    )
-  end
+  local result_status = tables.update_entry(device, "users",
+    command.args.userIndex,
+    { userName = command.args.userName, userType = command.args.userType }
+  )
 
   local additional_info = result_status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex }
   lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, result_status, additional_info)
