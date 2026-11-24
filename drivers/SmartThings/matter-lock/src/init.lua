@@ -1281,7 +1281,7 @@ end
 
 -- An error status for GetUser carries the path of the request command, not GetUserResponse.
 local function get_user_error_handler(driver, device, ib, response)
-  -- A successful GetUser also reports a SUCCESS status for the command alongside the GetUserResponse.
+  -- A successful GetUser sometimes reports a SUCCESS status for the command alongside the GetUserResponse.
   if ib.status == im.InteractionResponse.Status.SUCCESS then return end
   if lock_sync.is_syncing(device) then
     lock_sync.get_user_response_handler(device, ib)
