@@ -106,8 +106,8 @@ local function merge_users(device, reported_users)
   for i, user in ipairs(users) do
     local st_user = st_user_for[i]
     read_user_indices[user.userIndex] = true
-    -- the stored/legacy name, else the name held by the lock, else a name made from the user index
-    local user_name = st_user and st_user.userName or user.userName or string.format("Guest %d", user.userIndex)
+    -- the stored/legacy name, else a name made from the user index
+    local user_name = st_user and st_user.userName or string.format("Guest %d", user.userIndex)
     table.insert(user_table, {
       userIndex = user.userIndex,
       userName = user_name,
@@ -269,11 +269,9 @@ function sync.get_user_response_handler(device, ib)
         table.insert(pins, fields.credential_index.value)
       end
     end
-    local user_name = elements.user_name and elements.user_name.value
     local reported_users = utils.deep_copy(device:get_field(REPORTED_USERS) or {})
     table.insert(reported_users, {
       userIndex = user_index,
-      userName = (user_name ~= nil and user_name ~= "") and user_name or nil,
       pins = pins,
       remoteOnly = elements.user_type ~= nil and elements.user_type.value == clusters.DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER,
     })

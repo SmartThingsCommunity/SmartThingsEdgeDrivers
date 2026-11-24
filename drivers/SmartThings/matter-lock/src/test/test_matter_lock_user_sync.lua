@@ -128,14 +128,14 @@ test.register_coroutine_test(
     )})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockUsers.users({
-        {userIndex = 1, userName = "Alice", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
         {userIndex = 4, userName = "Guest 4", userType = "guest"},
       }, {visibility = {displayed = false}})
     ))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCredentials.credentials({
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 1, credentialIndex = 5, credentialType = "pin", credentialName = "Alice"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 1, credentialIndex = 5, credentialType = "pin", credentialName = "Guest 1"},
         {userIndex = 4, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 4"},
       }, {visibility = {displayed = false}})
     ))
@@ -221,12 +221,12 @@ test.register_coroutine_test(
     )})
     expect_tables(
       {
-        {userIndex = 1, userName = "Alice", userType = "guest"},
-        {userIndex = 4, userName = "Dan", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
+        {userIndex = 4, userName = "Guest 4", userType = "guest"},
       },
       {
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 4, credentialIndex = 2, credentialType = "pin", credentialName = "Dan"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 4, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 4"},
       }
     )
     test.wait_for_events()
@@ -248,12 +248,12 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({mock_device.id, get_user_response(3, "Bob", OCCUPIED, UNRESTRICTED, {pin(2)}, nil)})
     expect_tables(
       {
-        {userIndex = 1, userName = "Alice", userType = "guest"},
-        {userIndex = 3, userName = "Bob", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
+        {userIndex = 3, userName = "Guest 3", userType = "guest"},
       },
       {
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Bob"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 3"},
       }
     )
     test.wait_for_events()
@@ -273,12 +273,12 @@ test.register_coroutine_test(
     -- Bob is still in the tables
     expect_tables(
       {
-        {userIndex = 1, userName = "Alice", userType = "guest"},
-        {userIndex = 3, userName = "Bob", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
+        {userIndex = 3, userName = "Guest 3", userType = "guest"},
       },
       {
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Bob"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 3"},
       }
     )
     test.wait_for_events()
@@ -306,8 +306,8 @@ test.register_coroutine_test(
       13, "", types.UserStatusEnum.OCCUPIED_ENABLED, types.UserTypeEnum.REMOTE_ONLY_USER, {pin(12)}, nil
     )})
     expect_tables(
-      {{userIndex = 1, userName = "Alice", userType = "guest"}},
-      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"}}
+      {{userIndex = 1, userName = "Guest 1", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"}}
     )
     test.wait_for_events()
   end,
@@ -353,12 +353,12 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({mock_device.id, get_user_response(3, "Bob", OCCUPIED, UNRESTRICTED, {pin(2)}, nil)})
     expect_tables(
       {
-        {userIndex = 1, userName = "Alice", userType = "guest"},
-        {userIndex = 3, userName = "Bob", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
+        {userIndex = 3, userName = "Guest 3", userType = "guest"},
       },
       {
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Bob"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 3"},
       }
     )
     test.wait_for_events()
@@ -433,8 +433,8 @@ test.register_coroutine_test(
     -- user 3 does not answer in time
     test.mock_time.advance_time(10)
     expect_tables(
-      {{userIndex = 1, userName = "Alice", userType = "guest"}},
-      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"}}
+      {{userIndex = 1, userName = "Guest 1", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"}}
     )
     test.wait_for_events()
     assert(mock_device:get_field(lock_sync.USERS_SYNCED) == nil, "sync should not be complete")
@@ -445,12 +445,12 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({mock_device.id, get_user_response(3, "Bob", OCCUPIED, UNRESTRICTED, {pin(2)}, nil)})
     expect_tables(
       {
-        {userIndex = 1, userName = "Alice", userType = "guest"},
-        {userIndex = 3, userName = "Bob", userType = "guest"},
+        {userIndex = 1, userName = "Guest 1", userType = "guest"},
+        {userIndex = 3, userName = "Guest 3", userType = "guest"},
       },
       {
-        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"},
-        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Bob"},
+        {userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"},
+        {userIndex = 3, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 3"},
       }
     )
     test.wait_for_events()
@@ -502,6 +502,8 @@ local function store_tables_like_old_migration(codes)
     table.insert(users, {userIndex = slot, userName = name, userType = "guest"})
     table.insert(creds, {userIndex = slot, credentialIndex = slot, credentialType = "pin", credentialName = name})
   end
+  -- the lock's user names are not read, so the names come from the legacy codes, as in a real migration
+  mock_device:set_field(lock_utils.LOCK_CODES_FOR_MIGRATION, codes, {persist = true})
   sync_with_lock(lock_users, users, creds)
   mock_device:set_field(lock_sync.USERS_SYNCED, nil, {persist = true})
 end
@@ -581,8 +583,8 @@ test.register_coroutine_test(
         {index = 1, name = "Alice", pins = {1}},
         {index = 2, type = REMOTE_ONLY, pins = {2}}, -- the driver's COTA user
       },
-      {{userIndex = 1, userName = "Alice", userType = "guest"}},
-      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Alice"}}
+      {{userIndex = 1, userName = "Guest 1", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"}}
     )
   end,
   { min_api_version = 15 }
@@ -622,6 +624,137 @@ test.register_coroutine_test(
       capabilities.lockUsers.commandResult({commandName = "addUser", statusCode = "busy"},
         {state_change = true, visibility = {displayed = false}})))
     test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "The SUCCESS status that accompanies a GetUserResponse does not advance the sync a second time",
+  function()
+    set_total_users_supported(3)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({mock_device.id, DoorLock:build_test_command_response(
+      mock_device, 1, DoorLock.ID, DoorLock.server.commands.GetUser.ID, nil, im.InteractionResponse.Status.SUCCESS)})
+    test.wait_for_events() -- nothing is sent
+
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(
+      1, "Alice", types.UserStatusEnum.OCCUPIED_ENABLED, types.UserTypeEnum.UNRESTRICTED_USER, {pin(1)}, 2
+    )})
+    expect_get_user(2)
+    test.wait_for_events()
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A GetUserResponse received when no addUser or sync is in progress does not send SetUser",
+  function()
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(
+      10, nil, types.UserStatusEnum.AVAILABLE, nil, nil, nil
+    )})
+    test.wait_for_events() -- nothing is sent or emitted
+  end,
+  { min_api_version = 15 }
+)
+
+-- The replies below are copied from an ULTRALOQ Smart Door Lock on a production hub.
+-- A successful GetUser returns two blocks in one message: the GetUserResponse, then a SUCCESS status on
+-- the GetUser command path. User 1's name is not valid UTF-8, users 3 and 6 are NUL-padded to 10 bytes,
+-- user 6 holds only a programming PIN, and user 6 reports no NextUserIndex.
+local ULTRALOQ_USERS = {
+  {index = 1, name = "\xC4\x0E\x02\x20\x00\x00\x00\x00\xA4\x0E", type = types.UserTypeEnum.UNRESTRICTED_USER, pin = 1, next = 2},
+  {index = 2, name = "Brian", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 2, next = 3},
+  {index = 3, name = "Alex\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 3, next = 4},
+  {index = 4, name = "Hudson ", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 4, next = 5},
+  {index = 5, name = "Dog", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 5, next = 6},
+  {index = 6, name = "Nobody\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, programming_pin = 0, next = nil},
+}
+
+-- A GetUserResponse followed by the SUCCESS status block for the GetUser command, in one message.
+local function get_user_reply_as_sent_by_lock(user)
+  local credentials
+  if user.pin then
+    credentials = {pin(user.pin)}
+  else
+    credentials = {types.CredentialStruct({
+      credential_type = types.CredentialTypeEnum.PROGRAMMINGPIN, credential_index = user.programming_pin
+    })}
+  end
+  local reply = get_user_response(user.index, user.name, OCCUPIED, user.type, credentials, user.next)
+  local status_block = DoorLock:build_test_command_response(
+    mock_device, 1, DoorLock.ID, DoorLock.server.commands.GetUser.ID, nil, im.InteractionResponse.Status.SUCCESS
+  ).info_blocks[1]
+  table.insert(reply.info_blocks, status_block)
+  return reply
+end
+
+-- The datastore save JSON-encodes every persisted string, and the hub's encoder rejects invalid UTF-8.
+local function assert_utf8_only(value, path)
+  if type(value) == "string" then
+    assert(utf8.len(value) ~= nil, string.format("persisted string at %s is not valid UTF-8", path))
+  elseif type(value) == "table" then
+    for k, v in pairs(value) do
+      assert_utf8_only(k, path .. "[key]")
+      assert_utf8_only(v, path .. "." .. tostring(k))
+    end
+  end
+end
+
+test.register_coroutine_test(
+  "The ULTRALOQ's real GetUser replies sync every user and persist only valid UTF-8",
+  function()
+    set_total_users_supported(10)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    for _, user in ipairs(ULTRALOQ_USERS) do
+      test.socket.matter:__queue_receive({mock_device.id, get_user_reply_as_sent_by_lock(user)})
+      if user.next then
+        -- exactly one GetUser for the next index: the SUCCESS status block must not skip ahead
+        expect_get_user(user.next)
+      else
+        local users, creds = {}, {}
+        for _, u in ipairs(ULTRALOQ_USERS) do
+          table.insert(users, {userIndex = u.index, userName = "Guest " .. u.index, userType = "guest"})
+          if u.pin then
+            table.insert(creds, {userIndex = u.index, credentialIndex = u.pin, credentialType = "pin", credentialName = "Guest " .. u.index})
+          end
+        end
+        expect_tables(users, creds)
+      end
+      test.wait_for_events()
+      assert_utf8_only(mock_device:get_field("syncReportedUsers"), "syncReportedUsers")
+    end
+    assert(mock_device:get_field(lock_sync.USERS_SYNCED) == lock_sync.VERSION, "sync should be complete")
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A late GetUserResponse for an empty index after the sync finishes does not add a user to the lock",
+  function()
+    -- left behind by an earlier command, as on the production hub
+    mock_device:set_field(lock_utils.USER_NAME, "Melinda", {persist = true})
+    set_total_users_supported(10)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    local only_user = {index = 1, name = nil, type = types.UserTypeEnum.UNRESTRICTED_USER, pin = 1, next = nil}
+    test.socket.matter:__queue_receive({mock_device.id, get_user_reply_as_sent_by_lock(only_user)})
+    expect_tables(
+      {{userIndex = 1, userName = "Guest 1", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"}}
+    )
+    test.wait_for_events()
+
+    -- the lock's answer for an empty index carries only the user index; every other field is null
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(10, nil, nil, nil, nil, nil)})
+    test.wait_for_events() -- no SetUser is sent and no commandResult is emitted
   end,
   { min_api_version = 15 }
 )
