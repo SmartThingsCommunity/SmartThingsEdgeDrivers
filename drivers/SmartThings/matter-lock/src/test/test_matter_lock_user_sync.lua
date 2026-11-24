@@ -660,17 +660,17 @@ test.register_coroutine_test(
   { min_api_version = 15 }
 )
 
--- The replies below are copied from an ULTRALOQ Smart Door Lock on a production hub (2026-11-24).
+-- The replies below are copied from an ULTRALOQ Smart Door Lock on a production hub.
 -- A successful GetUser returns two blocks in one message: the GetUserResponse, then a SUCCESS status on
 -- the GetUser command path. User 1's name is not valid UTF-8, users 3 and 6 are NUL-padded to 10 bytes,
 -- user 6 holds only a programming PIN, and user 6 reports no NextUserIndex.
 local ULTRALOQ_USERS = {
   {index = 1, name = "\xC4\x0E\x02\x20\x00\x00\x00\x00\xA4\x0E", type = types.UserTypeEnum.UNRESTRICTED_USER, pin = 1, next = 2},
-  {index = 2, name = "Heron Lo", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 2, next = 3},
-  {index = 3, name = "Nathan Dw\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 3, next = 4},
-  {index = 4, name = "Melinda ", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 4, next = 5},
-  {index = 5, name = "Luong", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 5, next = 6},
-  {index = 6, name = "Madison M\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, programming_pin = 0, next = nil},
+  {index = 2, name = "Brian", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 2, next = 3},
+  {index = 3, name = "Alex\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 3, next = 4},
+  {index = 4, name = "Hudson ", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 4, next = 5},
+  {index = 5, name = "Dog", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 5, next = 6},
+  {index = 6, name = "Nobody\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, programming_pin = 0, next = nil},
 }
 
 -- A GetUserResponse followed by the SUCCESS status block for the GetUser command, in one message.
