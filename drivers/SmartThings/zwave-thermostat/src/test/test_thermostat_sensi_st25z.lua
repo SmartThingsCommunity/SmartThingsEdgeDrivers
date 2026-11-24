@@ -81,8 +81,64 @@ local mock_device = test.mock_device.build_test_zwave_device({
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+
+  -- The integration_test harness auto-dispatches an "init" lifecycle event
+  -- for every test before the test body even starts running. Pre-queue a
+  -- matching mock timer so device_init's call_with_delay(10.0, ...) has one
+  -- to consume at that point, instead of firing immediately with nothing
+  -- queued (which would otherwise send 8 unexpected GETs into every test).
+  test.timer.__create_and_queue_test_time_advance_timer(10.0, "oneshot")
 end
 test.set_test_init_function(test_init)
+
+----------------------------------------------------------------------
+-- Lifecycle: init -- fires on every hub boot/driver reload (unlike `added`,
+-- which only fires once at join). This device doesn't resend a setpoint
+-- report on its own once the radio comes back, so a value changed locally
+-- while the hub was powered off would otherwise never get picked up again.
+--
+-- The refresh is delayed 10s (device_init) so the test harness's own
+-- auto-queued "init" event -- sent before every test in this file, per the
+-- integration_test framework -- doesn't leak these sends into unrelated
+-- tests below, none of which advance the mock clock anywhere near that far.
+----------------------------------------------------------------------
+
+test.register_coroutine_test(
+  "Init lifecycle event should refresh every attribute 10s later (resync " ..
+  "after a hub power-cycle, since a locally-changed setpoint isn't re-sent " ..
+  "on its own)",
+  function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+
+    -- test_init's pre-queued timer is what the harness's own ambient "init"
+    -- dispatch (before this test body even starts) consumes; the callback
+    -- it schedules is already pending by this point, waiting on mock time.
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        SensorMultilevel:Get({
+          sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
+          scale = SensorMultilevel.scale.relative_humidity.PERCENTAGE })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1 })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device,
+        ThermostatSetpoint:Get({ setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1 })))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatMode:Get({})))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatFanMode:Get({})))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, Battery:Get({})))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, ThermostatOperatingState:Get({})))
+
+    test.mock_time.advance_time(10.0)
+  end
+)
 
 ----------------------------------------------------------------------
 -- Lifecycle: added -- overriding `added` replaces the base driver's own

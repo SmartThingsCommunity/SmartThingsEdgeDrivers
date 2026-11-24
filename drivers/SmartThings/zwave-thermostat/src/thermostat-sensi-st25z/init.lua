@@ -292,6 +292,19 @@ end
 -- Lifecycle
 ----------------------------------------------------------------------
 
+-- `init` fires on every hub boot/driver reload (unlike `added`, which only
+-- fires once at join). This device doesn't resend a setpoint report on its
+-- own once the radio comes back -- if it was changed locally while the hub
+-- was powered off, nothing else will ever re-request it -- so resync current
+-- values here. Just a refresh: no Supported* requests (those don't change
+-- over the device's lifetime, and only belong in `added`), no extra retries.
+-- Delayed slightly to let the radio settle after boot.
+local function device_init(driver, device)
+  device.thread:call_with_delay(10.0, function()
+    device:refresh()
+  end)
+end
+
 -- Overriding `added` replaces the base driver's own added handler (which does
 -- ThermostatMode/ThermostatFanMode SupportedGet + device:refresh()), so we
 -- replicate that here and add our own seed for operating state.
@@ -398,6 +411,7 @@ return {
   NAME = "thermostat-sensi-st25z",
 
   lifecycle_handlers = {
+    init  = device_init,
     added = device_added,
   },
 
