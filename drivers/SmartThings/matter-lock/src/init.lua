@@ -1281,6 +1281,8 @@ end
 
 -- An error status for GetUser carries the path of the request command, not GetUserResponse.
 local function get_user_error_handler(driver, device, ib, response)
+  -- A successful GetUser also reports a SUCCESS status for the command alongside the GetUserResponse.
+  if ib.status == im.InteractionResponse.Status.SUCCESS then return end
   if lock_sync.is_syncing(device) then
     lock_sync.get_user_response_handler(device, ib)
   end
@@ -1291,9 +1293,10 @@ local function get_user_response_handler(driver, device, ib, response)
     lock_sync.get_user_response_handler(device, ib)
     return
   end
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  if cmdName ~= "addUser" then return end
   local elements = ib.info_block.data.elements
   local userIdx = elements.user_index.value
-  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
