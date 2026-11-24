@@ -660,6 +660,105 @@ test.register_coroutine_test(
   { min_api_version = 15 }
 )
 
+-- The replies below are copied from an ULTRALOQ Smart Door Lock on a production hub (2026-11-24).
+-- A successful GetUser returns two blocks in one message: the GetUserResponse, then a SUCCESS status on
+-- the GetUser command path. User 1's name is not valid UTF-8, users 3 and 6 are NUL-padded to 10 bytes,
+-- user 6 holds only a programming PIN, and user 6 reports no NextUserIndex.
+local ULTRALOQ_USERS = {
+  {index = 1, name = "\xC4\x0E\x02\x20\x00\x00\x00\x00\xA4\x0E", type = types.UserTypeEnum.UNRESTRICTED_USER, pin = 1, next = 2},
+  {index = 2, name = "Heron Lo", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 2, next = 3},
+  {index = 3, name = "Nathan Dw\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 3, next = 4},
+  {index = 4, name = "Melinda ", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 4, next = 5},
+  {index = 5, name = "Luong", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, pin = 5, next = 6},
+  {index = 6, name = "Madison M\x00", type = types.UserTypeEnum.SCHEDULE_RESTRICTED_USER, programming_pin = 0, next = nil},
+}
+
+-- A GetUserResponse followed by the SUCCESS status block for the GetUser command, in one message.
+local function get_user_reply_as_sent_by_lock(user)
+  local credentials
+  if user.pin then
+    credentials = {pin(user.pin)}
+  else
+    credentials = {types.CredentialStruct({
+      credential_type = types.CredentialTypeEnum.PROGRAMMINGPIN, credential_index = user.programming_pin
+    })}
+  end
+  local reply = get_user_response(user.index, user.name, OCCUPIED, user.type, credentials, user.next)
+  local status_block = DoorLock:build_test_command_response(
+    mock_device, 1, DoorLock.ID, DoorLock.server.commands.GetUser.ID, nil, im.InteractionResponse.Status.SUCCESS
+  ).info_blocks[1]
+  table.insert(reply.info_blocks, status_block)
+  return reply
+end
+
+-- The datastore save JSON-encodes every persisted string, and the hub's encoder rejects invalid UTF-8.
+local function assert_utf8_only(value, path)
+  if type(value) == "string" then
+    assert(utf8.len(value) ~= nil, string.format("persisted string at %s is not valid UTF-8", path))
+  elseif type(value) == "table" then
+    for k, v in pairs(value) do
+      assert_utf8_only(k, path .. "[key]")
+      assert_utf8_only(v, path .. "." .. tostring(k))
+    end
+  end
+end
+
+test.register_coroutine_test(
+  "The ULTRALOQ's real GetUser replies sync every user and persist only valid UTF-8",
+  function()
+    set_total_users_supported(10)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    for _, user in ipairs(ULTRALOQ_USERS) do
+      test.socket.matter:__queue_receive({mock_device.id, get_user_reply_as_sent_by_lock(user)})
+      if user.next then
+        -- exactly one GetUser for the next index: the SUCCESS status block must not skip ahead
+        expect_get_user(user.next)
+      else
+        local users, creds = {}, {}
+        for _, u in ipairs(ULTRALOQ_USERS) do
+          table.insert(users, {userIndex = u.index, userName = "Guest " .. u.index, userType = "guest"})
+          if u.pin then
+            table.insert(creds, {userIndex = u.index, credentialIndex = u.pin, credentialType = "pin", credentialName = "Guest " .. u.index})
+          end
+        end
+        expect_tables(users, creds)
+      end
+      test.wait_for_events()
+      assert_utf8_only(mock_device:get_field("syncReportedUsers"), "syncReportedUsers")
+    end
+    assert(mock_device:get_field(lock_sync.USERS_SYNCED) == lock_sync.VERSION, "sync should be complete")
+  end,
+  { min_api_version = 15 }
+)
+
+test.register_coroutine_test(
+  "A late GetUserResponse for an empty index after the sync finishes does not add a user to the lock",
+  function()
+    -- left behind by an earlier command, as on the production hub
+    mock_device:set_field(lock_utils.USER_NAME, "Melinda", {persist = true})
+    set_total_users_supported(10)
+    refresh_and_wait_for_sync()
+    expect_get_user(1)
+    test.wait_for_events()
+
+    local only_user = {index = 1, name = nil, type = types.UserTypeEnum.UNRESTRICTED_USER, pin = 1, next = nil}
+    test.socket.matter:__queue_receive({mock_device.id, get_user_reply_as_sent_by_lock(only_user)})
+    expect_tables(
+      {{userIndex = 1, userName = "Guest 1", userType = "guest"}},
+      {{userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1"}}
+    )
+    test.wait_for_events()
+
+    -- the lock's answer for an empty index carries only the user index; every other field is null
+    test.socket.matter:__queue_receive({mock_device.id, get_user_response(10, nil, nil, nil, nil, nil)})
+    test.wait_for_events() -- no SetUser is sent and no commandResult is emitted
+  end,
+  { min_api_version = 15 }
+)
+
 -- A device paired with the "lock" profile, which has no lockUsers, as a newly paired lock has before
 -- match_profile runs.
 local new_lock = test.mock_device.build_test_matter_device({
