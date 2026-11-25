@@ -18,7 +18,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "OSRAM",
         model = "Gardenspot RGB",
-        server_clusters = {0x0006, 0x0008}
+        server_clusters = {0x0006, 0x0008, 0x0300}
       }
     }
   }
@@ -46,6 +46,22 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Level.ID)
     })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, ColorControl.ID)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.CurrentHue:configure_reporting(mock_device, 1, 3600, 16)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.CurrentSaturation:configure_reporting(mock_device, 1, 3600, 16)
+      }
+    )
 
     test.socket.zigbee:__expect_send(
       {

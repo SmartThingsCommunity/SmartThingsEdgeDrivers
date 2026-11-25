@@ -42,9 +42,6 @@ end
 
 local laisiao_bath_heater = {
   NAME = "Zigbee Laisiao Bathroom Heater",
-  supported_capabilities = {
-    capabilities.switch,
-  },
   lifecycle_handlers = {
     init = configurations.reconfig_wrapper(device_init),
   },

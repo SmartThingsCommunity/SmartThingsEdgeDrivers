@@ -25,6 +25,12 @@ function CapabilityHandlers.add_user(driver, device, command)
     return
   end
 
+  -- programming users cannot be created through the capability
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   -- Find the smallest positive userIndex not already in the table
   local next_available_index = tables.next_index(device, "users")
   local status = tables.add_entry(device, "users", {
@@ -42,19 +48,19 @@ function CapabilityHandlers.update_user(driver, device, command)
     return
   end
 
-  local result_status
-  if not tables.find_entry(device, "users", command.args.userIndex) then
-    result_status = tables.add_entry(device, "users", {
-      userIndex = command.args.userIndex,
-      userName  = command.args.userName,
-      userType  = command.args.userType,
-    })
-  else
-    result_status = tables.update_entry(device, "users",
-      command.args.userIndex,
-      { userName = command.args.userName, userType = command.args.userType }
-    )
+  -- a user cannot be made a programming user, and a programming user cannot be changed to another type
+  local found_user = tables.find_entry(device, "users", command.args.userIndex)
+  local is_programming_user = found_user ~= nil and found_user.userType == consts.PROGRAMMING_USER.USER_TYPE
+  if (command.args.userType == consts.PROGRAMMING_USER.USER_TYPE) ~= is_programming_user then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
   end
+
+  -- a user that does not exist is not created here, so this fails for it
+  local result_status = tables.update_entry(device, "users",
+    command.args.userIndex,
+    { userName = command.args.userName, userType = command.args.userType }
+  )
 
   local additional_info = result_status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex }
   lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, result_status, additional_info)
@@ -117,14 +123,29 @@ function CapabilityHandlers.add_credential(driver, device, command)
     return
   end
 
-  -- A userIndex of 0 means "auto-assign the next available slot"
-  local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
-  local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
+  -- userIndex 0 means "create a new user for this credential" (its index is chosen when the lock confirms the
+  -- code). Any other userIndex must name an existing user that does not already have a credential (for now,
+  -- each user may have at most one credential).
+  -- A programming user cannot be created or given a credential through the capability.
+  local user_index = command.args.userIndex
+  if command.args.userType == consts.PROGRAMMING_USER.USER_TYPE
+      or user_index ~= 0 and (not tables.find_entry(device, "users", user_index)
+      or lock_utils.is_programming_user(device, user_index)
+      or tables.find_entry_by(device, "credentials", "userIndex", user_index)) then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
 
-  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
+  local credentials_full = tables.is_full(device, "credentials")
+  -- if we are being asked to create a new user (index 0), this also needs a free user index.
+  local users_full = (user_index == 0) and tables.is_full(device, "users")
+  if credentials_full or users_full then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
+
+  -- the credential always takes the next available slot.
+  local cred_index = tables.next_index(device, "credentials")
 
   -- Set busy state and attempt to set the PIN on-device.
   lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.ADD, {
@@ -141,13 +162,26 @@ function CapabilityHandlers.add_credential(driver, device, command)
 end
 
 function CapabilityHandlers.update_credential(driver, device, command)
+  -- Index 0 is the Z-Wave "all users" wildcard and is never a valid credential to update.
+  if command.args.credentialIndex == 0 then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
   if lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.BUSY)
     return
   end
 
-  if not tables.find_entry(device, "credentials", command.args.credentialIndex) then
+  local existing = tables.find_entry(device, "credentials", command.args.credentialIndex)
+  if not existing then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.FAILURE)
+    return
+  end
+
+  -- a credential cannot be moved to another user: the given userIndex must already own this credential
+  if existing.userIndex ~= command.args.userIndex then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.UPDATE, consts.COMMAND_RESULT.INVALID_COMMAND)
     return
   end
 
@@ -164,18 +198,35 @@ function CapabilityHandlers.update_credential(driver, device, command)
   }))
 end
 
-function CapabilityHandlers.delete_credential(driver, device, command)
-  local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+-- The programming code cannot be deleted. Fail the command without sending anything to the lock.
+local function refuse_programming_credential_delete(device, injected_by_delete_user)
+  device.log.warn("ignoring deleteCredential for a programming code, it cannot be deleted")
+  if injected_by_delete_user then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, consts.COMMAND_RESULT.FAILURE)
+    lock_utils.clear_busy_state(device)
+  end
+  lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
+end
 
-  if cmd_in_progress == consts.LOCK_USERS.DELETE then
+function CapabilityHandlers.delete_credential(driver, device, command)
+  -- Index 0 is the Z-Wave "all users" wildcard; clearing everything must go through deleteAllCredentials.
+  if command.args.credentialIndex == 0 then
+    lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.INVALID_COMMAND)
+    return
+  end
+
+  local credential_index
+  if device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS) == consts.LOCK_USERS.DELETE then
     -- Injected by deleteUser; busy state was already set with the full LOCK_USERS.DELETE context.
     local credential_args = device:get_field(consts.DRIVER_STATE.CREDENTIAL_ARGS_IN_USE) or {}
-    device:send(UserCode:Set({
-      user_identifier = credential_args.credentialIndex,
-      user_id_status = UserCode.user_id_status.AVAILABLE
-    }))
+    if lock_utils.is_programming_user(device, credential_args.userIndex) then
+      refuse_programming_credential_delete(device, true)
+      return
+    end
+    credential_index = credential_args.credentialIndex
   elseif lock_utils.is_device_busy(device) then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.BUSY)
+    return
   else
     -- Standalone deleteCredential: look up the credential to obtain its associated userIndex.
     local found_cred = tables.find_entry(device, "credentials", command.args.credentialIndex)
@@ -183,40 +234,41 @@ function CapabilityHandlers.delete_credential(driver, device, command)
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE, consts.COMMAND_RESULT.FAILURE)
       return
     end
+    if lock_utils.is_programming_user(device, found_cred.userIndex) then
+      refuse_programming_credential_delete(device, false)
+      return
+    end
     lock_utils.set_busy_state(device, consts.LOCK_CREDENTIALS.DELETE, {
       credentialIndex = command.args.credentialIndex,
       credentialType  = command.args.credentialType,
       userIndex       = found_cred.userIndex,
     })
-    device:send(UserCode:Set({
-      user_identifier = command.args.credentialIndex,
-      user_id_status = UserCode.user_id_status.AVAILABLE
-    }))
+    credential_index = command.args.credentialIndex
   end
+
+  device:send(UserCode:Set({
+    user_identifier = credential_index,
+    user_id_status = UserCode.user_id_status.AVAILABLE
+  }))
 end
 
 function CapabilityHandlers.delete_all_credentials(driver, device, command)
   local cmd_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
   local send_clear_commands = function()
-    local credentials = tables.get_state(device, "credentials") or {}
-    local delay = 0
-    for _, credential in ipairs(credentials) do
-      device.thread:call_with_delay(delay, function()
-        device:send(UserCode:Set({
-          user_identifier = credential.credentialIndex,
-          user_id_status = UserCode.user_id_status.AVAILABLE
-        }))
-      end)
-      delay = delay + 2
-    end
-    -- Delayed cleanup: ensure all tables are cleared after individual responses complete
-    device.thread:call_with_delay(delay + 4, function()
+    -- User Identifier 0 with status AVAILABLE tells the lock to clear every user code slot. A lock with a
+    -- programming code (Yale) keeps it, so the programming entries are kept in state below.
+    device:send(UserCode:Set({
+      user_identifier = 0,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    }))
+    -- Delayed cleanup: ensure all tables are cleared after the lock has processed the command
+    device.thread:call_with_delay(4, function()
       if cmd_in_progress == consts.LOCK_USERS.DELETE_ALL then
-        tables.delete_all_entries(device, "users")
+        lock_utils.delete_all_non_programming_entries(device, "users")
         lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       end
-      tables.delete_all_entries(device, "credentials")
+      lock_utils.delete_all_non_programming_entries(device, "credentials")
       lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.DELETE_ALL, consts.COMMAND_RESULT.SUCCESS)
       lock_utils.clear_busy_state(device)
     end)
@@ -238,7 +290,10 @@ end
 
 function CapabilityHandlers.refresh(driver, device, cmd)
   device:send(DoorLock:OperationGet({}))
-  device:send(Battery:Get({}))
+
+  if device:supports_capability(capabilities.battery) then
+    device:send(Battery:Get({}))
+  end
 
   if device:supports_capability(capabilities.lockCredentials) then
     -- If we are missing the cached values for these attributes, read them so we can properly manage them locally
@@ -246,6 +301,9 @@ function CapabilityHandlers.refresh(driver, device, cmd)
        (device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME) == nil) then
       device:send(UserCode:UsersNumberGet({}))
     end
+
+    -- Allow callers to try to sync device state- fails silently if the device is busy or already synced.
+    device.thread:call_with_delay(15, function() lock_utils.sync_device_state(device) end)
   end
 end
 

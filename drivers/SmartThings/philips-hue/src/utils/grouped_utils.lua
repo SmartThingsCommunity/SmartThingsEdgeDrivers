@@ -138,12 +138,21 @@ function grouped_utils.scan_groups(driver, bridge_device, api, hue_id_to_device)
   local rooms, zones
   -- These are the hue light/other service ids rather than the hue device ids
   local light_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
-  while not (rooms and zones) do
+  local backoff = utils.backoff_builder(30, 1, 0.5)
+  while true do
     if not rooms then
       rooms = handle_group_scan_response("rooms", driver, hue_id_to_device, light_id_to_device, api:get_rooms())
     end
     if not zones then
       zones = handle_group_scan_response("zones", driver, hue_id_to_device, light_id_to_device, api:get_zones())
+    end
+    if rooms and zones then break end
+    cosock.socket.sleep(backoff())
+    -- The bridge was removed while the scan was retrying: a removed device's fields all read as
+    -- nil, and removing a bridge shuts down and clears its API client.
+    if bridge_device.id == nil or bridge_device:get_field(Fields.BRIDGE_API) ~= api then
+      log.info("Stopping group scan, the bridge's API client is gone")
+      return
     end
   end
   -- Combine rooms and zones.
@@ -300,6 +309,12 @@ function grouped_utils.queue_group_scan(driver, bridge_device)
         end
       end
 
+      -- A removed device's fields and methods all read as nil.
+      if bridge_device.id == nil then
+        log.info("Bridge was removed, skipping group scan")
+        return
+      end
+
       -- Finally do the scan
       local hue_device_table = build_hue_id_to_device_map(bridge_device)
       local api = bridge_device:get_field(Fields.BRIDGE_API)
@@ -314,7 +329,9 @@ function grouped_utils.queue_group_scan(driver, bridge_device)
       grouped_utils.scan_groups(driver, bridge_device, api, hue_device_table)
 
       -- Clear out tx for the next request
-      bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+      if bridge_device.id ~= nil then
+        bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+      end
     end)
     -- Set the queue to the tx
     bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, tx)

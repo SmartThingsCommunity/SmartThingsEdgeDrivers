@@ -7,6 +7,7 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local utils = require "st.utils"
 local lock_utils = require "lock_utils"
+local lock_sync = require "lock_sync"
 
 local version = require "version"
 if version.api < 10 then
@@ -148,6 +149,10 @@ local function device_init(driver, device)
     end
   end
   device:subscribe()
+
+  -- retry the user/credential sync on each driver init until it has run to completion, in case it
+  -- was interrupted (network, power, driver restart, etc.)
+  lock_sync.sync_after_delay(device)
  end
 
 local function device_added(driver, device)
@@ -343,21 +348,6 @@ local function deep_equals(a, b, opts, seen)
   return deep_equals(mt_a, mt_b, opts, seen)
 end
 
-local function migrate_lock_codes(device)
-  local lockCodes = device:get_field(lock_utils.LOCK_CODES_FOR_MIGRATION) or {}
-  local user_table = {}
-  local credential_table = {}
-  for _, entry in ipairs(lockCodes) do
-    local index = tonumber(entry[1])
-    table.insert(user_table, {userIndex = index, userType = "guest", userName = entry[2]})
-    table.insert(credential_table, {userIndex = index, credentialIndex = index, credentialType = "pin"})
-  end
-  if #user_table > 0 or #credential_table > 0 then
-    device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
-    device:emit_event(capabilities.lockCredentials.credentials(credential_table, {visibility = {displayed = false}}))
-  end
-end
-
 local function info_changed(driver, device, event, args)
   if deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     return
@@ -385,9 +375,10 @@ local function info_changed(driver, device, event, args)
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end
   if device:get_field(lock_utils.LOCK_CODES_COPY_REQUIRED) == true then
-    migrate_lock_codes(device)
+    -- the sync builds the users/credentials tables, carrying over the legacy lockCodes names
     device:set_field(lock_utils.LOCK_CODES_COPY_REQUIRED, false, {persist = true})
   end
+  lock_sync.sync_after_delay(device)
 end
 
 local function profiling_data_still_required(device)
@@ -1288,10 +1279,24 @@ local function handle_update_user(driver, device, command)
   )
 end
 
+-- An error status for GetUser carries the path of the request command, not GetUserResponse.
+local function get_user_error_handler(driver, device, ib, response)
+  -- A successful GetUser sometimes reports a SUCCESS status for the command alongside the GetUserResponse.
+  if ib.status == im.InteractionResponse.Status.SUCCESS then return end
+  if lock_sync.is_syncing(device) then
+    lock_sync.get_user_response_handler(device, ib)
+  end
+end
+
 local function get_user_response_handler(driver, device, ib, response)
+  if lock_sync.is_syncing(device) then
+    lock_sync.get_user_response_handler(device, ib)
+    return
+  end
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  if cmdName ~= "addUser" then return end
   local elements = ib.info_block.data.elements
   local userIdx = elements.user_index.value
-  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
@@ -1706,6 +1711,10 @@ local function set_pin_response_handler(driver, device, ib, response)
     end
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+    if cmdName == "addCota" then
+      -- the COTA credential now lives at the next index; keep the stored index in step
+      device:set_field(lock_utils.COTA_CRED_INDEX, credIdx, {persist = true})
+    end
 
     -- Send command
     local ep = find_default_endpoint(device, DoorLock.ID)
@@ -2455,7 +2464,8 @@ local function handle_refresh(driver, device, command)
     match_profile(driver, device, true)
   else
     device:send(DoorLock.attributes.LockState:read(device))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    -- try to sync users/credentials; does nothing if the device is busy or already synced.
+    lock_sync.sync_after_delay(device)
   end
 end
 
@@ -2844,6 +2854,7 @@ local matter_lock_driver = {
       [DoorLock.ID] = {
         [DoorLock.server.commands.SetUser.ID] = set_user_response_handler,
         [DoorLock.client.commands.GetUserResponse.ID] = get_user_response_handler,
+        [DoorLock.server.commands.GetUser.ID] = get_user_error_handler,
         [DoorLock.server.commands.ClearUser.ID] = clear_user_response_handler,
         [DoorLock.client.commands.SetCredentialResponse.ID] = set_credential_response_handler,
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
