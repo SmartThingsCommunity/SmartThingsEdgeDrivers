@@ -1,0 +1,11 @@
+name: scene-switch-child-scene
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true
