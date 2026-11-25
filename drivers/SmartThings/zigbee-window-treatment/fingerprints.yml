@@ -113,6 +113,11 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Blinds Actuator
     deviceProfileName: window-treatment-profile
+  - id: "Third Reality/3RSB015BZ"
+    deviceLabel: Third Reality Smart Blind
+    manufacturer: Third Reality, Inc
+    model: 3RSB015BZ
+    deviceProfileName: window-treatment-battery
   - id: "ScreenInnovations/WM25/L-Z"
     deviceLabel: Screen Innovations Window Treatment
     manufacturer: Screen Innovations
