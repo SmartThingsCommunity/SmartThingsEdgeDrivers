@@ -31,7 +31,7 @@ local constants = require "st.zigbee.constants"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
-      profile = t_utils.get_profile_definition("power-meter-consumption-report-sihas.yml"),
+      profile = t_utils.get_profile_definition("power-meter-consumption-report.yml"),
       zigbee_endpoints = {
         [1] = {
           id = 1,
