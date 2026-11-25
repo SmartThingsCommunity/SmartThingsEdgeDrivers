@@ -232,6 +232,12 @@ zigbeeManufacturer:
     manufacturer: Zhenchen
     model: SG20
     deviceProfileName: lock-battery
+  # ShinaSystem
+  - id: ShinaSystem/DLM-300Z
+    deviceLabel: SiHAS Door Lock
+    manufacturer: ShinaSystem
+    model: DLM-300Z
+    deviceProfileName: base-lock-door-state
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock
