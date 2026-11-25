@@ -5,6 +5,9 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 # configurable from Jenkins to override and manually set the drivers to be uploaded
 DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
+SUPPORT_CHANNELS = os.environ.get('SUPPORT_CHANNELS')
+SUPPORT_CHANNELS = [c.strip() for c in SUPPORT_CHANNELS.split(",")] if SUPPORT_CHANNELS else []
+
 DRY_RUN = os.environ.get("DRY_RUN") == True or os.environ.get("DRY_RUN") == "True"
 print(BRANCH)
 print(ENVIRONMENT)
@@ -19,8 +22,13 @@ CHANNEL_ID = os.environ.get(BRANCH+'_CHANNEL_ID')
 if not CHANNEL_ID:
   print("No channel id specified for "+BRANCH+", aborting.")
   exit(0)
+# Convert to list and extend the update channels (if PROD) to keep the
+# support channels in parity with the PROD_CHANNEL_ID
+UPDATE_CHANNELS = [CHANNEL_ID]
+if BRANCH == "PROD":
+  UPDATE_CHANNELS.extend(SUPPORT_CHANNELS)
 
-UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
+
 TOKEN = os.environ.get('TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
@@ -195,25 +203,28 @@ for package_key, driver_info in uploaded_drivers.items():
   print("Uploading package: {} driver id: {} version: {}".format(package_key, driver_info[DRIVERID], driver_info[VERSION]))
   driver_updates.append({DRIVERID: driver_info[DRIVERID], VERSION: driver_info[VERSION]})
 
-if DRY_RUN:
-  print("Dry Run, skipping bulk upload to " + UPDATE_URL)
-else:
-  response = requests.put(
-    UPDATE_URL,
-    headers={
-      "Accept": "application/vnd.smartthings+json;v=20200810",
-      "Authorization": "Bearer "+TOKEN,
-      "Content-Type": "application/json",
-      "X-ST-LOG-LEVEL": "DEBUG",
-      "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
-    },
-    data=json.dumps(driver_updates)
-  )
-  if response.status_code != 204:
-    print("Failed to bulk update drivers")
-    print("Error code: "+str(response.status_code))
-    print("Error response: "+response.text)
-    exit(1)
+for channel_ID in UPDATE_CHANNELS:
+  UPDATE_URL = ENVIRONMENT_URL+"/channels/"+channel_ID+"/drivers/bulk"
+  if DRY_RUN:
+    print("Dry Run, skipping bulk upload to " + UPDATE_URL)
+  else:
+    response = requests.put(
+      UPDATE_URL,
+      headers={
+        "Accept": "application/vnd.smartthings+json;v=20200810",
+        "Authorization": "Bearer "+TOKEN,
+        "Content-Type": "application/json",
+        "X-ST-LOG-LEVEL": "DEBUG",
+        "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
+      },
+      data=json.dumps(driver_updates)
+    )
+    print(f"Uploaded drivers to channel: {channel_ID}")
+    if response.status_code != 204:
+      print("Failed to bulk update drivers")
+      print("Error code: "+str(response.status_code))
+      print("Error response: "+response.text)
+      exit(1)
 
 print("Update drivers: ")
 print(drivers_updated)
