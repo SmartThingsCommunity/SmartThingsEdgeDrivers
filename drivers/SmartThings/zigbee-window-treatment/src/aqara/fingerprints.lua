@@ -5,7 +5,8 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.curtain" },
   { mfr = "LUMI", model = "lumi.curtain.v1" },
   { mfr = "LUMI", model = "lumi.curtain.aq2" },
-  { mfr = "LUMI", model = "lumi.curtain.agl001" }
+  { mfr = "LUMI", model = "lumi.curtain.agl001" },
+  { mfr = "LUMI", model = "lumi.curtain.vagl02" }
 }
 
 return FINGERPRINTS
