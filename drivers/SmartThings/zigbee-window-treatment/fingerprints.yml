@@ -158,7 +158,11 @@ zigbeeManufacturer:
     manufacturer: Sombra Shades
     model: SOMBRA/Z-M
     deviceProfileName: window-treatment-powerSource
-
+  - id: "_TZE200_cirjrpxe/TS0301"
+    deviceLabel: Zemismart Roller Shade Motor
+    manufacturer: _TZE200_cirjrpxe
+    model: TS0301
+    deviceProfileName: window-treatment-battery
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
