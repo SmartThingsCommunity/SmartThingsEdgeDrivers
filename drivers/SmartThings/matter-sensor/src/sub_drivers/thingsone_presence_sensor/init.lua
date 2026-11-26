@@ -31,22 +31,19 @@ function ThingsOneLifecycleHandlers.driver_switched(driver, device)
   device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
-function ThingsOneLifecycleHandlers.device_init(driver, device)
-  if version.api < 13 then
-    device.log.warn("OccupancySensing.HoldTime needs lua libs api 13; the presence hold time setting has no effect")
-  end
-  device:subscribe()
-end
-
 function ThingsOneLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
   end
   local old = args.old_st_store.preferences or {}
   local new = device.preferences or {}
-  -- HoldTime comes with lua libs api 13 (OccupancySensing revision 5); on older libs even looking it up raises an error
-  if version.api >= 13 and new[PRESENCE_HOLD_TIME] ~= nil and new[PRESENCE_HOLD_TIME] ~= old[PRESENCE_HOLD_TIME] then
-    write_presence_hold_time(device, new[PRESENCE_HOLD_TIME])
+  if new[PRESENCE_HOLD_TIME] ~= nil and new[PRESENCE_HOLD_TIME] ~= old[PRESENCE_HOLD_TIME] then
+    -- HoldTime comes with lua libs api 13 (OccupancySensing revision 5); on older libs even looking it up raises an error
+    if version.api >= 13 then
+      write_presence_hold_time(device, new[PRESENCE_HOLD_TIME])
+    else
+      device.log.warn("OccupancySensing.HoldTime needs lua libs api 13; the presence hold time setting has no effect")
+    end
   end
 end
 
@@ -56,7 +53,6 @@ local thingsone_presence_sensor_handler = {
     doConfigure = ThingsOneLifecycleHandlers.do_configure,
     driverSwitched = ThingsOneLifecycleHandlers.driver_switched,
     infoChanged = ThingsOneLifecycleHandlers.info_changed,
-    init = ThingsOneLifecycleHandlers.device_init,
   },
   can_handle = require("sub_drivers.thingsone_presence_sensor.can_handle"),
 }
