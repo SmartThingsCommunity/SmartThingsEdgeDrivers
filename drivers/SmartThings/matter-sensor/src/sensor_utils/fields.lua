@@ -52,6 +52,9 @@ SensorFields.BOOLEAN_CAP_EVENT_MAP = {
 SensorFields.vendor_overrides = {
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x2009] = { is_aqara_fp400 = true }
+  },
+  [0x1241] = { -- SAMJIN_MANUFACTURER_ID
+    [0x8010] = { is_thingsone_presence_sensor = true }
   }
 }
 
