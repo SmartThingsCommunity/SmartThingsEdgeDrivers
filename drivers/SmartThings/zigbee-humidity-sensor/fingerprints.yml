@@ -87,7 +87,7 @@ zigbeeManufacturer:
     deviceLabel: "SONOFF SNZB-02M"
     manufacturer: SONOFF
     model: SNZB-02M
-    deviceProfileName: sonoff-humidity-temp-press-battery
+    deviceProfileName: humidity-temp-press-battery
   - id: "SONOFF/SNZB-02DR2"
     deviceLabel: "SONOFF SNZB-02DR2"
     manufacturer: SONOFF

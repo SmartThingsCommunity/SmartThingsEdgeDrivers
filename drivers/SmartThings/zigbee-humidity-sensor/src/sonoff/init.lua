@@ -13,37 +13,23 @@ local PRESSURE_CONFIGURATION = {
   minimum_interval = 5,
   maximum_interval = 3600,
   data_type = PressureMeasurement.attributes.MeasuredValue.base_type,
-  reportable_change = 50
+  reportable_change = 1 -- 0.1 kPa for the standard MeasuredValue attribute
 }
 
-local function convert_pressure_value(raw_value)
-  if raw_value == nil then
-    return nil
-  end
-
-  return raw_value / 10.0
-end
-
 local function pressure_report_handler(driver, device, value, zb_rx)
-  local pressure_value = convert_pressure_value(value.value)
-  if pressure_value == nil then
+  if value.value == nil then
     log.warn(string.format("SNZB-02M pressure report has no value: %s", tostring(value)))
     return
   end
 
+  local pressure_value = value.value / 10.0
   log.debug(string.format("SNZB-02M pressure raw: %s, converted: %s kPa", tostring(value.value), tostring(pressure_value)))
   device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = pressure_value, unit = "kPa"}))
 end
 
+-- This init overrides the parent init, which loads model-specific configurations.lua entries.
 local function device_init(driver, device)
   device:add_configured_attribute(PRESSURE_CONFIGURATION)
-end
-
-local function refresh_handler(driver, device, command)
-  device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.RelativeHumidity.attributes.MeasuredValue:read(device))
-  device:send(PressureMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
 local can_handle = require "sonoff.can_handle"
@@ -58,11 +44,6 @@ return {
       [PressureMeasurement.ID] = {
         [PressureMeasurement.attributes.MeasuredValue.ID] = pressure_report_handler
       }
-    }
-  },
-  capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = refresh_handler
     }
   },
   can_handle = can_handle

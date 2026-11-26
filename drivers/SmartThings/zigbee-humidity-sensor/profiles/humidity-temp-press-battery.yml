@@ -1,4 +1,4 @@
-name: sonoff-humidity-temp-press-battery
+name: humidity-temp-press-battery
 components:
 - id: main
   capabilities:

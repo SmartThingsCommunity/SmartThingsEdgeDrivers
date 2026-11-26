@@ -14,7 +14,7 @@ local PressureMeasurement = clusters.PressureMeasurement
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("sonoff-humidity-temp-press-battery.yml"),
+    profile = t_utils.get_profile_definition("humidity-temp-press-battery.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -57,6 +57,48 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Pressure report should preserve fractional kPa",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        PressureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 1013)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 101.3, unit = "kPa" }))
+    }
+  },
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Pressure report without a value should not emit an event",
+  function()
+    local sonoff = require "sonoff"
+    local handler = sonoff.zigbee_handlers.attr[PressureMeasurement.ID][PressureMeasurement.attributes.MeasuredValue.ID]
+    local device = {
+      emit_event = function()
+        error("Unexpected event for a pressure report without a value")
+      end
+    }
+
+    -- A Zigbee Int16 report cannot represent a missing Lua value.
+    handler(nil, device, {})
+  end,
+  {
+    min_api_version = 14
+  }
+)
+
+test.register_message_test(
   "Refresh should read temperature, humidity, pressure and battery",
   {
     {
@@ -87,6 +129,34 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed",
+    min_api_version = 14
+  }
+)
+
+test.register_coroutine_test(
+  "Configure should bind and configure pressure reporting",
+  function()
+    local function expect_reporting(cluster, attribute, minimum_interval, maximum_interval, reportable_change)
+      test.socket.zigbee:__expect_send({ mock_device.id, attribute:read(mock_device) })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, cluster.ID)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        attribute:configure_reporting(mock_device, minimum_interval, maximum_interval, reportable_change)
+      })
+    end
+
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    expect_reporting(TemperatureMeasurement, TemperatureMeasurement.attributes.MeasuredValue, 30, 600, 100)
+    expect_reporting(RelativeHumidity, RelativeHumidity.attributes.MeasuredValue, 30, 3600, 100)
+    expect_reporting(PowerConfiguration, PowerConfiguration.attributes.BatteryPercentageRemaining, 30, 21600, 1)
+    expect_reporting(PressureMeasurement, PressureMeasurement.attributes.MeasuredValue, 5, 3600, 1)
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
     min_api_version = 14
   }
 )
