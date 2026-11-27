@@ -82,7 +82,7 @@ function StrayDeviceHelper.process_strays(driver, strays, bridge_device_uuid)
     if cached_device_description then
       table.insert(dnis_to_remove, device.device_network_id)
       lazy_handlers.lifecycle_handlers.initialize_device(
-        driver, device, "added", nil, bridge_device_uuid, cached_device_description
+        driver, device, "added", nil, bridge_device_uuid, device_rid
       )
     end
     ::continue::
