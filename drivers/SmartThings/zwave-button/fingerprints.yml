@@ -80,9 +80,9 @@ zwaveManufacturer:
     productId: 0x0082
     deviceProfileName: multi-button-4-no-battery
   - id: "0312/0924/D001"
-    deviceLabel: Z-Wave Scene Control Switch
+    deviceLabel: Minoston Remote Control
     manufacturerId: 0x0312
     productId: 0xD001
     productType: 0x0924
     deviceProfileName: multi-button-4
-    
+
