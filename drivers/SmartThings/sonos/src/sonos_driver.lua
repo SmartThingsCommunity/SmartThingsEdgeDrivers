@@ -763,6 +763,9 @@ function SonosDriver.new_driver_template()
         [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
         [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
       },
+      [capabilities.statelessWindowShadeLevelStep.ID] = {
+        [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = CmdHandlers.handle_step_volume,
+      },
     },
   }
 

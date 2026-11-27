@@ -125,6 +125,17 @@ function CapCommandHandlers.handle_set_volume(driver, device, cmd)
   _do_send_to_self(driver, device, payload)
 end
 
+-- Stateless volume step handler using stepSize as volumeDelta
+function CapCommandHandlers.handle_step_volume(driver, device, cmd)
+  local delta = cmd.args.stepSize or 0
+  log.info_with({ hub_logs = true }, string.format("Stateless volume step delta: %d", delta))
+  local payload = {
+    { namespace = "playerVolume", command = "setRelativeVolume" },
+    { volumeDelta = delta },
+  }
+  _do_send_to_self(driver, device, payload)
+end
+
 function CapCommandHandlers.handle_group_mute(driver, device, _cmd)
   CapCommandHandlers.handle_group_set_mute(driver, device, { args = { state = "muted" } })
 end
