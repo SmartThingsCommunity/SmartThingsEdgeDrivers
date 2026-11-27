@@ -1,0 +1,378 @@
+name: heatit-ztrm6-thermostat
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [5, 40]
+  - id: thermostatOperatingState
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+# Profile selection
+  - name: "showFloorTemp"
+    title: "Show floor temperature"
+    description: "Use if AF or A2F sensormode is selected"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Hide floor temperature"
+        1 : "Show floor temperature"
+      default: 0
+# 1 Disable Buttons
+  - name: "disableButtons"
+    title: "Enable or disable buttons"
+    description: "Set button status from program"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Enable"
+        1 : "Disable"
+      default: 0
+# 2
+  - name: "sensorMode"
+    title: "Sensor Mode"
+    description: "Chooses which sensor type to use"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "F Floor sensor"
+        1 : "A Air sensor internal"
+        2 : "AF Air with Floor limitation"
+        3 : "A2 external sensor"
+        4 : "A2F external with Floor limit"
+        5 : "PWER Regulator"
+      default: 1
+# 3
+  - name: "floorSensorType"
+    title: "Floor Sensor Type"
+    description: "NTC sensor type"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "10k NTC"
+        1 : "12k NTC"
+        2 : "15k NTC"
+        3 : "22k NTC"
+        4 : "33k NTC"
+        5 : "47k NTC"
+        6 : "6.8k NTC"
+        7 : "100k NTC"
+      default: 0
+# 4
+  - name: "aLo"
+    title: "Internal Min Temperature"
+    description: "Minimum limit for internal sensor in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 50
+# 5
+  - name: "fLo"
+    title: "Floor Min Temperature"
+    description: "Minimum limit for floor sensor in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 50
+# 6
+  - name: "eLo"
+    title: "External Min Temperature"
+    description: "Minimum limit for external sensor in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 50
+# 7
+  - name: "aHi"
+    title: "Internal Max Temperature"
+    description: "Maximum limit for internal sensor in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 400
+# 8
+  - name: "fHi"
+    title: "Floor Max Temperature"
+    description: "Maximum limit for floor sensor in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 400
+# 9
+  - name: "eHi"
+    title: "External Max Temperature"
+    description: "Maximum limit for external sensorin tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 400
+# 10
+  - name: "roomSensorCalibration"
+    title: "Internal sensor calibration"
+    description: "Calibrates internal sensor to increase accuracy in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -60
+      maximum: 60
+      default: 0
+# 11
+  - name: "floorSensorCalibration"
+    title: "Floor sensor calibration"
+    description: "Calibrates floor sensor to increase accuracy in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -60
+      maximum: 60
+      default: 0
+# 12
+  - name: "externSensorCalibration"
+    title: "External sensor calibration"
+    description: "Calibrates external sensor to increase accuracy in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -60
+      maximum: 60
+      default: 0
+# 13
+  - name: "regulationMode"
+    title: "Regulation Mode"
+    description: "Choose between regulation modes PWM and Hysteresis."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Hysteresis"
+        1 : "PWM regulation"
+      default: 0
+# 14
+  - name: "tempHysteresis"
+    title: "Temp control Hysteresis (diF)"
+    description: "0.3 to 3.0 Celsius in tenths"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 3
+      maximum: 30
+      default: 5
+# 15
+  - name: "tempDisplay"
+    title: "Temperature display"
+    description: "Selects which temperature shown on display"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Setpoint temperature"
+        1 : "Measured temperature"
+      default: 0
+# 16
+  - name: "displayBrightnessActive"
+    title: "Display brightness in active state"
+    description: "Configures the brightness of the display in active state in %"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 10
+      default: 10
+# 17
+  - name: "displayBrightnessDimmed"
+    title: "Display brightness in dimmed state"
+    description: "Configures the brightness of the display in dimmed state in %"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 10
+      default: 5
+# 18
+  - name: "tempReportInterval"
+    title: "Temperature report interval"
+    description: "How often temperature reports are sent in seconds"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 30
+      maximum: 65535
+      default: 840
+# 19
+  - name: "tempReportHysteresis"
+    title: "Temperature report hysteresis"
+    description: "Difference in temperature before a new report is sent 0.1 to 10 C"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 10
+# 20
+  - name: "meterReportInterval"
+    title: "Meter report interval"
+    description: "How often meter reports are sent in seconds"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 30
+      maximum: 65535
+      default: 840
+# 21
+  - name: "actionAfterError"
+    title: "Action after error"
+    description: "Reaction when error has turned OFF relay."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+# 22
+  - name: "comfortSetpoint"
+    title: "Comfort mode setpoint"
+    description: "Normal value for heating in tenths of degrees"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 210
+# 23
+  - name: "coolingSetpoint"
+    title: "Cooling mode setpoint"
+    description: "Setpoint when termostat in Cooling mode in tenth of degrees"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 180
+# 24
+  - name: "ecoSetpoint"
+    title: "ECO mode setpoint"
+    description: "Setpoint when termostat in ECO mode in tenth of degrees"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 400
+      default: 180
+# 25
+  - name: "regulatorLevel"
+    title: "Power level for Regulator"
+    description: "Setting for regulator in percent 1 = 10%  (Default 2 = 20%)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 10
+      default: 2
+# 26
+  - name: "updateInterval"
+    title: "Thermostat update interval"
+    description: "How often setpoint and on/off is sent to associated devices"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 43200
+# 27 Operation mode (Off, Heating, Energy Save Heating)
+  - name: "operationMode"
+    title: "Thermostat operation mode"
+    description: "Current thermostat operation mode"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Off"
+        1 : "Heat"
+        2 : "Cool"
+        3 : "Energy Save Heat"
+      default: 1
+# 28
+  - name: "openWindowDetection"
+    title: "Open window detection"
+    description: "Enable or disable open window detection"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Disable (default)"
+        1 : "Enable"
+      default: 0
+# 29
+  - name: "loadSize"
+    title: "Size of load"
+    description: "Load using a contactor 1-99 (* 100 W). 0=measured value"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 0
+# Associations 302
+  - name: "assocGroup2OnOff"
+    title: "Association group 2, On Off Control"
+    description: "Binary Switch Set association group (On Off control). Use dots to define End Points and separate devices with semicolons. Example: 4.2;5;6.4"
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 35
+      default: ""
+# Associations 303
+  - name: "assocGroup3Setpoint"
+    title: "Association group 3,Setpoint)"
+    description: "Thermostat Setpoint association group. Use dots to define End Points and separate devices with semicolons. Example: 4.2;5;6.4"
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 35
+      default: ""
+# Associations 304
+  - name: "assocGroup4Mode"
+    title: "Association group 4, Thermostat Mode"
+    description: "Thermostat Mode association group (On Off control). Use dots to define End Points and separate devices with semicolons. Example: 4.2;5;6.4"
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 35
+      default: ""
