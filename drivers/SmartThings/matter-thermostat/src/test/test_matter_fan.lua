@@ -2,8 +2,8 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+test.set_rpc_version(0)
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
