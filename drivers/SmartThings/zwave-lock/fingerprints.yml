@@ -164,7 +164,7 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x6600
     productId: 0x0002
-    deviceProfileName: base-lock
+    deviceProfileName: base-lock-tamper
   - id: "Yale/YRL220"
     deviceLabel: Yale Door Lock
     manufacturerId: 0x0129
