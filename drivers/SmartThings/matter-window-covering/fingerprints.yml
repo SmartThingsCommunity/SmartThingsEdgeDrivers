@@ -261,6 +261,12 @@ matterManufacturer:
     vendorId: 0x1524
     productId: 0xBF01
     deviceProfileName: window-covering-battery
+#Aqara
+  - id: "4447/14386"
+    deviceLabel: Aqara Curtain Controller C100
+    vendorId: 0x115F
+    productId: 0x3832
+    deviceProfileName: window-covering
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
