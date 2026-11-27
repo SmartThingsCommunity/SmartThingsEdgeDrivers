@@ -2,6 +2,7 @@ local utils = require "utils"
 
 local SensorMultiServiceHelper = {}
 function SensorMultiServiceHelper.update_multi_service_device_maps(driver, device, hue_device_id, sensor_info)
+  if not hue_device_id then return end
   local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
 
   if type(sensor_info.sensor_list) == "table" then
@@ -18,6 +19,7 @@ function SensorMultiServiceHelper.update_multi_service_device_maps(driver, devic
 
   driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
   local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device)
+  if not hue_id_to_device then return end
   for rid, _ in pairs(driver.services_for_device_rid[hue_device_id]) do
     hue_id_to_device[rid] = device
   end

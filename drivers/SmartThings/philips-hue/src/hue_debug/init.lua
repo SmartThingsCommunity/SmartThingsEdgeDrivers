@@ -85,7 +85,8 @@ local function _setup_forced_strays(forced_stray_types)
     if device_rid and type_map[device_type] and not forced_devices[device.id] then
       _log(string.format("Forcing device [%s] as stray by removing its device state disco cache", device.label))
       forced_devices[device.id] = true
-      Discovery.device_state_disco_cache[device_rid] = nil
+      local cache = Discovery.state_cache_for_device(driver, device)
+      if cache then cache[device_rid] = nil end
       added(driver, device, ...)
     end
   end

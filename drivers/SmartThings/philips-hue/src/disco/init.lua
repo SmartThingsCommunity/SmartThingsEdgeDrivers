@@ -26,18 +26,55 @@ local DOMAIN = "local"
 ---@class HueDiscovery
 ---@field public api_keys table<string,string>
 ---@field public disco_api_instances table<string,PhilipsHueApi>
----@field public device_state_disco_cache table<string,table<string,any>>
+---@field public device_state_disco_cache_by_bridge table<string,table<string,table<string,any>>>
 ---@field public ServiceType string
 ---@field public Domain string
 ---@field public discovery_active boolean
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
-  device_state_disco_cache = {},
+  device_state_disco_cache_by_bridge = {},
   ServiceType = SERVICE_TYPE,
   Domain = DOMAIN,
   discovery_active = false
 }
+
+--- The cached state of the devices on one bridge, keyed by Hue resource ID (and, for some device
+--- types, also by v1 ID), creating it if needed. The cache is kept per bridge because a Hue Bridge
+--- Pro keeps the resource IDs of the devices migrated to it, so two bridges can report state for the
+--- same resource ID, and a device must only ever be set up from its own bridge's state.
+---@param bridge_network_id string? the bridge's device network ID
+---@return table<string,table<string,any>>? cache nil if no bridge network ID was given
+function HueDiscovery.state_cache_for_bridge(bridge_network_id)
+  if not bridge_network_id then return nil end
+  local cache = HueDiscovery.device_state_disco_cache_by_bridge[bridge_network_id]
+  if not cache then
+    cache = {}
+    HueDiscovery.device_state_disco_cache_by_bridge[bridge_network_id] = cache
+  end
+  return cache
+end
+
+--- The state cache of the bridge a child device belongs to (see `state_cache_for_bridge`).
+---@param driver HueDriver
+---@param device HueDevice
+---@param parent_device_id string? the device's parent, if known, as for `utils.get_hue_bridge_for_device`
+---@return table<string,table<string,any>>? cache nil if the device's bridge isn't known
+function HueDiscovery.state_cache_for_device(driver, device, parent_device_id)
+  local bridge = utils.get_hue_bridge_for_device(driver, device, parent_device_id, true)
+  return bridge and HueDiscovery.state_cache_for_bridge(bridge.device_network_id)
+end
+
+--- The cached state of resource `rid` on the bridge `device` belongs to.
+---@param driver HueDriver
+---@param device HueDevice
+---@param rid string?
+---@param parent_device_id string?
+---@return table<string,any>?
+function HueDiscovery.cached_state_for_device(driver, device, rid, parent_device_id)
+  local cache = rid and HueDiscovery.state_cache_for_device(driver, device, parent_device_id)
+  return cache and cache[rid]
+end
 
 -- Lazy-load the discovered device handlers so we only load the code we need
 ---@type table<string,DiscoveredChildDeviceHandler>
@@ -251,7 +288,10 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network
     for _, device in ipairs(driver:get_devices()) do
       -- We're only interested in processing child/non-bridge devices here.
       if utils.is_bridge(driver, device) then goto continue end
-      local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID) or ""]
+      -- A device without a Hue device ID has not completed `added` (or lost its stored fields), so
+      -- there is nothing to compare against the bridge. Never delete a device on that basis.
+      if not device:get_field(Fields.HUE_DEVICE_ID) then goto continue end
+      local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID)]
       local parent_device_id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID) or ""
       local parent_bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
       local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_network_id)
@@ -357,7 +397,7 @@ function HueDiscovery.handle_discovered_child_device(driver, bridge_network_id, 
     api_instance,
     primary_services,
     device_info,
-    HueDiscovery.device_state_disco_cache,
+    HueDiscovery.state_cache_for_bridge(bridge_network_id),
     driver.try_create_device
   )
 end
@@ -411,7 +451,7 @@ function HueDiscovery.do_mdns_scan(driver)
           (rest_err or "unexpected nil in error position")
         )
       )
-      return
+      goto continue
     end
     -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
     -- we strip thoes out and make the string uppercase
@@ -421,7 +461,7 @@ function HueDiscovery.do_mdns_scan(driver)
           "No MAC address in returned Bridge Info for IP %s.", ip_addr
         )
       )
-      return
+      goto continue
     end
 
     bridge_info.ip = ip_addr

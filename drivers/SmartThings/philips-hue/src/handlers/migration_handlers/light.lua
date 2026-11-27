@@ -7,6 +7,7 @@ st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local Fields = require "fields"
+local LightLifecycleHandlers = require "handlers.lifecycle_handlers.light"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
@@ -18,8 +19,14 @@ local LightMigrationHandler = {}
 ---@param device HueChildDevice
 ---@param lifecycle_handlers LifecycleHandlers
 ---@param parent_device_id string?
----@param hue_light_description HueLightInfo?
+---@param hue_light_description HueLightInfo|string|nil the light's state, or its resource ID (as the
+--- stray resolver passes) to look its state up in the bridge's cache
 function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, parent_device_id, hue_light_description)
+  local light_rid = utils.get_hue_rid(device)
+  if type(hue_light_description) ~= "table" then
+    light_rid = type(hue_light_description) == "string" and hue_light_description or light_rid
+    hue_light_description = nil
+  end
   local api_key = device.data.username
   local v1_id = device.data.bulbId
   local bridge_id = driver.api_key_to_bridge_id[api_key]
@@ -43,7 +50,9 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
-      Discovery.device_state_disco_cache[utils.get_hue_rid(device) or v1_id] --[[@as HueLightInfo]]
+      (bridge_device and (Discovery.state_cache_for_bridge(bridge_device.device_network_id) or {})[
+        light_rid or v1_id
+      ]) --[[@as HueLightInfo]]
 
   if not (api_instance and bridge_device and bridge_device:get_field(Fields._INIT)
         and driver.joined_bridges[bridge_id] and light_resource) then
@@ -152,7 +161,9 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
   log.debug(string.format(
     "Re-requesting added handler for %s after migrating", (device.label or device.id or "unknown device")
   ))
-  lifecycle_handlers.device_added(driver, device, bridge_device.id, light_resource.id)
+  -- The light's own `added`, not `lifecycle_handlers.device_added`: the device still looks like a
+  -- DTH light (its DTH data remains), so that would send it back here.
+  LightLifecycleHandlers.added(driver, device, bridge_device.id, light_resource.id)
   log.debug(string.format(
     "Re-requesting init handler for %s after migrating", (device.label or device.id or "unknown device")
   ))

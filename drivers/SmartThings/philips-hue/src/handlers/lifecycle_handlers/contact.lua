@@ -35,7 +35,7 @@ function ContactLifecycleHandlers.added(driver, device, parent_device_id, resour
     return
   end
 
-  local sensor_info = Discovery.device_state_disco_cache[device_sensor_resource_id]
+  local sensor_info = Discovery.cached_state_for_device(driver, device, device_sensor_resource_id)
   if not sensor_info then
     log.error(
       string.format(
@@ -78,12 +78,20 @@ function ContactLifecycleHandlers.init(driver, device)
   log.debug("resource id " .. tostring(device_sensor_resource_id))
 
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
+  if not hue_device_id then
+    -- `added` hasn't completed for this device (e.g. its bridge isn't ready), so there is nothing
+    -- to initialize yet. The stray device resolver will run `added` and `init` again later.
+    log.warn(string.format(
+      "Contact Sensor %s has no Hue device ID, skipping init until it has been added", (device and device.label) or "unknown sensor"
+    ))
+    return
+  end
   local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device) or {}
   if not hue_id_to_device[device_sensor_resource_id] then
     hue_id_to_device[device_sensor_resource_id] = device
   end
   local sensor_info, err
-  sensor_info = Discovery.device_state_disco_cache[device_sensor_resource_id]
+  sensor_info = Discovery.cached_state_for_device(driver, device, device_sensor_resource_id)
   if not sensor_info then
     log.debug("no sensor info")
     local parent_bridge = utils.get_hue_bridge_for_device(
@@ -97,7 +105,7 @@ function ContactLifecycleHandlers.init(driver, device)
         api_instance,
         hue_device_id,
         parent_bridge.device_network_id,
-        Discovery.device_state_disco_cache
+        Discovery.state_cache_for_bridge(parent_bridge.device_network_id)
       )
       if err then
         log.error(
