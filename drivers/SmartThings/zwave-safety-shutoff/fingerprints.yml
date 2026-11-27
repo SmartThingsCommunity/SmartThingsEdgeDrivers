@@ -1,0 +1,26 @@
+zwaveManufacturer:
+  - id: "FireAvert/Shutoff/Gas"
+    deviceLabel: FireAvert Shutoff for Gas Appliances
+    manufacturerId: 0x045D
+    productType: 0x0004
+    productId: 0x1601
+    deviceProfileName: fireavert-appliance-shutoff-gas
+  - id: "FireAvert/Shutoff/120v"
+    deviceLabel: FireAvert Shutoff for Electric Appliances
+    manufacturerId: 0x045D
+    productType: 0x0004
+    productId: 0x0601
+    deviceProfileName: fireavert-appliance-shutoff-electric
+  - id: "FireAvert/Shutoff/240v3"
+    deviceLabel: FireAvert Shutoff for Electric Appliances
+    manufacturerId: 0x045D
+    productType: 0x0004
+    productId: 0x0602
+    deviceProfileName: fireavert-appliance-shutoff-electric
+  - id: "FireAvert/Shutoff/240v4"
+    deviceLabel: FireAvert Shutoff for Electric Appliances
+    manufacturerId: 0x045D
+    productType: 0x0004
+    productId: 0x0603
+    deviceProfileName: fireavert-appliance-shutoff-electric
+

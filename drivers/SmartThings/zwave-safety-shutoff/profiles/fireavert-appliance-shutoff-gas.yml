@@ -1,0 +1,70 @@
+name: fireavert-appliance-shutoff-gas
+components:
+- id: main
+  label: "FireAvert Information"
+  capabilities:
+  - id: refresh
+    version: 1
+  - id: soundDetection
+    version: 1
+  - id: safetyValve
+    version: 1
+  categories:
+    - name: SmokeDetector
+deviceConfig:
+  dashboard:
+    states:
+    - component: main
+      capability: soundDetection
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+        - noSound
+        - fireAlarm
+      version: 1
+    - component: main
+      capability: safetyValve
+      version: 1
+  detailView:
+    - component: main
+      capability: soundDetection
+      version: 1
+      values:
+      - key: soundDetected.value
+        alternatives:
+        - key: noSound
+          value: "No Alarm"
+          type: inactive
+        - key: fireAlarm
+          value: "Fire Alarm Detected"
+          type: active
+        enabledValues:
+          - noSound
+          - fireAlarm
+    - component: main
+      capability: safetyValve
+      version: 1
+  automation:  
+    conditions:
+      - component: main
+        capability: soundDetection
+        version: 1
+        values:
+          - key: soundDetected.value
+            enabledValues:
+              - fireAlarm
+              - noSound
+      - component: main
+        capability: safetyValve
+        version: 1
+    actions:
+      - component: main
+        capability: safetyValve
+        version: 1
