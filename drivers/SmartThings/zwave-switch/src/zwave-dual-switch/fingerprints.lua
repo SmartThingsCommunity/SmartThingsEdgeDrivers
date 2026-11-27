@@ -9,6 +9,7 @@ return {
   { mfr = 0x0312, prod = 0xC000, model = 0xC004 }, -- EVA Switch 1
   { mfr = 0x0312, prod = 0xFF00, model = 0xFF05 }, -- Minoston Switch 1
   { mfr = 0x0312, prod = 0xC000, model = 0xC007 }, -- Evalogik Switch 1
+  { mfr = 0x0312, prod = 0xFF01, model = 0xFF97 }, -- Minoston Outlet 1
   { mfr = 0x010F, prod = 0x1B01, model = 0x1000 }, -- Fibaro Walli Double Switch
   { mfr = 0x027A, prod = 0xA000, model = 0xA003 }  -- Zooz Double Plug
 }
